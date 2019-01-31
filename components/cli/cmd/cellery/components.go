@@ -19,17 +19,8 @@
 package main
 
 import (
-	"bufio"
-	"encoding/json"
-	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
-	"os"
-	"os/exec"
-	"strconv"
-	"strings"
+	"github.com/celleryio/sdk/components/cli/pkg/internal"
 )
 
 func newComponentsCommand() *cobra.Command {
@@ -43,7 +34,7 @@ func newComponentsCommand() *cobra.Command {
 				return nil
 			}
 			cellName = args[0]
-			err := components(cellName)
+			err := internal.RunComponents(cellName)
 			if err != nil{
 				cmd.Help()
 				return err
@@ -53,83 +44,4 @@ func newComponentsCommand() *cobra.Command {
 		Example: "  cellery components my-project:v1.0 -n myproject-v1.0.0",
 	}
 	return cmd
-}
-
-func components(cellName string) error {
-	cmd := exec.Command("kubectl", "get", "services", "-l", constants.GROUP_NAME + "/cell=" + cellName, "-o", "json")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := constants.EMPTY_STRING
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Error in executing cell components: %v \n", err)
-		os.Exit(1)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Cell components finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
-	}
-
-	jsonOutput := &util.Service{}
-
-	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson!= nil{
-		fmt.Println(errJson)
-	}
-
-	if len(jsonOutput.Items) == 0 {
-		fmt.Printf("Cannot find cell: %v \n", cellName)
-	} else {
-		displayComponentsTable(jsonOutput.Items, cellName)
-	}
-	return nil
-}
-
-func displayComponentsTable(componentArray []util.ServiceItem, cellName string) error {
-	tableData := [][]string{}
-
-	for i := 0; i < len(componentArray); i++ {
-		var name string
-		name = strings.Replace(componentArray[i].Metadata.Name, cellName + "--", "", -1)
-		name = strings.Replace(name, "-service", "", -1)
-
-		ports := strconv.Itoa(componentArray[i].Spec.Ports[0].Port)
-		for j := 1; j < len(componentArray[i].Spec.Ports); j++ {
-			ports = ports + "/" + strconv.Itoa(componentArray[i].Spec.Ports[j].Port)
-		}
-		component := []string{name, ports}
-		tableData = append(tableData, component)
-	}
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"NAME", "PORTS"})
-	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
-	table.SetAlignment(3)
-	table.SetRowSeparator("-")
-	table.SetCenterSeparator(" ")
-	table.SetColumnSeparator(" ")
-	table.SetHeaderColor(
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold})
-	table.SetColumnColor(
-		tablewriter.Colors{tablewriter.FgHiBlueColor},
-		tablewriter.Colors{})
-
-	table.AppendBulk(tableData)
-	table.Render()
-
-	return nil
 }

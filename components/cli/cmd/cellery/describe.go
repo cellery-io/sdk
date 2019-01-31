@@ -19,11 +19,8 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"github.com/spf13/cobra"
-	"os"
-	"os/exec"
+	"github.com/celleryio/sdk/components/cli/pkg/internal"
 )
 
 func newDescribeCommand() *cobra.Command {
@@ -37,7 +34,7 @@ func newDescribeCommand() *cobra.Command {
 				return nil
 			}
 			cellImage = args[0]
-			err := describe(cellImage)
+			err := internal.RunDescribe(cellImage)
 			if err != nil{
 				cmd.Help()
 				return err
@@ -47,33 +44,4 @@ func newDescribeCommand() *cobra.Command {
 		Example: "  cellery describe my-project:v1.0 -n myproject-v1.0.0",
 	}
 	return cmd
-}
-
-func describe(cellImage string) error {
-	cmd := exec.Command("kubectl", "describe", "cells", cellImage)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Error in executing cell describe: %v \n", err)
-		os.Exit(1)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Cell describe finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
-	}
-	return nil
 }

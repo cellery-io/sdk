@@ -19,14 +19,8 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"os/exec"
-	"runtime"
-	"strings"
+	"github.com/celleryio/sdk/components/cli/pkg/internal"
 )
 
 func newVersionCommand() *cobra.Command {
@@ -34,7 +28,7 @@ func newVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Get cellery runtime version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runVersion()
+			err := internal.RunVersion()
 			if err != nil {
 				cmd.Help()
 				return err
@@ -43,122 +37,4 @@ func newVersionCommand() *cobra.Command {
 		},
 	}
 	return cmd
-}
-
-func runVersion() error {
-
-	type Version struct {
-		CelleryTool struct {
-			Version          string `json:"version"`
-			APIVersion       string `json:"apiVersion"`
-			BallerinaVersion string `json:"ballerinaVersion"`
-			GitCommit        string `json:"gitCommit"`
-			Built            string `json:"built"`
-			OsArch           string `json:"osArch"`
-			Experimental     bool   `json:"experimental"`
-		} `json:"celleryTool"`
-		CelleryRepository struct {
-			Server        string `json:"server"`
-			APIVersion    string `json:"apiVersion"`
-			Authenticated bool   `json:"authenticated"`
-		} `json:"celleryRepository"`
-		Kubernetes struct {
-			Version string `json:"version"`
-			Crd     string `json:"crd"`
-		} `json:"kubernetes"`
-		Docker struct {
-			Registry string `json:"registry"`
-		} `json:"docker"`
-	}
-
-	type K8SStruct struct {
-		ServerVersion struct {
-			GitVersion string
-		}
-	}
-
-	//// Call API server to get the version details.
-	//resp, err := http.Get(constants.BASE_API_URL + "/version")
-	//if err != nil {
-	//	fmt.Println("Error connecting to the cellery api-server.")
-	//}
-	//defer resp.Body.Close()
-	//
-	//// Read the response body and get to an bute array.
-	//body, err := ioutil.ReadAll(resp.Body)
-	//response := Version{}
-	//
-	//// set the resopose byte array to the version struct.
-	//json.Unmarshal(body, &response)
-
-	balVersionCmd := exec.Command("ballerina", "version")
-	balResult, err := balVersionCmd.Output()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Ballerina not found. You must have ballerina installed. \x1b[0m\n")
-	}
-	balVersion := string(balResult)
-
-	//Print the version details.
-	white := color.New(color.FgWhite)
-	boldWhite := white.Add(color.Bold)
-
-	boldWhite.Println("Cellery:")
-	fmt.Println(" Version:\t\t0.0.1")                    //TODO
-	fmt.Println(" API version:\t\t0.0.1")                //TODO
-	fmt.Println(" Git commit:\t\t78a6bdb")               //TODO
-	fmt.Println(" Built:\t\t\tTue Oct 23 22:41:53 2018") //TODO
-	fmt.Println(" OS/Arch:\t\t" + runtime.GOOS + "/" + runtime.GOARCH)
-	fmt.Println(" Experimental:\t\ttrue") //TODO
-
-	boldWhite.Println("\nBallerina:")
-	fmt.Println(" Version:\t\t" + strings.TrimSpace(strings.Split(balVersion, " ")[1]))
-
-	boldWhite.Println("\nCellery Repository:")
-	fmt.Println(" Server:\t\thttp://central.cellery.io/api") //TODO
-	fmt.Println(" API version:\t\t0.0.1")                    //TODO
-	fmt.Println(" Login:\t\t\tLogged in")                    //TODO
-
-	boldWhite.Println("\nKubernetes")
-	k8sCmd := exec.Command("kubectl", "version", "-o", "json")
-	var k8sStdout, k8sStderr bytes.Buffer
-	k8sCmd.Stdout = &k8sStdout
-	k8sCmd.Stderr = &k8sStderr
-	k8sExecErr := k8sCmd.Run()
-	if k8sExecErr != nil {
-		fmt.Printf("\x1b[31;1m Error while getting Kubernetes version, \x1b[0m%v\n",
-			strings.TrimSpace(k8sStderr.String()))
-	} else {
-		k8sVersion := k8sStdout.String()
-		k8sVersionJson := K8SStruct{}
-		jsonErr := json.Unmarshal([]byte(k8sVersion), &k8sVersionJson)
-		if jsonErr != nil {
-			fmt.Printf("\x1b[31;1m Cannot connect to Kubernetes Cluster \x1b[0m %v \n", k8sExecErr)
-		}
-		fmt.Println(" Version:\t\t" + k8sVersionJson.ServerVersion.GitVersion)
-		fmt.Println(" CRD:\t\t\ttrue") //TODO
-	}
-
-	boldWhite.Println("\nDocker:")
-	dockerServerCmd := exec.Command("docker", "version", "--format", "{{.Server.Version}}")
-	dockerServerResult, err := dockerServerCmd.CombinedOutput()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Error while getting Docker Server version, \x1b[0m%v\n",
-			strings.TrimSpace(string(dockerServerResult)))
-		return nil
-	} else {
-		dockerServerVersion := string(dockerServerResult)
-		fmt.Println(" Server Version:\t" + strings.TrimSpace(dockerServerVersion))
-	}
-
-	dockerClientCmd := exec.Command("docker", "version", "--format", "{{.Client.Version}}")
-	dockerClientResult, err := dockerClientCmd.CombinedOutput()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Error while getting Docker Client version, \x1b[0m%v\n",
-			strings.TrimSpace(string(dockerServerResult)))
-	} else {
-		dockerClientVersion := string(dockerClientResult)
-		fmt.Println(" Client Version:\t" + strings.TrimSpace(dockerClientVersion))
-	}
-
-	return nil
 }

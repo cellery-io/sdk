@@ -19,13 +19,8 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
-	"os"
-	"os/exec"
-)
+	"github.com/celleryio/sdk/components/cli/pkg/internal"
 
 func newLogsCommand() *cobra.Command {
 	var cellName, componentName string
@@ -40,13 +35,13 @@ func newLogsCommand() *cobra.Command {
 			cellName = args[0]
 			if len(args) > 1 {
 				componentName = args[1]
-				err := componentLogs(cellName, componentName)
+				err := internal.RunComponentLogs(cellName, componentName)
 				if err != nil{
 					cmd.Help()
 					return err
 				}
 			} else {
-				err := cellLogs(cellName)
+				err := internal.RunCellLogs(cellName)
 				if err != nil{
 					cmd.Help()
 					return err
@@ -59,70 +54,3 @@ func newLogsCommand() *cobra.Command {
 	return cmd
 }
 
-func componentLogs(cellName, componentName string) error {
-	cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME + "/service=" + cellName + "--" + componentName, "-c", componentName)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output += stdoutScanner.Text()
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Error in executing cellery logs: %v \n", err)
-		os.Exit(1)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Cellery logs finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
-	}
-	if output == "" {
-		fmt.Printf("Cannot find cell: %v \n", cellName)
-	}
-	return nil
-}
-
-func cellLogs(cellName string) error {
-	cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME + "/cell=" + cellName, "--all-containers=true")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output += stdoutScanner.Text()
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Error in executing cell ps: %v \n", err)
-		os.Exit(1)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Cell ps finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
-	}
-	if output == "" {
-		fmt.Printf("Cannot find cell: %v \n", cellName)
-	}
-	return nil
-}

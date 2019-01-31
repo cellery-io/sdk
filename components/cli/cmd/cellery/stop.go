@@ -19,11 +19,8 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"github.com/spf13/cobra"
-	"os"
-	"os/exec"
+	"github.com/celleryio/sdk/components/cli/pkg/internal"
 )
 
 func newStopCommand() *cobra.Command {
@@ -37,7 +34,7 @@ func newStopCommand() *cobra.Command {
 				return nil
 			}
 			instanceName = args[0]
-			err := stop(instanceName)
+			err := internal.RunStop(instanceName)
 			if err != nil{
 				cmd.Help()
 				return err
@@ -47,37 +44,4 @@ func newStopCommand() *cobra.Command {
 		Example: "  cellery stop my-project:v1.0",
 	}
 	return cmd
-}
-
-func stop(instanceName string) error {
-	if instanceName == "" {
-		return fmt.Errorf("no cell instance name specified")
-	}
-
-	cmd := exec.Command("kubectl", "delete", "cell", instanceName)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Error in executing cellery stop: %v \n", err)
-		os.Exit(1)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Cell stop finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
-	}
-	return nil
 }
