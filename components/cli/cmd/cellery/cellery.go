@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package cellery
+package main
 
 import (
 	"fmt"
