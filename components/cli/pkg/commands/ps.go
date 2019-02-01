@@ -39,7 +39,7 @@ func RunPs() error {
 	go func() {
 		for stderrScanner.Scan() {
 			fmt.Println(stderrScanner.Text())
-			if (stderrScanner.Text() == "No resources found.") {
+			if stderrScanner.Text() == "No resources found." {
 				os.Exit(0)
 			}
 		}

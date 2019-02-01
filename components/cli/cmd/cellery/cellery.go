@@ -20,9 +20,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 func newCliCommand() *cobra.Command {
@@ -31,7 +32,7 @@ func newCliCommand() *cobra.Command {
 		Short:         "Manage immutable cell based applications",
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Version: fmt.Sprintf("%s, build %s", "0.1.0", "c69f31c"),
+		Version:       fmt.Sprintf("%s, build %s", "0.1.0", "c69f31c"),
 	}
 
 	cmd.AddCommand(

@@ -20,7 +20,7 @@ package util
 
 type Cell struct {
 	CellMetaData CellMetaData `json:"metadata"`
-	CellStatus CellStatus `json:"status"`
+	CellStatus   CellStatus   `json:"status"`
 }
 
 type CellMetaData struct {
@@ -36,8 +36,8 @@ type CellPods struct {
 }
 
 type Pod struct {
-	MetaData PodMetaData `json:"metadata"`
-	PodStatus PodStatus `json:"status"`
+	MetaData  PodMetaData `json:"metadata"`
+	PodStatus PodStatus   `json:"status"`
 }
 
 type PodMetaData struct {
@@ -45,14 +45,14 @@ type PodMetaData struct {
 }
 
 type PodStatus struct {
-	Phase string `json:"phase"`
-	StartTime string `json:"startTime"`
+	Phase      string         `json:"phase"`
+	StartTime  string         `json:"startTime"`
 	Conditions []PodCondition `json:"conditions"`
 }
 
 type PodCondition struct {
-	Type string `json:"type"`
-	Status string `json:"status"`
+	Type               string `json:"type"`
+	Status             string `json:"status"`
 	LastTransitionTime string `json:"lastTransitionTime"`
 }
 
@@ -62,7 +62,7 @@ type Service struct {
 
 type ServiceItem struct {
 	Metadata ServiceMetaData `json:"metadata"`
-	Spec ServiceSpec `json:"spec"`
+	Spec     ServiceSpec     `json:"spec"`
 }
 
 type ServiceMetaData struct {
@@ -78,7 +78,7 @@ type ServicePort struct {
 }
 
 type Gateway struct {
-	GatewaySpec GatewaySpec  `json:"spec"`
+	GatewaySpec GatewaySpec `json:"spec"`
 }
 
 type GatewaySpec struct {
@@ -86,12 +86,12 @@ type GatewaySpec struct {
 }
 
 type GatewayApi struct {
-	Backend string `json:"backend"`
-	Context string `json:"context"`
+	Backend     string              `json:"backend"`
+	Context     string              `json:"context"`
 	Definitions []GatewayDefinition `json:"definitions"`
 }
 
 type GatewayDefinition struct {
 	Method string `json:"method"`
-	Path string `json:"path"`
+	Path   string `json:"path"`
 }

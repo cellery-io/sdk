@@ -22,16 +22,18 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/constants"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
-	"github.com/olekukonko/tablewriter"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
+
+	"github.com/celleryio/sdk/components/cli/constants"
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 )
 
 func RunApis(cellName string) error {
-	cmd := exec.Command("kubectl", "get", "gateways", cellName + "--gateway", "-o", "json")
+	cmd := exec.Command("kubectl", "get", "gateways", cellName+"--gateway", "-o", "json")
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
 	output := ""
@@ -63,7 +65,7 @@ func RunApis(cellName string) error {
 	jsonOutput := &util.Gateway{}
 
 	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson!= nil{
+	if errJson != nil {
 		fmt.Println(errJson)
 	}
 
@@ -78,7 +80,7 @@ func displayApisTable(apiArray []util.GatewayApi) error {
 		api := []string{strings.Split(apiArray[i].Backend, "/")[2], apiArray[i].Context}
 		paths := getApiMethodsArray(apiArray[i].Definitions)
 
-		for i := 0; i < len(paths) ; i++  {
+		for i := 0; i < len(paths); i++ {
 			api = append(api, paths[i])
 		}
 		tableData = append(tableData, api)
@@ -117,20 +119,20 @@ func displayApisTable(apiArray []util.GatewayApi) error {
 func getApiMethodsArray(definitions []util.GatewayDefinition) []string {
 	methodArray := make([]string, 5)
 
-	for i := 0; i < len(definitions) ; i++ {
+	for i := 0; i < len(definitions); i++ {
 		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_GET) {
 			methodArray[0] = definitions[i].Path
 		}
-		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_POST)  {
+		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_POST) {
 			methodArray[1] = definitions[i].Path
 		}
-		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_PATCH)  {
+		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_PATCH) {
 			methodArray[2] = definitions[i].Path
 		}
-		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_PUT)  {
+		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_PUT) {
 			methodArray[3] = definitions[i].Path
 		}
-		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_DELETE)  {
+		if strings.EqualFold(definitions[i].Method, constants.HTTP_METHOD_DELETE) {
 			methodArray[4] = definitions[i].Path
 		}
 	}

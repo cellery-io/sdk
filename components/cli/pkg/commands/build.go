@@ -22,15 +22,17 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
-	"github.com/spf13/viper"
-	"github.com/tj/go-spin"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/spf13/viper"
+	"github.com/tj/go-spin"
+
+	"github.com/celleryio/sdk/components/cli/pkg/constants"
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 )
 
 var isSpinning = true

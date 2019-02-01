@@ -19,8 +19,9 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 func newCompletionCommand(root *cobra.Command) *cobra.Command {
@@ -37,9 +38,8 @@ To configure your bash shell to load completions for each session add to your ba
 . <(cellery completion)
 `,
 		Run: func(cmd *cobra.Command, args []string) {
-			root.GenBashCompletion(os.Stdout);
+			root.GenBashCompletion(os.Stdout)
 		},
 	}
 	return cmd
 }
-

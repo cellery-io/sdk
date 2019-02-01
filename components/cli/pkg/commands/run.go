@@ -21,13 +21,14 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/celleryio/sdk/components/cli/pkg/constants"
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 )
 
 func RunRun(cellImageTag string) error {

@@ -20,18 +20,20 @@ package commands
 
 import (
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
-	"github.com/olekukonko/tablewriter"
 	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
+
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 )
 
 type Component struct {
-	name, dockerImage string
-	ports []int
+	name, dockerImage   string
+	ports               []int
 	deployment, service string
 }
 
@@ -106,16 +108,16 @@ func RunImageInformations(input string) error {
 	return nil
 }
 
-func getComponentByNameAndVersion (nameAndVersion string, componentArrays [][]Component) []Component {
+func getComponentByNameAndVersion(nameAndVersion string, componentArrays [][]Component) []Component {
 	components := map[string][]Component{
 		"abc/hr_app_cell:v1.0.0": componentArrays[0],
-		"xyz/Hello_cell:v1.0.0": componentArrays[1],
+		"xyz/Hello_cell:v1.0.0":  componentArrays[1],
 	}
 
 	return components[nameAndVersion]
 }
 
-func getComponentByUniqueId (uniqueId string, componentArrays [][]Component) []Component {
+func getComponentByUniqueId(uniqueId string, componentArrays [][]Component) []Component {
 	components := map[string][]Component{
 		"a70ad572a50f": componentArrays[0],
 		"6efa497099d9": componentArrays[1],
@@ -127,7 +129,7 @@ func getComponentByUniqueId (uniqueId string, componentArrays [][]Component) []C
 func componentArrayToStringArray(components []Component) [][]string {
 	convertedArray := [][]string{}
 
-	for i := 0; i < len(components); i++  {
+	for i := 0; i < len(components); i++ {
 		component := make([]string, 5)
 		component[0] = components[i].name
 		component[1] = components[i].dockerImage
@@ -147,27 +149,27 @@ func intArrayToString(intArray []int) string {
 
 func getImagesArray() [][]string {
 	images := [][]string{}
-	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos" ,"registry.cellery.io"))
+	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos", "registry.cellery.io"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, organization := range organizations {
-		projects, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos" ,"registry.cellery.io", organization))
+		projects, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos", "registry.cellery.io", organization))
 		if err != nil {
 			log.Fatal(err)
 		}
 		for _, project := range projects {
-			versions, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos" ,"registry.cellery.io", organization, project))
+			versions, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos", "registry.cellery.io", organization, project))
 			if err != nil {
 				log.Fatal(err)
 			}
 			for _, version := range versions {
-				size, err := util.GetFileSize(filepath.Join(util.UserHomeDir(), ".cellery", "repos" ,"registry.cellery.io", organization, project, version, project + ".zip"))
+				size, err := util.GetFileSize(filepath.Join(util.UserHomeDir(), ".cellery", "repos", "registry.cellery.io", organization, project, version, project+".zip"))
 				if err != nil {
 					log.Fatal(err)
 				}
 				if size > 1024 {
-					images = append(images, []string{organization + "/" + project, version, strconv.FormatFloat(float64(size/1024),'f', -1, 64) + "KB"})
+					images = append(images, []string{organization + "/" + project, version, strconv.FormatFloat(float64(size/1024), 'f', -1, 64) + "KB"})
 				} else {
 					images = append(images, []string{organization + "/" + project, version, strconv.FormatInt(size, 10) + "B"})
 				}

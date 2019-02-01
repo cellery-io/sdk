@@ -22,17 +22,19 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
-	"github.com/olekukonko/tablewriter"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
+
+	"github.com/celleryio/sdk/components/cli/pkg/constants"
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 )
 
 func RunComponents(cellName string) error {
-	cmd := exec.Command("kubectl", "get", "services", "-l", constants.GROUP_NAME + "/cell=" + cellName, "-o", "json")
+	cmd := exec.Command("kubectl", "get", "services", "-l", constants.GROUP_NAME+"/cell="+cellName, "-o", "json")
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
 	output := constants.EMPTY_STRING
@@ -62,7 +64,7 @@ func RunComponents(cellName string) error {
 	jsonOutput := &util.Service{}
 
 	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson!= nil{
+	if errJson != nil {
 		fmt.Println(errJson)
 	}
 
@@ -79,7 +81,7 @@ func displayComponentsTable(componentArray []util.ServiceItem, cellName string) 
 
 	for i := 0; i < len(componentArray); i++ {
 		var name string
-		name = strings.Replace(componentArray[i].Metadata.Name, cellName + "--", "", -1)
+		name = strings.Replace(componentArray[i].Metadata.Name, cellName+"--", "", -1)
 		name = strings.Replace(name, "-service", "", -1)
 
 		ports := strconv.Itoa(componentArray[i].Spec.Ports[0].Port)

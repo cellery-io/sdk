@@ -19,8 +19,9 @@
 package main
 
 import (
-	"github.com/celleryio/sdk/components/cli/pkg/commands"
 	"github.com/spf13/cobra"
+
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 func newLogsCommand() *cobra.Command {
@@ -29,7 +30,7 @@ func newLogsCommand() *cobra.Command {
 		Use:   "logs [OPTIONS]",
 		Short: "Displays logs for either the cell instance, or a component of a running cell instance.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if (len(args) == 0) {
+			if len(args) == 0 {
 				cmd.Help()
 				return nil
 			}
@@ -37,13 +38,13 @@ func newLogsCommand() *cobra.Command {
 			if len(args) > 1 {
 				componentName = args[1]
 				err := commands.RunComponentLogs(cellName, componentName)
-				if err != nil{
+				if err != nil {
 					cmd.Help()
 					return err
 				}
 			} else {
 				err := commands.RunCellLogs(cellName)
-				if err != nil{
+				if err != nil {
 					cmd.Help()
 					return err
 				}
@@ -54,4 +55,3 @@ func newLogsCommand() *cobra.Command {
 	}
 	return cmd
 }
-

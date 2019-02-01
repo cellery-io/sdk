@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/fatih/color"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -35,6 +34,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 var Cyan = color.New(color.FgCyan)

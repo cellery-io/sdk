@@ -22,10 +22,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 func RunVersion() error {

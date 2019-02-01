@@ -21,13 +21,14 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
 	"os"
 	"os/exec"
+
+	"github.com/celleryio/sdk/components/cli/pkg/constants"
 )
 
 func RunComponentLogs(cellName, componentName string) error {
-	cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME + "/service=" + cellName + "--" + componentName, "-c", componentName)
+	cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME+"/service="+cellName+"--"+componentName, "-c", componentName)
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
 	output := ""
@@ -61,7 +62,7 @@ func RunComponentLogs(cellName, componentName string) error {
 }
 
 func RunCellLogs(cellName string) error {
-	cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME + "/cell=" + cellName, "--all-containers=true")
+	cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME+"/cell="+cellName, "--all-containers=true")
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
 	output := ""

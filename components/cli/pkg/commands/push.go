@@ -22,15 +22,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
-	"github.com/tj/go-spin"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/tj/go-spin"
+
+	"github.com/celleryio/sdk/components/cli/pkg/constants"
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 )
 
 var cellImage string

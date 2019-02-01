@@ -20,12 +20,13 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+
 	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 type Component struct {
-	name, dockerImage string
-	ports []int
+	name, dockerImage   string
+	ports               []int
 	deployment, service string
 }
 
@@ -34,7 +35,7 @@ func newImageCommand() *cobra.Command {
 		Use:   "images [OPTIONS]",
 		Short: "List cell images",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if (len(args) == 0) {
+			if len(args) == 0 {
 				return commands.RunImage()
 			} else {
 				return commands.RunImageInformations(args[0])

@@ -21,12 +21,14 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
-	"github.com/fatih/color"
-	i "github.com/oxequa/interact"
 	"os"
 	"os/user"
 	"path/filepath"
+
+	"github.com/fatih/color"
+	i "github.com/oxequa/interact"
+
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 )
 
 func RunInit() error {

@@ -20,6 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+
 	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
@@ -29,13 +30,13 @@ func newStatusCommand() *cobra.Command {
 		Use:   "status [OPTIONS]",
 		Short: "Performs a health check of a cell.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if (len(args) == 0) {
+			if len(args) == 0 {
 				cmd.Help()
 				return nil
 			}
 			cellName = args[0]
 			err := commands.RunStatus(cellName)
-			if err != nil{
+			if err != nil {
 				cmd.Help()
 				return err
 			}

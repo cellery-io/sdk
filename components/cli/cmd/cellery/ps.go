@@ -20,6 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+
 	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
@@ -29,7 +30,7 @@ func newPsCommand() *cobra.Command {
 		Short: "list all running cells",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := commands.RunPs()
-			if err != nil{
+			if err != nil {
 				cmd.Help()
 				return err
 			}

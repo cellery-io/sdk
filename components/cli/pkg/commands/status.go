@@ -22,17 +22,19 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
-	"github.com/celleryio/sdk/components/cli/pkg/util"
-	"github.com/olekukonko/tablewriter"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
+
+	"github.com/celleryio/sdk/components/cli/pkg/constants"
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 )
 
 func RunStatus(cellName string) error {
-	cmd := exec.Command("kubectl", "get", "pods", "-l", constants.GROUP_NAME+ "/cell=" + cellName, "-o", "json")
+	cmd := exec.Command("kubectl", "get", "pods", "-l", constants.GROUP_NAME+"/cell="+cellName, "-o", "json")
 	output := ""
 
 	outfile, errPrint := os.Create("./out.txt")
@@ -65,7 +67,7 @@ func RunStatus(cellName string) error {
 	output = string(outputByteArray)
 	jsonOutput := &util.CellPods{}
 	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson!= nil{
+	if errJson != nil {
 		fmt.Println(errJson)
 	}
 
@@ -113,7 +115,7 @@ func getCellSummary(cellName string) (cellCreationTime, cellStatus string) {
 	jsonOutput := &util.Cell{}
 
 	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson!= nil{
+	if errJson != nil {
 		fmt.Println(errJson)
 	}
 	duration := util.GetDuration(util.ConvertStringToTime(jsonOutput.CellMetaData.CreationTimestamp))
@@ -149,13 +151,13 @@ func displayStatusDetailedTable(podItems []util.Pod, cellName string) error {
 	tableData := [][]string{}
 
 	for i := 0; i < len(podItems); i++ {
-		name := strings.Replace(strings.Split(podItems[i].MetaData.Name, "-deployment-")[0], cellName + "--", "", -1)
+		name := strings.Replace(strings.Split(podItems[i].MetaData.Name, "-deployment-")[0], cellName+"--", "", -1)
 		state := podItems[i].PodStatus.Phase
 
 		if strings.EqualFold(state, "Running") {
 			duration := util.GetDuration(util.ConvertStringToTime(podItems[i].PodStatus.Conditions[1].LastTransitionTime))
 			state = "Up for " + duration
- 		}
+		}
 		status := []string{name, state}
 		tableData = append(tableData, status)
 	}
