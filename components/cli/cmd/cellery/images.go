@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 type Component struct {
@@ -35,9 +35,9 @@ func newImageCommand() *cobra.Command {
 		Short: "List cell images",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if (len(args) == 0) {
-				return internal.RunImage()
+				return commands.RunImage()
 			} else {
-				return internal.RunImageInformations(args[0])
+				return commands.RunImageInformations(args[0])
 			}
 		},
 	}

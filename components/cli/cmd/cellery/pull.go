@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 func newPullCommand() *cobra.Command {
@@ -33,7 +33,7 @@ func newPullCommand() *cobra.Command {
 				return nil
 			}
 			cellImage = args[0]
-			err := internal.RunPull(cellImage, false)
+			err := commands.RunPull(cellImage, false)
 			if err != nil {
 				cmd.Help()
 				return err

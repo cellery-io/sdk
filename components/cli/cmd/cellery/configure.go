@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 type Config struct {
@@ -35,7 +35,7 @@ func newConfigureCommand() *cobra.Command {
 		Use:   "configure",
 		Short: "configure the cellery installation",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return internal.RunConfigure()
+			return commands.RunConfigure()
 		},
 	}
 	return cmd

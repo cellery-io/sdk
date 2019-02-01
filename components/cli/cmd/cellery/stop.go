@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 func newStopCommand() *cobra.Command {
@@ -34,7 +34,7 @@ func newStopCommand() *cobra.Command {
 				return nil
 			}
 			instanceName = args[0]
-			err := internal.RunStop(instanceName)
+			err := commands.RunStop(instanceName)
 			if err != nil{
 				cmd.Help()
 				return err

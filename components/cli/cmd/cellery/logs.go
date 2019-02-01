@@ -19,8 +19,9 @@
 package main
 
 import (
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+)
 
 func newLogsCommand() *cobra.Command {
 	var cellName, componentName string
@@ -35,13 +36,13 @@ func newLogsCommand() *cobra.Command {
 			cellName = args[0]
 			if len(args) > 1 {
 				componentName = args[1]
-				err := internal.RunComponentLogs(cellName, componentName)
+				err := commands.RunComponentLogs(cellName, componentName)
 				if err != nil{
 					cmd.Help()
 					return err
 				}
 			} else {
-				err := internal.RunCellLogs(cellName)
+				err := commands.RunCellLogs(cellName)
 				if err != nil{
 					cmd.Help()
 					return err

@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 func newVersionCommand() *cobra.Command {
@@ -28,7 +28,7 @@ func newVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Get cellery runtime version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := internal.RunVersion()
+			err := commands.RunVersion()
 			if err != nil {
 				cmd.Help()
 				return err

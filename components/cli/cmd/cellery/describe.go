@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 func newDescribeCommand() *cobra.Command {
@@ -34,7 +34,7 @@ func newDescribeCommand() *cobra.Command {
 				return nil
 			}
 			cellImage = args[0]
-			err := internal.RunDescribe(cellImage)
+			err := commands.RunDescribe(cellImage)
 			if err != nil{
 				cmd.Help()
 				return err

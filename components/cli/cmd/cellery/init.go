@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 func newInitCommand() *cobra.Command {
@@ -28,7 +28,7 @@ func newInitCommand() *cobra.Command {
 		Use:   "init",
 		Short: "Initialize a cell project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := internal.RunInit()
+			err := commands.RunInit()
 			if err != nil {
 				cmd.Help()
 				return err

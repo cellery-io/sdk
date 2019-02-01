@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 func newComponentsCommand() *cobra.Command {
@@ -34,7 +34,7 @@ func newComponentsCommand() *cobra.Command {
 				return nil
 			}
 			cellName = args[0]
-			err := internal.RunComponents(cellName)
+			err := commands.RunComponents(cellName)
 			if err != nil{
 				cmd.Help()
 				return err

@@ -21,7 +21,7 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/celleryio/sdk/components/cli/pkg/internal"
+	"github.com/celleryio/sdk/components/cli/pkg/commands"
 )
 
 var isSpinning = true
@@ -40,7 +40,7 @@ func newBuildCommand() *cobra.Command {
 				return nil
 			}
 			fileName = args[0]
-			err := internal.RunBuild(tag, fileName)
+			err := commands.RunBuild(tag, fileName)
 			if err != nil {
 				cmd.Help()
 				return err
