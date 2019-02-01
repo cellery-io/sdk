@@ -18,7 +18,7 @@
 
 package constants
 
-const GROUP_NAME = "vick.wso2.com"
+const GROUP_NAME = "mesh.cellery.io"
 const BASE_API_URL = "http://localhost:8080"
 
 const CELL_IMAGE_EXT = ".zip"
