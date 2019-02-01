@@ -29,7 +29,8 @@ hs_err_pid*
 # MacOS
 *.DS_Store
 
+# Generated Artifacts
 target
-ballerina-natives/dependency-reduced-pom.xml
 *dependency-reduced-pom.xml
 *cellery
+components/build

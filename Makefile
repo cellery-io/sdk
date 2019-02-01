@@ -14,19 +14,39 @@
 # limitations under the License.
 # -----------------------------------------------------------------------
 
+PROJECT_ROOT := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+PROJECT_PKG := github.com/celleryio/sdk
+GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
+GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
+
+MAIN_PACKAGES := cli
+
+all: build-lang build-cli build-registry
+
 .PHONY: build-lang
 build-lang:
-	cd ./components/lang; \
+	cd ${PROJECT_ROOT}/components/lang; \
 	mvn clean install;
 
 .PHONY: build-cli
 build-cli:
-	go build -o cellery ./components/cli/cmd/cellery
+	go build -o ${GO_BUILD_DIRECTORY}/cellery ./components/cli/cmd/cellery
 
 .PHONY: build-registry
 build-registry:
 	cd ./docker; \
 	bash build.sh;
 
-.PHONY: build-all
-build-all: build-lang build-cli build-registry
+.PHONY: code.format
+code.format: tools.goimports
+	@goimports -local $(PROJECT_PKG) -w -l $(GOFILES)
+
+.PHONY: tools tools.goimports
+
+tools: tools.goimports
+
+tools.goimports:
+	@command -v goimports >/dev/null; if [ $$? -ne 0 ]; then \
+		echo "goimports not found. Running 'go get golang.org/x/tools/cmd/goimports'"; \
+		go get golang.org/x/tools/cmd/goimports; \
+		fi;
