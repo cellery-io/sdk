@@ -24,8 +24,8 @@ service<http:Service> payroll bind { port: 8080 } {
         }
 
         //check the header
-        if (req.hasHeader("x-vick-auth-subject")) {
-            string empName = req.getHeader("x-vick-auth-subject");
+        if (req.hasHeader("x-cellery-auth-subject")) {
+            string empName = req.getHeader("x-cellery-auth-subject");
             if (employeeSalaryMap.hasKey(empName)) {
                 json employeeIdJson = { salary: employeeSalaryMap[empName]};
                 res.setJsonPayload(employeeIdJson);

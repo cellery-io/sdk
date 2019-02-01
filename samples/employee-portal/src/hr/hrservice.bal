@@ -45,7 +45,7 @@ service<http:Service> hr bind { port: 8080 } {
             io:println(header + ": " + req.getHeader(untaint header));
         }
 
-        string employeeName = req.getHeader("x-vick-auth-subject");
+        string employeeName = req.getHeader("x-cellery-auth-subject");
         io:println("employee name: " + employeeName);
 
         json employeeDetails;

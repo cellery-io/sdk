@@ -30,8 +30,8 @@ service<http:Service> employee bind { port: 8080 } {
         }
 
         //check the header
-        if (req.hasHeader("x-vick-auth-subject")) {
-            string empName = req.getHeader("x-vick-auth-subject");
+        if (req.hasHeader("x-cellery-auth-subject")) {
+            string empName = req.getHeader("x-cellery-auth-subject");
             log:printInfo(empName);
             if (employeeIdMap.hasKey(empName)) {
                 json employeeIdJson = { id: employeeIdMap[empName], designation: employeeDesignationMap[empName] };
