@@ -16,24 +16,21 @@
  * under the License.
  */
 
-package internal
+package commands
 
 import (
 	"bufio"
 	"fmt"
-	"github.com/celleryio/sdk/components/cli/pkg/constants"
 	"os"
 	"os/exec"
 )
 
-func RunComponentLogs(cellName, componentName string) error {
-	cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME + "/service=" + cellName + "--" + componentName, "-c", componentName)
+func RunPs() error {
+	cmd := exec.Command("kubectl", "get", "cells")
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
 	go func() {
 		for stdoutScanner.Scan() {
-			output += stdoutScanner.Text()
 			fmt.Println(stdoutScanner.Text())
 		}
 	}()
@@ -42,40 +39,9 @@ func RunComponentLogs(cellName, componentName string) error {
 	go func() {
 		for stderrScanner.Scan() {
 			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Error in executing cellery logs: %v \n", err)
-		os.Exit(1)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Cellery logs finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
-	}
-	if output == "" {
-		fmt.Printf("Cannot find cell: %v \n", cellName)
-	}
-	return nil
-}
-
-func RunCellLogs(cellName string) error {
-	cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME + "/cell=" + cellName, "--all-containers=true")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output += stdoutScanner.Text()
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
+			if (stderrScanner.Text() == "No resources found.") {
+				os.Exit(0)
+			}
 		}
 	}()
 	err := cmd.Start()
@@ -87,9 +53,6 @@ func RunCellLogs(cellName string) error {
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Cell ps finished with error: \x1b[0m %v \n", err)
 		os.Exit(1)
-	}
-	if output == "" {
-		fmt.Printf("Cannot find cell: %v \n", cellName)
 	}
 	return nil
 }

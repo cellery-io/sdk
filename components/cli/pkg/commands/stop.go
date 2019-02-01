@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package internal
+package commands
 
 import (
 	"bufio"
@@ -25,8 +25,12 @@ import (
 	"os/exec"
 )
 
-func RunPs() error {
-	cmd := exec.Command("kubectl", "get", "cells")
+func RunStop(instanceName string) error {
+	if instanceName == "" {
+		return fmt.Errorf("no cell instance name specified")
+	}
+
+	cmd := exec.Command("kubectl", "delete", "cell", instanceName)
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
 	go func() {
@@ -39,19 +43,16 @@ func RunPs() error {
 	go func() {
 		for stderrScanner.Scan() {
 			fmt.Println(stderrScanner.Text())
-			if (stderrScanner.Text() == "No resources found.") {
-				os.Exit(0)
-			}
 		}
 	}()
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("Error in executing cell ps: %v \n", err)
+		fmt.Printf("Error in executing cellery stop: %v \n", err)
 		os.Exit(1)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Cell ps finished with error: \x1b[0m %v \n", err)
+		fmt.Printf("\x1b[31;1m Cell stop finished with error: \x1b[0m %v \n", err)
 		os.Exit(1)
 	}
 	return nil

@@ -16,16 +16,15 @@
  * under the License.
  */
 
-package main
+package commands
 
 import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/celleryio/sdk/components/cli/pkg/util"
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
-	"github.com/spf13/cobra"
-	"github.com/wso2/cellery/cli/util"
 	"os"
 	"os/exec"
 )
@@ -37,18 +36,7 @@ type Context struct {
 	Name string `json:"name"`
 }
 
-func newConfigureCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "configure",
-		Short: "configure the cellery installation",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runConfigure()
-		},
-	}
-	return cmd
-}
-
-func runConfigure() error {
+func RunConfigure() error {
 	bold := color.New(color.Bold).SprintFunc()
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -59,7 +47,7 @@ func runConfigure() error {
 	}
 
 	cellPrompt := promptui.Select{
-		Label:     util.YellowBold("?") + " Select a Cellery Installed Kubernetes Cluster",
+		Label:     util.YellowBold("?") + " Select a VICK Installed Kubernetes Cluster",
 		Items:     getContexts(),
 		Templates: cellTemplate,
 	}

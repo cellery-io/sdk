@@ -16,12 +16,11 @@
  * under the License.
  */
 
-package internal
+package commands
 
 import (
 	"bufio"
 	"fmt"
-	"github.com/spf13/cobra"
 	"github.com/celleryio/sdk/components/cli/pkg/constants"
 	"github.com/celleryio/sdk/components/cli/pkg/util"
 	"os"
@@ -30,29 +29,6 @@ import (
 	"strings"
 	"time"
 )
-
-func newRunCommand() *cobra.Command {
-	var cellImage string
-	cmd := &cobra.Command{
-		Use:   "run [OPTIONS]",
-		Short: "Use a cell image to create a running instance",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				cmd.Help()
-				return nil
-			}
-			cellImage = args[0]
-			err := run(cellImage)
-			if err != nil {
-				cmd.Help()
-				return err
-			}
-			return nil
-		},
-		Example: "  cellery run my-project:1.0.0 -n myproject-v1.0.0",
-	}
-	return cmd
-}
 
 func RunRun(cellImageTag string) error {
 	if cellImageTag == "" {

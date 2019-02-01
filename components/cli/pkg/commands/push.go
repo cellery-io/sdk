@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package internal
+package commands
 
 import (
 	"bytes"
