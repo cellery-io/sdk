@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.cellery;
+package io.cellery.impl;
 
 import com.esotericsoftware.yamlbeans.YamlWriter;
 import io.cellery.models.API;
@@ -79,7 +79,7 @@ import static org.apache.commons.lang3.StringUtils.removePattern;
         returnType = {@ReturnType(type = TypeKind.STRING)},
         isPublic = true
 )
-public class CelleryBuild extends BlockingNativeCallableUnit {
+public class CreateImage extends BlockingNativeCallableUnit {
 
     private int gatewayPort = 80;
     private ComponentHolder componentHolder;

@@ -15,32 +15,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package io.cellery;
 
-package io.cellery.models;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
- * API model.
+ * Cellery Utility methods.
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class API {
-    List<APIDefinition> definitions;
-    private String context;
-    private String backend;
-    private boolean global;
-
-    public void addDefinition(APIDefinition definition) {
-        if (definitions == null) {
-            definitions = new ArrayList<>();
-        }
-        this.definitions.add(definition);
+public class CelleryUtils {
+    /**
+     * Returns swagger file as a String.
+     *
+     * @param path     swagger file path
+     * @param encoding string encoding
+     * @return swagger file as a String
+     * @throws IOException if unable to read file
+     */
+    public static String readSwaggerFile(String path, Charset encoding) throws IOException {
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        return new String(encoded, encoding);
     }
 }

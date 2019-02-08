@@ -33,3 +33,6 @@ hs_err_pid*
 *target
 *dependency-reduced-pom.xml
 components/build
+
+# Ballerina
+*.balx

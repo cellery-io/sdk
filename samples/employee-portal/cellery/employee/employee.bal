@@ -2,7 +2,6 @@ import ballerina/io;
 import ballerina/config;
 import celleryio/cellery;
 
-//Employee Component
 cellery:Component employeeComponent = {
     name: "employee",
     source: {
@@ -11,13 +10,7 @@ cellery:Component employeeComponent = {
     ingresses: {
         employee: new cellery:HTTPIngress(
                       8080,
-                      "employee",
-                      [
-                          {
-                              path: "/",
-                              method: "GET"
-                          }
-                      ]
+                      "./resources/employee.swagger.json"
         )
     },
     parameters: {
@@ -37,13 +30,17 @@ cellery:Component salaryComponent = {
         image: "docker.io/celleryio/sampleapp-salary"
     },
     ingresses: {
-        SalaryAPI: new cellery:HTTPIngress(8080, "payroll",
-            [
+        SalaryAPI: new cellery:HTTPIngress(
+                8080,
+
                 {
-                    path: "/salary",
-                    method: "GET"
-                }
-            ])
+                          basePath: "payment",
+                          definitions:[{
+                              path: "/",
+                              method: "GET"
+                          }]
+                      }
+            )
     },
     labels: {
         cellery:TEAM:"Finance",
@@ -61,7 +58,7 @@ public function build() {
     // Map component parameters
     cellery:setParameter(employeeComponent.parameters.SALARY_HOST, cellery:getHost(employeeCell, salaryComponent));
     cellery:setParameter(employeeComponent.parameters.BASE_PATH,
-        cellery:getBasePath(salaryComponent.ingresses.SalaryAPI));
+    cellery:getBasePath(salaryComponent.ingresses.SalaryAPI));
 
     // Add components to Cell
     employeeCell.addComponent(employeeComponent);

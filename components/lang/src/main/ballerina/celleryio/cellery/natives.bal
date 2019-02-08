@@ -23,30 +23,30 @@ public const string MAINTAINER = "MAINTAINER";
 # Pre-defined labels for cellery components.
 public type Label "TEAM"|"OWNER"|"MAINTAINER";
 
-public type DockerSource record{
+public type DockerSource record {
     string Dockerfile;
     string tag;
     !...
 };
 
-public type ImageSource record{
+public type ImageSource record {
     string image;
     !...
 };
 
-public type GitSource record{
+public type GitSource record {
     string gitRepo;
     string tag;
     !...
 };
 
-public type Definition record{
+public type Definition record {
     string path;
     string method;
     !...
 };
 
-public type API record{
+public type API record {
     string name?;
     string targetComponent;
     boolean global;
@@ -54,7 +54,7 @@ public type API record{
     !...
 };
 
-public type Egress record{
+public type Egress record {
     string targetComponent?;
     string targetCell?;
     TCPIngress|HTTPIngress ingress?;
@@ -63,7 +63,7 @@ public type Egress record{
     !...
 };
 
-public type Resiliency record{
+public type Resiliency record {
     RetryConfig retryConfig?;
     FailoverConfig failoverConfig?;
     !...
@@ -82,7 +82,7 @@ public type FailoverConfig record {
     !...
 };
 
-public type Component record{
+public type Component record {
     string name;
     ImageSource source;
     int replicas = 1;
@@ -101,15 +101,28 @@ public type TCPIngress object {
     }
 };
 
+public type InlineAPI record {
+    string basePath;
+    Definition[] definitions;
+    !...
+};
+
 public type HTTPIngress object {
     public int port;
     public string basePath;
     public Definition[] definitions;
 
-    public function __init(int port, string basePath, Definition[] definitions) {
+    public function __init(int port, InlineAPI|string definitions) {
         self.port = port;
-        self.basePath = basePath;
-        self.definitions = definitions;
+        if (definitions is InlineAPI) {
+            // API details are defined in-line
+            self.basePath = definitions.basePath;
+            self.definitions = definitions.definitions;
+        } else {
+            // API details are defined in a swagger file
+            self.basePath = getBasePathFromSwagger(definitions);
+            self.definitions = getDefinitionsFromSwagger(definitions);
+        }
     }
 };
 
@@ -128,11 +141,6 @@ public type Env object {
 public type Secret object {
     public string path;
     public string|int|boolean|float value;
-
-    public function __init(string path, string|int|boolean|float value) {
-        self.path = path;
-        self.value = value;
-    }
 
     public function __init() {
         self.path = "";
@@ -218,6 +226,18 @@ public type CellImage object {
 # + cellImage - The cell image definition
 # + return - true/false
 public extern function createImage(CellImage cellImage) returns (boolean|error);
+
+# Parse the swagger file and returns BasePath
+#
+# + swaggerFilePath - The swaggerFilePath
+# + return - Basepath declared in the swagger file
+public extern function getBasePathFromSwagger(string swaggerFilePath) returns (string);
+
+# Parse the swagger file and returns API Defintions
+#
+# + swaggerFilePath - The swaggerFilePath
+# + return - Array of Definitions
+public extern function getDefinitionsFromSwagger(string swaggerFilePath) returns (Definition[]);
 
 public function getHost(CellImage cellImage, Component component) returns (string) {
     return getValidName(cellImage.name) + "--" + getValidName(component.name) + "-service";
