@@ -23,6 +23,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -42,9 +43,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
 	"github.com/fatih/color"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 var Cyan = color.New(color.FgCyan)
@@ -57,9 +58,57 @@ var GreenBold = Green.Add(color.Bold).SprintFunc()
 var Yellow = color.New(color.FgYellow)
 var YellowBold = Yellow.Add(color.Bold).SprintFunc()
 
-func ExitWithImageFormatError() {
-	fmt.Printf("Incorrect tag name. Tag name should be [REPOSITORY]/ORGANIZATION/IMAGE_NAME:VERSION\n")
-	os.Exit(1)
+func ParseImage(cellImageString string) (parsedCellImage *CellImage, err error) {
+	cellImage := &CellImage{
+		constants.CENTRAL_REGISTRY_HOST,
+		constants.DEFAULT_REGISTRY_PORT,
+		"",
+		"",
+		"",
+	}
+
+	if cellImageString == "" {
+		return cellImage, errors.New("no cell image specified")
+	}
+
+	const IMAGE_FORMAT_ERROR_MESSAGE = "incorrect image name format. Image name should be " +
+		"[REGISTRY[:REGISTRY_PORT]/]ORGANIZATION/IMAGE_NAME:VERSION"
+
+	// Parsing the cell image string
+	strArr := strings.Split(cellImageString, "/")
+	if len(strArr) == 3 {
+		registrySplit := strings.Split(strArr[0], ":")
+		if len(registrySplit) == 2 {
+			cellImage.RegistryHost = registrySplit[0]
+
+			convertedRegistryPort, err := strconv.ParseInt(registrySplit[1], 10, 0)
+			if err != nil {
+				return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
+			}
+			cellImage.RegistryPort = int(convertedRegistryPort)
+		} else {
+			cellImage.RegistryHost = registrySplit[0]
+		}
+		cellImage.Organization = strArr[1]
+		imageTag := strings.Split(strArr[2], ":")
+		if len(imageTag) != 2 {
+			return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
+		}
+		cellImage.ImageName = imageTag[0]
+		cellImage.ImageVersion = imageTag[1]
+	} else if len(strArr) == 2 {
+		cellImage.Organization = strArr[0]
+		imageNameSplit := strings.Split(strArr[1], ":")
+		if len(imageNameSplit) != 2 {
+			return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
+		}
+		cellImage.ImageName = imageNameSplit[0]
+		cellImage.ImageVersion = imageNameSplit[1]
+	} else {
+		return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
+	}
+
+	return cellImage, nil
 }
 
 func PrintWhatsNextMessage(cmd string) {

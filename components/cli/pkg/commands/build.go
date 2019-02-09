@@ -25,19 +25,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/tj/go-spin"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
-
-var isSpinning = true
-var isFirstPrint = true
-var tag string
-var fileName string
 
 /**
 Spinner
@@ -45,57 +38,27 @@ Spinner
 func buildSpinner(tag string) {
 	s := spin.New()
 	for {
-		if isSpinning {
-			fmt.Printf("\r\033[36m%s\033[m Building %s %s", s.Next(), "image", util.Bold(tag))
-			time.Sleep(100 * time.Millisecond)
-		}
+		fmt.Printf("\r\033[36m%s\033[m Building %s %s", s.Next(), "image", util.Bold(tag))
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
 func RunBuild(tag string, fileName string) error {
-	var organization string
-	var imageVersion string
-
 	fileExist, err := util.FileExists(fileName)
 	if !fileExist {
 		fmt.Printf("Please check the filename. File '%s' does not exist.\n", fileName)
 		os.Exit(1)
 	}
 
-	var extension = filepath.Ext(fileName)
-	var fileNameSuffix = fileName[0 : len(fileName)-len(extension)]
-
-	registryHost := constants.CENTRAL_REGISTRY_HOST
-	imageName := fileNameSuffix
-
-	if tag == "" {
-		util.ExitWithImageFormatError()
-	} else {
-		strArr := strings.Split(tag, "/")
-		if len(strArr) == 3 {
-			registryHost = strArr[0]
-			organization = strArr[1]
-			imageTag := strings.Split(strArr[2], ":")
-			if len(imageTag) != 2 {
-				util.ExitWithImageFormatError()
-			}
-			imageName = imageTag[0]
-			imageVersion = imageTag[1]
-		} else if len(strArr) == 2 {
-			organization = strArr[0]
-			imageTag := strings.Split(strArr[1], ":")
-			if len(imageTag) != 2 {
-				util.ExitWithImageFormatError()
-			}
-			imageName = imageTag[0]
-			imageVersion = imageTag[1]
-		} else {
-			util.ExitWithImageFormatError()
-		}
+	parsedCellImage, err := util.ParseImage(tag)
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
+		os.Exit(1)
 	}
 
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", registryHost, organization, imageName,
-		imageVersion)
+	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.RegistryHost,
+		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
+
 	go buildSpinner(tag)
 
 	//first clean target directory if exists
@@ -145,7 +108,7 @@ func RunBuild(tag string, fileName string) error {
 	}
 	folders := []string{"artifacts"}
 	files := []string{fileName}
-	output := imageName + ".zip"
+	output := parsedCellImage.ImageName + ".zip"
 	err = util.RecursiveZip(files, folders, output)
 	if err != nil {
 		fmt.Printf("\x1b[31;1mCell build finished with error: \x1b[0m %v \n", err)

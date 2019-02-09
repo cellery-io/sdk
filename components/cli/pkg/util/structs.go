@@ -18,6 +18,14 @@
 
 package util
 
+type CellImage struct {
+	RegistryHost string
+	RegistryPort int
+	Organization string
+	ImageName    string
+	ImageVersion string
+}
+
 type Cell struct {
 	CellMetaData CellMetaData `json:"metadata"`
 	CellStatus   CellStatus   `json:"status"`

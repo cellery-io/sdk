@@ -24,7 +24,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -32,41 +31,16 @@ import (
 )
 
 func RunRun(cellImageTag string) error {
-	if cellImageTag == "" {
-		return fmt.Errorf("please specify the cell image")
+	parsedCellImage, err := util.ParseImage(cellImageTag)
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
+		os.Exit(1)
 	}
 
-	registryHost := constants.CENTRAL_REGISTRY_HOST
-	organization := ""
-	imageName := ""
-	imageVersion := ""
-
-	strArr := strings.Split(cellImageTag, "/")
-	if len(strArr) == 3 {
-		registryHost = strArr[0]
-		organization = strArr[1]
-		imageTag := strings.Split(strArr[2], ":")
-		if len(imageTag) != 2 {
-			util.ExitWithImageFormatError()
-		}
-		imageName = imageTag[0]
-		imageVersion = imageTag[1]
-	} else if len(strArr) == 2 {
-		organization = strArr[0]
-		imageTag := strings.Split(strArr[1], ":")
-		if len(imageTag) != 2 {
-			util.ExitWithImageFormatError()
-		}
-		imageName = imageTag[0]
-		imageVersion = imageTag[1]
-	} else {
-		util.ExitWithImageFormatError()
-	}
-
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", registryHost, organization, imageName,
-		imageVersion)
+	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.RegistryHost,
+		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	fmt.Printf("Running cell image: %s ...\n", util.Bold(cellImageTag))
-	zipLocation := filepath.Join(repoLocation, imageName+constants.CELL_IMAGE_EXT)
+	zipLocation := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	if _, err := os.Stat(zipLocation); os.IsNotExist(err) {
 		fmt.Printf("\nUnable to find image %s locally.", cellImageTag)
@@ -78,7 +52,7 @@ func RunRun(cellImageTag string) error {
 	currentTIme := time.Now()
 	timstamp := currentTIme.Format("20060102150405")
 	tmpPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", timstamp)
-	err := util.CreateDir(tmpPath)
+	err = util.CreateDir(tmpPath)
 	if err != nil {
 		panic(err)
 	}
