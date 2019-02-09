@@ -58,10 +58,10 @@ var GreenBold = Green.Add(color.Bold).SprintFunc()
 var Yellow = color.New(color.FgYellow)
 var YellowBold = Yellow.Add(color.Bold).SprintFunc()
 
+// ParseImage parses the given image name string and returns a CellImage struct with the relevant information.
 func ParseImage(cellImageString string) (parsedCellImage *CellImage, err error) {
 	cellImage := &CellImage{
 		constants.CENTRAL_REGISTRY_HOST,
-		constants.DEFAULT_REGISTRY_PORT,
 		"",
 		"",
 		"",
@@ -77,18 +77,7 @@ func ParseImage(cellImageString string) (parsedCellImage *CellImage, err error) 
 	// Parsing the cell image string
 	strArr := strings.Split(cellImageString, "/")
 	if len(strArr) == 3 {
-		registrySplit := strings.Split(strArr[0], ":")
-		if len(registrySplit) == 2 {
-			cellImage.RegistryHost = registrySplit[0]
-
-			convertedRegistryPort, err := strconv.ParseInt(registrySplit[1], 10, 0)
-			if err != nil {
-				return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
-			}
-			cellImage.RegistryPort = int(convertedRegistryPort)
-		} else {
-			cellImage.RegistryHost = registrySplit[0]
-		}
+		cellImage.Registry = strArr[0]
 		cellImage.Organization = strArr[1]
 		imageTag := strings.Split(strArr[2], ":")
 		if len(imageTag) != 2 {
@@ -111,11 +100,11 @@ func ParseImage(cellImageString string) (parsedCellImage *CellImage, err error) 
 	return cellImage, nil
 }
 
-func PrintWhatsNextMessage(cmd string) {
+func PrintWhatsNextMessage(action string, cmd string) {
 	fmt.Println()
 	fmt.Println(Bold("What's next?"))
 	fmt.Println("--------------------------------------------------------")
-	fmt.Println("Execute the following command to run the image: ")
+	fmt.Printf("Execute the following command to %s:\n", action)
 	fmt.Println("  $ " + cmd)
 	fmt.Println("--------------------------------------------------------")
 }
@@ -529,6 +518,12 @@ func UserHomeDir() string {
 	return os.Getenv("HOME")
 }
 
+// This returns the ballerina home directory in the machine.
+// This expects the BALLERINA_HOME environment variable to be set.
+func BallerinaHomeDir() string {
+	return os.Getenv("BALLERINA_HOME")
+}
+
 func CreateDir(dirPath string) error {
 	dirExist, _ := FileExists(dirPath)
 	if !dirExist {
@@ -654,4 +649,61 @@ func ExtractTarGzFile(extractTo, archive_name string) error {
 	ExecuteCommand(cmd, "Error occured in extracting file :"+archive_name)
 
 	return nil
+}
+
+// AddImageToBalPath extracts the cell image in a temporary location and copies the relevant ballerina files to the
+// ballerina repo directory. This expects the BALLERINA_HOME environment variable to be set in th developer machine.
+func AddImageToBalPath(cellImage *CellImage) {
+	cellImageFile := filepath.Join(UserHomeDir(), ".cellery", "repos", cellImage.Registry,
+		cellImage.Organization, cellImage.ImageName, cellImage.ImageVersion,
+		cellImage.ImageName+constants.CELL_IMAGE_EXT)
+
+	// Create temp directory
+	currentTIme := time.Now()
+	timestamp := currentTIme.Format("27065102350415")
+	tempPath := filepath.Join(UserHomeDir(), ".cellery", "tmp", timestamp)
+	err := CreateDir(tempPath)
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n", err)
+		os.Exit(1)
+	}
+	defer func() {
+		err = os.RemoveAll(tempPath)
+		if err != nil {
+			fmt.Printf("\x1b[31;1m Error while cleaning up: \x1b[0m %v \n", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Unzipping Cellery Image
+	err = Unzip(cellImageFile, tempPath)
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n", err)
+		os.Exit(1)
+	}
+
+	balRepoDir := filepath.Join(BallerinaHomeDir(), "lib", "repo", cellImage.Organization, cellImage.ImageName,
+		cellImage.ImageVersion)
+
+	// Cleaning up the old image bal files if it already exists
+	hasOldImage, err := FileExists(balRepoDir)
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error occurred while removing the old cell image: \x1b[0m %v \n", err)
+		os.Exit(1)
+	}
+	if hasOldImage {
+		err = os.RemoveAll(balRepoDir)
+		if err != nil {
+			fmt.Printf("\x1b[31;1m Error while cleaning up: \x1b[0m %v \n", err)
+			os.Exit(1)
+		}
+	}
+
+	// Copying the ballerina files to bal path
+	balArtifactsDir := filepath.Join(tempPath, "artifacts", "bal")
+	err = CopyDir(balArtifactsDir, balRepoDir)
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n", err)
+		os.Exit(1)
+	}
 }

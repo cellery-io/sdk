@@ -32,9 +32,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-/**
-Spinner
-*/
+// buildSpinner shows the spinner and message while this command is being performed
 func buildSpinner(tag string) {
 	s := spin.New()
 	for {
@@ -43,6 +41,8 @@ func buildSpinner(tag string) {
 	}
 }
 
+// RunBuild executes the cell's build life cycle method and saves the generated cell image to the local repo.
+// This also copies the relevant ballerina files to the ballerina repo directory.
 func RunBuild(tag string, fileName string) error {
 	fileExist, err := util.FileExists(fileName)
 	if !fileExist {
@@ -56,12 +56,12 @@ func RunBuild(tag string, fileName string) error {
 		os.Exit(1)
 	}
 
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.RegistryHost,
+	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.Registry,
 		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 
 	go buildSpinner(tag)
 
-	//first clean target directory if exists
+	// First clean target directory if exists
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		fmt.Println("Error in getting current directory location: " + err.Error())
@@ -117,6 +117,20 @@ func RunBuild(tag string, fileName string) error {
 
 	_ = os.RemoveAll(filepath.Join(dir, "artifacts"))
 
+	// Cleaning up the old image if it already exists
+	hasOldImage, err := util.FileExists(repoLocation)
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error occurred while removing the old cell image: \x1b[0m %v \n", err)
+		os.Exit(1)
+	}
+	if hasOldImage {
+		err = os.RemoveAll(repoLocation)
+		if err != nil {
+			fmt.Printf("\x1b[31;1m Error while cleaning up: \x1b[0m %v \n", err)
+			os.Exit(1)
+		}
+	}
+
 	repoCreateErr := util.CreateDir(repoLocation)
 	if repoCreateErr != nil {
 		fmt.Println("Error while creating image location: " + repoCreateErr.Error())
@@ -133,7 +147,9 @@ func RunBuild(tag string, fileName string) error {
 
 	_ = os.Remove(zipSrc)
 
+	util.AddImageToBalPath(parsedCellImage)
+
 	fmt.Printf(util.GreenBold("\U00002714")+" Successfully built cell image: %s\n", util.Bold(tag))
-	util.PrintWhatsNextMessage("cellery run " + tag)
+	util.PrintWhatsNextMessage("run the image", "cellery run "+tag)
 	return nil
 }

@@ -27,7 +27,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/docker/distribution/manifest"
@@ -63,9 +62,7 @@ func RunPush(cellImage string) error {
 	go pushSpinner(cellImage)
 
 	// Initiating a connection to Cellery Registry
-	registryURL := "http://" + parsedCellImage.RegistryHost + ":" + strconv.FormatInt(int64(parsedCellImage.RegistryPort),
-		10)
-	hub, err := registry.New(registryURL, "", "")
+	hub, err := registry.New("https://"+parsedCellImage.Registry, "", "")
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while initializing connection to the Cellery Registry: "+
 			"\x1b[0m %v \n", err)
@@ -73,7 +70,7 @@ func RunPush(cellImage string) error {
 	}
 
 	// Reading the cell image
-	cellImageFilePath := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.RegistryHost,
+	cellImageFilePath := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.Registry,
 		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion,
 		parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 	cellImageFile, err := os.Open(cellImageFilePath)
@@ -90,7 +87,6 @@ func RunPush(cellImage string) error {
 			}
 		}()
 	}
-	fmt.Printf(cellImageFilePath)
 	cellImageFileBytes, err := ioutil.ReadAll(cellImageFile)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while reading the cell image: \x1b[0m %v \n", err)
@@ -161,9 +157,9 @@ func RunPush(cellImage string) error {
 	}
 
 	fmt.Println()
-	fmt.Printf(util.GreenBold("\n\U00002714")+" Successfully pushed cell image: %s\n", util.Bold(cellImage))
-	fmt.Println("Image Digest : " + util.Bold(cellImageDigest))
-	util.PrintWhatsNextMessage("cellery pull " + cellImage)
+	fmt.Println("\nImage Digest : " + util.Bold(cellImageDigest))
+	fmt.Printf(util.GreenBold("\U00002714")+" Successfully pushed cell image: %s\n", util.Bold(cellImage))
+	util.PrintWhatsNextMessage("pull the image", "cellery pull "+cellImage)
 
 	return nil
 }

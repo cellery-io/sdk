@@ -37,7 +37,7 @@ func RunRun(cellImageTag string) error {
 		os.Exit(1)
 	}
 
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.RegistryHost,
+	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.Registry,
 		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	fmt.Printf("Running cell image: %s ...\n", util.Bold(cellImageTag))
 	zipLocation := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
@@ -96,7 +96,7 @@ func RunRun(cellImageTag string) error {
 
 	fmt.Println()
 	fmt.Printf(util.GreenBold("\U00002714")+" Successfully deployed cell image: %s\n", util.Bold(cellImageTag))
-	util.PrintWhatsNextMessage("cellery ps")
+	util.PrintWhatsNextMessage("list running cells", "cellery ps")
 
 	return nil
 }

@@ -19,8 +19,7 @@
 package util
 
 type CellImage struct {
-	RegistryHost string
-	RegistryPort int
+	Registry     string
 	Organization string
 	ImageName    string
 	ImageVersion string

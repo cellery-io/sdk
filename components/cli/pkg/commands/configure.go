@@ -56,6 +56,6 @@ func RunConfigure() error {
 
 	setContext(value)
 	fmt.Printf(util.GreenBold("\n\U00002714") + " Successfully configured Cellery.\n")
-	util.PrintWhatsNextMessage("cellery init")
+	util.PrintWhatsNextMessage("initialize a project", "cellery init")
 	return nil
 }

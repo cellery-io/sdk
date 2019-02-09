@@ -114,6 +114,7 @@ func RunInit() error {
 	balW.Flush()
 
 	fmt.Println(util.GreenBold("\n\U00002714") + " Initialized project in directory: " + util.Faint(projectPath))
-	util.PrintWhatsNextMessage("cellery build " + projectName + ".bal" + " -t [repo]/organization/image_name:version")
+	util.PrintWhatsNextMessage("build the image",
+		"cellery build "+projectName+".bal"+" -t [repo/]organization/image_name:version")
 	return nil
 }

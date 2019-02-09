@@ -25,7 +25,6 @@ const CELL_IMAGE_EXT = ".zip"
 
 // Registry
 const CENTRAL_REGISTRY_HOST = "registry.cellery.io"
-const DEFAULT_REGISTRY_PORT = 5000
 const REGISTRY_BASE_PATH = "/registry/0.0.1"
 
 const EMPTY_STRING = ""
