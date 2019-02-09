@@ -22,8 +22,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newCliCommand() *cobra.Command {
@@ -58,6 +61,31 @@ func newCliCommand() *cobra.Command {
 }
 
 func main() {
+	logFileDirectory := filepath.Join(util.UserHomeDir(), ".cellery", "logs")
+	logFilePath := filepath.Join(logFileDirectory, "cli.log")
+
+	// Creating the log directory if it does not exist
+	err := util.CreateDir(logFileDirectory)
+	if err != nil {
+		log.Fatalf("Failed to create log file: %v", err)
+	}
+
+	// Setting the log output to the log file
+	logFile, err := os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if logFile != nil {
+		defer func() {
+			err := logFile.Close()
+			if err != nil {
+				log.Fatalf("Failed to close log file: %v", err)
+			}
+		}()
+	}
+	if err != nil {
+		log.Fatalf("Error opening log file: %v", err)
+		log.Printf("Writing log to stdout")
+	} else {
+		log.SetOutput(logFile)
+	}
 
 	cmd := newCliCommand()
 	if err := cmd.Execute(); err != nil {
