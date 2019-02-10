@@ -102,3 +102,8 @@ type GatewayDefinition struct {
 	Method string `json:"method"`
 	Path   string `json:"path"`
 }
+
+type Spinner struct {
+	Message    string
+	IsSpinning bool
+}

@@ -25,21 +25,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
-
-	"github.com/tj/go-spin"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
-
-// buildSpinner shows the spinner and message while this command is being performed
-func buildSpinner(tag string) {
-	s := spin.New()
-	for {
-		fmt.Printf("\r\033[36m%s\033[m Building %s %s", s.Next(), "image", util.Bold(tag))
-		time.Sleep(100 * time.Millisecond)
-	}
-}
 
 // RunBuild executes the cell's build life cycle method and saves the generated cell image to the local repo.
 // This also copies the relevant ballerina files to the ballerina repo directory.
@@ -59,7 +47,10 @@ func RunBuild(tag string, fileName string) error {
 	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.Registry,
 		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 
-	go buildSpinner(tag)
+	spinner := util.StartNewSpinner("Building image " + util.Bold(tag))
+	defer func() {
+		spinner.IsSpinning = false
+	}()
 
 	// First clean target directory if exists
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))

@@ -25,6 +25,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/tj/go-spin"
+	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -57,48 +59,6 @@ var Green = color.New(color.FgGreen)
 var GreenBold = Green.Add(color.Bold).SprintFunc()
 var Yellow = color.New(color.FgYellow)
 var YellowBold = Yellow.Add(color.Bold).SprintFunc()
-
-// ParseImage parses the given image name string and returns a CellImage struct with the relevant information.
-func ParseImage(cellImageString string) (parsedCellImage *CellImage, err error) {
-	cellImage := &CellImage{
-		constants.CENTRAL_REGISTRY_HOST,
-		"",
-		"",
-		"",
-	}
-
-	if cellImageString == "" {
-		return cellImage, errors.New("no cell image specified")
-	}
-
-	const IMAGE_FORMAT_ERROR_MESSAGE = "incorrect image name format. Image name should be " +
-		"[REGISTRY[:REGISTRY_PORT]/]ORGANIZATION/IMAGE_NAME:VERSION"
-
-	// Parsing the cell image string
-	strArr := strings.Split(cellImageString, "/")
-	if len(strArr) == 3 {
-		cellImage.Registry = strArr[0]
-		cellImage.Organization = strArr[1]
-		imageTag := strings.Split(strArr[2], ":")
-		if len(imageTag) != 2 {
-			return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
-		}
-		cellImage.ImageName = imageTag[0]
-		cellImage.ImageVersion = imageTag[1]
-	} else if len(strArr) == 2 {
-		cellImage.Organization = strArr[0]
-		imageNameSplit := strings.Split(strArr[1], ":")
-		if len(imageNameSplit) != 2 {
-			return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
-		}
-		cellImage.ImageName = imageNameSplit[0]
-		cellImage.ImageVersion = imageNameSplit[1]
-	} else {
-		return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
-	}
-
-	return cellImage, nil
-}
 
 func PrintWhatsNextMessage(action string, cmd string) {
 	fmt.Println()
@@ -518,12 +478,6 @@ func UserHomeDir() string {
 	return os.Getenv("HOME")
 }
 
-// This returns the ballerina home directory in the machine.
-// This expects the BALLERINA_HOME environment variable to be set.
-func BallerinaHomeDir() string {
-	return os.Getenv("BALLERINA_HOME")
-}
-
 func CreateDir(dirPath string) error {
 	dirExist, _ := FileExists(dirPath)
 	if !dirExist {
@@ -651,6 +605,89 @@ func ExtractTarGzFile(extractTo, archive_name string) error {
 	return nil
 }
 
+// RequestCredentials requests the credentials form the user and returns them
+func RequestCredentials() (string, string, error) {
+	fmt.Println()
+	fmt.Println(YellowBold("?") + " Credentials Required")
+
+	// Requesting the username from the user
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Username: ")
+	username, err := reader.ReadString('\n')
+	if err != nil {
+		return "", "", err
+	}
+
+	// Requesting the password from the user
+	fmt.Print("Password: ")
+	bytePassword, err := terminal.ReadPassword(0)
+	if err != nil {
+		return username, "", err
+	}
+	password := string(bytePassword)
+
+	fmt.Println()
+	return strings.TrimSpace(username), strings.TrimSpace(password), nil
+}
+
+// StartNewSpinner starts a new spinner with the provided message
+func StartNewSpinner(message string) *Spinner {
+	spinner := spin.New()
+	newSpinner := &Spinner{
+		message,
+		true,
+	}
+	go func() {
+		for newSpinner.IsSpinning {
+			fmt.Printf("\r\033[36m%s\033[m %s", spinner.Next(), message)
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+	return newSpinner
+}
+
+// ParseImage parses the given image name string and returns a CellImage struct with the relevant information.
+func ParseImage(cellImageString string) (parsedCellImage *CellImage, err error) {
+	cellImage := &CellImage{
+		constants.CENTRAL_REGISTRY_HOST,
+		"",
+		"",
+		"",
+	}
+
+	if cellImageString == "" {
+		return cellImage, errors.New("no cell image specified")
+	}
+
+	const IMAGE_FORMAT_ERROR_MESSAGE = "incorrect image name format. Image name should be " +
+		"[REGISTRY[:REGISTRY_PORT]/]ORGANIZATION/IMAGE_NAME:VERSION"
+
+	// Parsing the cell image string
+	strArr := strings.Split(cellImageString, "/")
+	if len(strArr) == 3 {
+		cellImage.Registry = strArr[0]
+		cellImage.Organization = strArr[1]
+		imageTag := strings.Split(strArr[2], ":")
+		if len(imageTag) != 2 {
+			return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
+		}
+		cellImage.ImageName = imageTag[0]
+		cellImage.ImageVersion = imageTag[1]
+	} else if len(strArr) == 2 {
+		cellImage.Organization = strArr[0]
+		imageNameSplit := strings.Split(strArr[1], ":")
+		if len(imageNameSplit) != 2 {
+			return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
+		}
+		cellImage.ImageName = imageNameSplit[0]
+		cellImage.ImageVersion = imageNameSplit[1]
+	} else {
+		return cellImage, errors.New(IMAGE_FORMAT_ERROR_MESSAGE)
+	}
+
+	return cellImage, nil
+}
+
 // AddImageToBalPath extracts the cell image in a temporary location and copies the relevant ballerina files to the
 // ballerina repo directory. This expects the BALLERINA_HOME environment variable to be set in th developer machine.
 func AddImageToBalPath(cellImage *CellImage) {
@@ -682,7 +719,7 @@ func AddImageToBalPath(cellImage *CellImage) {
 		os.Exit(1)
 	}
 
-	balRepoDir := filepath.Join(BallerinaHomeDir(), "lib", "repo", cellImage.Organization, cellImage.ImageName,
+	balRepoDir := filepath.Join(UserHomeDir(), ".ballerina", "repo", cellImage.Organization, cellImage.ImageName,
 		cellImage.ImageVersion)
 
 	// Cleaning up the old image bal files if it already exists

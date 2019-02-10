@@ -27,31 +27,40 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/docker/distribution/manifest"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/libtrust"
 	"github.com/nokia/docker-registry-client/registry"
 	"github.com/opencontainers/go-digest"
-	"github.com/tj/go-spin"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-// pushSpinner shows the spinner and message while this command is being performed
-func pushSpinner(tag string) {
-	s := spin.New()
-	for {
-		fmt.Printf("\r\033[36m%s\033[m Pushing %s %s", s.Next(), "image", util.Bold(tag))
-		time.Sleep(100 * time.Millisecond)
-	}
-}
-
 // RunPush parses the cell image name to recognize the Cellery Registry (A Docker Registry), Organization and version
 // and pushes to the Cellery Registry
 func RunPush(cellImage string) error {
+	err := pushImage(cellImage, "", "")
+	if err != nil {
+		fmt.Println()
+		username, password, err := util.RequestCredentials()
+		if err != nil {
+			fmt.Printf("\x1b[31;1m Failed to acquire credentials: \x1b[0m %v \n", err)
+			os.Exit(1)
+		}
+		fmt.Println()
+
+		err = pushImage(cellImage, username, password)
+		if err != nil {
+			fmt.Printf("\x1b[31;1m Failed to push image: \x1b[0m %v \n", err)
+			os.Exit(1)
+		}
+	}
+	return nil
+}
+
+func pushImage(cellImage string, username string, password string) error {
 	parsedCellImage, err := util.ParseImage(cellImage)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
@@ -59,10 +68,15 @@ func RunPush(cellImage string) error {
 	}
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
 
-	go pushSpinner(cellImage)
+	spinner := util.StartNewSpinner("Pushing image " + util.Bold(cellImage))
+	defer func() {
+		spinner.IsSpinning = false
+	}()
 
 	// Initiating a connection to Cellery Registry
-	hub, err := registry.New("https://"+parsedCellImage.Registry, "", "")
+	fmt.Print(username)
+	fmt.Print(password)
+	hub, err := registry.New("https://"+parsedCellImage.Registry, username, password)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while initializing connection to the Cellery Registry: "+
 			"\x1b[0m %v \n", err)
@@ -102,9 +116,7 @@ func RunPush(cellImage string) error {
 	// Checking if the the Cell Image already exists in the registry
 	cellImageDigestExists, err := hub.HasBlob(repository, cellImageDigest)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while checking if the cell image already exists: \x1b[0m %v \n",
-			err)
-		os.Exit(1)
+		return err
 	}
 
 	// Pushing the cell image if it is not already uploaded
@@ -112,8 +124,7 @@ func RunPush(cellImage string) error {
 		// Read stream of files
 		err = hub.UploadBlob(repository, cellImageDigest, bytes.NewReader(cellImageFileBytes), nil)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error occurred while pushing the cell image: \x1b[0m %v \n", err)
-			os.Exit(1)
+			return err
 		}
 		log.Printf("Successfully uploaded %s cell image", cellImage)
 	} else {
@@ -152,8 +163,7 @@ func RunPush(cellImage string) error {
 	// Uploading the manifest to the Cellery Registry (Docker Registry)
 	err = hub.PutManifest(repository, parsedCellImage.ImageVersion, signedCellImageManifest)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while pushing the cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		return err
 	}
 
 	fmt.Println()

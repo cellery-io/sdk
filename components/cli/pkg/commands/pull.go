@@ -23,27 +23,36 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/nokia/docker-registry-client/registry"
-	"github.com/tj/go-spin"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-// pullSpinner shows the spinner and message while this command is being performed
-func pullSpinner(tag string) {
-	s := spin.New()
-	for {
-		fmt.Printf("\r\033[36m%s\033[m Pulling %s %s", s.Next(), "image", util.Bold(tag))
-		time.Sleep(100 * time.Millisecond)
-	}
-}
-
 // RunPull connects to the Cellery Registry and pulls the cell image and saves it in the local repository.
 // This also adds the relevant ballerina files to the ballerina repo directory.
 func RunPull(cellImage string, silent bool) error {
+	err := pullImage(cellImage, "", "", silent)
+	if err != nil {
+		fmt.Println()
+		username, password, err := util.RequestCredentials()
+		if err != nil {
+			fmt.Printf("\x1b[31;1m Failed to acquire credentials: \x1b[0m %v \n", err)
+			os.Exit(1)
+		}
+		fmt.Println()
+
+		err = pullImage(cellImage, username, password, silent)
+		if err != nil {
+			fmt.Printf("\x1b[31;1m Failed to pull image: \x1b[0m %v \n", err)
+			os.Exit(1)
+		}
+	}
+	return nil
+}
+
+func pullImage(cellImage string, username string, password string, silent bool) error {
 	parsedCellImage, err := util.ParseImage(cellImage)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
@@ -51,12 +60,16 @@ func RunPull(cellImage string, silent bool) error {
 	}
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
 
+	var spinner *util.Spinner = nil
 	if !silent {
-		go pullSpinner(cellImage)
+		spinner = util.StartNewSpinner("Pulling image " + util.Bold(cellImage))
+		defer func() {
+			spinner.IsSpinning = false
+		}()
 	}
 
 	// Initiating a connection to Cellery Registry
-	hub, err := registry.New("https://"+parsedCellImage.Registry, "", "")
+	hub, err := registry.New("https://"+parsedCellImage.Registry, username, password)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while initializing connection to the Cellery Registry: "+
 			"\x1b[0m %v \n", err)
@@ -66,15 +79,13 @@ func RunPull(cellImage string, silent bool) error {
 	// Fetching the Docker Image Manifest
 	cellImageManifest, err := hub.Manifest(repository, "0.1.0")
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Image %s not found in the Cellery Registry\x1b[0m\n", cellImage)
-		os.Exit(1)
+		return err
 	}
 
 	// Fetching the Docker Image Digest
 	cellImageDigest, err := hub.ManifestDigest(repository, "0.1.0")
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while fetching the cell image digest: \x1b[0m %v \n", err)
-		os.Exit(1)
+		return err
 	}
 
 	if len(cellImageManifest.References()) == 1 {
@@ -82,6 +93,9 @@ func RunPull(cellImage string, silent bool) error {
 
 		// Downloading the Cell Image from the repository
 		reader, err := hub.DownloadBlob(repository, cellImageReference.Digest)
+		if err != nil {
+			return err
+		}
 		if reader != nil {
 			defer func() {
 				err = reader.Close()
@@ -90,10 +104,6 @@ func RunPull(cellImage string, silent bool) error {
 					os.Exit(1)
 				}
 			}()
-		}
-		if err != nil {
-			fmt.Printf("\x1b[31;1m Error occurred while pulling cell image: \x1b[0m %v \n", err)
-			os.Exit(1)
 		}
 		bytes, err := ioutil.ReadAll(reader)
 		if err != nil {

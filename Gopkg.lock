@@ -278,6 +278,7 @@
     "github.com/oxequa/interact",
     "github.com/spf13/cobra",
     "github.com/tj/go-spin",
+    "golang.org/x/crypto/ssh/terminal",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
