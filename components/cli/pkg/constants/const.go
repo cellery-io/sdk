@@ -24,8 +24,7 @@ const BASE_API_URL = "http://localhost:8080"
 const CELL_IMAGE_EXT = ".zip"
 
 // Registry
-const CENTRAL_REGISTRY_HOST = "registry.cellery.io"
-const REGISTRY_BASE_PATH = "/registry/0.0.1"
+const CENTRAL_REGISTRY_HOST = "registry-1.docker.io"
 
 const EMPTY_STRING = ""
 const REGISTRY_ORGANIZATION = "wso2"

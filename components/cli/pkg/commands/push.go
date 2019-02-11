@@ -61,7 +61,7 @@ func RunPush(cellImage string) error {
 }
 
 func pushImage(cellImage string, username string, password string) error {
-	parsedCellImage, err := util.ParseImage(cellImage)
+	parsedCellImage, err := util.ParseImageTag(cellImage)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
 		os.Exit(1)
@@ -84,9 +84,8 @@ func pushImage(cellImage string, username string, password string) error {
 	}
 
 	// Reading the cell image
-	cellImageFilePath := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.Registry,
-		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion,
-		parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+	cellImageFilePath := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 	cellImageFile, err := os.Open(cellImageFilePath)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while reading the cell image: \x1b[0m %v \n", err)

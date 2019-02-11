@@ -646,8 +646,8 @@ func StartNewSpinner(message string) *Spinner {
 	return newSpinner
 }
 
-// ParseImage parses the given image name string and returns a CellImage struct with the relevant information.
-func ParseImage(cellImageString string) (parsedCellImage *CellImage, err error) {
+// ParseImageTag parses the given image name string and returns a CellImage struct with the relevant information.
+func ParseImageTag(cellImageString string) (parsedCellImage *CellImage, err error) {
 	cellImage := &CellImage{
 		constants.CENTRAL_REGISTRY_HOST,
 		"",
@@ -691,9 +691,8 @@ func ParseImage(cellImageString string) (parsedCellImage *CellImage, err error) 
 // AddImageToBalPath extracts the cell image in a temporary location and copies the relevant ballerina files to the
 // ballerina repo directory. This expects the BALLERINA_HOME environment variable to be set in th developer machine.
 func AddImageToBalPath(cellImage *CellImage) {
-	cellImageFile := filepath.Join(UserHomeDir(), ".cellery", "repos", cellImage.Registry,
-		cellImage.Organization, cellImage.ImageName, cellImage.ImageVersion,
-		cellImage.ImageName+constants.CELL_IMAGE_EXT)
+	cellImageFile := filepath.Join(UserHomeDir(), ".cellery", "repo", cellImage.Organization, cellImage.ImageName,
+		cellImage.ImageVersion, cellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	// Create temp directory
 	currentTIme := time.Now()

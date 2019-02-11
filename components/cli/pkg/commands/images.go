@@ -62,7 +62,7 @@ func RunImage() error {
 	return nil
 }
 
-func RunImageInformations(input string) error {
+func RunImageInformation(input string) error {
 	componentArrays := [][]Component{
 		{
 			{"API-GW", "cellery.io/micro-gw:v1.1", []int{443, 80}, "API_GW_deployment", "API_GW_service"},
@@ -127,7 +127,7 @@ func getComponentByUniqueId(uniqueId string, componentArrays [][]Component) []Co
 }
 
 func componentArrayToStringArray(components []Component) [][]string {
-	convertedArray := [][]string{}
+	var convertedArray [][]string
 
 	for i := 0; i < len(components); i++ {
 		component := make([]string, 5)
@@ -148,30 +148,34 @@ func intArrayToString(intArray []int) string {
 }
 
 func getImagesArray() [][]string {
-	images := [][]string{}
-	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos", "registry.cellery.io"))
+	var images [][]string
+	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repo"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, organization := range organizations {
-		projects, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos", "registry.cellery.io", organization))
+		projects, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repo", organization))
 		if err != nil {
 			log.Fatal(err)
 		}
 		for _, project := range projects {
-			versions, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repos", "registry.cellery.io", organization, project))
+			versions, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repo",
+				organization, project))
 			if err != nil {
 				log.Fatal(err)
 			}
 			for _, version := range versions {
-				size, err := util.GetFileSize(filepath.Join(util.UserHomeDir(), ".cellery", "repos", "registry.cellery.io", organization, project, version, project+".zip"))
+				size, err := util.GetFileSize(filepath.Join(util.UserHomeDir(), ".cellery", "repo",
+					organization, project, version, project+".zip"))
 				if err != nil {
 					log.Fatal(err)
 				}
 				if size > 1024 {
-					images = append(images, []string{organization + "/" + project, version, strconv.FormatFloat(float64(size/1024), 'f', -1, 64) + "KB"})
+					images = append(images, []string{organization + "/" + project, version,
+						strconv.FormatFloat(float64(size/1024), 'f', -1, 64) + "KB"})
 				} else {
-					images = append(images, []string{organization + "/" + project, version, strconv.FormatInt(size, 10) + "B"})
+					images = append(images, []string{organization + "/" + project, version,
+						strconv.FormatInt(size, 10) + "B"})
 				}
 
 			}

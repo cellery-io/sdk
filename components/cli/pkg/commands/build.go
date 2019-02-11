@@ -34,18 +34,18 @@ import (
 func RunBuild(tag string, fileName string) error {
 	fileExist, err := util.FileExists(fileName)
 	if !fileExist {
-		fmt.Printf("Please check the filename. File '%s' does not exist.\n", fileName)
+		fmt.Printf("\x1b[31;1m Please check the filename. File '%s' does not exist.\x1b[0m\n", fileName)
 		os.Exit(1)
 	}
 
-	parsedCellImage, err := util.ParseImage(tag)
+	parsedCellImage, err := util.ParseImageTag(tag)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
 		os.Exit(1)
 	}
 
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.Registry,
-		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
+	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 
 	spinner := util.StartNewSpinner("Building image " + util.Bold(tag))
 	defer func() {
@@ -55,7 +55,7 @@ func RunBuild(tag string, fileName string) error {
 	// First clean target directory if exists
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		fmt.Println("Error in getting current directory location: " + err.Error())
+		fmt.Println("\x1b[31;1m Error in getting current directory location: \x1b[0m %v \n" + err.Error())
 		os.Exit(1)
 	}
 	_ = os.RemoveAll(filepath.Join(dir, "target"))
@@ -74,7 +74,7 @@ func RunBuild(tag string, fileName string) error {
 	cmd.Stderr = &stderr
 	err = cmd.Start()
 	if err != nil {
-		fmt.Printf("Error in executing cell build: %v \n", err)
+		fmt.Printf("\x1b[31;1m Error in executing cell build: \x1b[0m %v \n", err)
 		errStr := string(stderr.Bytes())
 		fmt.Printf("%s\n", errStr)
 		os.Exit(1)
@@ -102,7 +102,7 @@ func RunBuild(tag string, fileName string) error {
 	output := parsedCellImage.ImageName + ".zip"
 	err = util.RecursiveZip(files, folders, output)
 	if err != nil {
-		fmt.Printf("\x1b[31;1mCell build finished with error: \x1b[0m %v \n", err)
+		fmt.Printf("\x1b[31;1m Cell build finished with error: \x1b[0m %v \n", err)
 		os.Exit(1)
 	}
 
@@ -124,7 +124,7 @@ func RunBuild(tag string, fileName string) error {
 
 	repoCreateErr := util.CreateDir(repoLocation)
 	if repoCreateErr != nil {
-		fmt.Println("Error while creating image location: " + repoCreateErr.Error())
+		fmt.Println("\x1b[31;1m Error while creating image location: \x1b[0m %v \n" + repoCreateErr.Error())
 		os.Exit(1)
 	}
 
@@ -132,7 +132,7 @@ func RunBuild(tag string, fileName string) error {
 	zipDst := filepath.Join(repoLocation, output)
 	zipCopyError := util.CopyFile(zipSrc, zipDst)
 	if zipCopyError != nil {
-		fmt.Println("Error while saving image: " + zipCopyError.Error())
+		fmt.Println("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n" + zipCopyError.Error())
 		os.Exit(1)
 	}
 

@@ -38,7 +38,7 @@ func newImageCommand() *cobra.Command {
 			if len(args) == 0 {
 				return commands.RunImage()
 			} else {
-				return commands.RunImageInformations(args[0])
+				return commands.RunImageInformation(args[0])
 			}
 		},
 	}

@@ -53,7 +53,7 @@ func RunPull(cellImage string, silent bool) error {
 }
 
 func pullImage(cellImage string, username string, password string, silent bool) error {
-	parsedCellImage, err := util.ParseImage(cellImage)
+	parsedCellImage, err := util.ParseImageTag(cellImage)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
 		os.Exit(1)
@@ -111,8 +111,8 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 			os.Exit(1)
 		}
 
-		repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.Registry,
-			parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
+		repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+			parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 
 		// Cleaning up the old image if it already exists
 		hasOldImage, err := util.FileExists(repoLocation)

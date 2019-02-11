@@ -31,14 +31,14 @@ import (
 )
 
 func RunRun(cellImageTag string) error {
-	parsedCellImage, err := util.ParseImage(cellImageTag)
+	parsedCellImage, err := util.ParseImageTag(cellImageTag)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
 		os.Exit(1)
 	}
 
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repos", parsedCellImage.Registry,
-		parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
+	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	fmt.Printf("Running cell image: %s ...\n", util.Bold(cellImageTag))
 	zipLocation := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 
@@ -50,8 +50,8 @@ func RunRun(cellImageTag string) error {
 
 	//create tmp directory
 	currentTIme := time.Now()
-	timstamp := currentTIme.Format("20060102150405")
-	tmpPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", timstamp)
+	timestamp := currentTIme.Format("20060102150405")
+	tmpPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", timestamp)
 	err = util.CreateDir(tmpPath)
 	if err != nil {
 		panic(err)
