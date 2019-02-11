@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 
 	"github.com/nokia/docker-registry-client/registry"
+	"github.com/opencontainers/go-digest"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -62,7 +63,10 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 
 	var spinner *util.Spinner = nil
 	if !silent {
-		spinner = util.StartNewSpinner("Pulling image " + util.Bold(cellImage))
+		imageName := fmt.Sprintf("%s/%s:%s", parsedCellImage.Organization, parsedCellImage.ImageName,
+			parsedCellImage.ImageVersion)
+		spinner = util.StartNewSpinner(fmt.Sprintf("Pulling image %s from %s", util.Bold(imageName),
+			util.Bold(parsedCellImage.Registry)))
 		defer func() {
 			spinner.IsSpinning = false
 		}()
@@ -82,14 +86,10 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 		return err
 	}
 
-	// Fetching the Docker Image Digest
-	cellImageDigest, err := hub.ManifestDigest(repository, "0.1.0")
-	if err != nil {
-		return err
-	}
-
+	var cellImageDigest digest.Digest
 	if len(cellImageManifest.References()) == 1 {
 		cellImageReference := cellImageManifest.References()[0]
+		cellImageDigest = cellImageReference.Digest
 
 		// Downloading the Cell Image from the repository
 		reader, err := hub.DownloadBlob(repository, cellImageReference.Digest)
@@ -100,7 +100,7 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 			defer func() {
 				err = reader.Close()
 				if err != nil {
-					fmt.Printf("\x1b[31;1m Error occurred while pulling cell image: \x1b[0m %v \n", err)
+					fmt.Printf("\x1b[31;1m Error occurred while cleaning up: \x1b[0m %v \n", err)
 					os.Exit(1)
 				}
 			}()
@@ -135,7 +135,7 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 			os.Exit(1)
 		}
 
-		// Writing the Cell Image to Local File
+		// Writing the Cell Image to local file
 		cellImageFile := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 		err = ioutil.WriteFile(cellImageFile, bytes, 0644)
 		if err != nil {
@@ -150,9 +150,10 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 		os.Exit(1)
 	}
 
+	spinner.IsSpinning = false
 	fmt.Println()
 	fmt.Println("\nImage Digest : " + util.Bold(cellImageDigest))
-	fmt.Printf(util.GreenBold("\U00002714")+" Successfully pulled cell image: %s\n", util.Bold(cellImage))
+	fmt.Printf("\n%s Successfully pulled cell image: %s\n", util.GreenBold("\U00002714"), util.Bold(cellImage))
 	if !silent {
 		util.PrintWhatsNextMessage("run the image", "cellery run "+cellImage)
 	}

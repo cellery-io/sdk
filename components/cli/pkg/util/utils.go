@@ -25,8 +25,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/tj/go-spin"
-	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -46,6 +44,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/fatih/color"
+	"github.com/tj/go-spin"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
@@ -735,11 +735,37 @@ func AddImageToBalPath(cellImage *CellImage) {
 		}
 	}
 
-	// Copying the ballerina files to bal path
-	balArtifactsDir := filepath.Join(tempPath, "artifacts", "bal")
-	err = CopyDir(balArtifactsDir, balRepoDir)
+	// Creating the .ballerina directory (ballerina cli fails when this directory is not present)
+	err = CreateDir(filepath.Join(tempPath, "artifacts", "bal", ".ballerina"))
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n", err)
+		fmt.Printf("\x1b[31;1m Error occurred while installing cell reference: \x1b[0m %v \n", err)
+		os.Exit(1)
+	}
+
+	// Installing the cell reference ballerina module
+	cmd := exec.Command("ballerina", "install", cellImage.ImageName)
+	cmd.Dir = filepath.Join(tempPath, "artifacts", "bal")
+	execError := ""
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			execError += stderrScanner.Text()
+		}
+	}()
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err = cmd.Start()
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error occurred while installing cell reference: \x1b[0m %v \n", err)
+		errStr := string(stderr.Bytes())
+		fmt.Printf("%s\n", errStr)
+		os.Exit(1)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error occurred while installing cell reference: \x1b[0m %v \n", err)
 		os.Exit(1)
 	}
 }

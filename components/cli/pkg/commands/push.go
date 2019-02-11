@@ -68,14 +68,15 @@ func pushImage(cellImage string, username string, password string) error {
 	}
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
 
-	spinner := util.StartNewSpinner("Pushing image " + util.Bold(cellImage))
+	imageName := fmt.Sprintf("%s/%s:%s", parsedCellImage.Organization, parsedCellImage.ImageName,
+		parsedCellImage.ImageVersion)
+	spinner := util.StartNewSpinner(fmt.Sprintf("Pushing image %s to %s", util.Bold(imageName),
+		util.Bold(parsedCellImage.Registry)))
 	defer func() {
 		spinner.IsSpinning = false
 	}()
 
 	// Initiating a connection to Cellery Registry
-	fmt.Print(username)
-	fmt.Print(password)
 	hub, err := registry.New("https://"+parsedCellImage.Registry, username, password)
 	if err != nil {
 		fmt.Printf("\x1b[31;1m Error occurred while initializing connection to the Cellery Registry: "+
@@ -165,9 +166,10 @@ func pushImage(cellImage string, username string, password string) error {
 		return err
 	}
 
+	spinner.IsSpinning = false
 	fmt.Println()
 	fmt.Println("\nImage Digest : " + util.Bold(cellImageDigest))
-	fmt.Printf(util.GreenBold("\U00002714")+" Successfully pushed cell image: %s\n", util.Bold(cellImage))
+	fmt.Printf("\n%s Successfully pushed cell image: %s\n", util.GreenBold("\U00002714"), util.Bold(cellImage))
 	util.PrintWhatsNextMessage("pull the image", "cellery pull "+cellImage)
 
 	return nil

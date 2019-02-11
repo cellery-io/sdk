@@ -397,15 +397,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_COMPONENTS,
                 componentHolder.getComponentNameToComponentMap().values());
         context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_HANDLE_API_NAME,
-                (Function<Object, Object>) basePath -> {
-                    String basePathString = (String) basePath;
-                    return basePathString.replace("/", "");
-                });
+                (Function<Object, Object>) string -> convertToTitleCase((String) string, "/|-"));
         context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_HANDLE_TYPE_NAME,
-                (Function<Object, Object>) basePath -> {
-                    String basePathString = (String) basePath;
-                    return basePathString.replace("-", "");
-                });
+                (Function<Object, Object>) string -> convertToTitleCase((String) string, "-"));
 
         // Writing the template to file
         String targetFileNameWithPath = OUTPUT_DIRECTORY + File.separator + "bal" + File.separator + ballerinaPathName
@@ -475,6 +469,27 @@ public class CreateImage extends BlockingNativeCallableUnit {
     private String removeTags(String string) {
         //a tag is a sequence of characters starting with ! and ending with whitespace
         return removePattern(string, " ![^\\s]*");
+    }
+
+    /**
+     * Convert a string to title case.
+     *
+     * @param text The text to be converted to title case
+     * @param separator The word separator
+     * @return The title case text
+     */
+    private String convertToTitleCase(String text, String separator) {
+        String[] wordsArray = text.split(separator);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String word : wordsArray) {
+            if (word.length() >= 1) {
+                stringBuilder.append(word.substring(0, 1).toUpperCase(Locale.ENGLISH));
+            }
+            if (word.length() >= 2) {
+                stringBuilder.append(word.substring(1).toLowerCase(Locale.ENGLISH));
+            }
+        }
+        return stringBuilder.toString();
     }
 
 }

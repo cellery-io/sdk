@@ -16,4 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 # ----------------------------------------------------------------------------
-go build -o cellery ./cli/cmd/
+#!/usr/bin/env bash
+
+go build -o /usr/local/bin/cellery ./cmd/cellery

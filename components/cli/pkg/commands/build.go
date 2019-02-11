@@ -53,14 +53,16 @@ func RunBuild(tag string, fileName string) error {
 	}()
 
 	// First clean target directory if exists
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	projectDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		fmt.Println("\x1b[31;1m Error in getting current directory location: \x1b[0m %v \n" + err.Error())
 		os.Exit(1)
 	}
-	_ = os.RemoveAll(filepath.Join(dir, "target"))
+	_ = os.RemoveAll(filepath.Join(projectDir, "target"))
 
-	cmd := exec.Command("ballerina", "run", fileName+":build", imageName, imageVersion)
+	// Executing the build method in the cell file
+	cmd := exec.Command("ballerina", "run", fileName+":build", parsedCellImage.ImageName,
+		parsedCellImage.ImageVersion)
 	execError := ""
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)
@@ -92,7 +94,35 @@ func RunBuild(tag string, fileName string) error {
 	outStr := string(stdout.Bytes())
 	fmt.Printf("\n\033[36m%s\033[m\n", outStr)
 
-	folderCopyError := util.CopyDir(filepath.Join(dir, "target"), filepath.Join(dir, "artifacts"))
+	// Creating additional Ballerina.toml file for ballerina reference project
+	tomlTemplate := "[project]\n" +
+		"org-name = \"" + parsedCellImage.Organization + "\"\n" +
+		"version = \"" + parsedCellImage.ImageVersion + "\"\n"
+	tomlFile, err := os.Create(filepath.Join(projectDir, "target", "bal", "Ballerina.toml"))
+	if err != nil {
+		fmt.Println("Error in creating Toml File: " + err.Error())
+		os.Exit(1)
+	}
+	defer func() {
+		err = tomlFile.Close()
+		if err != nil {
+			fmt.Printf("\x1b[31;1m Error occurred while cleaning up: \x1b[0m %v \n", err)
+			os.Exit(1)
+		}
+	}()
+	writer := bufio.NewWriter(tomlFile)
+	_, err = writer.WriteString(tomlTemplate)
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error occurred while creating cell reference: \x1b[0m %v \n", err)
+		os.Exit(1)
+	}
+	err = writer.Flush()
+	if err != nil {
+		fmt.Printf("\x1b[31;1m Error occurred creating cell reference: \x1b[0m %v \n", err)
+		os.Exit(1)
+	}
+
+	folderCopyError := util.CopyDir(filepath.Join(projectDir, "target"), filepath.Join(projectDir, "artifacts"))
 	if folderCopyError != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -106,7 +136,7 @@ func RunBuild(tag string, fileName string) error {
 		os.Exit(1)
 	}
 
-	_ = os.RemoveAll(filepath.Join(dir, "artifacts"))
+	_ = os.RemoveAll(filepath.Join(projectDir, "artifacts"))
 
 	// Cleaning up the old image if it already exists
 	hasOldImage, err := util.FileExists(repoLocation)
@@ -128,7 +158,7 @@ func RunBuild(tag string, fileName string) error {
 		os.Exit(1)
 	}
 
-	zipSrc := filepath.Join(dir, output)
+	zipSrc := filepath.Join(projectDir, output)
 	zipDst := filepath.Join(repoLocation, output)
 	zipCopyError := util.CopyFile(zipSrc, zipDst)
 	if zipCopyError != nil {
@@ -140,7 +170,9 @@ func RunBuild(tag string, fileName string) error {
 
 	util.AddImageToBalPath(parsedCellImage)
 
-	fmt.Printf(util.GreenBold("\U00002714")+" Successfully built cell image: %s\n", util.Bold(tag))
+	spinner.IsSpinning = false
+	fmt.Println()
+	fmt.Printf("\n%s Successfully built cell image: %s\n", util.GreenBold("\U00002714"), util.Bold(tag))
 	util.PrintWhatsNextMessage("run the image", "cellery run "+tag)
 	return nil
 }
