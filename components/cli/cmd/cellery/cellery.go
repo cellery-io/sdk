@@ -67,7 +67,7 @@ func main() {
 	// Creating the log directory if it does not exist
 	err := util.CreateDir(logFileDirectory)
 	if err != nil {
-		log.Fatalf("Failed to create log file: %v", err)
+		log.Printf("Failed to create log file: %v", err)
 	}
 
 	// Setting the log output to the log file
@@ -76,13 +76,12 @@ func main() {
 		defer func() {
 			err := logFile.Close()
 			if err != nil {
-				log.Fatalf("Failed to close log file: %v", err)
+				log.Printf("Failed to close log file: %v", err)
 			}
 		}()
 	}
 	if err != nil {
-		log.Fatalf("Error opening log file: %v", err)
-		log.Printf("Writing log to stdout")
+		log.Printf("Writing log to stdout because error occured while opening log file: %v", err)
 	} else {
 		log.SetOutput(logFile)
 	}

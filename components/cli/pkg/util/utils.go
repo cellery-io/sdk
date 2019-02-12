@@ -769,3 +769,15 @@ func AddImageToBalPath(cellImage *CellImage) {
 		os.Exit(1)
 	}
 }
+
+// ExitWithErrorMessage prints an error message and exits the command
+func ExitWithErrorMessage(message string, err error) {
+	fmt.Printf("\n \x1b[31;1m %s: \x1b[0m %v \n", message, err)
+	os.Exit(1)
+}
+
+// PrintSuccessMessage prints the standard command success message
+func PrintSuccessMessage(message string) {
+	fmt.Println()
+	fmt.Printf("\n%s %s\n", GreenBold("\U00002714"), message)
+}

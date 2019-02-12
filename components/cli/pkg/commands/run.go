@@ -33,8 +33,7 @@ import (
 func RunRun(cellImageTag string) error {
 	parsedCellImage, err := util.ParseImageTag(cellImageTag)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
 
 	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
@@ -82,20 +81,17 @@ func RunRun(cellImageTag string) error {
 	}()
 	err = cmd.Start()
 	if err != nil {
-		fmt.Printf("Error in executing cell run: %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error in executing cell run", err)
 	}
 	err = cmd.Wait()
 
 	_ = os.RemoveAll(tmpPath)
 
 	if err != nil {
-		fmt.Printf("\x1b[31;1m\n Error occurred while running cell image:\x1b[0m %v \n", execError)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while running cell image", err)
 	}
 
-	fmt.Println()
-	fmt.Printf("\n%s Successfully deployed cell image: %s\n", util.GreenBold("\U00002714"), util.Bold(cellImageTag))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully deployed cell image: %s", util.Bold(cellImageTag)))
 	util.PrintWhatsNextMessage("list running cells", "cellery ps")
 
 	return nil

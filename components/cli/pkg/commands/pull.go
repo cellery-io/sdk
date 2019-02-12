@@ -19,6 +19,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -39,15 +40,13 @@ func RunPull(cellImage string, silent bool) error {
 		fmt.Println()
 		username, password, err := util.RequestCredentials()
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Failed to acquire credentials: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Failed to acquire credentials", err)
 		}
 		fmt.Println()
 
 		err = pullImage(cellImage, username, password, silent)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Failed to pull image: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Failed to pull image", err)
 		}
 	}
 	return nil
@@ -56,8 +55,7 @@ func RunPull(cellImage string, silent bool) error {
 func pullImage(cellImage string, username string, password string, silent bool) error {
 	parsedCellImage, err := util.ParseImageTag(cellImage)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
 
@@ -75,9 +73,7 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 	// Initiating a connection to Cellery Registry
 	hub, err := registry.New("https://"+parsedCellImage.Registry, username, password)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while initializing connection to the Cellery Registry: "+
-			"\x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while initializing connection to the Cellery Registry", err)
 	}
 
 	// Fetching the Docker Image Manifest
@@ -100,15 +96,13 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 			defer func() {
 				err = reader.Close()
 				if err != nil {
-					fmt.Printf("\x1b[31;1m Error occurred while cleaning up: \x1b[0m %v \n", err)
-					os.Exit(1)
+					util.ExitWithErrorMessage("Error occurred while cleaning up", err)
 				}
 			}()
 		}
 		bytes, err := ioutil.ReadAll(reader)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error occurred while pulling cell image: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Error occurred while pulling cell image", err)
 		}
 
 		repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
@@ -117,43 +111,38 @@ func pullImage(cellImage string, username string, password string, silent bool) 
 		// Cleaning up the old image if it already exists
 		hasOldImage, err := util.FileExists(repoLocation)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error occurred while removing the old cell image: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Error occurred while removing the old cell image", err)
 		}
 		if hasOldImage {
 			err = os.RemoveAll(repoLocation)
 			if err != nil {
-				fmt.Printf("\x1b[31;1m Error while cleaning up: \x1b[0m %v \n", err)
-				os.Exit(1)
+				util.ExitWithErrorMessage("Error while cleaning up", err)
 			}
 		}
 
 		// Creating the Repo location
 		err = util.CreateDir(repoLocation)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Error while saving cell image to local repo", err)
 		}
 
 		// Writing the Cell Image to local file
 		cellImageFile := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 		err = ioutil.WriteFile(cellImageFile, bytes, 0644)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Error while saving cell image to local repo", err)
 		}
 
 		util.AddImageToBalPath(parsedCellImage)
 	} else {
-		fmt.Printf("\x1b[31;1m Invalid cell image: \x1b[0m Expected exactly 1 File Layer, but found %d \n",
-			len(cellImageManifest.References()))
-		os.Exit(1)
+		util.ExitWithErrorMessage("Invalid cell image",
+			errors.New(fmt.Sprintf("expected exactly 1 File Layer, but found %d",
+				len(cellImageManifest.References()))))
 	}
 
 	spinner.IsSpinning = false
-	fmt.Println()
-	fmt.Println("\nImage Digest : " + util.Bold(cellImageDigest))
-	fmt.Printf("\n%s Successfully pulled cell image: %s\n", util.GreenBold("\U00002714"), util.Bold(cellImage))
+	fmt.Print("\n\nImage Digest : " + util.Bold(cellImageDigest))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully pulled cell image: %s", util.Bold(cellImage)))
 	if !silent {
 		util.PrintWhatsNextMessage("run the image", "cellery run "+cellImage)
 	}

@@ -21,7 +21,7 @@ GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 MAIN_PACKAGES := cli
 
-all: build-lang build-cli build-registry
+all: code.format build-lang build-cli build-registry
 
 .PHONY: build-lang
 build-lang:

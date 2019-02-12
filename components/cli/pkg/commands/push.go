@@ -46,15 +46,13 @@ func RunPush(cellImage string) error {
 		fmt.Println()
 		username, password, err := util.RequestCredentials()
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Failed to acquire credentials: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Failed to acquire credentials", err)
 		}
 		fmt.Println()
 
 		err = pushImage(cellImage, username, password)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Failed to push image: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Failed to push image", err)
 		}
 	}
 	return nil
@@ -63,8 +61,7 @@ func RunPush(cellImage string) error {
 func pushImage(cellImage string, username string, password string) error {
 	parsedCellImage, err := util.ParseImageTag(cellImage)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while parsing cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
 
@@ -79,9 +76,7 @@ func pushImage(cellImage string, username string, password string) error {
 	// Initiating a connection to Cellery Registry
 	hub, err := registry.New("https://"+parsedCellImage.Registry, username, password)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while initializing connection to the Cellery Registry: "+
-			"\x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while initializing connection to the Cellery Registry", err)
 	}
 
 	// Reading the cell image
@@ -89,22 +84,19 @@ func pushImage(cellImage string, username string, password string) error {
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 	cellImageFile, err := os.Open(cellImageFilePath)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while reading the cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while reading the cell image", err)
 	}
 	if cellImageFile != nil {
 		defer func() {
 			err := cellImageFile.Close()
 			if err != nil {
-				fmt.Printf("\x1b[31;1m Error occurred while opening the cell image: \x1b[0m %v \n", err)
-				os.Exit(1)
+				util.ExitWithErrorMessage("Error occurred while opening the cell image", err)
 			}
 		}()
 	}
 	cellImageFileBytes, err := ioutil.ReadAll(cellImageFile)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while reading the cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while reading the cell image", err)
 	}
 
 	// Creating the Cell Image Digest (Docker file Layer digest)
@@ -151,13 +143,11 @@ func pushImage(cellImage string, username string, password string) error {
 	// Signing the Docker Manifest
 	key, err := libtrust.GenerateECP256PrivateKey()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while pushing the cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while pushing the cell image", err)
 	}
 	signedCellImageManifest, err := schema1.Sign(cellImageManifest, key)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while pushing the cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while pushing the cell image", err)
 	}
 
 	// Uploading the manifest to the Cellery Registry (Docker Registry)
@@ -167,9 +157,8 @@ func pushImage(cellImage string, username string, password string) error {
 	}
 
 	spinner.IsSpinning = false
-	fmt.Println()
-	fmt.Println("\nImage Digest : " + util.Bold(cellImageDigest))
-	fmt.Printf("\n%s Successfully pushed cell image: %s\n", util.GreenBold("\U00002714"), util.Bold(cellImage))
+	fmt.Print("\n\nImage Digest : " + util.Bold(cellImageDigest))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully pushed cell image: %s", util.Bold(cellImage)))
 	util.PrintWhatsNextMessage("pull the image", "cellery pull "+cellImage)
 
 	return nil
