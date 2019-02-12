@@ -94,8 +94,7 @@ func RunInit() error {
 
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		fmt.Println("Error in getting current directory location: " + err.Error())
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error in getting current directory location", err)
 	}
 
 	if _, err := os.Stat(dir + "/" + projectName); os.IsNotExist(err) {
@@ -105,8 +104,7 @@ func RunInit() error {
 
 	balFile, err := os.Create(projectPath + "/" + projectName + ".bal")
 	if err != nil {
-		fmt.Println("Error in creating Ballerina File: " + err.Error())
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error in creating Ballerina File", err)
 	}
 	defer balFile.Close()
 	balW := bufio.NewWriter(balFile)

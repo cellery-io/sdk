@@ -38,12 +38,12 @@ func RunRun(cellImageTag string) error {
 
 	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
-	fmt.Printf("Running cell image: %s ...\n", util.Bold(cellImageTag))
+	fmt.Printf("Running cell image: %s\n", util.Bold(cellImageTag))
 	zipLocation := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	if _, err := os.Stat(zipLocation); os.IsNotExist(err) {
 		fmt.Printf("\nUnable to find image %s locally.", cellImageTag)
-		fmt.Printf("\nPulling image: %s ...", cellImageTag)
+		fmt.Printf("\nPulling image: %s", cellImageTag)
 		_ = RunPull(cellImageTag, true)
 	}
 

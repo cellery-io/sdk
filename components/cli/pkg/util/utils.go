@@ -403,8 +403,7 @@ func GetDuration(startTime time.Time) string {
 func ConvertStringToTime(timeString string) time.Time {
 	convertedTime, err := time.Parse(time.RFC3339, timeString)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error parsing time: \x1b[0m %v \n", err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error parsing time", err)
 	}
 	return convertedTime
 }
@@ -695,27 +694,24 @@ func AddImageToBalPath(cellImage *CellImage) {
 		cellImage.ImageVersion, cellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	// Create temp directory
-	currentTIme := time.Now()
-	timestamp := currentTIme.Format("27065102350415")
+	currentTime := time.Now()
+	timestamp := currentTime.Format("27065102350415")
 	tempPath := filepath.Join(UserHomeDir(), ".cellery", "tmp", timestamp)
 	err := CreateDir(tempPath)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n", err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error while saving cell image to local repo", err)
 	}
 	defer func() {
 		err = os.RemoveAll(tempPath)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error while cleaning up: \x1b[0m %v \n", err)
-			os.Exit(1)
+			ExitWithErrorMessage("Error while cleaning up", err)
 		}
 	}()
 
 	// Unzipping Cellery Image
 	err = Unzip(cellImageFile, tempPath)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error while saving cell image to local repo: \x1b[0m %v \n", err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error while saving cell image to local repo", err)
 	}
 
 	balRepoDir := filepath.Join(UserHomeDir(), ".ballerina", "repo", cellImage.Organization, cellImage.ImageName,
@@ -724,22 +720,19 @@ func AddImageToBalPath(cellImage *CellImage) {
 	// Cleaning up the old image bal files if it already exists
 	hasOldImage, err := FileExists(balRepoDir)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while removing the old cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error occurred while removing the old cell image", err)
 	}
 	if hasOldImage {
 		err = os.RemoveAll(balRepoDir)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error while cleaning up: \x1b[0m %v \n", err)
-			os.Exit(1)
+			ExitWithErrorMessage("Error while cleaning up", err)
 		}
 	}
 
 	// Creating the .ballerina directory (ballerina cli fails when this directory is not present)
 	err = CreateDir(filepath.Join(tempPath, "artifacts", "bal", ".ballerina"))
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while installing cell reference: \x1b[0m %v \n", err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error occurred while installing cell reference", err)
 	}
 
 	// Installing the cell reference ballerina module
@@ -758,15 +751,13 @@ func AddImageToBalPath(cellImage *CellImage) {
 	cmd.Stderr = &stderr
 	err = cmd.Start()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while installing cell reference: \x1b[0m %v \n", err)
 		errStr := string(stderr.Bytes())
 		fmt.Printf("%s\n", errStr)
-		os.Exit(1)
+		ExitWithErrorMessage("Error occurred while installing cell reference", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while installing cell reference: \x1b[0m %v \n", err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error occurred while installing cell reference", err)
 	}
 }
 

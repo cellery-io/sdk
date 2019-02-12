@@ -24,24 +24,25 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-// newExtractResourcesCommand creates a command which can be invoked to extract the cell
-// image resources to a specific directory.
-func newExtractResourcesCommand() *cobra.Command {
+// newListFilesCommand creates a command which can be invoked to list the files (directory structure) of a cell images.
+func newListFilesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "extract-resources [CELL_IMAGE] [OUTPUT_DIR]",
-		Short: "Extract the resource files of a pulled image to the provided location",
+		Use:   "list-files [CELL_IMAGE]",
+		Short: "List the files in the cell image",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 2 {
+			if len(args) != 1 {
 				cmd.Help()
 				return nil
 			}
-			err := commands.RunExtractResources(args[0], args[1])
+			cellImage = args[0]
+			err := commands.RunListFiles(cellImage)
 			if err != nil {
 				cmd.Help()
 				return err
 			}
 			return nil
 		},
+		Example: "  cellery list-files cellery-samples/hello-world:1.0.0",
 	}
 	return cmd
 }

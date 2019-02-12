@@ -45,14 +45,12 @@ func RunExtractResources(cellImage string, outputPath string) error {
 	tempPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", timestamp)
 	err = util.CreateDir(tempPath)
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error while extracting resources from cell image: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error while extracting resources from cell image", err)
 	}
 	defer func() {
 		err = os.RemoveAll(tempPath)
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error while cleaning up: \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Error while cleaning up", err)
 		}
 	}()
 
@@ -77,9 +75,7 @@ func RunExtractResources(cellImage string, outputPath string) error {
 		util.ExitWithErrorMessage("Error occurred while extracting the image resources", err)
 	}
 
-	_ = os.RemoveAll(tempPath)
-
-	fmt.Print("\nExtracted resources: " + util.Bold(outputPath))
+	fmt.Print("\nExtracted resources: " + util.Bold(filepath.Abs(outputPath)))
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully extracred cell image resources: %s", util.Bold(cellImage)))
 	return nil
 }

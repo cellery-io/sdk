@@ -75,10 +75,9 @@ func RunBuild(tag string, fileName string) error {
 	cmd.Stderr = &stderr
 	err = cmd.Start()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error in executing cell build: \x1b[0m %v \n", err)
 		errStr := string(stderr.Bytes())
 		fmt.Printf("%s\n", errStr)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while building cell image", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
@@ -87,7 +86,7 @@ func RunBuild(tag string, fileName string) error {
 		fmt.Println("\x1b[31;1m======================\x1b[0m")
 		errStr := string(stderr.Bytes())
 		fmt.Printf("\x1b[31;1m%s\x1b[0m", errStr)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while building cell image", err)
 	}
 
 	outStr := string(stdout.Bytes())

@@ -51,13 +51,11 @@ func RunApis(cellName string) error {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("Error in executing cellery apis: %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching APIs", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Cellery apis finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching APIs", err)
 	}
 
 	jsonOutput := &util.Gateway{}

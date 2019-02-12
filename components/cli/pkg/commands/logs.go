@@ -21,10 +21,10 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"os"
 	"os/exec"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunLogs(cellName, componentName string) error {
@@ -57,13 +57,11 @@ func executeLogsCommand(cmd *exec.Cmd, cellName, componentName string) error {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("Error in executing cell logs: %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching logs", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Cell logs finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching logs", err)
 	}
 	if output == "" {
 		if componentName == "" {

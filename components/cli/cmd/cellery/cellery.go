@@ -31,7 +31,7 @@ import (
 
 func newCliCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           "cellery [OPTIONS] COMMAND [ARG...]",
+		Use:           "cellery [OPTIONS] COMMAND [ARG]",
 		Short:         "Manage immutable cell based applications",
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -57,6 +57,7 @@ func newCliCommand() *cobra.Command {
 		newPullCommand(),
 		newSetupCommand(),
 		newExtractResourcesCommand(),
+		newListFilesCommand(),
 	)
 	return cmd
 }

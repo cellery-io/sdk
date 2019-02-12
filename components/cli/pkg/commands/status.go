@@ -39,29 +39,25 @@ func RunStatus(cellName string) error {
 
 	outfile, errPrint := os.Create("./out.txt")
 	if errPrint != nil {
-		fmt.Printf("Error in executing cell status: %v \n", errPrint)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", errPrint)
 	}
 	defer outfile.Close()
 	cmd.Stdout = outfile
 
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("Error in executing cell status: %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Cell status finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", err)
 	}
 
 	outputByteArray, err := ioutil.ReadFile("./out.txt")
 	os.Remove("./out.txt")
 
 	if err != nil {
-		fmt.Printf("Error in executing cell status: %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", err)
 	}
 
 	output = string(outputByteArray)
@@ -104,13 +100,11 @@ func getCellSummary(cellName string) (cellCreationTime, cellStatus string) {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("Error in executing cell status: %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Cell status finished with error: \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", err)
 	}
 
 	jsonOutput := &util.Cell{}
