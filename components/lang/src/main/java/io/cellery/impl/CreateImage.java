@@ -72,6 +72,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.TARGET;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -94,7 +95,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
     private static final MustacheFactory mustacheFactory = new DefaultMustacheFactory();
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
 
-    private int gatewayPort = 80;
     private ComponentHolder componentHolder;
     private PrintStream out = System.out;
 
@@ -224,7 +224,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
     private void processIngressPort(LinkedHashMap<?, ?> ingressMap, Component component) {
         ingressMap.forEach((name, entry) -> ((BMap<?, ?>) entry).getMap().forEach((key, value) -> {
             if ("port".equals(key.toString())) {
-                component.addPorts(Integer.parseInt(value.toString()), gatewayPort);
+                component.addPorts(Integer.parseInt(value.toString()), DEFAULT_GATEWAY_PORT);
             }
         }));
     }
@@ -317,7 +317,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             if (component.getIsStub()) {
                 continue;
             }
-            spec.setApis(component.getApis());
+            spec.setHttp(component.getApis());
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             templateSpec.setReplicas(component.getReplicas());
             component.getEgresses().forEach((egress) -> {
@@ -349,7 +349,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
             });
             //TODO:Fix service port
-            templateSpec.setServicePort(gatewayPort);
+            templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
             List<ContainerPort> ports = new ArrayList<>();
             component.getContainerPortToServicePortMap().forEach((containerPort, servicePort) ->
                     ports.add(new ContainerPortBuilder().withContainerPort(containerPort).build()));
@@ -392,7 +392,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         Map<String, Object> context = new HashMap<>();
         context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_NAME, name);
         context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_VERSION, cellVersion);
-        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_GATEWAY_PORT, gatewayPort);
+        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_GATEWAY_PORT, DEFAULT_GATEWAY_PORT);
         context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_GATEWAY_PROTOCOL, DEFAULT_GATEWAY_PROTOCOL);
         context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_COMPONENTS,
                 componentHolder.getComponentNameToComponentMap().values());
@@ -474,7 +474,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
     /**
      * Convert a string to title case.
      *
-     * @param text The text to be converted to title case
+     * @param text      The text to be converted to title case
      * @param separator The word separator
      * @return The title case text
      */

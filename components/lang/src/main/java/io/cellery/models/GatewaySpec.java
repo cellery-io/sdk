@@ -32,6 +32,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GatewaySpec {
-    private @Singular("apis")
-    List<API> apis;
+    private @Singular("http")
+    List<API> http;
 }
