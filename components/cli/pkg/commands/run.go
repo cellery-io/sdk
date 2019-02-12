@@ -47,7 +47,7 @@ func RunRun(cellImageTag string) error {
 		_ = RunPull(cellImageTag, true)
 	}
 
-	//create tmp directory
+	// Create tmp directory
 	currentTIme := time.Now()
 	timestamp := currentTIme.Format("20060102150405")
 	tmpPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", timestamp)
