@@ -29,7 +29,6 @@ import io.cellery.models.CellCache;
 import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
 import io.cellery.models.ComponentHolder;
-import io.cellery.models.Egress;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.GatewayTemplate;
 import io.cellery.models.ServiceTemplate;
@@ -75,11 +74,10 @@ import java.util.function.Function;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.TARGET;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.removePattern;
 
 /**
- * Native function cellery/build.
+ * Native function cellery:createImage.
  */
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
@@ -108,34 +106,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         processAPIs(((BValueArray) ((BMap) ctx.getNullableRefArgument(0)).getMap().get("apis")).getValues());
         Set<Component> components = new HashSet<>(componentHolder.getComponentNameToComponentMap().values());
         cellCache.setCellNameToComponentMap(cellName, components);
-        processCellEgress(((BValueArray) ((BMap) ctx.getNullableRefArgument(0)).getMap().get("egresses")).getValues());
         generateCell(cellName);
         generateCellReference(cellName, cellVersion);
         ctx.setReturnValues(new BBoolean(true));
-    }
-
-    private void processCellEgress(BRefType<?>[] egresses) {
-        for (BRefType egressDefinition : egresses) {
-            if (egressDefinition == null) {
-                continue;
-            }
-            Egress egress = new Egress();
-            for (Map.Entry<?, ?> entry : ((BMap<?, ?>) egressDefinition).getMap().entrySet()) {
-                Object key = entry.getKey();
-                BValue value = (BValue) entry.getValue();
-                switch (key.toString()) {
-                    case "targetCell":
-                        egress.setCellName(value.toString());
-                        break;
-                    case "envVar":
-                        egress.setEnvVar(value.toString());
-                        break;
-                    default:
-                        break;
-                }
-            }
-            componentHolder.getComponentNameToComponentMap().values().forEach(component -> component.addEgress(egress));
-        }
     }
 
     private void processComponents(BRefType<?>[] components) {
@@ -163,9 +136,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
                     case "ingresses":
                         processIngressPort(((BMap<?, ?>) value).getMap(), component);
                         break;
-                    case "egresses":
-                        processEgress(((BValueArray) value).getValues(), component);
-                        break;
                     case "env":
                         ((BMap<?, ?>) value).getMap().forEach((envKey, envValue) ->
                                 component.addEnv(envKey.toString(), envValue.toString()));
@@ -188,30 +158,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 }
             });
             componentHolder.addComponent(component);
-        }
-    }
-
-    private void processEgress(BRefType<?>[] egresses, Component component) {
-        for (BRefType egressDefinition : egresses) {
-            if (egressDefinition == null) {
-                continue;
-            }
-            Egress egress = new Egress();
-            for (Map.Entry<?, ?> entry : ((BMap<?, ?>) egressDefinition).getMap().entrySet()) {
-                Object key = entry.getKey();
-                BValue value = (BValue) entry.getValue();
-                switch (key.toString()) {
-                    case "targetComponent":
-                        egress.setTargetComponent(value.toString());
-                        break;
-                    case "envVar":
-                        egress.setEnvVar(value.toString());
-                        break;
-                    default:
-                        break;
-                }
-            }
-            component.addEgress(egress);
         }
     }
 
@@ -320,27 +266,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
             spec.setHttp(component.getApis());
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             templateSpec.setReplicas(component.getReplicas());
-            component.getEgresses().forEach((egress) -> {
-                String serviceName;
-                if (isEmpty(egress.getCellName())) {
-                    //Inter cell mapping
-                    Component targetComponent =
-                            componentHolder.getComponentNameToComponentMap().get(egress.getTargetComponent());
-                    if (targetComponent == null) {
-                        throw new BallerinaException("Invalid component egress. " +
-                                "Components " + component.getName() + " and " + egress.getTargetComponent() + " are " +
-                                "not defined in the same cell.");
-                    }
-                    // Generate service name => cellName--serviceName-service
-                    serviceName = getValidName(name) + "--" +
-                            targetComponent.getService()
-                            + "-service";
-                } else {
-                    serviceName = getValidName(egress.getCellName()) + "--gateway-service";
-                }
-                component.addEnv(egress.getEnvVar(), serviceName);
-
-            });
             List<EnvVar> envVarList = new ArrayList<>();
             component.getEnvVars().forEach((key, value) -> {
                 if (StringUtils.isEmpty(value)) {

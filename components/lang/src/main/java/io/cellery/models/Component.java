@@ -4,10 +4,8 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Cell component.
@@ -19,7 +17,6 @@ public class Component {
     Map<String, String> envVars;
     Map<String, String> labels;
     List<API> apis;
-    Set<Egress> egresses;
     String source;
     String service;
     Boolean isStub;
@@ -29,7 +26,6 @@ public class Component {
         envVars = new HashMap<>();
         labels = new HashMap<>();
         apis = new ArrayList<>();
-        egresses = new HashSet<>();
         containerPortToServicePortMap = new HashMap<>();
         replicas = 1;
         isStub = false;
@@ -41,10 +37,6 @@ public class Component {
 
     public void addPorts(int containerMap, int servicePort) {
         this.containerPortToServicePortMap.put(containerMap, servicePort);
-    }
-
-    public void addEgress(Egress egress) {
-        this.egresses.add(egress);
     }
 
     public void addEnv(String key, String value) {
