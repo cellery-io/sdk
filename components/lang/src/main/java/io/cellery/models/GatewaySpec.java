@@ -20,20 +20,33 @@ package io.cellery.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.Singular;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Gateway Spec.
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class GatewaySpec {
     private @Singular("http")
     List<API> http;
     private @Singular("tcp")
     List<TCP> tcp;
+
+    public GatewaySpec() {
+        http = new ArrayList<>();
+        tcp = new ArrayList<>();
+    }
+
+    public void addHttpAPI(List<API> api) {
+        http.addAll(api);
+    }
+
+    public void addTCP(List<TCP> tcpIngress) {
+        tcp.addAll(tcpIngress);
+    }
+
 }

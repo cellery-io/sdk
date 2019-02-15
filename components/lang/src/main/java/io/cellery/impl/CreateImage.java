@@ -366,8 +366,8 @@ public class CreateImage extends BlockingNativeCallableUnit {
             if (component.getIsStub()) {
                 continue;
             }
-            spec.setHttp(component.getApis());
-            spec.setTcp(component.getTcpList());
+            spec.addHttpAPI(component.getApis());
+            spec.addTCP(component.getTcpList());
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             templateSpec.setReplicas(component.getReplicas());
 
