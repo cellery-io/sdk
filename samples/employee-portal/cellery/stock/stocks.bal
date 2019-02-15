@@ -22,7 +22,7 @@ cellery:Component stock = {
     }
 };
 
-cellery:CellImage stockCell = new("stock-options");
+cellery:CellImage stockCell = new();
 
 public function build(string imageName, string imageVersion) {
     //Build Stock Cell

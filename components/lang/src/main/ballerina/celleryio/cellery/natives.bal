@@ -149,28 +149,7 @@ public type Secret object {
     }
 };
 
-public type CellStub object {
-    public string name;
-    map<TCPIngress|HTTPIngress> ingresses = {};
-    map<string> context = {};
-
-    public function __init(string name) {
-        self.name = name;
-        self.ingresses = {};
-        self.context = {};
-    }
-
-    public function addIngress(string context) {
-        self.context = { name: context };
-    }
-
-    public function getIngress(string ingressName) returns string? {
-        return self.context[ingressName];
-    }
-};
-
 public type CellImage object {
-    public string name;
     public Component[] components = [];
     public API?[] apis = [];
     public TCP?[] tcp = [];
@@ -228,9 +207,6 @@ public type CellImage object {
         }
     }
 
-    public function __init(string name) {
-        self.name = name;
-    }
 };
 
 # Build the cell aritifacts
@@ -253,8 +229,8 @@ public extern function getBasePathFromSwagger(string swaggerFilePath) returns (s
 # + return - Array of Definitions
 public extern function getDefinitionsFromSwagger(string swaggerFilePath) returns (Definition[]);
 
-public function getHost(CellImage cellImage, Component component) returns (string) {
-    return getValidName(cellImage.name) + "--" + getValidName(component.name) + "-service";
+public function getHost(string cellImageName, Component component) returns (string) {
+    return cellImageName + "--" + getValidName(component.name) + "-service";
 }
 
 public function getBasePath(TCPIngress|HTTPIngress? httpIngress) returns (string) {

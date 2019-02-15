@@ -15,7 +15,7 @@ cellery:Component mysqlComponent = {
     }
 };
 
-cellery:CellImage mysqlCell = new("mysql");
+cellery:CellImage mysqlCell = new();
 
 public function build(string imageName, string imageVersion) {
     //Build MySQL Cell

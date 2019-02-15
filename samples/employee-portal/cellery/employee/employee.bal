@@ -47,7 +47,7 @@ cellery:Component salaryComponent = {
     }
 };
 
-public cellery:CellImage employeeCell = new("Employee");
+public cellery:CellImage employeeCell = new();
 
 public function build(string imageName, string imageVersion) {
 
@@ -55,7 +55,7 @@ public function build(string imageName, string imageVersion) {
     io:println("Building Employee Cell ...");
 
     // Map component parameters
-    cellery:setParameter(employeeComponent.parameters.SALARY_HOST, cellery:getHost(employeeCell, salaryComponent));
+    cellery:setParameter(employeeComponent.parameters.SALARY_HOST, cellery:getHost(imageName, salaryComponent));
     cellery:setParameter(employeeComponent.parameters.BASE_PATH,
     cellery:getBasePath(salaryComponent.ingresses.SalaryAPI));
 
