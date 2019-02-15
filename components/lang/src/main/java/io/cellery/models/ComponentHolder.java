@@ -36,4 +36,14 @@ public class ComponentHolder {
         temp.addApi(api);
         componentNameToComponentMap.put(componentName, temp);
     }
+
+    public void addTCP(String componentName, TCP tcp) {
+        Component temp = componentNameToComponentMap.remove(componentName);
+        if (temp == null) {
+            throw new BallerinaException("Invalid component name " + componentName);
+        }
+        tcp.setBackendHost(temp.getService());
+        temp.addTCP(tcp);
+        componentNameToComponentMap.put(componentName, temp);
+    }
 }

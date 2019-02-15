@@ -15,7 +15,6 @@
 // under the License.
 import ballerina/log;
 
-
 public const string TEAM = "TEAM";
 public const string OWNER = "OWNER";
 public const string MAINTAINER = "MAINTAINER";
@@ -50,17 +49,14 @@ public type API record {
     string name?;
     string targetComponent;
     boolean global;
-    TCPIngress|HTTPIngress ingress;
+    HTTPIngress ingress;
     !...
 };
 
-public type Egress record {
-    string targetComponent?;
-    string targetCell?;
-    TCPIngress|HTTPIngress ingress?;
-    string envVar?;
-    Resiliency resiliency?;
-    !...
+public type TCP record{
+    string name?;
+    string targetComponent;
+    TCPIngress ingress;
 };
 
 public type Resiliency record {
@@ -88,7 +84,6 @@ public type Component record {
     int replicas = 1;
     map<string> env?;
     map<TCPIngress|HTTPIngress> ingresses;
-    Egress[] egresses?;
     map<string> labels?;
     map<Env|Secret> parameters?;
     !...
@@ -96,8 +91,10 @@ public type Component record {
 
 public type TCPIngress object {
     public int port;
-    public function __init(int port) {
+    public int targetPort;
+    public function __init(int port, int targetPort) {
         self.port = port;
+        self.targetPort = targetPort;
     }
 };
 
@@ -176,7 +173,7 @@ public type CellImage object {
     public string name;
     public Component[] components = [];
     public API?[] apis = [];
-    public Egress?[] egresses = [];
+    public TCP?[] tcp = [];
 
     public function addComponent(Component component) {
         self.components[self.components.length()] = component;
@@ -184,23 +181,36 @@ public type CellImage object {
 
     public function exposeAPIsFrom(Component component) {
         foreach var (name, ingressTemp) in component.ingresses {
-            self.apis[self.apis.length()] = {
-                targetComponent: component.name,
-                ingress: ingressTemp,
-                global: false
-            };
+            if (ingressTemp is HTTPIngress) {
+                self.apis[self.apis.length()] = {
+                    targetComponent: component.name,
+                    ingress: ingressTemp,
+                    global: false
+                };
+            } else if (ingressTemp is TCPIngress){
+                self.tcp[self.tcp.length()] = {
+                    targetComponent: component.name,
+                    ingress: ingressTemp
+                };
+            }
         }
     }
 
     public function exposeAPIFrom(Component component, string ingressName) {
         TCPIngress|HTTPIngress? ingress = component.ingresses[ingressName];
-        if (ingress is (TCPIngress|HTTPIngress)) {
+        if (ingress is HTTPIngress) {
             self.apis[self.apis.length()] = {
                 targetComponent: component.name,
                 ingress: ingress,
                 global: false
             };
-        } else {
+        } else if (ingress is TCPIngress){
+            self.tcp[self.tcp.length()] = {
+                targetComponent: component.name,
+                ingress: ingress
+            };
+        }
+        else {
             error err = error("Ingress " + ingressName + " not found in the component " + component.name + ".");
             panic err;
         }
@@ -208,11 +218,13 @@ public type CellImage object {
 
     public function exposeGlobalAPI(Component component) {
         foreach var (name, ingressTemp) in component.ingresses {
-            self.apis[self.apis.length()] = {
-                targetComponent: component.name,
-                ingress: ingressTemp,
-                global: true
-            };
+            if (ingressTemp is HTTPIngress) {
+                self.apis[self.apis.length()] = {
+                    targetComponent: component.name,
+                    ingress: ingressTemp,
+                    global: true
+                };
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -21,19 +21,15 @@ package io.cellery.models;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Singular;
-
-import java.util.List;
 
 /**
- * Gateway Spec.
+ * TCP ingress model.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GatewaySpec {
-    private @Singular("http")
-    List<API> http;
-    private @Singular("tcp")
-    List<TCP> tcp;
+public class TCP {
+    int port;
+    int backendPort;
+    String backendHost;
 }

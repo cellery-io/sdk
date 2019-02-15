@@ -33,6 +33,7 @@ import io.cellery.models.GatewaySpec;
 import io.cellery.models.GatewayTemplate;
 import io.cellery.models.ServiceTemplate;
 import io.cellery.models.ServiceTemplateSpec;
+import io.cellery.models.TCP;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
@@ -69,6 +70,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
@@ -101,9 +103,10 @@ public class CreateImage extends BlockingNativeCallableUnit {
         String cellVersion = ctx.getNullableStringArgument(1);
         String cellName = getValidName(ctx.getStringArgument(0));
         CellCache cellCache = CellCache.getInstance();
-        processComponents(
-                ((BValueArray) ((BMap) ctx.getNullableRefArgument(0)).getMap().get("components")).getValues());
-        processAPIs(((BValueArray) ((BMap) ctx.getNullableRefArgument(0)).getMap().get("apis")).getValues());
+        final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
+        processComponents(((BValueArray) refArgument.getMap().get("components")).getValues());
+        processAPIs(((BValueArray) refArgument.getMap().get("apis")).getValues());
+        processTCP(((BValueArray) refArgument.getMap().get("tcp")).getValues());
         Set<Component> components = new HashSet<>(componentHolder.getComponentNameToComponentMap().values());
         cellCache.setCellNameToComponentMap(cellName, components);
         generateCell(cellName);
@@ -168,11 +171,22 @@ public class CreateImage extends BlockingNativeCallableUnit {
      * @param component  current component
      */
     private void processIngressPort(LinkedHashMap<?, ?> ingressMap, Component component) {
+        AtomicInteger containerPort = new AtomicInteger(0);
+        AtomicInteger servicePort = new AtomicInteger(0);
         ingressMap.forEach((name, entry) -> ((BMap<?, ?>) entry).getMap().forEach((key, value) -> {
             if ("port".equals(key.toString())) {
-                component.addPorts(Integer.parseInt(value.toString()), DEFAULT_GATEWAY_PORT);
+                containerPort.set(Integer.parseInt(value.toString()));
+            } else if ("targetPort".equals(key.toString())) {
+                servicePort.set(Integer.parseInt(value.toString()));
             }
         }));
+        if (servicePort.get() == 0) {
+            //HTTP ingress
+            component.addPorts(containerPort.get(), DEFAULT_GATEWAY_PORT);
+        } else {
+            //TCP ingress
+            component.addPorts(containerPort.get(), containerPort.get());
+        }
     }
 
     private void processAPIs(BRefType<?>[] apiMap) {
@@ -213,6 +227,47 @@ public class CreateImage extends BlockingNativeCallableUnit {
             }
             if (componentName != null) {
                 componentHolder.addAPI(componentName, api);
+            } else {
+                throw new BallerinaException("Undefined target component.");
+            }
+        }
+    }
+
+    private void processTCP(BRefType<?>[] tcpMap) {
+        for (BRefType tcpDefinition : tcpMap) {
+            if (tcpDefinition == null) {
+                continue;
+            }
+            TCP tcp = new TCP();
+            String componentName = null;
+            for (Map.Entry<?, ?> entry : ((BMap<?, ?>) tcpDefinition).getMap().entrySet()) {
+                Object key = entry.getKey();
+                BValue value = (BValue) entry.getValue();
+                switch (key.toString()) {
+                    case "targetComponent":
+                        componentName = value.toString();
+                        break;
+                    case "ingress":
+                        ((BMap<?, ?>) value).getMap().forEach((contextKey, contextValue) -> {
+                            switch (contextKey.toString()) {
+                                case "port":
+                                    tcp.setPort(Integer.parseInt(contextValue.toString()));
+                                    break;
+                                case "targetPort":
+                                    tcp.setBackendPort(Integer.parseInt(contextValue.toString()));
+                                    break;
+                                default:
+                                    break;
+                            }
+                        });
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+            if (componentName != null) {
+                componentHolder.addTCP(componentName, tcp);
             } else {
                 throw new BallerinaException("Undefined target component.");
             }
@@ -264,6 +319,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 continue;
             }
             spec.setHttp(component.getApis());
+            spec.setTcp(component.getTcpList());
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             templateSpec.setReplicas(component.getReplicas());
             List<EnvVar> envVarList = new ArrayList<>();
@@ -274,10 +330,11 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
             });
             //TODO:Fix service port
-            templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
             List<ContainerPort> ports = new ArrayList<>();
-            component.getContainerPortToServicePortMap().forEach((containerPort, servicePort) ->
-                    ports.add(new ContainerPortBuilder().withContainerPort(containerPort).build()));
+            component.getContainerPortToServicePortMap().forEach((containerPort, servicePort) -> {
+                ports.add(new ContainerPortBuilder().withContainerPort(containerPort).build());
+                templateSpec.setServicePort(servicePort);
+            });
             templateSpec.setContainer(new ContainerBuilder()
                     .withImage(component.getSource())
                     .withPorts(ports)

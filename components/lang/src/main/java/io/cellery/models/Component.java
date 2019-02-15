@@ -17,6 +17,7 @@ public class Component {
     Map<String, String> envVars;
     Map<String, String> labels;
     List<API> apis;
+    List<TCP> tcpList;
     String source;
     String service;
     Boolean isStub;
@@ -26,6 +27,7 @@ public class Component {
         envVars = new HashMap<>();
         labels = new HashMap<>();
         apis = new ArrayList<>();
+        tcpList = new ArrayList<>();
         containerPortToServicePortMap = new HashMap<>();
         replicas = 1;
         isStub = false;
@@ -33,6 +35,10 @@ public class Component {
 
     void addApi(API api) {
         this.apis.add(api);
+    }
+
+    void addTCP(TCP tcp) {
+        this.tcpList.add(tcp);
     }
 
     public void addPorts(int containerMap, int servicePort) {
