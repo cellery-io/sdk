@@ -17,10 +17,16 @@
  */
 package io.cellery;
 
+import com.esotericsoftware.yamlbeans.YamlWriter;
+
+import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 /**
  * Cellery Utility methods.
@@ -38,6 +44,57 @@ public class CelleryUtils {
     public static String readSwaggerFile(String path, Charset encoding) throws IOException {
         byte[] encoded = Files.readAllBytes(Paths.get(path));
         return new String(encoded, encoding);
+    }
+
+    /**
+     * Returns valid kubernetes name.
+     *
+     * @param name actual value
+     * @return valid name
+     */
+    public static String getValidName(String name) {
+        return name.toLowerCase(Locale.getDefault()).replaceAll("\\P{Alnum}", "-");
+    }
+
+
+    /**
+     * Write content to a File. Create the required directories if they don't not exists.
+     *
+     * @param context    context of the file
+     * @param targetPath target file path
+     * @throws IOException If an error occurs when writing to a file
+     */
+    public static void writeToFile(String context, String targetPath) throws IOException {
+        File newFile = new File(targetPath);
+        // delete if file exists
+        if (newFile.exists()) {
+            Files.delete(Paths.get(newFile.getPath()));
+        }
+        //create required directories
+        if (newFile.getParentFile().mkdirs()) {
+            Files.write(Paths.get(targetPath), context.getBytes(StandardCharsets.UTF_8));
+            return;
+        }
+        Files.write(Paths.get(targetPath), context.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Generates Yaml from a object.
+     *
+     * @param object Object
+     * @param <T>    Any Object type
+     * @return Yaml as a string.
+     */
+    public static <T> String toYaml(T object) {
+        try (StringWriter stringWriter = new StringWriter()) {
+            YamlWriter writer = new YamlWriter(stringWriter);
+            writer.write(object);
+            writer.getConfig().writeConfig.setWriteRootTags(false); //replaces only root tag
+            writer.close(); //don't add this to finally, because the text will not be flushed
+            return stringWriter.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

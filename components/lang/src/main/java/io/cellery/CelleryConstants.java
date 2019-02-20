@@ -17,6 +17,8 @@
  */
 package io.cellery;
 
+import java.io.File;
+
 /**
  * Collected constants of Cellery.
  */
@@ -38,9 +40,14 @@ public class CelleryConstants {
 
     // These should match the Ballerina object names of the Auto Scaling Metrics Objects
     public static final String AUTO_SCALING_METRIC_OBJECT_CPU_UTILIZATION_PERCENTAGE = "CpuUtilizationPercentage";
-
+    public static final String YAML = ".yaml";
     public static final String TARGET = "target";
     public static final String RESOURCES = "resources";
     public static final String DEFAULT_GATEWAY_PROTOCOL = "http";
     public static final int DEFAULT_GATEWAY_PORT = 80;
+    public static final String DEFAULT_PARAMETER_VALUE = "";
+    public static final String CELLERY_HOME = System.getProperty("user.home") + File.separator +
+            ".cellery";
+    public static final String CELLERY_REPO_PATH = CELLERY_HOME + File.separator + "repo" + File.separator;
+    public static final String CELL_YAML_PATH = "artifacts" + File.separator + "cellery" + File.separator;
 }

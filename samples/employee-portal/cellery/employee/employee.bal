@@ -33,9 +33,9 @@ cellery:Component salaryComponent = {
         SalaryAPI: new cellery:HTTPIngress(
                 8080,
                 {
-                  basePath: "payment",
+                  basePath: "payroll",
                   definitions:[{
-                      path: "/",
+                      path: "salary",
                       method: "GET"
                   }]
                 }
@@ -65,6 +65,7 @@ public function build(string imageName, string imageVersion) {
 
     //Expose API from Cell Gateway
     employeeCell.exposeAPIsFrom(employeeComponent);
+    employeeCell.exposeAPIsFrom(salaryComponent);
 
     _ = cellery:createImage(employeeCell, imageName, imageVersion);
 }

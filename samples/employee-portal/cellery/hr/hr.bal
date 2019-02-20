@@ -1,49 +1,52 @@
 import ballerina/io;
 import celleryio/cellery;
+import anuruddhal/employee;
+import anuruddhal/stock;
 
 
 //HR component
-cellery:Component hr = {
+cellery:Component hrComponent = {
     name: "hr",
     source: {
         image: "docker.io/celleryio/sampleapp-hr"
     },
-    env: { employeegw_url: "", stockgw_url: "" },
     ingresses: {
-        "hr": new cellery:HTTPIngress(8080, "info",
-            [
-                {
-                    path: "/",
+        "hr": new cellery:HTTPIngress(8080, {
+                basePath: "/",
+                definitions: [{
+                    path: "/info",
                     method: "GET"
-                }
-            ]
+                }]
+            }
         )
+    },
+    parameters: {
+        employeegw_url: new cellery:Env(),
+        stockgw_url: new cellery:Env()
     }
 
 };
 
 // Cell Intialization
-cellery:CellImage hrCell = new("HR");
-cellery:CellStub employeeStub = new("Employee");
-cellery:CellStub stocksStub = new("Stock-Options");
+cellery:CellImage hrCell = new();
 
-public function build() {
+public function build(string imageName, string imageVersion) {
     // Build HR cell
     io:println("Building HR Cell ...");
-    hrCell.addComponent(hr);
-
-    // Load Employee Stub
-    employeeStub.addIngress("employee");
-    hrCell.addStub(employeeStub);
-
-    // Load Stock Stub
-    stocksStub.addIngress("stocks");
-    hrCell.addStub(stocksStub);
+    hrCell.addComponent(hrComponent);
 
     // Expose API from Cell Gateway & Global Gateway
-    hrCell.exposeGlobalAPI(hr);
-    hrCell.declareEgress(employeeStub.name, employeeStub.getIngress("employee"), "employeegw_url");
-    hrCell.declareEgress(stocksStub.name, stocksStub.getIngress("stocks"), "stockgw_url");
-    _ = cellery:createImage(hrCell);
-
+    hrCell.exposeGlobalAPI(hrComponent);
+    _ = cellery:createImage(hrCell, imageName, imageVersion);
 }
+
+
+public function run(string imageName, string imageVersion, string instanceName) {
+    employee:EmployeeReference employeeRef = new(instanceName = "employee");
+    stock:StockReference stockRef = new(instanceName = "stock");
+    cellery:setParameter(hrComponent.parameters.employeegw_url, employeeRef.getHost());
+    cellery:setParameter(hrComponent.parameters.stockgw_url, stockRef.getHost());
+    hrCell.addComponent(hrComponent);
+    _ = cellery:createInstance(hrCell, imageName, imageVersion, instanceName);
+}
+

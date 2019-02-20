@@ -20,7 +20,6 @@ public class Component {
     List<TCP> tcpList;
     String source;
     String service;
-    Boolean isStub;
     Map<Integer, Integer> containerPortToServicePortMap;
     AutoScaling autoScaling;
 
@@ -31,7 +30,6 @@ public class Component {
         tcpList = new ArrayList<>();
         containerPortToServicePortMap = new HashMap<>();
         replicas = 1;
-        isStub = false;
     }
 
     void addApi(API api) {

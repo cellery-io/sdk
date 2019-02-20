@@ -18,22 +18,22 @@
 # Reference to the {{cellName}} cell image instance which can be used to get details about the APIs
 # exposed by the the cell. This information is only relevant for calls within the cellery system.
 #
-# + alias - The alias of the instance of the cell image to be referred to
+# + instanceName - The name of the instance of the cell image to be referred to
 public type {{#handleTypeName}}{{cellName}}{{/handleTypeName}}Reference object {
     string cellName = "{{cellName}}";
     string cellVersion = "{{cellVersion}}";
-    string alias = "";
+    string instanceName = "";
 
-    public function __init(string alias = "") {
-        self.alias = alias;
+    public function __init(string instanceName = "") {
+        self.instanceName = instanceName;
     }
 
     # Get the Host name of the Cell Gateway. This hostname can be used when accessing the APIs.
     #
     # + return - The host name of the Cell Gateway
     public function getHost() returns string {
-        if (self.alias.length() > 0) {
-            return self.cellName + "--" + self.cellVersion + "--" + self.alias + "--gateway-service";
+        if (self.instanceName.length() > 0) {
+            return self.cellName + "--" + self.cellVersion + "--" + self.instanceName + "--gateway-service";
         }
         return self.cellName + "--" + self.cellVersion + "--gateway-service";
     }

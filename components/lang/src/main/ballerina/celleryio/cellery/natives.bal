@@ -102,7 +102,6 @@ public type Component record {
     string name;
     ImageSource source;
     int replicas = 1;
-    map<string> env?;
     map<TCPIngress|HTTPIngress> ingresses;
     map<string> labels?;
     map<Env|Secret> parameters?;
@@ -237,6 +236,16 @@ public type CellImage object {
 # + imageVersion - The cell image version
 # + return - true/false
 public extern function createImage(CellImage cellImage, string imageName, string imageVersion) returns (boolean|error);
+
+# Update the cell aritifacts with runtime changes
+#
+# + cellImage - The cell image definition
+# + imageName - The cell image name
+# + imageVersion - The cell image version
+# + instanceName - The cell instance name
+# + return - true/false
+public extern function createInstance(CellImage cellImage, string imageName, string imageVersion, string instanceName)
+returns (boolean|error);
 
 # Parse the swagger file and returns BasePath
 #

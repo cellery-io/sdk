@@ -17,7 +17,6 @@
  */
 package io.cellery.impl;
 
-import com.esotericsoftware.yamlbeans.YamlWriter;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
@@ -65,9 +64,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,8 +77,12 @@ import java.util.function.Function;
 
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
+import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.TARGET;
-import static org.apache.commons.lang3.StringUtils.removePattern;
+import static io.cellery.CelleryConstants.YAML;
+import static io.cellery.CelleryUtils.getValidName;
+import static io.cellery.CelleryUtils.toYaml;
+import static io.cellery.CelleryUtils.writeToFile;
 
 /**
  * Native function cellery:createImage.
@@ -135,23 +135,20 @@ public class CreateImage extends BlockingNativeCallableUnit {
                     case "replicas":
                         component.setReplicas((int) ((BInteger) value).intValue());
                         break;
-                    case "isStub":
-                        component.setIsStub(((BBoolean) value).booleanValue());
-                        break;
                     case "source":
                         component.setSource(((BMap<?, ?>) value).getMap().get("image").toString());
                         break;
                     case "ingresses":
                         processIngressPort(((BMap<?, ?>) value).getMap(), component);
                         break;
-                    case "env":
-                        ((BMap<?, ?>) value).getMap().forEach((envKey, envValue) ->
-                                component.addEnv(envKey.toString(), envValue.toString()));
-                        break;
                     case "parameters":
                         ((BMap<?, ?>) value).getMap().forEach((k, v) -> {
-                            if (!((BMap) v).getMap().get("value").toString().isEmpty()) {
-                                component.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
+                            if (((BMap) v).getMap().get("value") != null) {
+                                if (!((BMap) v).getMap().get("value").toString().isEmpty()) {
+                                    component.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
+                                }
+                            } else {
+                                component.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);
                             }
                             //TODO:Handle secrets
                         });
@@ -182,9 +179,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         AtomicInteger servicePort = new AtomicInteger(0);
         ingressMap.forEach((name, entry) -> ((BMap<?, ?>) entry).getMap().forEach((key, value) -> {
             if ("port".equals(key.toString())) {
-                containerPort.set(Integer.parseInt(value.toString()));
+                containerPort.set((int) ((BInteger) value).intValue());
             } else if ("targetPort".equals(key.toString())) {
-                servicePort.set(Integer.parseInt(value.toString()));
+                servicePort.set((int) ((BInteger) value).intValue());
             }
         }));
         if (servicePort.get() == 0) {
@@ -200,7 +197,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
      * Extract the scale policy.
      *
      * @param scalePolicy Scale policy to be processed
-     * @param component current component
+     * @param component   current component
      */
     private void processAutoScalePolicy(LinkedHashMap<?, ?> scalePolicy, Component component) {
         LinkedHashMap bScalePolicy = ((BMap) scalePolicy.get("policy")).getMap();
@@ -298,10 +295,10 @@ public class CreateImage extends BlockingNativeCallableUnit {
                         ((BMap<?, ?>) value).getMap().forEach((contextKey, contextValue) -> {
                             switch (contextKey.toString()) {
                                 case "port":
-                                    tcp.setPort(Integer.parseInt(contextValue.toString()));
+                                    tcp.setPort((int) ((BInteger) contextValue).intValue());
                                     break;
                                 case "targetPort":
-                                    tcp.setBackendPort(Integer.parseInt(contextValue.toString()));
+                                    tcp.setBackendPort((int) ((BInteger) contextValue).intValue());
                                     break;
                                 default:
                                     break;
@@ -346,15 +343,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
         return apiDefinitions;
     }
 
-    /**
-     * Returns valid kubernetes name.
-     *
-     * @param name actual value
-     * @return valid name
-     */
-    private String getValidName(String name) {
-        return name.toLowerCase(Locale.getDefault()).replace("_", "-").replace(".", "-");
-    }
 
     private void generateCell(String name) {
         List<Component> components =
@@ -363,9 +351,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
         List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
 
         for (Component component : components) {
-            if (component.getIsStub()) {
-                continue;
-            }
             spec.addHttpAPI(component.getApis());
             spec.addTCP(component.getTcpList());
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
@@ -431,7 +416,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         cellSpec.setServicesTemplates(serviceTemplateList);
         Cell cell = new Cell(new ObjectMetaBuilder().withName(getValidName(name)).build(), cellSpec);
 
-        String targetPath = OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + name + ".yaml";
+        String targetPath = OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + name + YAML;
         try {
             writeToFile(toYaml(cell), targetPath);
         } catch (IOException e) {
@@ -485,50 +470,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
         }
     }
 
-    /**
-     * Write content to a File. Create the required directories if they don't not exists.
-     *
-     * @param context    context of the file
-     * @param targetPath target file path
-     * @throws IOException If an error occurs when writing to a file
-     */
-    private void writeToFile(String context, String targetPath) throws IOException {
-        File newFile = new File(targetPath);
-        // delete if file exists
-        if (newFile.exists()) {
-            Files.delete(Paths.get(newFile.getPath()));
-        }
-        //create required directories
-        if (newFile.getParentFile().mkdirs()) {
-            Files.write(Paths.get(targetPath), context.getBytes(StandardCharsets.UTF_8));
-            return;
-        }
-        Files.write(Paths.get(targetPath), context.getBytes(StandardCharsets.UTF_8));
-    }
-
-    /**
-     * Generates Yaml from a object.
-     *
-     * @param object Object
-     * @param <T>    Any Object type
-     * @return Yaml as a string.
-     */
-    private <T> String toYaml(T object) {
-        try (StringWriter stringWriter = new StringWriter()) {
-            YamlWriter writer = new YamlWriter(stringWriter);
-            writer.write(object);
-            writer.getConfig().writeConfig.setWriteRootTags(false); //replaces only root tag
-            writer.close(); //don't add this to finally, because the text will not be flushed
-            return removeTags(stringWriter.toString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String removeTags(String string) {
-        //a tag is a sequence of characters starting with ! and ending with whitespace
-        return removePattern(string, " ![^\\s]*");
-    }
 
     /**
      * Convert a string to title case.
