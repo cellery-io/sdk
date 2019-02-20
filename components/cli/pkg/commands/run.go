@@ -30,7 +30,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunRun(cellImageTag string) {
+func RunRun(cellImageTag string, instanceName string) {
 	parsedCellImage, err := util.ParseImageTag(cellImageTag)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
@@ -61,7 +61,45 @@ func RunRun(cellImageTag string) {
 		panic(err)
 	}
 
-	kubeYamlDir := filepath.Join(tmpPath, "artifacts", "cellery")
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+	}
+	var kubeYamlDir string
+	if instanceName != "" {
+		//Instance name is provided. Ballerina run method should be executed.
+		balFilePath, err := util.GetSourceFileName(tmpPath)
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+		}
+		balFilePath = filepath.Join(tmpPath, balFilePath)
+		cmd := exec.Command("ballerina", "run", balFilePath+":run",
+			parsedCellImage.Organization+"/"+parsedCellImage.ImageName, parsedCellImage.ImageVersion, instanceName)
+		execError := ""
+		stdoutReader, _ := cmd.StdoutPipe()
+		stdoutScanner := bufio.NewScanner(stdoutReader)
+		go func() {
+			for stdoutScanner.Scan() {
+				fmt.Printf("\033[36m%s\033[m\n", stdoutScanner.Text())
+			}
+		}()
+		stderrReader, _ := cmd.StderrPipe()
+		stderrScanner := bufio.NewScanner(stderrReader)
+		go func() {
+			for stderrScanner.Scan() {
+				execError += stderrScanner.Text()
+			}
+		}()
+		err = cmd.Start()
+		if err != nil {
+			util.ExitWithErrorMessage("Error in executing cellery run", err)
+		}
+		err = cmd.Wait()
+
+		kubeYamlDir = filepath.Join(util.UserHomeDir(), ".cellery", "tmp", "instances", instanceName)
+	} else {
+		// instance name is not provided apply the yaml generated at build.
+		kubeYamlDir = filepath.Join(tmpPath, "artifacts", "cellery")
+	}
 
 	cmd := exec.Command("kubectl", "apply", "-f", kubeYamlDir)
 	execError := ""
@@ -84,7 +122,7 @@ func RunRun(cellImageTag string) {
 		util.ExitWithErrorMessage("Error in executing cell run", err)
 	}
 	err = cmd.Wait()
-
+	_ = os.RemoveAll(kubeYamlDir)
 	_ = os.RemoveAll(tmpPath)
 
 	if err != nil {

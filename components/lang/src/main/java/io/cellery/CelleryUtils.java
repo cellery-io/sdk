@@ -18,6 +18,7 @@
 package io.cellery;
 
 import com.esotericsoftware.yamlbeans.YamlWriter;
+import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,7 +94,7 @@ public class CelleryUtils {
             writer.close(); //don't add this to finally, because the text will not be flushed
             return stringWriter.toString();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BallerinaException("Error occurred while generating yaml definition.");
         }
     }
 

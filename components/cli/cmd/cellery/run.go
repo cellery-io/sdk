@@ -44,7 +44,7 @@ func newRunCommand() *cobra.Command {
 				return err
 			}
 			if name != "" {
-				isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
+				isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
 				if err != nil || !isCellValid {
 					return fmt.Errorf("expects a valid cell name, received %s", args[0])
 				}
@@ -52,7 +52,7 @@ func newRunCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunRun(args[0])
+			commands.RunRun(args[0], name)
 		},
 		Example: "  cellery run cellery-samples/employee:1.0.0 -n employee\n" +
 			"  cellery run registry.foo.io/cellery-samples/employee:1.0.0 -n employee" +

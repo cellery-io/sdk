@@ -890,3 +890,23 @@ func PrintSuccessMessage(message string) {
 	fmt.Println()
 	fmt.Printf("\n%s %s\n", GreenBold("\U00002714"), message)
 }
+
+func GetSourceFileName(filePath string) (string, error) {
+	d, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer d.Close()
+	fi, err := d.Readdir(-1)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	for _, fi := range fi {
+		if fi.Mode().IsRegular() && strings.HasSuffix(fi.Name(), ".bal") {
+			return fi.Name(), nil
+		}
+	}
+	return "", errors.New("Source file not found.")
+}
