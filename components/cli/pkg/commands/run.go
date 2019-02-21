@@ -65,7 +65,7 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
 	var kubeYamlDir string
-	if len(dependencies) > 0 {
+	if len(dependencies) > 0 && instanceName != "" {
 		//Instance name is provided. Ballerina run method should be executed.
 		balFilePath, err := util.GetSourceFileName(tmpPath)
 		if err != nil {
@@ -107,7 +107,9 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 		kubeYamlDir = filepath.Join(tmpPath, "artifacts", "cellery")
 	}
 	kubeYamlFile := filepath.Join(kubeYamlDir, parsedCellImage.ImageName+".yaml")
-	err = util.ReplaceInFile(kubeYamlFile, "name: "+parsedCellImage.ImageName, "name: "+instanceName, 1)
+	if instanceName != "" {
+		err = util.ReplaceInFile(kubeYamlFile, "name: "+parsedCellImage.ImageName, "name: "+instanceName, 1)
+	}
 	if err != nil {
 		util.ExitWithErrorMessage("Error in replacing cell instance name", err)
 	}
