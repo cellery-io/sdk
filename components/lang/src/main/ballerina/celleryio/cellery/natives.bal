@@ -118,27 +118,21 @@ public type TCPIngress object {
     }
 };
 
-public type InlineAPI record {
-    string basePath;
-    Definition[] definitions;
-    !...;
-};
-
 public type HTTPIngress object {
     public int port;
-    public string basePath;
+    public string context;
     public Definition[] definitions;
 
-    public function __init(int port, InlineAPI|string definitions) {
+    public function __init(int port, string context ,Definition[]|string definitions) {
         self.port = port;
-        if (definitions is InlineAPI) {
-            // API details are defined in-line
-            self.basePath = definitions.basePath;
-            self.definitions = definitions.definitions;
-        } else {
+        if (definitions is string) {
             // API details are defined in a swagger file
-            self.basePath = getBasePathFromSwagger(definitions);
+            self.context = context;
             self.definitions = getDefinitionsFromSwagger(definitions);
+        } else {
+            // API details are defined in-line
+            self.context = context;
+            self.definitions = definitions;
         }
     }
 };
@@ -247,12 +241,6 @@ public extern function createImage(CellImage cellImage, string imageName, string
 public extern function createInstance(CellImage cellImage, string imageName, string imageVersion, string instanceName)
 returns (boolean|error);
 
-# Parse the swagger file and returns BasePath
-#
-# + swaggerFilePath - The swaggerFilePath
-# + return - Basepath declared in the swagger file
-public extern function getBasePathFromSwagger(string swaggerFilePath) returns (string);
-
 # Parse the swagger file and returns API Defintions
 #
 # + swaggerFilePath - The swaggerFilePath
@@ -261,14 +249,6 @@ public extern function getDefinitionsFromSwagger(string swaggerFilePath) returns
 
 public function getHost(string cellImageName, Component component) returns (string) {
     return cellImageName + "--" + getValidName(component.name) + "-service";
-}
-
-public function getBasePath(TCPIngress|HTTPIngress? httpIngress) returns (string) {
-    if (httpIngress is HTTPIngress) {
-        return httpIngress.basePath;
-    }
-    error err = error("Unable to extract basePath from ingress");
-    panic err;
 }
 
 function getValidName(string name) returns string {

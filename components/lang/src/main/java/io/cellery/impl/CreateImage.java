@@ -253,7 +253,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
                     case "ingress":
                         ((BMap<?, ?>) value).getMap().forEach((contextKey, contextValue) -> {
                             switch (contextKey.toString()) {
-                                case "basePath":
+                                case "context":
                                     api.setContext(contextValue.toString());
                                     break;
                                 case "definitions":

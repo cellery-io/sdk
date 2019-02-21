@@ -10,13 +10,13 @@ cellery:Component employeeComponent = {
     ingresses: {
         employee: new cellery:HTTPIngress(
                       8080,
+                      "employee-details",
                       "./resources/employee.swagger.json"
         )
     },
     parameters: {
         SALARY_HOST: new cellery:Env(),
-        PORT: new cellery:Env(default = 8080),
-        BASE_PATH: new cellery:Env()
+        PORT: new cellery:Env(default = 8080)
     },
     labels: {
         cellery:TEAM:"HR"
@@ -32,13 +32,11 @@ cellery:Component salaryComponent = {
     ingresses: {
         SalaryAPI: new cellery:HTTPIngress(
                 8080,
-                {
-                  basePath: "payroll",
-                  definitions:[{
+                "payroll",
+                [{
                       path: "salary",
                       method: "GET"
-                  }]
-                }
+                }]
             )
     },
     labels: {
@@ -56,8 +54,6 @@ public function build(string imageName, string imageVersion) {
 
     // Map component parameters
     cellery:setParameter(employeeComponent.parameters.SALARY_HOST, cellery:getHost(imageName, salaryComponent));
-    cellery:setParameter(employeeComponent.parameters.BASE_PATH,
-    cellery:getBasePath(salaryComponent.ingresses.SalaryAPI));
 
     // Add components to Cell
     employeeCell.addComponent(employeeComponent);
@@ -65,7 +61,6 @@ public function build(string imageName, string imageVersion) {
 
     //Expose API from Cell Gateway
     employeeCell.exposeAPIsFrom(employeeComponent);
-    employeeCell.exposeAPIsFrom(salaryComponent);
 
     _ = cellery:createImage(employeeCell, imageName, imageVersion);
 }

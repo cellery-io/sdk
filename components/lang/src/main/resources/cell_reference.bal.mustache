@@ -24,7 +24,7 @@ public type {{#handleTypeName}}{{cellName}}{{/handleTypeName}}Reference object {
     string cellVersion = "{{cellVersion}}";
     string instanceName = "";
 
-    public function __init(string instanceName = "") {
+    public function __init(string instanceName) {
         self.instanceName = instanceName;
     }
 
@@ -32,10 +32,7 @@ public type {{#handleTypeName}}{{cellName}}{{/handleTypeName}}Reference object {
     #
     # + return - The host name of the Cell Gateway
     public function getHost() returns string {
-        if (self.instanceName.length() > 0) {
-            return self.cellName + "--" + self.cellVersion + "--" + self.instanceName + "--gateway-service";
-        }
-        return self.cellName + "--" + self.cellVersion + "--gateway-service";
+            return self.instanceName + "--gateway-service";
     }
 
 {{#components}}
@@ -48,7 +45,7 @@ public type {{#handleTypeName}}{{cellName}}{{/handleTypeName}}Reference object {
 {{#context}}
         return self.get{{#handleApiName}}{{context}}{{/handleApiName}}ApiProtocol() + "://" + self.getHost() + ":"
             + self.get{{#handleApiName}}{{context}}{{/handleApiName}}ApiPort()
-            + self.get{{#handleApiName}}{{context}}{{/handleApiName}}ApiBasePath();
+            + self.get{{#handleApiName}}{{context}}{{/handleApiName}}ApiContext();
 {{/context}}
 {{^context}}
         return self.get{{#handleApiName}}{{context}}{{/handleApiName}}ApiProtocol() + "://" + self.getHost() + ":"
@@ -73,11 +70,11 @@ public type {{#handleTypeName}}{{cellName}}{{/handleTypeName}}Reference object {
     }
 
 {{#context}}
-    # Get the base path of the "{{context}}" API exposed by the cell gateway.
-    # This base path can be used when accessing the "{{context}}" API.
+    # Get the context of the "{{context}}" API exposed by the cell gateway.
+    # This context path can be used when accessing the "{{context}}" API.
     #
-    # + return - The base path of the "{{context}}" API
-    public function get{{#handleApiName}}{{context}}{{/handleApiName}}ApiBasePath() returns string {
+    # + return - The context of the "{{context}}" API
+    public function get{{#handleApiName}}{{context}}{{/handleApiName}}ApiContext() returns string {
         return "{{context}}";
     }
 {{/context}}

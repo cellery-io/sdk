@@ -1,7 +1,7 @@
 import ballerina/io;
 import celleryio/cellery;
-import anuruddhal/employee;
-import anuruddhal/stock;
+import myorg/employee;
+import myorg/stock;
 
 
 //HR component
@@ -11,13 +11,13 @@ cellery:Component hrComponent = {
         image: "docker.io/celleryio/sampleapp-hr"
     },
     ingresses: {
-        "hr": new cellery:HTTPIngress(8080, {
-                basePath: "/",
-                definitions: [{
-                    path: "/info",
-                    method: "GET"
-                }]
-            }
+        "hr": new cellery:HTTPIngress(
+                  8080,
+                  "hr-api",
+                  [{
+                      path: "/info",
+                      method: "GET"
+                  }]
         )
     },
     parameters: {
@@ -42,8 +42,8 @@ public function build(string imageName, string imageVersion) {
 
 
 public function run(string imageName, string imageVersion, string instanceName) {
-    employee:EmployeeReference employeeRef = new(instanceName = "employee");
-    stock:StockReference stockRef = new(instanceName = "stock");
+    employee:EmployeeReference employeeRef = new("employee");
+    stock:StockReference stockRef = new("stock");
     cellery:setParameter(hrComponent.parameters.employeegw_url, employeeRef.getHost());
     cellery:setParameter(hrComponent.parameters.stockgw_url, stockRef.getHost());
     hrCell.addComponent(hrComponent);

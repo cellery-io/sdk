@@ -64,12 +64,17 @@ public class GetDefinitionsFromSwagger extends BlockingNativeCallableUnit {
             throw new BallerinaException("Unable to read swagger file. " + swaggerFilePath);
         }
         final Swagger swagger = new SwaggerParser().parse(specification);
+        String basePath = swagger.getBasePath();
+        if (basePath.isEmpty() || "/".equals(basePath)) {
+            basePath = "";
+        }
         AtomicLong runCount = new AtomicLong(0L);
+        String finalBasePath = basePath;
         swagger.getPaths().forEach((path, pathDefinition) -> {
             pathDefinition.getOperationMap().forEach((httpMethod, operation) -> {
                 BMap<String, BValue> bmap = BLangConnectorSPIUtil.createBStruct(ctx, CelleryConstants.CELLERY_PACKAGE,
                         CelleryConstants.RECORD_NAME_DEFINITION,
-                        path, httpMethod.toString());
+                        finalBasePath + path, httpMethod.toString());
                 bValueArray.add(runCount.getAndIncrement(), bmap);
 
             });
