@@ -22,21 +22,20 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/spf13/cobra"
 )
 
 func newRunCommand() *cobra.Command {
 	var name string
-	var dependencies string
+	var dependencies []string
 	cmd := &cobra.Command{
 		Use:   "run [<registry>/]<organization>/<cell-image>:<version>",
 		Short: "Use a cell image to create a running instance",
 		Args: func(cmd *cobra.Command, args []string) error {
-			err := cobra.ExactArgs(1)(cmd, args)
+			err := cobra.MinimumNArgs(1)(cmd, args)
 			if err != nil {
 				return err
 			}
@@ -60,7 +59,7 @@ func newRunCommand() *cobra.Command {
 			"  cellery run cellery-samples/employee:1.0.0 -l dep1:instance1 dep2:instance2",
 	}
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Name of the cell instance")
-	cmd.Flags().StringVarP(&dependencies, "link", "l", "",
+	cmd.Flags().StringArrayVarP(&dependencies, "link", "l", nil,
 		"fully qualified dependency instance names")
 	return cmd
 }

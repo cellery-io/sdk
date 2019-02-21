@@ -911,18 +911,16 @@ func GetSourceFileName(filePath string) (string, error) {
 	return "", errors.New("Source file not found.")
 }
 
-func ReplaceInFile(srcFile, oldString, newString string) error {
+func ReplaceInFile(srcFile, oldString, newString string, replaceCount int) error {
 	input, err := ioutil.ReadFile(srcFile)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
-	output := bytes.Replace(input, []byte(oldString), []byte(newString), -1)
+	output := bytes.Replace(input, []byte(oldString), []byte(newString), replaceCount)
 
 	if err = ioutil.WriteFile(srcFile, output, 0666); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	return nil
 }

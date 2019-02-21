@@ -92,10 +92,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             });
 
         });
-        //Replace cell name with instance name
-        cell.getMetadata().setName(instanceName);
         String destinationPath = CELLERY_HOME + File.separator + "tmp" + File.separator
-                + "instances" + File.separator + instanceName + File.separator + instanceName + YAML;
+                + "instances" + File.separator + instanceName + File.separator + cellName + YAML;
         try {
             writeToFile(removeTags(toYaml(cell)), destinationPath);
         } catch (IOException e) {

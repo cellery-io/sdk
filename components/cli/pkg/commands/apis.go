@@ -90,7 +90,7 @@ func displayApisTable(apiArray []util.GatewayHttpApi, cellName string) {
 					}
 				} else {
 					if strings.HasPrefix(apiArray[i].Definitions[j].Path, "/") {
-						url = strings.TrimSuffix(url, "/");
+						url = strings.TrimSuffix(url, "/")
 					}
 				}
 				url += apiArray[i].Definitions[j].Path

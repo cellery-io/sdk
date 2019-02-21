@@ -20,19 +20,17 @@ package commands
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunRun(cellImageTag string, instanceName string, dependencies string) {
+func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 	parsedCellImage, err := util.ParseImageTag(cellImageTag)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
@@ -67,26 +65,22 @@ func RunRun(cellImageTag string, instanceName string, dependencies string) {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
 	var kubeYamlDir string
-	if instanceName != "" {
+	if len(dependencies) > 0 {
 		//Instance name is provided. Ballerina run method should be executed.
 		balFilePath, err := util.GetSourceFileName(tmpPath)
 		if err != nil {
 			util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 		}
 		balFilePath = filepath.Join(tmpPath, balFilePath)
-		// if any dependency instance names are passed to the command, pass them to ballerina run
-		var depMap string
-		if len(dependencies) > 0 {
-			dependencyArr := strings.Fields(dependencies)
-			depMap = generateBalCompatibleMap(dependencyArr)
-			fmt.Println(depMap)
-		} else {
-			depMap = "{}"
-			fmt.Println(depMap)
+		args := []string{"run", balFilePath + ":run", parsedCellImage.Organization + "/" + parsedCellImage.ImageName,
+			parsedCellImage.ImageVersion, instanceName}
+		args = append(args, dependencies...)
+
+		cmd, err := buildCommand("ballerina", args)
+		if err != nil {
+			util.ExitWithErrorMessage("Error in building ballerina command", err)
 		}
-		cmd := exec.Command("ballerina", "run", balFilePath+":run",
-			parsedCellImage.Organization+"/"+parsedCellImage.ImageName, parsedCellImage.ImageVersion, instanceName, depMap)
-		execError := ""
+
 		stdoutReader, _ := cmd.StdoutPipe()
 		stdoutScanner := bufio.NewScanner(stdoutReader)
 		go func() {
@@ -98,7 +92,7 @@ func RunRun(cellImageTag string, instanceName string, dependencies string) {
 		stderrScanner := bufio.NewScanner(stderrReader)
 		go func() {
 			for stderrScanner.Scan() {
-				execError += stderrScanner.Text()
+				fmt.Printf("\033[36m%s\033[m\n", stderrScanner.Text())
 			}
 		}()
 		err = cmd.Start()
@@ -112,9 +106,12 @@ func RunRun(cellImageTag string, instanceName string, dependencies string) {
 		// instance name is not provided apply the yaml generated at build.
 		kubeYamlDir = filepath.Join(tmpPath, "artifacts", "cellery")
 	}
-
+	kubeYamlFile := filepath.Join(kubeYamlDir, parsedCellImage.ImageName+".yaml")
+	err = util.ReplaceInFile(kubeYamlFile, "name: "+parsedCellImage.ImageName, "name: "+instanceName, 1)
+	if err != nil {
+		util.ExitWithErrorMessage("Error in replacing cell instance name", err)
+	}
 	cmd := exec.Command("kubectl", "apply", "-f", kubeYamlDir)
-	execError := ""
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
 	go func() {
@@ -126,7 +123,7 @@ func RunRun(cellImageTag string, instanceName string, dependencies string) {
 	stderrScanner := bufio.NewScanner(stderrReader)
 	go func() {
 		for stderrScanner.Scan() {
-			execError += stderrScanner.Text()
+			fmt.Printf("\033[36m%s\033[m\n", stderrScanner.Text())
 		}
 	}()
 	err = cmd.Start()
@@ -145,22 +142,22 @@ func RunRun(cellImageTag string, instanceName string, dependencies string) {
 	util.PrintWhatsNextMessage("list running cells", "cellery ps")
 }
 
-func generateBalCompatibleMap (depArr []string) string {
-	var strBuffer bytes.Buffer
-	strBuffer.WriteString("{")
-	for index, element := range depArr {
-		if index > 0 {
-			strBuffer.WriteString(",")
-		}
-		depElements := strings.Split(element, ":")
-		strBuffer.WriteString("\"")
-		strBuffer.WriteString(depElements[0])
-		strBuffer.WriteString("\"")
-		strBuffer.WriteString(":")
-		strBuffer.WriteString("\"")
-		strBuffer.WriteString(depElements[1])
-		strBuffer.WriteString("\"")
+func buildCommand(name string, args []string) (*exec.Cmd, error) {
+	newArgs := make([]string, len(args)+1)
+	newArgs[0] = name
+	for i, element := range args {
+		newArgs[i+1] = element
 	}
-	strBuffer.WriteString("}")
-	return strBuffer.String()
+	cmd := &exec.Cmd{
+		Path: name,
+		Args: append(newArgs),
+	}
+	if filepath.Base(name) == name {
+		if lp, err := exec.LookPath(name); err != nil {
+			return nil, err
+		} else {
+			cmd.Path = lp
+		}
+	}
+	return cmd, nil
 }

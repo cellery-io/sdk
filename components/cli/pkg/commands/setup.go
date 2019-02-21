@@ -37,7 +37,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
-	sqladmin "google.golang.org/api/sqladmin/v1beta4"
+	"google.golang.org/api/sqladmin/v1beta4"
 
 	"context"
 
@@ -537,8 +537,8 @@ func create(client *storage.Client, projectID, bucketName string) error {
 
 func uploadSqlFile(client *storage.Client, bucket, object string) error {
 	ctx := context.Background()
-	util.ReplaceInFile(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "sql", "init.sql"), "DATABASE_USERNAME", constants.GCP_SQL_USER_NAME)
-	util.ReplaceInFile(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "sql", "init.sql"), "DATABASE_PASSWORD", constants.GCP_SQL_PASSWORD + strconv.Itoa(rand.Intn(1000)))
+	err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "sql", "init.sql"), "DATABASE_USERNAME", constants.GCP_SQL_USER_NAME, -1)
+	err = util.ReplaceInFile(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "sql", "init.sql"), "DATABASE_PASSWORD", constants.GCP_SQL_PASSWORD+strconv.Itoa(rand.Intn(1000)), -1)
 	f, err := os.Open(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "sql", "init.sql"))
 	if err != nil {
 		return err
