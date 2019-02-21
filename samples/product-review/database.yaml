@@ -1,0 +1,33 @@
+apiVersion: mesh.cellery.io/v1alpha1
+kind: Cell
+metadata:
+  name: database
+spec:
+  gatewayTemplate:
+    spec:
+      tcp:
+      - port: 31406
+        backendHost: reviews-mysql-db
+        backendPort: 3306
+  servicesTemplates:
+  - metadata:
+      name: reviews-mysql-db
+    spec:
+      replicas: 1
+      container:
+        name: mysql
+        image: celleryio/samples-productreview-mysql
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "root"
+      servicePort: 3306
+      protocol: TCP
+  - metadata:
+      name: debug
+    spec:
+      replicas: 1
+      container:
+        image: docker.io/mirage20/k8s-debug-tools
+      servicePort: 80

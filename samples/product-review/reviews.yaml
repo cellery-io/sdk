@@ -1,0 +1,74 @@
+apiVersion: mesh.cellery.io/v1alpha1
+kind: Cell
+metadata:
+  name: reviews
+spec:
+  gatewayTemplate:
+    spec:
+      http:
+      - context: reviews-1
+        definitions:
+        - path: /*
+          method: GET
+        backend: reviews
+        global: false
+  servicesTemplates:
+  - metadata:
+      name: reviews
+    spec:
+      replicas: 1
+      container:
+        image: celleryio/samples-productreview-reviews
+        env:
+        - name: PORT
+          value: "8080"
+        - name: PRODUCTS_HOST
+          value: "customer-products--gateway-service"
+        - name: PRODUCTS_PORT
+          value: "80"
+        - name: PRODUCTS_CONTEXT
+          value: "products-1"
+        - name: CUSTOMERS_HOST
+          value: "customer-products--gateway-service"
+        - name: CUSTOMERS_PORT
+          value: "80"
+        - name: CUSTOMERS_CONTEXT
+          value: "customers-1"
+        - name: RATINGS_HOST
+          value: "review--ratings-service"
+        - name: RATINGS_PORT
+          value: "80"
+        - name: DATABASE_HOST
+          value: "database--gateway-service"
+        - name: DATABASE_PORT
+          value: "31406"
+        - name: DATABASE_USERNAME
+          value: "root"
+        - name: DATABASE_PASSWORD
+          value: "root"
+        - name: DATABASE_NAME
+          value: "reviews_db"
+        ports:
+        - containerPort: 8080
+      servicePort: 80
+  - metadata:
+      name: ratings
+    spec:
+      replicas: 1
+      container:
+        name: ratings
+        image: celleryio/samples-productreview-ratings
+        env:
+        - name: PORT
+          value: "8080"
+        ports:
+        - containerPort: 8080
+      servicePort: 80
+  - metadata:
+      name: debug
+    spec:
+      replicas: 1
+      container:
+        image: docker.io/mirage20/k8s-debug-tools
+      servicePort: 80
+

@@ -1,0 +1,69 @@
+apiVersion: mesh.cellery.io/v1alpha1
+kind: Cell
+metadata:
+  name: customer-products
+spec:
+  gatewayTemplate:
+    spec:
+      http:
+      - context: customers-1
+        definitions:
+        - path: /*
+          method: GET
+        backend: customers
+        global: false
+      - context: products-1
+        definitions:
+        - path: /*
+          method: GET
+        backend: products
+        global: false
+  servicesTemplates:
+  - metadata:
+      name: customers
+    spec:
+      replicas: 1
+      container:
+        image: celleryio/samples-productreview-customers
+        env:
+        - name: PORT
+          value: "8080"
+        ports:
+        - containerPort: 8080
+      servicePort: 80
+  - metadata:
+      name: products
+    spec:
+      replicas: 1
+      container:
+        image: celleryio/samples-productreview-products
+        env:
+        - name: PORT
+          value: "8080"
+        - name: CATEGORIES_HOST
+          value: "customer-products--categories-service"
+        - name: CATEGORIES_PORT
+          value: "8000"
+        ports:
+        - containerPort: 8080
+      servicePort: 80
+  - metadata:
+      name: categories
+    spec:
+      replicas: 1
+      container:
+        image: celleryio/samples-productreview-categories
+        env:
+        - name: PORT
+          value: "8000"
+        ports:
+        - containerPort: 8000
+      servicePort: 8000
+      protocol: GRPC
+  - metadata:
+      name: debug
+    spec:
+      replicas: 1
+      container:
+        image: docker.io/mirage20/k8s-debug-tools
+      servicePort: 80
