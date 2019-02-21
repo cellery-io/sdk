@@ -33,4 +33,5 @@ public class ServiceTemplateSpec {
     private int servicePort;
     private Container container;
     private AutoScalingSpec autoscaling;
+    private String protocol;
 }

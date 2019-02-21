@@ -355,7 +355,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             spec.addTCP(component.getTcpList());
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             templateSpec.setReplicas(component.getReplicas());
-
+            templateSpec.setProtocol(component.getProtocol());
             List<EnvVar> envVarList = new ArrayList<>();
             component.getEnvVars().forEach((key, value) -> {
                 if (StringUtils.isEmpty(value)) {

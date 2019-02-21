@@ -20,6 +20,7 @@ public class Component {
     List<TCP> tcpList;
     String source;
     String service;
+    String protocol;
     Map<Integer, Integer> containerPortToServicePortMap;
     AutoScaling autoScaling;
 

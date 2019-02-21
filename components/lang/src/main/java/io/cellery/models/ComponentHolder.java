@@ -32,6 +32,7 @@ public class ComponentHolder {
         if (temp == null) {
             throw new BallerinaException("Invalid component name " + componentName);
         }
+        temp.setProtocol("HTTP");
         api.setBackend(temp.getService());
         temp.addApi(api);
         componentNameToComponentMap.put(componentName, temp);
@@ -42,6 +43,7 @@ public class ComponentHolder {
         if (temp == null) {
             throw new BallerinaException("Invalid component name " + componentName);
         }
+        temp.setProtocol("TCP");
         tcp.setBackendHost(temp.getService());
         temp.addTCP(tcp);
         componentNameToComponentMap.put(componentName, temp);
