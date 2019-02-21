@@ -41,6 +41,8 @@ public class CelleryConstants {
     // These should match the Ballerina object names of the Auto Scaling Metrics Objects
     public static final String AUTO_SCALING_METRIC_OBJECT_CPU_UTILIZATION_PERCENTAGE = "CpuUtilizationPercentage";
     public static final String YAML = ".yaml";
+    public static final String PROTOCOL_TCP = "TCP";
+    public static final String PROTOCOL_HTTP = "HTTP";
     public static final String TARGET = "target";
     public static final String RESOURCES = "resources";
     public static final String DEFAULT_GATEWAY_PROTOCOL = "http";

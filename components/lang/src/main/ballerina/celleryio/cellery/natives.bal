@@ -25,24 +25,24 @@ public type Label "TEAM"|"OWNER"|"MAINTAINER";
 public type DockerSource record {
     string Dockerfile;
     string tag;
-    !...
+    !...;
 };
 
 public type ImageSource record {
     string image;
-    !...
+    !...;
 };
 
 public type GitSource record {
     string gitRepo;
     string tag;
-    !...
+    !...;
 };
 
 public type Definition record {
     string path;
     string method;
-    !...
+    !...;
 };
 
 public type API record {
@@ -50,7 +50,7 @@ public type API record {
     string targetComponent;
     boolean global;
     HTTPIngress ingress;
-    !...
+    !...;
 };
 
 public type TCP record{
@@ -62,7 +62,7 @@ public type TCP record{
 public type Resiliency record {
     RetryConfig retryConfig?;
     FailoverConfig failoverConfig?;
-    !...
+    !...;
 };
 
 public type RetryConfig record {
@@ -70,25 +70,25 @@ public type RetryConfig record {
     int count;
     float backOffFactor;
     int maxWaitInterval;
-    !...
+    !...;
 };
 
 public type FailoverConfig record {
     int timeOut;
-    !...
+    !...;
 };
 
 public type AutoScaling record {
     AutoScalingPolicy policy;
     boolean overridable = true;
-    !...
+    !...;
 };
 
 public type AutoScalingPolicy record {
     int minReplicas;
     int maxReplicas;
     CpuUtilizationPercentage[] metrics;
-    !...
+    !...;
 };
 
 public type CpuUtilizationPercentage object {
@@ -106,7 +106,7 @@ public type Component record {
     map<string> labels?;
     map<Env|Secret> parameters?;
     AutoScaling autoscaling?;
-    !...
+    !...;
 };
 
 public type TCPIngress object {
@@ -121,7 +121,7 @@ public type TCPIngress object {
 public type InlineAPI record {
     string basePath;
     Definition[] definitions;
-    !...
+    !...;
 };
 
 public type HTTPIngress object {

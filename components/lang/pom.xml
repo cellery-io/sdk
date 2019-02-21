@@ -291,7 +291,7 @@
     </repositories>
 
     <properties>
-        <ballerina.version>0.990.0</ballerina.version>
+        <ballerina.version>0.990.3</ballerina.version>
         <lombok.version>1.18.4</lombok.version>
         <fabric8.kubernetes.version>4.1.2</fabric8.kubernetes.version>
         <yaml.beans.version>1.13</yaml.beans.version>
