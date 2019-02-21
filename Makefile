@@ -21,7 +21,7 @@ GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 MAIN_PACKAGES := cli
 
-all: code.format build-lang build-cli build-registry
+all: code.format build-lang build-cli
 
 .PHONY: build-lang
 build-lang:
@@ -31,11 +31,6 @@ build-lang:
 .PHONY: build-cli
 build-cli:
 	go build -o ${GO_BUILD_DIRECTORY}/cellery ./components/cli/cmd/cellery
-
-.PHONY: build-registry
-build-registry:
-	cd ./docker; \
-	bash build.sh;
 
 .PHONY: code.format
 code.format: tools.goimports
