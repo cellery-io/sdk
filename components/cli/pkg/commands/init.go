@@ -70,16 +70,16 @@ func RunInit() {
 		"    },\n" +
 		"    ingresses: {\n" +
 		"        hello: new cellery:HTTPIngress(\n" +
-		"            8080,\n" +
-		"            {\n" +
-		"                basePath: \"hello\",\n" +
-		"                definitions: [\n" +
-		"                    {\n" +
-		"                        path: \"/\",\n" +
-		"                        method: \"GET\"\n" +
-		"                    }\n" +
-		"                ]\n" +
-		"            }\n" +
+		"                   8080,\n" +
+		"\n" +
+		"                   \"hello\",\n" +
+		"                   [\n" +
+		"                       {\n" +
+		"                           path: \"/\",\n" +
+		"                           method: \"GET\"\n" +
+		"                       }\n" +
+		"                   ]\n" +
+		"\n" +
 		"        )\n" +
 		"    }\n" +
 		"};\n" +
@@ -97,7 +97,6 @@ func RunInit() {
 		"    }\n" +
 		"}\n" +
 		"\n"
-
 	currentDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		util.ExitWithErrorMessage("Error in getting current directory location", err)
