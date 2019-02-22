@@ -23,6 +23,9 @@ MAIN_PACKAGES := cli
 
 all: code.format build-lang build-cli
 
+.PHONY: install
+install: install-lang install-cli
+
 .PHONY: build-lang
 build-lang:
 	cd ${PROJECT_ROOT}/components/lang; \
@@ -31,6 +34,16 @@ build-lang:
 .PHONY: build-cli
 build-cli:
 	go build -o ${GO_BUILD_DIRECTORY}/cellery ./components/cli/cmd/cellery
+
+.PHONY: install-lang
+install-lang:
+	cd ${PROJECT_ROOT}/components/lang; \
+	bash copy-libs.sh;
+
+.PHONY: install-cli
+install-cli:
+	cd ${PROJECT_ROOT}/components/cli; \
+	bash build.sh;
 
 .PHONY: code.format
 code.format: tools.goimports

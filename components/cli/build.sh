@@ -17,5 +17,7 @@
 # under the License.
 # ----------------------------------------------------------------------------
 #!/usr/bin/env bash
-
-go build -o /usr/local/bin/cellery ./cmd/cellery
+set -e
+go build -o cellery ./cmd/cellery
+sudo mv cellery /usr/local/bin
+echo "CLI installed"
