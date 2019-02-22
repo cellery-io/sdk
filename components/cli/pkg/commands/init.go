@@ -86,12 +86,12 @@ func RunInit() {
 		"\n" +
 		"public cellery:CellImage helloCell = new();\n" +
 		"\n" +
-		"public function build(string imageName, string imageVersion) {\n" +
+		"public function build(string orgName, string imageName, string imageVersion) {\n" +
 		"    helloCell.addComponent(helloWorldComp);\n" +
 		"\n" +
 		"    helloCell.exposeGlobalAPI(helloWorldComp);\n" +
 		"\n" +
-		"    var out = cellery:createImage(helloCell, imageName, imageVersion);\n" +
+		"    var out = cellery:createImage(helloCell, orgName, imageName, imageVersion);\n" +
 		"    if (out is boolean) {\n" +
 		"        io:println(\"Hello World Cell Built successfully.\");\n" +
 		"    }\n" +
