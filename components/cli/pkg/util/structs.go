@@ -117,3 +117,18 @@ type Spinner struct {
 	isSpinning     bool
 	error          bool
 }
+
+type Gcp struct {
+	Compute GcpCompute `json:"compute"`
+	Core GcpCore `json:"core"`
+}
+
+type GcpCompute struct {
+	Region string `json:"region"`
+	Zone string `json:"zone"`
+}
+
+type GcpCore struct {
+	Account string `json:"account"`
+	Project string `json:"project"`
+}

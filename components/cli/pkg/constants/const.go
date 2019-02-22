@@ -65,18 +65,17 @@ const AWS_REGION = "ap-south-1"
 const VM_NAME = "cellery-runtime-local"
 const VM_FILE_NAME = "Cellery Runtime 0.1.0.vdi"
 
-const GCP_PROJECT_NAME = "vick-team"
-const GCP_CLUSTER_NAME = "cellery-test"
-const GCP_REGION = "us-west1"
-const GCP_ZONE = "us-west1-b"
+const GCP_CLUSTER_NAME = "cellery-cluster"
 const GCP_DB_INSTANCE_NAME = "cellery-sql"
 const GCP_BUCKET_NAME = "cellery-gcp-bucket"
 const GCP_SQL_USER_NAME = "cellery-sql-user"
 const GCP_SQL_PASSWORD = "cellery-sql-user"
 const GCP_NFS_SERVER_INSTANCE  = "nfs-server"
+
 const GCP_NFS_CONFIG_NAME  = "data"
 const GCP_NFS_CONFIG_CAPACITY  = 1024
-const GCP_ACCOUNT_NAME  = "user@wso2.com"
 const GCP_CLUSTER_IMAGE_TYPE  = "cos_containerd"
-const GCP_CLUSTER_MACHINE_TYPE  = "n1-standard-1"
+const GCP_CLUSTER_MACHINE_TYPE  = "n1-standard-4"
 const GCP_CLUSTER_DISK_SIZE_GB  = 100
+const GCP_SQL_TIER  = "db-n1-standard-1"
+const GCP_SQL_DISK_SIZE_GB  = 20
