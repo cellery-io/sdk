@@ -487,6 +487,22 @@ func CreateDir(dirPath string) error {
 	return nil
 }
 
+func CleanOrCreateDir(dirPath string) error {
+	dirExist, _ := FileExists(dirPath)
+	if !dirExist {
+		err := os.MkdirAll(dirPath, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := os.RemoveAll(dirPath)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func FileExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -901,7 +917,17 @@ func GetSourceFileName(filePath string) (string, error) {
 			return fi.Name(), nil
 		}
 	}
-	return "", errors.New("Source file not found.")
+	return "", errors.New("Ballerina source file not found in extracted location: " + filePath)
+}
+
+func RunMethodExists(sourceFile string) (bool, error) {
+	bytes, err := ioutil.ReadFile(sourceFile)
+	if err != nil {
+		return false, err
+	}
+	content := string(bytes)
+	// //check whether s contains substring text
+	return regexp.MatchString(".*(public)\\s+(function)\\s+(run)\\s*\\(\\s*(string)\\s+.*\\s(string)\\s+.*\\s(string)\\s+.*", content)
 }
 
 func ReplaceInFile(srcFile, oldString, newString string, replaceCount int) error {

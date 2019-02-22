@@ -33,17 +33,13 @@ import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static io.cellery.CelleryConstants.CELLERY_HOME;
-import static io.cellery.CelleryConstants.CELLERY_REPO_PATH;
 import static io.cellery.CelleryConstants.CELL_YAML_PATH;
 import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.YAML;
@@ -70,14 +66,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
 
     public void execute(Context ctx) {
         String[] cellNameData = ctx.getStringArgument(0).split("/");
-        String cellVersion = ctx.getStringArgument(1);
-        String orgName = cellNameData[0];
         String cellName = cellNameData[1];
-        String instanceName = ctx.getStringArgument(2);
-        String cellImagePath = CELLERY_REPO_PATH + orgName + File.separator + cellName + File.separator
-                + cellVersion + File.separator + cellName + ".zip";
-        Cell cell = new CreateInstance().getInstance(cellImagePath, cellName);
-
+        String destinationPath = CELLERY_HOME + File.separator + "tmp" + File.separator
+                + cellName + File.separator + cellName + YAML;
+        Cell cell = getInstance(destinationPath);
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
         processComponents(((BValueArray) refArgument.getMap().get("components")).getValues());
         cell.getSpec().getServicesTemplates().forEach(serviceTemplate -> {
@@ -92,34 +84,26 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             });
 
         });
-        String destinationPath = CELLERY_HOME + File.separator + "tmp" + File.separator
-                + "instances" + File.separator + instanceName + File.separator + cellName + YAML;
         try {
             writeToFile(removeTags(toYaml(cell)), destinationPath);
         } catch (IOException e) {
-            throw new BallerinaException("Unable to persist updated cell file " + destinationPath);
+            throw new BallerinaException("Unable to persist updated cell yaml " + destinationPath);
         }
     }
 
-    private Cell getInstance(String cellImagePath, String cellName) {
+    private Cell getInstance(String destinationPath) {
         Cell cell = null;
-        try (ZipFile zipFile = new ZipFile(cellImagePath)) {
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                if ((CELL_YAML_PATH + cellName + ".yaml").equals(entry.getName())) {
-                    InputStream stream = zipFile.getInputStream(entry);
-                    YamlReader reader = new YamlReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-                    cell = reader.read(Cell.class);
-                    break;
-                }
-            }
+        try (InputStreamReader fileReader = new InputStreamReader(new FileInputStream(destinationPath),
+                StandardCharsets.UTF_8)) {
+            YamlReader reader = new YamlReader(fileReader);
+            cell = reader.read(Cell.class);
         } catch (IOException e) {
-            throw new BallerinaException("Unable to read Cell image file " + cellImagePath + ". \nDid you pull/build" +
+            throw new BallerinaException("Unable to read Cell image file " + destinationPath + ". \nDid you " +
+                    "pull/build" +
                     " the cell image ?");
         }
         if (cell == null) {
-            throw new BallerinaException("Unable to extract Cell Image yaml " + CELL_YAML_PATH + cellName);
+            throw new BallerinaException("Unable to extract Cell Image yaml " + CELL_YAML_PATH);
         }
         return cell;
     }

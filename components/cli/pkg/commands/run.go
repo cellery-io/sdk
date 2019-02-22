@@ -21,13 +21,11 @@ package commands
 import (
 	"bufio"
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunRun(cellImageTag string, instanceName string, dependencies []string) {
@@ -48,10 +46,8 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 	}
 
 	// Create tmp directory
-	currentTIme := time.Now()
-	timestamp := currentTIme.Format("20060102150405")
-	tmpPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", timestamp)
-	err = util.CreateDir(tmpPath)
+	tmpPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", parsedCellImage.ImageName)
+	err = util.CleanOrCreateDir(tmpPath)
 	if err != nil {
 		panic(err)
 	}
@@ -62,25 +58,32 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 	}
 
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+		util.ExitWithErrorMessage("Error occurred while extracting cell image", err)
 	}
 	var kubeYamlDir string
-	if len(dependencies) > 0 && instanceName != "" {
-		//Instance name is provided. Ballerina run method should be executed.
-		balFilePath, err := util.GetSourceFileName(tmpPath)
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+	balFilePath, err := util.GetSourceFileName(tmpPath)
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while extracting source file: ", err)
+	}
+	balFilePath = filepath.Join(tmpPath, balFilePath)
+	containsRunFunction, err := util.RunMethodExists(balFilePath)
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while checking for run function: ", err)
+	}
+	if containsRunFunction {
+		// Ballerina run method should be executed.
+		if instanceName == "" {
+			//Instance name not provided setting default {cellImageName}
+			instanceName = parsedCellImage.ImageName
 		}
-		balFilePath = filepath.Join(tmpPath, balFilePath)
 		args := []string{"run", balFilePath + ":run", parsedCellImage.Organization + "/" + parsedCellImage.ImageName,
 			parsedCellImage.ImageVersion, instanceName}
 		args = append(args, dependencies...)
 
 		cmd, err := buildCommand("ballerina", args)
 		if err != nil {
-			util.ExitWithErrorMessage("Error in building ballerina command", err)
+			util.ExitWithErrorMessage("Error in building ballerina command ", err)
 		}
-
 		stdoutReader, _ := cmd.StdoutPipe()
 		stdoutScanner := bufio.NewScanner(stdoutReader)
 		go func() {
@@ -100,12 +103,10 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 			util.ExitWithErrorMessage("Error in executing cellery run", err)
 		}
 		err = cmd.Wait()
-
-		kubeYamlDir = filepath.Join(util.UserHomeDir(), ".cellery", "tmp", "instances", instanceName)
-	} else {
-		// instance name is not provided apply the yaml generated at build.
-		kubeYamlDir = filepath.Join(tmpPath, "artifacts", "cellery")
 	}
+
+	// Update the instance name
+	kubeYamlDir = filepath.Join(tmpPath, "artifacts", "cellery")
 	kubeYamlFile := filepath.Join(kubeYamlDir, parsedCellImage.ImageName+".yaml")
 	if instanceName != "" {
 		err = util.ReplaceInFile(kubeYamlFile, "name: "+parsedCellImage.ImageName, "name: "+instanceName, 1)
@@ -133,8 +134,8 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 		util.ExitWithErrorMessage("Error in executing cell run", err)
 	}
 	err = cmd.Wait()
-	_ = os.RemoveAll(kubeYamlDir)
-	_ = os.RemoveAll(tmpPath)
+	//_ = os.RemoveAll(kubeYamlDir)
+	//_ = os.RemoveAll(tmpPath)
 
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while running cell image", err)
