@@ -144,6 +144,9 @@ copyBuildDirectories() {
 
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin
     cp ../../components/build/cellery ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin
+
+    mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
+    cp -R k8s-artefacts ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
 }
 
 createInstaller() {
