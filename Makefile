@@ -15,11 +15,19 @@
 # -----------------------------------------------------------------------
 
 PROJECT_ROOT := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-PROJECT_PKG := github.com/celleryio/sdk
+PROJECT_PKG := github.com/cellery-io/sdk
 GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
+GIT_REVISION := $(shell git rev-parse --verify HEAD)
 
 MAIN_PACKAGES := cli
+
+VERSION ?= $(GIT_REVISION)
+
+# Go build time flags
+GO_LDFLAGS := -X $(PROJECT_PKG)/components/cli/pkg/version.buildVersion=$(VERSION)
+GO_LDFLAGS += -X $(PROJECT_PKG)/components/cli/pkg/version.buildGitRevision=$(GIT_REVISION)
+GO_LDFLAGS += -X $(PROJECT_PKG)/components/cli/pkg/version.buildTime=$(shell date --iso=seconds)
 
 all: code.format build-lang build-cli
 
@@ -30,7 +38,7 @@ build-lang:
 
 .PHONY: build-cli
 build-cli:
-	go build -o ${GO_BUILD_DIRECTORY}/cellery ./components/cli/cmd/cellery
+	go build -o ${GO_BUILD_DIRECTORY}/cellery -ldflags "$(GO_LDFLAGS)" -x ./components/cli/cmd/cellery
 
 .PHONY: code.format
 code.format: tools.goimports

@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -46,11 +47,11 @@ func RunVersion() {
 
 	// Printing Cellery version information
 	_, _ = boldWhite.Println("Cellery:")
-	fmt.Println(" CLI Version:\t\t0.1.0")                      // TODO
-	fmt.Println(" Built:\t\t\tMon Feb 18 09:29:59 2019 +0530") // TODO
-	fmt.Println(" Git Commit:\t\tc38a20a")                     // TODO
-	fmt.Println(" OS/Arch:\t\t" + runtime.GOOS + "/" + runtime.GOARCH)
-	fmt.Println(" Experimental:\t\ttrue") // TODO
+	fmt.Printf(" CLI Version:\t\t%s\n", version.BuildVersion())
+	fmt.Printf(" Built:\t\t\t%s\n", version.BuildTime())
+	fmt.Printf(" Git Commit:\t\t%s\n", version.BuildGitRevision())
+	fmt.Printf(" OS/Arch:\t\t%s/%s\n", runtime.GOOS, runtime.GOARCH)
+	//fmt.Println(" Experimental:\t\ttrue") // TODO
 
 	// Printing Ballerina version information
 	_, _ = boldWhite.Println("\nBallerina:")
