@@ -16,13 +16,22 @@
 # under the License.
 #
 #!/usr/bin/env bash
-
+set -e
 BALLERINA_VERSION=$(ballerina version | awk '{print $2}')
 
 mvn clean install
 
-sudo cp target/cellery-0.1.0-SNAPSHOT.jar /Library/Ballerina/ballerina-${BALLERINA_VERSION}/bre/lib
-sudo cp -r target/generated-balo/repo/celleryio /Library/Ballerina/ballerina-${BALLERINA_VERSION}/lib/repo
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    # Linux
+    sudo cp target/cellery-0.1.0-SNAPSHOT.jar /usr/lib/ballerina/ballerina-${BALLERINA_VERSION}/bre/lib
+    sudo cp -r target/generated-balo/repo/celleryio /usr/lib/ballerina/ballerina-${BALLERINA_VERSION}/lib/repo
+    mkdir -p ~/.ballerina/repo/
+    cp -r target/generated-balo/repo/celleryio ~/.ballerina/repo/
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # MacOS
+    sudo cp  target/cellery-0.1.0-SNAPSHOT.jar /Library/Ballerina/ballerina-${BALLERINA_VERSION}/bre/lib
+    sudo cp -r  target/generated-balo/repo/celleryio /Library/Ballerina/ballerina-${BALLERINA_VERSION}/lib/repo
+    mkdir -p ~/.ballerina/repo/
+    cp -r target/generated-balo/repo/celleryio ~/.ballerina/repo/
+fi
 
-mkdir -p ~/.ballerina/repo/
-cp -r target/generated-balo/repo/celleryio ~/.ballerina/repo/
