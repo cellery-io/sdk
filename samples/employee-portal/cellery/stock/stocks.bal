@@ -9,10 +9,10 @@ cellery:Component stock = {
     },
     ingresses: {
         stock: new cellery:HTTPIngress(8080,
-                "stocks",
+                "stock",
                 [
                     {
-                        path: "/",
+                        path: "/options",
                         method: "GET"
                     }
                 ]

@@ -15,7 +15,7 @@ cellery:Component hrComponent = {
                   8080,
                   "hr-api",
                   [{
-                      path: "/info",
+                      path: "/",
                       method: "GET"
                   }]
         )

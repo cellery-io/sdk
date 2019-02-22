@@ -10,7 +10,7 @@ cellery:Component employeeComponent = {
     ingresses: {
         employee: new cellery:HTTPIngress(
                       8080,
-                      "employee-details",
+                      "employee",
                       "./resources/employee.swagger.json"
         )
     },
