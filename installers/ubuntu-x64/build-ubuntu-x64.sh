@@ -34,7 +34,7 @@ function printUsage() {
 }
 
 if [ -z "$1" ]; then
-    echo "Please enter the version of the cellery distribution."
+    echo "Please enter the version of the Cellery distribution."
     printUsage
     exit 1
 fi
@@ -46,6 +46,8 @@ DATE=`date +%Y-%m-%d`
 TIME=`date +%H:%M:%S`
 LOG_PREFIX="[$DATE $TIME]"
 BINARY_SIZE="0 MB"
+#k8s artifacts folder
+K8S_DIRECTORY="k8s-artefacts"
 
 #Functions
 go_to_dir() {
@@ -146,7 +148,10 @@ copyBuildDirectories() {
     cp ../../components/build/cellery ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin
 
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
-    cp -R k8s-artefacts ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
+
+    if [ -d "$K8S_DIRECTORY" ]; then
+        cp -R $K8S_DIRECTORY ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
+    fi
 }
 
 createInstaller() {
