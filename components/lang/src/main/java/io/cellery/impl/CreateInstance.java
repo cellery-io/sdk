@@ -67,8 +67,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     public void execute(Context ctx) {
         String[] cellNameData = ctx.getStringArgument(0).split("/");
         String cellName = cellNameData[1];
-        String destinationPath = CELLERY_HOME + File.separator + "tmp" + File.separator
-                + cellName + File.separator + cellName + YAML;
+        String destinationPath = CELLERY_HOME + File.separator + "tmp" + File.separator + cellName + File.separator +
+                "artifacts" + File.separator + "cellery" + File.separator + cellName + YAML;
         Cell cell = getInstance(destinationPath);
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
         processComponents(((BValueArray) refArgument.getMap().get("components")).getValues());

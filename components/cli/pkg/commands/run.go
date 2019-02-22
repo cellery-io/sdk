@@ -21,11 +21,12 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunRun(cellImageTag string, instanceName string, dependencies []string) {
@@ -61,14 +62,14 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 		util.ExitWithErrorMessage("Error occurred while extracting cell image", err)
 	}
 	var kubeYamlDir string
-	balFilePath, err := util.GetSourceFileName(tmpPath)
+	balFileName, err := util.GetSourceFileName(filepath.Join(tmpPath, constants.ZIP_BALLERINA_SOURCE))
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while extracting source file: ", err)
 	}
-	balFilePath = filepath.Join(tmpPath, balFilePath)
+	balFilePath := filepath.Join(tmpPath, constants.ZIP_BALLERINA_SOURCE, balFileName)
 	containsRunFunction, err := util.RunMethodExists(balFilePath)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while checking for run function: ", err)
+		util.ExitWithErrorMessage("Error occurred while checking for run function ", err)
 	}
 	if containsRunFunction {
 		// Ballerina run method should be executed.
@@ -106,9 +107,10 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 	}
 
 	// Update the instance name
-	kubeYamlDir = filepath.Join(tmpPath, "artifacts", "cellery")
+	kubeYamlDir = filepath.Join(tmpPath, constants.ZIP_ARTIFACTS, "cellery")
 	kubeYamlFile := filepath.Join(kubeYamlDir, parsedCellImage.ImageName+".yaml")
 	if instanceName != "" {
+		//Cell instance name changed.
 		err = util.ReplaceInFile(kubeYamlFile, "name: "+parsedCellImage.ImageName, "name: "+instanceName, 1)
 	}
 	if err != nil {
@@ -134,8 +136,8 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 		util.ExitWithErrorMessage("Error in executing cell run", err)
 	}
 	err = cmd.Wait()
-	//_ = os.RemoveAll(kubeYamlDir)
-	//_ = os.RemoveAll(tmpPath)
+	_ = os.RemoveAll(kubeYamlDir)
+	_ = os.RemoveAll(tmpPath)
 
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while running cell image", err)

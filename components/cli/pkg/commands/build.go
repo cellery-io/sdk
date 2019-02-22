@@ -27,6 +27,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -123,21 +125,31 @@ func RunBuild(tag string, fileName string) {
 		util.ExitWithErrorMessage("Error occurred creating cell reference", err)
 	}
 
-	folderCopyError := util.CopyDir(filepath.Join(projectDir, "target"), filepath.Join(projectDir, "artifacts"))
+	folderCopyError := util.CopyDir(filepath.Join(projectDir, "target"), filepath.Join(projectDir, constants.ZIP_ARTIFACTS))
 	if folderCopyError != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred creating cell image", err)
 	}
-	folders := []string{"artifacts"}
-	files := []string{fileName}
+	err = util.CleanOrCreateDir(filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE))
+	if err != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error occurred while creating the cell image", err)
+	}
+	fileCopyError := util.CopyFile(fileName, filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE, filepath.Base(fileName)))
+	if fileCopyError != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error occurred creating cell image", err)
+	}
+	folders := []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE}
 	output := parsedCellImage.ImageName + ".zip"
-	err = util.RecursiveZip(files, folders, output)
+	err = util.RecursiveZip(nil, folders, output)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while creating the cell image", err)
 	}
 
-	_ = os.RemoveAll(filepath.Join(projectDir, "artifacts"))
+	_ = os.RemoveAll(filepath.Join(projectDir, constants.ZIP_ARTIFACTS))
+	_ = os.RemoveAll(filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE))
 
 	// Cleaning up the old image if it already exists
 	hasOldImage, err := util.FileExists(repoLocation)
