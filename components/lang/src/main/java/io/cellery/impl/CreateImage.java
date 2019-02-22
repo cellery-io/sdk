@@ -44,6 +44,7 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerSpecBuilder;
 import io.fabric8.kubernetes.api.model.MetricSpecBuilder;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
@@ -75,6 +76,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
+import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
+import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
@@ -91,6 +95,7 @@ import static io.cellery.CelleryUtils.writeToFile;
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "createImage",
         args = {@Argument(name = "cellImage", type = TypeKind.OBJECT),
+                @Argument(name = "orgName", type = TypeKind.STRING),
                 @Argument(name = "imageName", type = TypeKind.STRING),
                 @Argument(name = "imageVersion", type = TypeKind.STRING)},
         returnType = {@ReturnType(type = TypeKind.STRING)},
@@ -106,8 +111,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
 
     public void execute(Context ctx) {
         componentHolder = new ComponentHolder();
-        String cellVersion = ctx.getNullableStringArgument(1);
-        String cellName = getValidName(ctx.getStringArgument(0));
+        String cellVersion = ctx.getStringArgument(2);
+        String orgName = ctx.getStringArgument(0);
+        String cellName = getValidName(ctx.getStringArgument(1));
         CellCache cellCache = CellCache.getInstance();
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
         processComponents(((BValueArray) refArgument.getMap().get("components")).getValues());
@@ -115,7 +121,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         processTCP(((BValueArray) refArgument.getMap().get("tcp")).getValues());
         Set<Component> components = new HashSet<>(componentHolder.getComponentNameToComponentMap().values());
         cellCache.setCellNameToComponentMap(cellName, components);
-        generateCell(cellName);
+        generateCell(orgName, cellName, cellVersion);
         generateCellReference(cellName, cellVersion);
         ctx.setReturnValues(new BBoolean(true));
     }
@@ -344,7 +350,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
     }
 
 
-    private void generateCell(String name) {
+    private void generateCell(String orgName, String name, String version) {
         List<Component> components =
                 new ArrayList<>(componentHolder.getComponentNameToComponentMap().values());
         GatewaySpec spec = new GatewaySpec();
@@ -414,7 +420,12 @@ public class CreateImage extends BlockingNativeCallableUnit {
         CellSpec cellSpec = new CellSpec();
         cellSpec.setGatewayTemplate(gatewayTemplate);
         cellSpec.setServicesTemplates(serviceTemplateList);
-        Cell cell = new Cell(new ObjectMetaBuilder().withName(getValidName(name)).build(), cellSpec);
+        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(name))
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, orgName)
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, name)
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, version)
+                .build();
+        Cell cell = new Cell(objectMeta, cellSpec);
 
         String targetPath = OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + name + YAML;
         try {

@@ -226,10 +226,12 @@ public type CellImage object {
 # Build the cell aritifacts
 #
 # + cellImage - The cell image definition
+# + orgName - The cell  image org
 # + imageName - The cell image name
 # + imageVersion - The cell image version
 # + return - true/false
-public extern function createImage(CellImage cellImage, string imageName, string imageVersion) returns (boolean|error);
+public extern function createImage(CellImage cellImage, string orgName , string imageName, string imageVersion)
+returns (boolean|error);
 
 # Update the cell aritifacts with runtime changes
 #

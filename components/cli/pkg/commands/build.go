@@ -61,8 +61,8 @@ func RunBuild(tag string, fileName string) {
 	_ = os.RemoveAll(filepath.Join(projectDir, "target"))
 
 	// Executing the build method in the cell file
-	cmd := exec.Command("ballerina", "run", fileName+":build", parsedCellImage.ImageName,
-		parsedCellImage.ImageVersion)
+	cmd := exec.Command("ballerina", "run", fileName+":build", parsedCellImage.Organization,
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	execError := ""
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)

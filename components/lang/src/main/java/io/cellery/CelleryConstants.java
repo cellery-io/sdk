@@ -52,4 +52,8 @@ public class CelleryConstants {
             ".cellery";
     public static final String CELLERY_REPO_PATH = CELLERY_HOME + File.separator + "repo" + File.separator;
     public static final String CELL_YAML_PATH = "artifacts" + File.separator + "cellery" + File.separator;
+
+    public static final String ANNOTATION_CELL_IMAGE_ORG = "mesh.cellery.io/cell-image-org";
+    public static final String ANNOTATION_CELL_IMAGE_NAME = "mesh.cellery.io/cell-image-name";
+    public static final String ANNOTATION_CELL_IMAGE_VERSION = "mesh.cellery.io/cell-image-version";
 }

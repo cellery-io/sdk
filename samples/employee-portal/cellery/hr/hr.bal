@@ -30,14 +30,14 @@ cellery:Component hrComponent = {
 // Cell Intialization
 cellery:CellImage hrCell = new();
 
-public function build(string imageName, string imageVersion) {
+public function build(string orgName, string imageName, string imageVersion) {
     // Build HR cell
     io:println("Building HR Cell ...");
     hrCell.addComponent(hrComponent);
 
     // Expose API from Cell Gateway & Global Gateway
     hrCell.exposeGlobalAPI(hrComponent);
-    _ = cellery:createImage(hrCell, imageName, imageVersion);
+    _ = cellery:createImage(hrCell, orgName, imageName, imageVersion);
 }
 
 

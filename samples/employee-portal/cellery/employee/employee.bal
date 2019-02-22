@@ -47,7 +47,7 @@ cellery:Component salaryComponent = {
 
 public cellery:CellImage employeeCell = new();
 
-public function build(string imageName, string imageVersion) {
+public function build(string orgName, string imageName, string imageVersion) {
 
     // Build EmployeeCell
     io:println("Building Employee Cell ...");
@@ -62,5 +62,5 @@ public function build(string imageName, string imageVersion) {
     //Expose API from Cell Gateway
     employeeCell.exposeAPIsFrom(employeeComponent);
 
-    _ = cellery:createImage(employeeCell, imageName, imageVersion);
+    _ = cellery:createImage(employeeCell, orgName, imageName, imageVersion);
 }

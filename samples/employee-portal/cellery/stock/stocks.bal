@@ -9,24 +9,24 @@ cellery:Component stock = {
     },
     ingresses: {
         stock: new cellery:HTTPIngress(8080,
-                "stock",
-                [
-                    {
-                        path: "/options",
-                        method: "GET"
-                    }
-                ]
+            "stock",
+            [
+                {
+                    path: "/options",
+                    method: "GET"
+                }
+            ]
         )
     }
 };
 
 cellery:CellImage stockCell = new();
 
-public function build(string imageName, string imageVersion) {
+public function build(string orgName, string imageName, string imageVersion) {
     //Build Stock Cell
     io:println("Building Stock Cell ...");
     stockCell.addComponent(stock);
     //Expose API from Cell Gateway
     stockCell.exposeAPIsFrom(stock);
-    _ = cellery:createImage(stockCell, imageName, imageVersion);
+    _ = cellery:createImage(stockCell, orgName, imageName, imageVersion);
 }
