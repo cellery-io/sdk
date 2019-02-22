@@ -35,11 +35,12 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"cloud.google.com/go/storage"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"context"
 

@@ -22,10 +22,11 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/spf13/cobra"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/spf13/cobra"
 )
 
 func newRunCommand() *cobra.Command {
