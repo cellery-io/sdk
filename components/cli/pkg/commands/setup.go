@@ -309,6 +309,7 @@ func manageEnvironment() error {
 				time.Sleep(2 * time.Second)
 			}
 			util.ExecuteCommand(exec.Command("VBoxManage", "unregistervm", constants.VM_NAME, "--delete"), "Error deleting VM")
+			os.RemoveAll(filepath.Join(util.UserHomeDir(), ".cellery", "vm", constants.AWS_S3_ITEM_VM))
 		}
 	default:
 		{
@@ -715,7 +716,7 @@ func create(client *storage.Client, projectID, bucketName string) error {
 
 func uploadSqlFile(client *storage.Client, bucket, object string) error {
 	ctx := context.Background()
-	err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "mysql", "dbscripts", "init.sql"), "DATABASE_USERNAME", constants.GCP_SQL_USER_NAME+uniqueNumber, -1)
+	err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "mysql", "dbscripts", "init.sql"), "DATABASE_USERNAME", constants.GCP_SQL_USER_NAME, -1)
 	err = util.ReplaceInFile(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "mysql", "dbscripts", "init.sql"), "DATABASE_PASSWORD", constants.GCP_SQL_PASSWORD+uniqueNumber, -1)
 	f, err := os.Open(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "mysql", "dbscripts", "init.sql"))
 	if err != nil {
