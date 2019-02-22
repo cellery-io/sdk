@@ -375,10 +375,12 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:22097e3cfe0bf97a0cf182118f69e8c26171112e60e59c071ff7329c01ecb773"
+  branch = "master"
+  digest = "1:d8d92355ad80604c60c4f9796abfbad3fa6e2aaf1893e9a829d6465e56324c7e"
   name = "google.golang.org/api"
   packages = [
     "container/v1",
+    "file/v1",
     "gensupport",
     "googleapi",
     "googleapi/internal/uritemplates",
@@ -392,8 +394,7 @@
     "transport/http/internal/propagation",
   ]
   pruneopts = "UT"
-  revision = "19e022d8cf43ce81f046bae8cc18c5397cc7732f"
-  version = "v0.1.0"
+  revision = "ed2534c57ed076df43af394869d83ac66b040e17"
 
 [[projects]]
   digest = "1:fa026a5c59bd2df343ec4a3538e6288dcf4e2ec5281d743ae82c120affe6926a"
@@ -491,6 +492,7 @@
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/oauth2/google",
     "google.golang.org/api/container/v1",
+    "google.golang.org/api/file/v1",
     "google.golang.org/api/sqladmin/v1beta4",
   ]
   solver-name = "gps-cdcl"
