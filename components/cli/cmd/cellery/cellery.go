@@ -36,7 +36,6 @@ func newCliCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newConfigureCommand(),
 		newCompletionCommand(cmd),
 		newBuildCommand(),
 		newImageCommand(),
