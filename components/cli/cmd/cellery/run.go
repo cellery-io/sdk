@@ -56,11 +56,11 @@ func newRunCommand() *cobra.Command {
 			commands.RunRun(args[0], name, dependencies)
 		},
 		Example: "  cellery run cellery-samples/employee:1.0.0 -n employee\n" +
-			"  cellery run registry.foo.io/cellery-samples/employee:1.0.0 -n employee -l dep1:instance1 dep2:instance2" +
-			"  cellery run cellery-samples/employee:1.0.0 -l dep1:instance1 dep2:instance2",
+			"  cellery run registry.foo.io/cellery-samples/employee:1.0.0 -n employee -l instance1 -l instance2 \n" +
+			"  cellery run cellery-samples/employee:1.0.0 -l instance1 -l instance2",
 	}
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Name of the cell instance")
 	cmd.Flags().StringArrayVarP(&dependencies, "link", "l", nil,
-		"fully qualified dependency instance names")
+		"Dependency instance names")
 	return cmd
 }
