@@ -1,14 +1,14 @@
 # Cellery Product Review Sample
 
-The application shows information about user reviews for the set of products. Each of the review item shows product information, product category information, customer information, rating and review description.
+Product Review sample application shows information about user reviews for a set of products. Each review item shows product information, product category information, customer information, rating and review description.
 
-This samples demonstrate following features of the cellery.
+This sample demonstrates following features of the cellery.
 
 * Intra-Cell communication
 * Inter-Cell communication
 * Different Protocol usage
 
-The Product Review Sample application has five microservices which are group into three seperate cells.
+The Product Review Sample application has five microservices which are grouped into three separate cells.
 
 
 The component interaction diagram of the application is shown below.
@@ -38,7 +38,7 @@ By default, the Cellery installation will be using the following domain names,
     wso2sp-observability-api 
     wso2-apim-gateway
     ```
-These should be properly mapped to the Kubernetes IngressController IP of the deployment.
+These domains should be properly mapped to the Kubernetes IngressController IP of the deployment.
 
 1. Login to the API [Store](https://wso2-apim/store/) using admin:admin credentials.
 
