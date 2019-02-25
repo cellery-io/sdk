@@ -45,6 +45,6 @@ public function build(string orgName, string imageName, string imageVersion) {
     petCell.addComponent(petComponent);
     petCell.addComponent(debugComponent);
     //Expose API from Cell Gateway
-    petCell.exposeAPIsFrom(petComponent);
+    petCell.exposeGlobalAPI(petComponent);
     _ = cellery:createImage(petCell, orgName, imageName, imageVersion);
 }
