@@ -419,7 +419,7 @@ func createGcp() error {
 	// Backup artifacts folder
 	artiFactsBackupExist, errBackupDir := util.FileExists(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts-old"))
 	if errBackupDir == nil {
-		if  artiFactsBackupExist{
+		if artiFactsBackupExist {
 			if err := os.RemoveAll(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts")); err != nil {
 				fmt.Printf("Error replacing artifacts filel: %v", err)
 			}
@@ -432,9 +432,9 @@ func createGcp() error {
 	util.CopyDir(filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts"), filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts-old"))
 
 	validateGcpConfigFile([]string{filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "global-apim", "conf", "datasources", "master-datasources.xml"),
-	 							   filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "observability", "sp", "conf", "deployment.yaml"),
-								   filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "global-apim", "artifacts-persistent-volume.yaml"),
-								   filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "mysql", "dbscripts", "init.sql")})
+		filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "observability", "sp", "conf", "deployment.yaml"),
+		filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "global-apim", "artifacts-persistent-volume.yaml"),
+		filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts", "mysql", "dbscripts", "init.sql")})
 
 	// Get the GCP cluster data
 	projectName, accountName, region, zone = getGcpData()
@@ -968,9 +968,9 @@ func deployCelleryRuntime() error {
 }
 
 func validateGcpConfigFile(configFiles []string) error {
-	for i := 0; i < len(configFiles) ; i++ {
+	for i := 0; i < len(configFiles); i++ {
 		fileExist, fileExistError := util.FileExists(configFiles[i])
-		if  fileExistError != nil || !fileExist {
+		if fileExistError != nil || !fileExist {
 			fmt.Printf("Cannot find file : %v", configFiles[i])
 			os.Exit(1)
 		}
