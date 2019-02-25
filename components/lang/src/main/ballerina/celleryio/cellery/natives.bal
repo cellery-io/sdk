@@ -87,7 +87,7 @@ public type AutoScaling record {
 public type AutoScalingPolicy record {
     int minReplicas;
     int maxReplicas;
-    CpuUtilizationPercentage[] metrics;
+    CpuUtilizationPercentage cpuPercentage;
     !...;
 };
 
@@ -102,7 +102,7 @@ public type Component record {
     string name;
     ImageSource source;
     int replicas = 1;
-    map<TCPIngress|HTTPIngress> ingresses;
+    map<TCPIngress|HTTPIngress> ingresses?;
     map<string> labels?;
     map<Env|Secret> parameters?;
     AutoScaling autoscaling?;
@@ -123,7 +123,7 @@ public type HTTPIngress object {
     public string context;
     public Definition[] definitions;
 
-    public function __init(int port, string context ,Definition[]|string definitions) {
+    public function __init(int port, string context, Definition[]|string definitions) {
         self.port = port;
         if (definitions is string) {
             // API details are defined in a swagger file
@@ -230,8 +230,14 @@ public type CellImage object {
 # + imageName - The cell image name
 # + imageVersion - The cell image version
 # + return - true/false
-public extern function createImage(CellImage cellImage, string orgName , string imageName, string imageVersion)
-returns (boolean|error);
+public extern function createImage(CellImage cellImage, string orgName, string imageName, string imageVersion)
+                                                                                                                                                                                                                                    returns
+                                                                                                                                                                                                                                    (
+                                                                                                                                                                                                                                    boolean
+                                                                                                                                                                                                                                    |
+                                                                                                                                                                                                                                    error
+                                                                                                                                                                                                                                    )
+;
 
 # Update the cell aritifacts with runtime changes
 #
@@ -241,7 +247,13 @@ returns (boolean|error);
 # + instanceName - The cell instance name
 # + return - true/false
 public extern function createInstance(CellImage cellImage, string imageName, string imageVersion, string instanceName)
-returns (boolean|error);
+                                                                                                                                                                                                                                                                  returns
+                                                                                                                                                                                                                                                                  (
+                                                                                                                                                                                                                                                                  boolean
+                                                                                                                                                                                                                                                                  |
+                                                                                                                                                                                                                                                                  error
+                                                                                                                                                                                                                                                                  )
+;
 
 # Parse the swagger file and returns API Defintions
 #

@@ -210,26 +210,11 @@ public class CreateImage extends BlockingNativeCallableUnit {
         boolean bOverridable = ((BBoolean) scalePolicy.get("overridable")).booleanValue();
 
         List<AutoScalingResourceMetric> autoScalingResourceMetrics = new ArrayList<>();
-        BValueArray metricsArray = ((BValueArray) bScalePolicy.get("metrics"));
-        for (int i = 0; i < metricsArray.size(); i++) {
-            BMap<?, ?> bMetric = (BMap<?, ?>) metricsArray.getRefValue(i);
-            LinkedHashMap<?, ?> metric = bMetric.getMap();
-            long percentage = ((BInteger) metric.get("percentage")).intValue();
-
-            String metricType = bMetric.getType().getName();
-            String resourceName = null;
-            if (CelleryConstants.AUTO_SCALING_METRIC_OBJECT_CPU_UTILIZATION_PERCENTAGE.equals(metricType)) {
-                resourceName = CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU;
-            } else {
-                out.println("Warning: Unknown Auto Scaling Policy Metric \"" + metricType + "\"");
-            }
-
-            if (resourceName != null) {
-                AutoScalingResourceMetric autoScalingResourceMetric
-                        = new AutoScalingResourceMetric(resourceName, (int) percentage);
-                autoScalingResourceMetrics.add(autoScalingResourceMetric);
-            }
-        }
+        LinkedHashMap cpuPercentage = (((BMap) bScalePolicy.get("cpuPercentage")).getMap());
+        long percentage = ((BInteger) cpuPercentage.get("percentage")).intValue();
+        AutoScalingResourceMetric autoScalingResourceMetric
+                = new AutoScalingResourceMetric(CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU, (int) percentage);
+        autoScalingResourceMetrics.add(autoScalingResourceMetric);
 
         AutoScalingPolicy autoScalingPolicy = new AutoScalingPolicy();
         autoScalingPolicy.setMinReplicas(((BInteger) bScalePolicy.get("minReplicas")).intValue());
