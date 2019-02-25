@@ -9,13 +9,45 @@ The component interaction diagram of the application is shown below.
 ![samples-pet-service](pet-service.png)
 
 ## Deploying the sample
-1. Run the following command from the sdk root directory:
+1. Run the following command from the `sdk/samples/pet-service` directory:
     ```
-    kubectl apply -f ./samples/pet-service/
+    $ cellery build pet-cell.bal -t pet-org/pet-service:1.0.0
+    cellery build petCell.bal -t pet-org/pet-service:1.0.0
+    Building Pet Service Cell ...
+    
+    ✔ Building image pet-org/pet-service:1.0.0
+    ✔ Saving new Image to the Local Repository
+    
+    
+    ✔ Successfully built cell image: pet-org/pet-service:1.0.0
+    
+    What's next?
+    --------------------------------------------------------
+    Execute the following command to run the image:
+      $ cellery run pet-org/pet-service:1.0.0
+    --------------------------------------------------------
     ```
-2. Wait until Cell gets into ‘Ready’ state. Use the command below to check if the Cell is in Ready state: 
+2. Run the following command to deploy the cell.
     ```
-    kubectl get cells 
+    $ cellery run pet-org/pet-service:1.0.0
+    Running cell image: pet-org/pet-service:1.0.0
+    cell.mesh.cellery.io/pet-service created
+    
+    
+    ✔ Successfully deployed cell image: pet-org/pet-service:1.0.0
+    
+    What's next?
+    --------------------------------------------------------
+    Execute the following command to list running cells:
+     $ cellery ps
+    --------------------------------------------------------
+    ```
+
+3. Wait until Cell gets into ‘Ready’ state. Use the command below to check if the Cell is in Ready state: 
+    ```
+    $ cellery ps
+    NAME          STATUS     GATEWAY                        SERVICES   AGE
+    pet-service   NotReady   pet-service--gateway-service   0          1m
     ```
 
 ## Invoking the API from the local machine
@@ -75,6 +107,8 @@ following command from the debug pod:
    
 ## Cleaning up
 Issue the following command to delete the pet-service sample:
-    ```
-    kubectl delete -f ./samples/pet-service/
-    ```    
+    
+```
+$ cellery stop pet-service
+cell.mesh.cellery.io "pet-service" deleted 
+```    

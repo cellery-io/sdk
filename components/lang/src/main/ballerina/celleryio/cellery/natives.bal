@@ -231,13 +231,7 @@ public type CellImage object {
 # + imageVersion - The cell image version
 # + return - true/false
 public extern function createImage(CellImage cellImage, string orgName, string imageName, string imageVersion)
-                                                                                                                                                                                                                                    returns
-                                                                                                                                                                                                                                    (
-                                                                                                                                                                                                                                    boolean
-                                                                                                                                                                                                                                    |
-                                                                                                                                                                                                                                    error
-                                                                                                                                                                                                                                    )
-;
+returns (boolean|error);
 
 # Update the cell aritifacts with runtime changes
 #
@@ -247,13 +241,7 @@ public extern function createImage(CellImage cellImage, string orgName, string i
 # + instanceName - The cell instance name
 # + return - true/false
 public extern function createInstance(CellImage cellImage, string imageName, string imageVersion, string instanceName)
-                                                                                                                                                                                                                                                                  returns
-                                                                                                                                                                                                                                                                  (
-                                                                                                                                                                                                                                                                  boolean
-                                                                                                                                                                                                                                                                  |
-                                                                                                                                                                                                                                                                  error
-                                                                                                                                                                                                                                                                  )
-;
+returns (boolean|error);
 
 # Parse the swagger file and returns API Defintions
 #
