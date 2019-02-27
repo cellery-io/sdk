@@ -1,0 +1,33 @@
+[
+  {
+    "order_id": 1,
+    "customer_id": "004",
+    "item": [1,3],
+    "price": 10,
+    "delivery_date": "10-03-2019",
+    "delivery_address": "Dehiwale"
+  },
+  {
+    "order_id": 2,
+    "customer_id": "002",
+    "item": [2],
+    "price": 5,
+    "delivery_date": "18-03-2019",
+    "delivery_address": "Galle"
+  },
+  {
+    "order_id": 3,
+    "customer_id": "001",
+    "item": [1,6,5],
+    "price": 15,"delivery_date": "20-03-2019",
+    "delivery_address": "Colombo-13"
+  },
+  {
+    "order_id": 4,
+    "customer_id": "006",
+    "item": [4,5],
+    "price": 12,
+    "delivery_date": "22-03-2019",
+    "delivery_address": "Colombo-15"
+  }
+]

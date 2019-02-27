@@ -36,3 +36,6 @@ components/build
 
 # Ballerina
 *.balx
+
+# NPM
+**/node_modules/*
