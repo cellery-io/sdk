@@ -44,7 +44,7 @@ public function build(string orgName, string imageName, string imageVersion) {
     io:println("Building Pet Service Cell ...");
     petCell.addComponent(petComponent);
     petCell.addComponent(debugComponent);
-    //Expose API from Cell Gateway
-    petCell.exposeGlobalAPI(petComponent);
+    //Expose API from Global Cell Gateway
+    petCell.exposeGlobal(petComponent);
     _ = cellery:createImage(petCell, orgName, imageName, imageVersion);
 }

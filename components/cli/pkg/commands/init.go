@@ -89,7 +89,7 @@ func RunInit() {
 		"public function build(string orgName, string imageName, string imageVersion) {\n" +
 		"    helloCell.addComponent(helloWorldComp);\n" +
 		"\n" +
-		"    helloCell.exposeGlobalAPI(helloWorldComp);\n" +
+		"    helloCell.exposeGlobal(helloWorldComp);\n" +
 		"\n" +
 		"    var out = cellery:createImage(helloCell, orgName, imageName, imageVersion);\n" +
 		"    if (out is boolean) {\n" +

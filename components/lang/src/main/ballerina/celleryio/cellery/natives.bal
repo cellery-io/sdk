@@ -209,7 +209,7 @@ public type CellImage object {
         }
     }
 
-    public function exposeGlobalAPI(Component component) {
+    public function exposeGlobal(Component component) {
         foreach var (name, ingressTemp) in component.ingresses {
             if (ingressTemp is HTTPIngress) {
                 self.apis[self.apis.length()] = {

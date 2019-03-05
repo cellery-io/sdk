@@ -188,7 +188,7 @@ public cellery:CellImage helloCell = new();
 public function build(string orgName, string imageName, string imageVersion) {
     helloCell.addComponent(helloWorldComp);
 
-    helloCell.exposeGlobalAPI(helloWorldComp);
+    helloCell.exposeGlobal(helloWorldComp);
 
     var out = cellery:createImage(helloCell, orgName, imageName, imageVersion);
     if (out is boolean) {

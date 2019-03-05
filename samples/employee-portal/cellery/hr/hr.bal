@@ -36,7 +36,7 @@ public function build(string orgName, string imageName, string imageVersion) {
     hrCell.addComponent(hrComponent);
 
     // Expose API from Cell Gateway & Global Gateway
-    hrCell.exposeGlobalAPI(hrComponent);
+    hrCell.exposeGlobal(hrComponent);
     _ = cellery:createImage(hrCell, orgName, imageName, imageVersion);
 }
 
