@@ -29,7 +29,7 @@ cellery:Component ordersComponent = {
         image: "celleryio/samples-pet-store-orders"
     },
     ingresses: {
-        orders: new cellery:HTTPIngress(orderPort,
+        orders: new cellery:HttpApiIngress(orderPort,
             "orders",
             [
                 {
@@ -48,7 +48,7 @@ cellery:Component customersComponent = {
         image: "celleryio/samples-pet-store-customers"
     },
     ingresses: {
-        customers: new cellery:HTTPIngress(customerPort,
+        customers: new cellery:HttpApiIngress(customerPort,
             "customers",
             [
                 {
@@ -67,7 +67,7 @@ cellery:Component catalogComponent = {
         image: "celleryio/samples-pet-store-catalog"
     },
     ingresses: {
-        catalog: new cellery:HTTPIngress(catalogPort,
+        catalog: new cellery:HttpApiIngress(catalogPort,
             "catalog",
             [
                 {
@@ -86,7 +86,7 @@ cellery:Component controllerComponent = {
         image: "celleryio/samples-pet-store-controller"
     },
     ingresses: {
-        controller: new cellery:HTTPIngress(
+        controller: new cellery:HttpApiIngress(
                       controllerPort,
                       "controller",
                       "./components/controller/resources/pet-store.swagger.json"

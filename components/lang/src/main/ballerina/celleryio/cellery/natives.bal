@@ -49,7 +49,7 @@ public type API record {
     string name?;
     string targetComponent;
     boolean global;
-    HTTPIngress ingress;
+    HttpApiIngress ingress;
     !...;
 };
 
@@ -102,7 +102,7 @@ public type Component record {
     string name;
     ImageSource source;
     int replicas = 1;
-    map<TCPIngress|HTTPIngress> ingresses?;
+    map<TCPIngress|HttpApiIngress> ingresses?;
     map<string> labels?;
     map<Env|Secret> parameters?;
     AutoScaling autoscaling?;
@@ -118,7 +118,7 @@ public type TCPIngress object {
     }
 };
 
-public type HTTPIngress object {
+public type HttpApiIngress object {
     public int port;
     public string context;
     public Definition[] definitions;
@@ -177,7 +177,7 @@ public type CellImage object {
     # + component - The component record
     public function exposeLocal(Component component) {
         foreach var (name, ingressTemp) in component.ingresses {
-            if (ingressTemp is HTTPIngress) {
+            if (ingressTemp is HttpApiIngress) {
                 self.apis[self.apis.length()] = {
                     targetComponent: component.name,
                     ingress: ingressTemp,
@@ -197,8 +197,8 @@ public type CellImage object {
     # + component - The component record
     # + ingressName - Name of the ingress to be exposed
     public function exposeIngressLocal(Component component, string ingressName) {
-        TCPIngress|HTTPIngress? ingress = component.ingresses[ingressName];
-        if (ingress is HTTPIngress) {
+        TCPIngress|HttpApiIngress? ingress = component.ingresses[ingressName];
+        if (ingress is HttpApiIngress) {
             self.apis[self.apis.length()] = {
                 targetComponent: component.name,
                 ingress: ingress,
@@ -221,7 +221,7 @@ public type CellImage object {
     # + component - The component record
     public function exposeGlobal(Component component) {
         foreach var (name, ingressTemp) in component.ingresses {
-            if (ingressTemp is HTTPIngress) {
+            if (ingressTemp is HttpApiIngress) {
                 self.apis[self.apis.length()] = {
                     targetComponent: component.name,
                     ingress: ingressTemp,
@@ -236,8 +236,8 @@ public type CellImage object {
     # + component - The component record
     # + ingressName - Name of the ingress to be exposed
     public function exposeIngressGlobal(Component component, string ingressName) {
-        TCPIngress|HTTPIngress? ingress = component.ingresses[ingressName];
-        if (ingress is HTTPIngress) {
+        TCPIngress|HttpApiIngress? ingress = component.ingresses[ingressName];
+        if (ingress is HttpApiIngress) {
             self.apis[self.apis.length()] = {
                 targetComponent: component.name,
                 ingress: ingress,

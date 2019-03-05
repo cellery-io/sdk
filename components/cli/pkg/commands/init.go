@@ -68,7 +68,7 @@ func RunInit() {
 		"        image: \"sumedhassk/hello-world:1.0.0\"\n" +
 		"    },\n" +
 		"    ingresses: {\n" +
-		"        hello: new cellery:HTTPIngress(\n" +
+		"        hello: new cellery:HttpApiIngress(\n" +
 		"                   9090,\n" +
 		"\n" +
 		"                   \"hello\",\n" +

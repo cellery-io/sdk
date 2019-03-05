@@ -11,7 +11,7 @@ cellery:Component hrComponent = {
         image: "docker.io/celleryio/sampleapp-hr"
     },
     ingresses: {
-        "hr": new cellery:HTTPIngress(
+        "hr": new cellery:HttpApiIngress(
                   8080,
                   "hr-api",
                   [{

@@ -8,7 +8,7 @@ cellery:Component employeeComponent = {
         image: "docker.io/celleryio/sampleapp-employee"
     },
     ingresses: {
-        employee: new cellery:HTTPIngress(
+        employee: new cellery:HttpApiIngress(
                       8080,
                       "employee",
                       "./resources/employee.swagger.json"
@@ -30,7 +30,7 @@ cellery:Component salaryComponent = {
         image: "docker.io/celleryio/sampleapp-salary"
     },
     ingresses: {
-        SalaryAPI: new cellery:HTTPIngress(
+        SalaryAPI: new cellery:HttpApiIngress(
                 8080,
                 "payroll",
                 [{

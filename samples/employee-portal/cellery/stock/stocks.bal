@@ -8,7 +8,7 @@ cellery:Component stock = {
         image: "docker.io/celleryio/sampleapp-stock"
     },
     ingresses: {
-        stock: new cellery:HTTPIngress(8080,
+        stock: new cellery:HttpApiIngress(8080,
             "stock",
             [
                 {

@@ -21,7 +21,7 @@ cellery:Component stock = {
        image: "docker.io/celleryio/sampleapp-stock"
    },
    ingresses: {
-       stock: new cellery:HTTPIngress(8080,
+       stock: new cellery:HttpApiIngress(8080,
            "stock",
            [
                {
@@ -41,7 +41,7 @@ An Ingress represents an entry point into a Cell or Component. An ingress can be
 HTTP ingress supports defining HTTP definitions inline or as a swagger file.
 A sample ingress instance  with inline API definition would be as follows:
 ```
-cellery:Ingress ingressA = new cellery:HTTPIngress(
+cellery:Ingress ingressA = new cellery:HttpApiIngress(
     8080,      //port
     "foo",        //context
      [        // Definitions
@@ -54,7 +54,7 @@ cellery:Ingress ingressA = new cellery:HTTPIngress(
 ```
 A sample ingress instance  with swagger 2.0 definition would be as follows:
 ```
-cellery:Ingress ingressA = new cellery:HTTPIngress(
+cellery:Ingress ingressA = new cellery:HttpApiIngress(
     8080,
     "foo",
     “./resources/employee.swagger.json”
@@ -81,7 +81,7 @@ cellery:Component employeeComponent = {
        image: "docker.io/celleryio/sampleapp-employee"
    },
    ingresses: {
-       employee: new cellery:HTTPIngress(
+       employee: new cellery:HttpApiIngress(
                      8080,
                      "employee",
                      "./resources/employee.swagger.json"
@@ -124,7 +124,7 @@ cellery:Component stock = {
        image: "docker.io/celleryio/sampleapp-stock"
    },
    ingresses: {
-       stock: new cellery:HTTPIngress(8080,
+       stock: new cellery:HttpApiIngress(8080,
            "stock",
            [
                {
@@ -173,7 +173,7 @@ cellery:Component stock = {
        image: "docker.io/celleryio/sampleapp-stock"
    },
    ingresses: {
-       stock: new cellery:HTTPIngress(8080,
+       stock: new cellery:HttpApiIngress(8080,
            "stock",
            [
                {
@@ -214,7 +214,7 @@ cellery:Component employeeComponent = {
        image: "docker.io/celleryio/sampleapp-employee"
    },
    ingresses: {
-       employee: new cellery:HTTPIngress(
+       employee: new cellery:HttpApiIngress(
                      8080,
                      "employee",
                      "./resources/employee.swagger.json"
@@ -238,7 +238,7 @@ cellery:Component salaryComponent = {
        image: "docker.io/celleryio/sampleapp-salary"
    },
    ingresses: {
-       SalaryAPI: new cellery:HTTPIngress(
+       SalaryAPI: new cellery:HttpApiIngress(
                8080,
                "payroll",
                [{
@@ -348,7 +348,7 @@ cellery:Component hrComponent = {
       image: "docker.io/wso2vick/sampleapp-hr"
   },
   ingresses: {
-      hr: new cellery:HTTPIngress(8080, "info",
+      hr: new cellery:HttpApiIngress(8080, "info",
           [
               {
                   path: "/",

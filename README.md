@@ -168,7 +168,7 @@ cellery:Component helloWorldComp = {
         image: "sumedhassk/hello-world:1.0.0"
     },
     ingresses: {
-        hello: new cellery:HTTPIngress(
+        hello: new cellery:HttpApiIngress(
                    9090,
 
                    "hello",

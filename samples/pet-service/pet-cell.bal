@@ -8,7 +8,7 @@ cellery:Component petComponent = {
         image: "docker.io/isurulucky/pet-service"
     },
     ingresses: {
-        stock: new cellery:HTTPIngress(9090,
+        stock: new cellery:HttpApiIngress(9090,
             "petsvc",
             [
                 {
