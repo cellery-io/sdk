@@ -60,7 +60,7 @@ public function build(string orgName, string imageName, string imageVersion) {
     employeeCell.addComponent(salaryComponent);
 
     //Expose API from Cell Gateway
-    employeeCell.exposeAPIsFrom(employeeComponent);
+    employeeCell.exposeLocal(employeeComponent);
 
     _ = cellery:createImage(employeeCell, orgName, imageName, imageVersion);
 }

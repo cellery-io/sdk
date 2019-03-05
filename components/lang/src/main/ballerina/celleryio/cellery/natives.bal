@@ -172,7 +172,10 @@ public type CellImage object {
         self.components[self.components.length()] = component;
     }
 
-    public function exposeAPIsFrom(Component component) {
+    # Expose the all the ingresses in a component via Cell Gateway
+    #
+    # + component - The component record
+    public function exposeLocal(Component component) {
         foreach var (name, ingressTemp) in component.ingresses {
             if (ingressTemp is HTTPIngress) {
                 self.apis[self.apis.length()] = {
@@ -189,7 +192,11 @@ public type CellImage object {
         }
     }
 
-    public function exposeAPIFrom(Component component, string ingressName) {
+    # Expose a given ingress via Cell Gateway
+    #
+    # + component - The component record
+    # + ingressName - Name of the ingress to be exposed
+    public function exposeIngressLocal(Component component, string ingressName) {
         TCPIngress|HTTPIngress? ingress = component.ingresses[ingressName];
         if (ingress is HTTPIngress) {
             self.apis[self.apis.length()] = {
@@ -209,6 +216,9 @@ public type CellImage object {
         }
     }
 
+    # Expose the all the ingresses in a component via Global Gateway
+    #
+    # + component - The component record
     public function exposeGlobal(Component component) {
         foreach var (name, ingressTemp) in component.ingresses {
             if (ingressTemp is HTTPIngress) {
@@ -218,6 +228,30 @@ public type CellImage object {
                     global: true
                 };
             }
+        }
+    }
+
+    # Expose a given ingress via Global Cell Gateway
+    #
+    # + component - The component record
+    # + ingressName - Name of the ingress to be exposed
+    public function exposeIngressGlobal(Component component, string ingressName) {
+        TCPIngress|HTTPIngress? ingress = component.ingresses[ingressName];
+        if (ingress is HTTPIngress) {
+            self.apis[self.apis.length()] = {
+                targetComponent: component.name,
+                ingress: ingress,
+                global: true
+            };
+        } else if (ingress is TCPIngress){
+            self.tcp[self.tcp.length()] = {
+                targetComponent: component.name,
+                ingress: ingress
+            };
+        }
+        else {
+            error err = error("Ingress " + ingressName + " not found in the component " + component.name + ".");
+            panic err;
         }
     }
 

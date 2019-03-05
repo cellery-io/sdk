@@ -108,7 +108,7 @@ public function build(string orgName, string imageName, string imageVersion) {
    // Add components to Cell
    employeeCell.addComponent(employeeComponent);
    //Expose API from Cell Gateway
-   employeeCell.exposeAPIsFrom(employeeComponent);
+   employeeCell.exposeLocal(employeeComponent);
 
    _ = cellery:createImage(employeeCell, orgName, imageName, imageVersion);
 }
@@ -116,7 +116,7 @@ public function build(string orgName, string imageName, string imageVersion) {
 
 #### APIs
 An API represents a defined set of functions and procedures that the services of the Components inside a Cell exposes 
-as resources (i.e ingresses). An Ingress can be exposed as an API using exposeAPIsFrom method.
+as resources (i.e ingresses). An Ingress can be exposed as an API using exposeLocal method.
 ```
 cellery:Component stock = {
    name: "stock",
@@ -143,7 +143,7 @@ public function build(string orgName, string imageName, string imageVersion) {
    io:println("Building Stock Cell ...");
    stockCell.addComponent(stock);
    //Expose API from Cell Gateway
-   stockCell.exposeAPIsFrom(stock);
+   stockCell.exposeLocal(stock);
    _ = cellery:createImage(stockCell, orgName, imageName, imageVersion);
 }
 ```
@@ -193,7 +193,7 @@ public function build(string orgName, string imageName, string imageVersion) {
    io:println("Building Stock Cell ...");
    stockCell.addComponent(stock);
    //Expose API from Cell Gateway
-   stockCell.exposeAPIsFrom(stock);
+   stockCell.exposeLocal(stock);
    _ = cellery:createImage(stockCell, orgName, imageName, imageVersion);
 }
 ```
@@ -261,7 +261,7 @@ public function build(string orgName, string imageName, string imageVersion) {
    // Add components to Cell
    employeeCell.addComponent(employeeComponent);
    //Expose API from Cell Gateway
-   employeeCell.exposeAPIsFrom(employeeComponent);
+   employeeCell.exposeLocal(employeeComponent);
 
    _ = cellery:createImage(employeeCell, orgName, imageName, imageVersion);
 }

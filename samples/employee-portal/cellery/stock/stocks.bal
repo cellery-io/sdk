@@ -27,6 +27,6 @@ public function build(string orgName, string imageName, string imageVersion) {
     io:println("Building Stock Cell ...");
     stockCell.addComponent(stock);
     //Expose API from Cell Gateway
-    stockCell.exposeAPIsFrom(stock);
+    stockCell.exposeLocal(stock);
     _ = cellery:createImage(stockCell, orgName, imageName, imageVersion);
 }

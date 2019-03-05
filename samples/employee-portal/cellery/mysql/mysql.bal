@@ -22,6 +22,6 @@ public function build(string orgName, string imageName, string imageVersion) {
     io:println("Building MySQL Cell ...");
     mysqlCell.addComponent(mysqlComponent);
     //Expose API from Cell Gateway
-    mysqlCell.exposeAPIsFrom(mysqlComponent);
+    mysqlCell.exposeLocal(mysqlComponent);
     _ = cellery:createImage(mysqlCell, orgName, imageName, imageVersion);
 }

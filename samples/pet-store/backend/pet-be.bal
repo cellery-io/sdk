@@ -122,7 +122,7 @@ public function build(string orgName, string imageName, string imageVersion) {
     cellery:setParameter(controllerComponent.parameters.CUSTOMER_PORT, customerPort);
 
     //Expose API from Cell Gateway
-    petStoreCell.exposeAPIsFrom(controllerComponent);
+    petStoreCell.exposeLocal(controllerComponent);
 
     _ = cellery:createImage(petStoreCell, orgName, imageName, imageVersion);
 }
