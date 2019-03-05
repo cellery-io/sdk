@@ -45,7 +45,7 @@ cellery:Component salaryComponent = {
     }
 };
 
-public cellery:CellImage employeeCell = new();
+cellery:CellImage employeeCell = new();
 
 public function build(string orgName, string imageName, string imageVersion) {
 

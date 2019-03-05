@@ -183,7 +183,7 @@ cellery:Component helloWorldComp = {
     }
 };
 
-public cellery:CellImage helloCell = new();
+cellery:CellImage helloCell = new();
 
 public function build(string orgName, string imageName, string imageVersion) {
     helloCell.addComponent(helloWorldComp);
