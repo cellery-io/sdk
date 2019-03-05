@@ -60,8 +60,7 @@ func RunInit() {
 		util.ExitWithErrorMessage("Error occurred while initializing the project", err)
 	}
 
-	cellTemplate := "import ballerina/io;\n" +
-		"import celleryio/cellery;\n" +
+	cellTemplate := "import celleryio/cellery;\n" +
 		"\n" +
 		"cellery:Component helloWorldComp = {\n" +
 		"    name: \"hello-world\",\n" +
@@ -84,17 +83,14 @@ func RunInit() {
 		"    }\n" +
 		"};\n" +
 		"\n" +
-		"public cellery:CellImage helloCell = new();\n" +
+		"cellery:CellImage helloCell = new();\n" +
 		"\n" +
 		"public function build(string orgName, string imageName, string imageVersion) {\n" +
 		"    helloCell.addComponent(helloWorldComp);\n" +
 		"\n" +
 		"    helloCell.exposeGlobal(helloWorldComp);\n" +
 		"\n" +
-		"    var out = cellery:createImage(helloCell, orgName, imageName, imageVersion);\n" +
-		"    if (out is boolean) {\n" +
-		"        io:println(\"Hello World Cell Built successfully.\");\n" +
-		"    }\n" +
+		"    _= cellery:createImage(helloCell, orgName, imageName, imageVersion);\n" +
 		"}\n" +
 		"\n"
 
