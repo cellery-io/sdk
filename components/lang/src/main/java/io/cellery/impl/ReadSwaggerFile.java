@@ -50,12 +50,12 @@ import static io.cellery.CelleryUtils.readSwaggerFile;
  */
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
-        functionName = "getDefinitionsFromSwagger",
+        functionName = "readSwaggerFile",
         args = {@Argument(name = "swaggerFilePath", type = TypeKind.STRING)},
         returnType = {@ReturnType(type = TypeKind.ARRAY)},
         isPublic = true
 )
-public class GetDefinitionsFromSwagger extends BlockingNativeCallableUnit {
+public class ReadSwaggerFile extends BlockingNativeCallableUnit {
 
     public void execute(Context ctx) {
         BArrayType bArrayType =

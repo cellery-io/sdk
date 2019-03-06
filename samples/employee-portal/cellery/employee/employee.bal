@@ -2,6 +2,10 @@ import ballerina/io;
 import ballerina/config;
 import celleryio/cellery;
 
+// Read API defintion from swagger file.
+cellery:ApiDefinition[] employeeAPIdefn = cellery:readSwaggerFile("./resources/employee.swagger.json");
+
+// Employee Component
 cellery:Component employeeComponent = {
     name: "employee",
     source: {
@@ -11,7 +15,7 @@ cellery:Component employeeComponent = {
         employee: new cellery:HttpApiIngress(
                       8080,
                       "employee",
-                      "./resources/employee.swagger.json"
+                      employeeAPIdefn
         )
     },
     parameters: {
@@ -23,7 +27,7 @@ cellery:Component employeeComponent = {
     }
 };
 
-//Salary Component
+// Salary Component
 cellery:Component salaryComponent = {
     name: "salary",
     source: {
@@ -59,7 +63,7 @@ public function build(string orgName, string imageName, string imageVersion) {
     employeeCell.addComponent(employeeComponent);
     employeeCell.addComponent(salaryComponent);
 
-    //Expose API from Cell Gateway
+    // Expose API from Cell Gateway
     employeeCell.exposeLocal(employeeComponent);
 
     _ = cellery:createImage(employeeCell, orgName, imageName, imageVersion);

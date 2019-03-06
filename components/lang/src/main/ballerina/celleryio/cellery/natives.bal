@@ -39,7 +39,7 @@ public type GitSource record {
     !...;
 };
 
-public type Definition record {
+public type ApiDefinition record {
     string path;
     string method;
     !...;
@@ -121,19 +121,12 @@ public type TCPIngress object {
 public type HttpApiIngress object {
     public int port;
     public string context;
-    public Definition[] definitions;
+    public ApiDefinition[] definitions;
 
-    public function __init(int port, string context, Definition[]|string definitions) {
+    public function __init(int port, string context, ApiDefinition[] definitions) {
         self.port = port;
-        if (definitions is string) {
-            // API details are defined in a swagger file
-            self.context = context;
-            self.definitions = getDefinitionsFromSwagger(definitions);
-        } else {
-            // API details are defined in-line
-            self.context = context;
-            self.definitions = definitions;
-        }
+        self.context = context;
+        self.definitions = definitions;
     }
 };
 
@@ -280,8 +273,8 @@ returns (boolean|error);
 # Parse the swagger file and returns API Defintions
 #
 # + swaggerFilePath - The swaggerFilePath
-# + return - Array of Definitions
-public extern function getDefinitionsFromSwagger(string swaggerFilePath) returns (Definition[]);
+# + return - Array of ApiDefinitions
+public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition[]);
 
 public function getHost(string cellImageName, Component component) returns (string) {
     return cellImageName + "--" + getValidName(component.name) + "-service";

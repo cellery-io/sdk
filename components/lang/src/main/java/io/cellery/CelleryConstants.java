@@ -24,7 +24,7 @@ import java.io.File;
  */
 public class CelleryConstants {
     public static final String CELLERY_PACKAGE = "celleryio/cellery:0.0.0";
-    public static final String RECORD_NAME_DEFINITION = "Definition";
+    public static final String RECORD_NAME_DEFINITION = "ApiDefinition";
 
     public static final String CELL_REFERENCE_TEMPLATE_FILE = "cell_reference.bal.mustache";
     public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_NAME = "cellName";
