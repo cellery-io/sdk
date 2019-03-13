@@ -18,6 +18,8 @@
 package io.cellery;
 
 import com.esotericsoftware.yamlbeans.YamlWriter;
+import io.cellery.models.Component;
+import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.File;
@@ -27,7 +29,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+
+import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 
 /**
  * Cellery Utility methods.
@@ -57,6 +62,19 @@ public class CelleryUtils {
         return name.toLowerCase(Locale.getDefault()).replaceAll("\\P{Alnum}", "-");
     }
 
+
+    public static void processParameters(Component component, LinkedHashMap<?, ?> parameters) {
+        parameters.forEach((k, v) -> {
+            if (((BMap) v).getMap().get("value") != null) {
+                if (!((BMap) v).getMap().get("value").toString().isEmpty()) {
+                    component.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
+                }
+            } else {
+                component.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);
+            }
+            //TODO:Handle secrets
+        });
+    }
 
     /**
      * Write content to a File. Create the required directories if they don't not exists.

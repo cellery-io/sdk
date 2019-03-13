@@ -53,8 +53,7 @@ import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BRefType;
-import org.ballerinalang.model.values.BValue;
+import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
@@ -81,10 +80,10 @@ import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
-import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.getValidName;
+import static io.cellery.CelleryUtils.processParameters;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 
@@ -116,9 +115,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         String cellName = getValidName(ctx.getStringArgument(1));
         CellCache cellCache = CellCache.getInstance();
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
-        processComponents(((BValueArray) refArgument.getMap().get("components")).getValues());
-        processAPIs(((BValueArray) refArgument.getMap().get("apis")).getValues());
-        processTCP(((BValueArray) refArgument.getMap().get("tcp")).getValues());
+        processComponents((BMap) refArgument.getMap().get("components"));
+        processAPIs((BMap) refArgument.getMap().get("apis"));
+        processTCP((BMap) refArgument.getMap().get("tcp"));
         Set<Component> components = new HashSet<>(componentHolder.getComponentNameToComponentMap().values());
         cellCache.setCellNameToComponentMap(cellName, components);
         generateCell(orgName, cellName, cellVersion);
@@ -126,53 +125,34 @@ public class CreateImage extends BlockingNativeCallableUnit {
         ctx.setReturnValues(new BBoolean(true));
     }
 
-    private void processComponents(BRefType<?>[] components) {
-        for (BRefType componentDefinition : components) {
-            if (componentDefinition == null) {
-                continue;
-            }
+    private void processComponents(BMap<?, ?> components) {
+        components.getMap().forEach((key, value) -> {
+            LinkedHashMap componentValues = ((BMap) value).getMap();
             Component component = new Component();
-            ((BMap<?, ?>) componentDefinition).getMap().forEach((key, value) -> {
-                switch (key.toString()) {
-                    case "name":
-                        component.setName(value.toString());
-                        component.setService(getValidName(value.toString()));
-                        break;
-                    case "replicas":
-                        component.setReplicas((int) ((BInteger) value).intValue());
-                        break;
-                    case "source":
-                        component.setSource(((BMap<?, ?>) value).getMap().get("image").toString());
-                        break;
-                    case "ingresses":
-                        processIngressPort(((BMap<?, ?>) value).getMap(), component);
-                        break;
-                    case "parameters":
-                        ((BMap<?, ?>) value).getMap().forEach((k, v) -> {
-                            if (((BMap) v).getMap().get("value") != null) {
-                                if (!((BMap) v).getMap().get("value").toString().isEmpty()) {
-                                    component.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
-                                }
-                            } else {
-                                component.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);
-                            }
-                            //TODO:Handle secrets
-                        });
-                        break;
-                    case "labels":
-                        ((BMap<?, ?>) value).getMap().forEach((labelKey, labelValue) ->
-                                component.addLabel(labelKey.toString(), labelValue.toString()));
-                        break;
-                    case "autoscaling":
-                        processAutoScalePolicy(((BMap<?, ?>) value).getMap(), component);
-                        break;
-                    default:
-                        break;
-                }
-            });
+            // Mandatory fields
+            component.setName(((BString) componentValues.get("name")).stringValue());
+            component.setService(getValidName(component.getName()));
+            component.setReplicas((int) ((BInteger) componentValues.get("replicas")).intValue());
+            component.setSource(((BMap<?, ?>) componentValues.get("source")).getMap().get("image").toString());
+
+            // Optional fields
+            if (componentValues.containsKey("ingresses")) {
+                processIngressPort(((BMap<?, ?>) componentValues.get("ingresses")).getMap(), component);
+            }
+            if (componentValues.containsKey("parameters")) {
+                processParameters(component, ((BMap<?, ?>) componentValues.get("parameters")).getMap());
+            }
+            if (componentValues.containsKey("labels")) {
+                ((BMap<?, ?>) componentValues.get("labels")).getMap().forEach((labelKey, labelValue) ->
+                        component.addLabel(labelKey.toString(), labelValue.toString()));
+            }
+            if (componentValues.containsKey("autoscaling")) {
+                processAutoScalePolicy(((BMap<?, ?>) componentValues.get("autoscaling")).getMap(), component);
+            }
             componentHolder.addComponent(component);
-        }
+        });
     }
+
 
     /**
      * Extract the ingress port.
@@ -224,114 +204,38 @@ public class CreateImage extends BlockingNativeCallableUnit {
         component.setAutoScaling(new AutoScaling(autoScalingPolicy, bOverridable));
     }
 
-    private void processAPIs(BRefType<?>[] apiMap) {
-        for (BRefType apiDefinition : apiMap) {
-            if (apiDefinition == null) {
-                continue;
-            }
+    private void processAPIs(BMap<?, ?> apiMap) {
+        apiMap.getMap().forEach((key, value) -> {
+            LinkedHashMap apiValues = ((BMap) value).getMap();
             API api = new API();
-            String componentName = null;
-            for (Map.Entry<?, ?> entry : ((BMap<?, ?>) apiDefinition).getMap().entrySet()) {
-                Object key = entry.getKey();
-                BValue value = (BValue) entry.getValue();
-                switch (key.toString()) {
-                    case "global":
-                        api.setGlobal(Boolean.parseBoolean(value.toString()));
-                        break;
-                    case "targetComponent":
-                        componentName = value.toString();
-                        break;
-                    case "ingress":
-                        ((BMap<?, ?>) value).getMap().forEach((contextKey, contextValue) -> {
-                            switch (contextKey.toString()) {
-                                case "context":
-                                    api.setContext(contextValue.toString());
-                                    break;
-                                case "definitions":
-                                    api.setDefinitions(processDefinitions(((BValueArray) contextValue).getValues()));
-                                    break;
-                                default:
-                                    break;
-                            }
-                        });
-                        break;
-                    default:
-                        break;
-
-                }
+            api.setGlobal(((BBoolean) apiValues.get("global")).booleanValue());
+            String componentName = ((BString) apiValues.get("targetComponent")).stringValue();
+            LinkedHashMap<?, ?> ingress = ((BMap<?, ?>) apiValues.get("ingress")).getMap();
+            api.setContext(((BString) ingress.get("context")).stringValue());
+            List<APIDefinition> apiDefinitions = new ArrayList<>();
+            BValueArray ingressDefs = ((BValueArray) ingress.get("definitions"));
+            for (int i = 0; i < ingressDefs.size(); i++) {
+                APIDefinition apiDefinition = new APIDefinition();
+                LinkedHashMap definitions = ((BMap) ingressDefs.getBValue(i)).getMap();
+                apiDefinition.setPath(((BString) definitions.get("path")).stringValue());
+                apiDefinition.setMethod(((BString) definitions.get("method")).stringValue());
+                apiDefinitions.add(apiDefinition);
             }
-            if (componentName != null) {
-                componentHolder.addAPI(componentName, api);
-            } else {
-                throw new BallerinaException("Undefined target component.");
-            }
-        }
+            api.setDefinitions(apiDefinitions);
+            componentHolder.addAPI(componentName, api);
+        });
     }
 
-    private void processTCP(BRefType<?>[] tcpMap) {
-        for (BRefType tcpDefinition : tcpMap) {
-            if (tcpDefinition == null) {
-                continue;
-            }
+    private void processTCP(BMap<?, ?> tcpMap) {
+        tcpMap.getMap().forEach((key, value) -> {
+            LinkedHashMap tcpValues = ((BMap) value).getMap();
             TCP tcp = new TCP();
-            String componentName = null;
-            for (Map.Entry<?, ?> entry : ((BMap<?, ?>) tcpDefinition).getMap().entrySet()) {
-                Object key = entry.getKey();
-                BValue value = (BValue) entry.getValue();
-                switch (key.toString()) {
-                    case "targetComponent":
-                        componentName = value.toString();
-                        break;
-                    case "ingress":
-                        ((BMap<?, ?>) value).getMap().forEach((contextKey, contextValue) -> {
-                            switch (contextKey.toString()) {
-                                case "port":
-                                    tcp.setPort((int) ((BInteger) contextValue).intValue());
-                                    break;
-                                case "targetPort":
-                                    tcp.setBackendPort((int) ((BInteger) contextValue).intValue());
-                                    break;
-                                default:
-                                    break;
-                            }
-                        });
-                        break;
-                    default:
-                        break;
-
-                }
-            }
-            if (componentName != null) {
-                componentHolder.addTCP(componentName, tcp);
-            } else {
-                throw new BallerinaException("Undefined target component.");
-            }
-        }
-    }
-
-    private List<APIDefinition> processDefinitions(BRefType<?>[] definitions) {
-        List<APIDefinition> apiDefinitions = new ArrayList<>();
-        for (BRefType definition : definitions) {
-            if (definition == null) {
-                continue;
-            }
-            APIDefinition apiDefinition = new APIDefinition();
-            ((BMap<?, ?>) definition).getMap().forEach((key, value) -> {
-                switch (key.toString()) {
-                    case "path":
-                        apiDefinition.setPath(value.toString());
-                        break;
-                    case "method":
-                        apiDefinition.setMethod(value.toString());
-                        break;
-                    default:
-                        break;
-
-                }
-            });
-            apiDefinitions.add(apiDefinition);
-        }
-        return apiDefinitions;
+            String componentName = ((BString) tcpValues.get("targetComponent")).stringValue();
+            LinkedHashMap<?, ?> ingress = ((BMap<?, ?>) tcpValues.get("ingress")).getMap();
+            tcp.setPort((int) ((BInteger) ingress.get("port")).intValue());
+            tcp.setBackendPort((int) ((BInteger) ingress.get("targetPort")).intValue());
+            componentHolder.addTCP(componentName, tcp);
+        });
     }
 
 

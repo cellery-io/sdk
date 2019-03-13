@@ -24,7 +24,6 @@ cellery:Component hrComponent = {
         employeegw_url: new cellery:Env(),
         stockgw_url: new cellery:Env()
     }
-
 };
 
 // Cell Intialization
@@ -41,11 +40,15 @@ public function build(string orgName, string imageName, string imageVersion) {
 }
 
 
-public function run(string imageName, string imageVersion, string instanceName, string... dependenciesRef) {
-    employee:EmployeeReference employeeRef = new(dependenciesRef[0]);
-    stock:StockReference stockRef = new(dependenciesRef[1]);
-    cellery:setParameter(hrComponent.parameters.employeegw_url, employeeRef.getHost());
-    cellery:setParameter(hrComponent.parameters.stockgw_url, stockRef.getHost());
+public function run(string imageName, string imageVersion, string instanceName, map<string> dependenciesRef) {
+    //Resolve employee gateway URL
+    employee:EmployeeReference employeeRef = new(untaint dependenciesRef["employee"] ?: "employee");
+    hrComponent.parameters.employeegw_url.value = employeeRef.getHost();
+
+    //Resolve stock gateway URL
+    stock:StockReference stockRef = new(untaint dependenciesRef["stock"] ?: "stock");
+    hrComponent.parameters.stockgw_url.value = stockRef.getHost();
+
     hrCell.addComponent(hrComponent);
     _ = cellery:createInstance(hrCell, imageName, imageVersion, instanceName);
 }

@@ -25,8 +25,7 @@ import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BRefType;
-import org.ballerinalang.model.values.BValueArray;
+import org.ballerinalang.model.values.BString;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
@@ -37,13 +36,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.cellery.CelleryConstants.CELLERY_HOME;
 import static io.cellery.CelleryConstants.CELL_YAML_PATH;
-import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.YAML;
-import static io.cellery.CelleryUtils.getValidName;
+import static io.cellery.CelleryUtils.processParameters;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 import static org.apache.commons.lang3.StringUtils.removePattern;
@@ -71,7 +70,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 "artifacts" + File.separator + "cellery" + File.separator + cellName + YAML;
         Cell cell = getInstance(destinationPath);
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
-        processComponents(((BValueArray) refArgument.getMap().get("components")).getValues());
+        processComponents((BMap) refArgument.getMap().get("components"));
         cell.getSpec().getServicesTemplates().forEach(serviceTemplate -> {
             String componentName = serviceTemplate.getMetadata().getName();
             Map<String, String> updatedParams =
@@ -99,8 +98,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             cell = reader.read(Cell.class);
         } catch (IOException e) {
             throw new BallerinaException("Unable to read Cell image file " + destinationPath + ". \nDid you " +
-                    "pull/build" +
-                    " the cell image ?");
+                    "pull/build the cell image ?");
         }
         if (cell == null) {
             throw new BallerinaException("Unable to extract Cell Image yaml " + CELL_YAML_PATH);
@@ -108,39 +106,17 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         return cell;
     }
 
-    private void processComponents(BRefType<?>[] components) {
-        for (BRefType componentDefinition : components) {
-            if (componentDefinition == null) {
-                continue;
-            }
+    private void processComponents(BMap<?, ?> components) {
+        components.getMap().forEach((key, value) -> {
+            LinkedHashMap componentValues = ((BMap) value).getMap();
             Component component = new Component();
-            ((BMap<?, ?>) componentDefinition).getMap().forEach((key, value) -> {
-                switch (key.toString()) {
-                    case "name":
-                        component.setName(value.toString());
-                        component.setService(getValidName(value.toString()));
-                        break;
-                    case "parameters":
-                        ((BMap<?, ?>) value).getMap().forEach((k, v) -> {
-                            if (((BMap) v).getMap().get("value") != null) {
-                                if (!((BMap) v).getMap().get("value").toString().isEmpty()) {
-                                    component.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
-                                }
-                            } else {
-                                component.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);
-                            }
-                        });
-                        break;
-                    case "labels":
-                        ((BMap<?, ?>) value).getMap().forEach((labelKey, labelValue) ->
-                                component.addLabel(labelKey.toString(), labelValue.toString()));
-                        break;
-                    default:
-                        break;
-                }
-            });
+            // Mandatory fields
+            component.setName(((BString) componentValues.get("name")).stringValue());
+            if (componentValues.containsKey("parameters")) {
+                processParameters(component, ((BMap<?, ?>) componentValues.get("parameters")).getMap());
+            }
             componentHolder.addComponent(component);
-        }
+        });
     }
 
 
