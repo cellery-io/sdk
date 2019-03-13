@@ -20,10 +20,12 @@ package commands
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -61,7 +63,6 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while extracting cell image", err)
 	}
-	var kubeYamlDir string
 	balFileName, err := util.GetSourceFileName(filepath.Join(tmpPath, constants.ZIP_BALLERINA_SOURCE))
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while extracting source file: ", err)
@@ -77,14 +78,10 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 			//Instance name not provided setting default {cellImageName}
 			instanceName = parsedCellImage.ImageName
 		}
-		args := []string{"run", balFilePath + ":run", parsedCellImage.Organization + "/" + parsedCellImage.ImageName,
-			parsedCellImage.ImageVersion, instanceName}
-		args = append(args, dependencies...)
-
-		cmd, err := buildCommand("ballerina", args)
-		if err != nil {
-			util.ExitWithErrorMessage("Error in building ballerina command ", err)
-		}
+		cmd := exec.Command("ballerina", "run", balFilePath+":run",
+			parsedCellImage.Organization+"/"+parsedCellImage.ImageName,
+			parsedCellImage.ImageVersion,
+			instanceName, generateBalCompatibleMap(dependencies))
 		stdoutReader, _ := cmd.StdoutPipe()
 		stdoutScanner := bufio.NewScanner(stdoutReader)
 		go func() {
@@ -104,10 +101,13 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 			util.ExitWithErrorMessage("Error in executing cellery run", err)
 		}
 		err = cmd.Wait()
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred in cellery run", err)
+		}
 	}
 
 	// Update the instance name
-	kubeYamlDir = filepath.Join(tmpPath, constants.ZIP_ARTIFACTS, "cellery")
+	kubeYamlDir := filepath.Join(tmpPath, constants.ZIP_ARTIFACTS, "cellery")
 	kubeYamlFile := filepath.Join(kubeYamlDir, parsedCellImage.ImageName+".yaml")
 	if instanceName != "" {
 		//Cell instance name changed.
@@ -116,6 +116,7 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error in replacing cell instance name", err)
 	}
+
 	cmd := exec.Command("kubectl", "apply", "-f", kubeYamlDir)
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
@@ -147,22 +148,22 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 	util.PrintWhatsNextMessage("list running cells", "cellery ps")
 }
 
-func buildCommand(name string, args []string) (*exec.Cmd, error) {
-	newArgs := make([]string, len(args)+1)
-	newArgs[0] = name
-	for i, element := range args {
-		newArgs[i+1] = element
-	}
-	cmd := &exec.Cmd{
-		Path: name,
-		Args: append(newArgs),
-	}
-	if filepath.Base(name) == name {
-		if lp, err := exec.LookPath(name); err != nil {
-			return nil, err
-		} else {
-			cmd.Path = lp
+func generateBalCompatibleMap(depArr []string) string {
+	var strBuffer bytes.Buffer
+	strBuffer.WriteString("\"{")
+	for index, element := range depArr {
+		if index > 0 {
+			strBuffer.WriteString(",")
 		}
+		depElements := strings.Split(element, ":")
+		strBuffer.WriteString("\"")
+		strBuffer.WriteString(depElements[0])
+		strBuffer.WriteString("\"")
+		strBuffer.WriteString(":")
+		strBuffer.WriteString("\"")
+		strBuffer.WriteString(depElements[1])
+		strBuffer.WriteString("\"")
 	}
-	return cmd, nil
+	strBuffer.WriteString("}\"")
+	return strBuffer.String()
 }
