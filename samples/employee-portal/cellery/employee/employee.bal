@@ -1,5 +1,4 @@
 import ballerina/io;
-import ballerina/config;
 import celleryio/cellery;
 
 // Read API defintion from swagger file.

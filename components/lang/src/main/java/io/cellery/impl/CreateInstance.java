@@ -91,7 +91,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     }
 
     private Cell getInstance(String destinationPath) {
-        Cell cell = null;
+        Cell cell;
         try (InputStreamReader fileReader = new InputStreamReader(new FileInputStream(destinationPath),
                 StandardCharsets.UTF_8)) {
             YamlReader reader = new YamlReader(fileReader);

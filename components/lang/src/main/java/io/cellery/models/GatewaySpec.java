@@ -35,10 +35,13 @@ public class GatewaySpec {
     List<API> http;
     private @Singular("tcp")
     List<TCP> tcp;
+    private @Singular("grpc")
+    List<GRPC> grpc;
 
     public GatewaySpec() {
         http = new ArrayList<>();
         tcp = new ArrayList<>();
+        grpc = new ArrayList<>();
     }
 
     public void addHttpAPI(List<API> api) {
@@ -47,6 +50,10 @@ public class GatewaySpec {
 
     public void addTCP(List<TCP> tcpIngress) {
         tcp.addAll(tcpIngress);
+    }
+
+    public void addGRPC(List<GRPC> grpcIngress) {
+        grpc.addAll(grpcIngress);
     }
 
 }

@@ -32,6 +32,7 @@ import io.cellery.models.CellCache;
 import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
 import io.cellery.models.ComponentHolder;
+import io.cellery.models.GRPC;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.GatewayTemplate;
 import io.cellery.models.ServiceTemplate;
@@ -80,8 +81,12 @@ import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
+import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
+import static io.cellery.CelleryConstants.PROTOCOL_HTTP;
+import static io.cellery.CelleryConstants.PROTOCOL_TCP;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
+import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.processParameters;
 import static io.cellery.CelleryUtils.toYaml;
@@ -118,6 +123,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         processComponents((BMap) refArgument.getMap().get("components"));
         processAPIs((BMap) refArgument.getMap().get("apis"));
         processTCP((BMap) refArgument.getMap().get("tcp"));
+        processGRPC((BMap) refArgument.getMap().get("grpc"));
         Set<Component> components = new HashSet<>(componentHolder.getComponentNameToComponentMap().values());
         cellCache.setCellNameToComponentMap(cellName, components);
         generateCell(orgName, cellName, cellVersion);
@@ -222,7 +228,10 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 apiDefinitions.add(apiDefinition);
             }
             api.setDefinitions(apiDefinitions);
-            componentHolder.addAPI(componentName, api);
+            Component component = componentHolder.getComponent(componentName);
+            component.setProtocol(PROTOCOL_HTTP);
+            api.setBackend(component.getService());
+            component.addApi(api);
         });
     }
 
@@ -234,7 +243,29 @@ public class CreateImage extends BlockingNativeCallableUnit {
             LinkedHashMap<?, ?> ingress = ((BMap<?, ?>) tcpValues.get("ingress")).getMap();
             tcp.setPort((int) ((BInteger) ingress.get("port")).intValue());
             tcp.setBackendPort((int) ((BInteger) ingress.get("targetPort")).intValue());
-            componentHolder.addTCP(componentName, tcp);
+            Component component = componentHolder.getComponent(componentName);
+            component.setProtocol(PROTOCOL_TCP);
+            tcp.setBackendHost(component.getService());
+            component.addTCP(tcp);
+        });
+    }
+
+    private void processGRPC(BMap<?, ?> grpcMap) {
+        grpcMap.getMap().forEach((key, value) -> {
+            LinkedHashMap grpcValues = ((BMap) value).getMap();
+            GRPC grpc = new GRPC();
+            String componentName = ((BString) grpcValues.get("targetComponent")).stringValue();
+            LinkedHashMap<?, ?> ingress = ((BMap<?, ?>) grpcValues.get("ingress")).getMap();
+            grpc.setPort((int) ((BInteger) ingress.get("port")).intValue());
+            grpc.setBackendPort((int) ((BInteger) ingress.get("targetPort")).intValue());
+            String protoFile = ((BString) ingress.get("protoFile")).stringValue();
+            if (!protoFile.isEmpty()) {
+                copyResourceToTarget(protoFile);
+            }
+            Component component = componentHolder.getComponent(componentName);
+            component.setProtocol(PROTOCOL_GRPC);
+            grpc.setBackendHost(component.getService());
+            component.addGRPC(grpc);
         });
     }
 
@@ -248,6 +279,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         for (Component component : components) {
             spec.addHttpAPI(component.getApis());
             spec.addTCP(component.getTcpList());
+            spec.addGRPC(component.getGrpcList());
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             templateSpec.setReplicas(component.getReplicas());
             templateSpec.setProtocol(component.getProtocol());

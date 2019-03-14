@@ -19,6 +19,7 @@ package io.cellery;
 
 import com.esotericsoftware.yamlbeans.YamlWriter;
 import io.cellery.models.Component;
+import org.apache.commons.io.FileUtils;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
@@ -33,6 +34,8 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 
 import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
+import static io.cellery.CelleryConstants.RESOURCES;
+import static io.cellery.CelleryConstants.TARGET;
 
 /**
  * Cellery Utility methods.
@@ -112,8 +115,36 @@ public class CelleryUtils {
             writer.close(); //don't add this to finally, because the text will not be flushed
             return stringWriter.toString();
         } catch (IOException e) {
-            throw new BallerinaException("Error occurred while generating yaml definition.");
+            throw new BallerinaException("Error occurred while generating yaml definition." + e.getMessage());
         }
     }
 
+    /**
+     * Copy file target/resources directory.
+     *
+     * @param sourcePath source file/directory path
+     */
+    public static void copyResourceToTarget(String sourcePath) {
+        File src = new File(sourcePath);
+        String targetPath = TARGET + File.separator + RESOURCES + File.separator + src.getName();
+        File dst = new File(targetPath);
+        // if source is file
+        try {
+            if (Files.isRegularFile(Paths.get(sourcePath))) {
+                if (Files.isDirectory(dst.toPath())) {
+                    // if destination is directory
+                    FileUtils.copyFileToDirectory(src, dst);
+                } else {
+                    // if destination is file
+                    FileUtils.copyFile(src, dst);
+                }
+            } else if (Files.isDirectory(Paths.get(sourcePath))) {
+                FileUtils.copyDirectory(src, dst);
+            }
+
+        } catch (IOException e) {
+            throw new BallerinaException("Error occured while copying resource file " + sourcePath +
+                    ". " + e.getMessage());
+        }
+    }
 }

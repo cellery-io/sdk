@@ -46,7 +46,6 @@ public type ApiDefinition record {
 };
 
 public type API record {
-    string name?;
     string targetComponent;
     boolean global;
     HttpApiIngress ingress;
@@ -54,7 +53,11 @@ public type API record {
 };
 
 public type TCP record{
-    string name?;
+    string targetComponent;
+    TCPIngress ingress;
+};
+
+public type GRPC record{
     string targetComponent;
     TCPIngress ingress;
 };
@@ -102,7 +105,7 @@ public type Component record {
     string name;
     ImageSource source;
     int replicas = 1;
-    map<TCPIngress|HttpApiIngress> ingresses?;
+    map<TCPIngress|HttpApiIngress|GRPCIngress> ingresses?;
     map<string> labels?;
     map<ParamValue> parameters?;
     AutoScaling autoscaling?;
@@ -115,6 +118,17 @@ public type TCPIngress object {
     public function __init(int port, int targetPort) {
         self.port = port;
         self.targetPort = targetPort;
+    }
+};
+
+public type GRPCIngress object {
+    public int port;
+    public int targetPort;
+    public string protoFile;
+    public function __init(int port, int targetPort, string protoFile = "") {
+        self.port = port;
+        self.targetPort = targetPort;
+        self.protoFile = protoFile;
     }
 };
 
@@ -155,6 +169,7 @@ public type CellImage object {
     public map<Component> components = {};
     public map<API> apis = {};
     public map<TCP> tcp = {};
+    public map<GRPC> grpc = {};
 
     public function addComponent(Component component) {
         self.components[component.name] = component;
@@ -171,7 +186,13 @@ public type CellImage object {
                     ingress: ingressTemp,
                     global: false
                 };
-            } else if (ingressTemp is TCPIngress){
+            } else if (ingressTemp is GRPCIngress){
+                self.grpc[name] = {
+                    targetComponent: component.name,
+                    ingress: ingressTemp
+                };
+            }
+            else if (ingressTemp is TCPIngress){
                 self.tcp[name] = {
                     targetComponent: component.name,
                     ingress: ingressTemp
@@ -185,14 +206,20 @@ public type CellImage object {
     # + component - The component record
     # + ingressName - Name of the ingress to be exposed
     public function exposeIngressLocal(Component component, string ingressName) {
-        TCPIngress|HttpApiIngress? ingress = component.ingresses[ingressName];
+        TCPIngress|HttpApiIngress|GRPCIngress? ingress = component.ingresses[ingressName];
         if (ingress is HttpApiIngress) {
             self.apis[ingressName] = {
                 targetComponent: component.name,
                 ingress: ingress,
                 global: false
             };
-        } else if (ingress is TCPIngress){
+        } else if (ingress is GRPCIngress){
+            self.grpc[ingressName] = {
+                targetComponent: component.name,
+                ingress: ingress
+            };
+        }
+        else if (ingress is TCPIngress){
             self.tcp[ingressName] = {
                 targetComponent: component.name,
                 ingress: ingress
@@ -204,7 +231,7 @@ public type CellImage object {
         }
     }
 
-    # Expose the all the ingresses in a component via Global Gateway
+    # Expose the all the HttpApiIngress ingresses in a component via Global Gateway
     #
     # + component - The component record
     public function exposeGlobal(Component component) {
@@ -224,14 +251,20 @@ public type CellImage object {
     # + component - The component record
     # + ingressName - Name of the ingress to be exposed
     public function exposeIngressGlobal(Component component, string ingressName) {
-        TCPIngress|HttpApiIngress? ingress = component.ingresses[ingressName];
+        TCPIngress|HttpApiIngress|GRPCIngress? ingress = component.ingresses[ingressName];
         if (ingress is HttpApiIngress) {
             self.apis[ingressName] = {
                 targetComponent: component.name,
                 ingress: ingress,
                 global: true
             };
-        } else if (ingress is TCPIngress){
+        } else if (ingress is GRPCIngress){
+            self.grpc[ingressName] = {
+                targetComponent: component.name,
+                ingress: ingress
+            };
+        }
+        else if (ingress is TCPIngress){
             self.tcp[ingressName] = {
                 targetComponent: component.name,
                 ingress: ingress
