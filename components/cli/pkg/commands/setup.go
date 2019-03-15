@@ -1093,6 +1093,7 @@ func cleanupGcp() error {
 	}
 	if value == constants.CELLERY_SETUP_BACK {
 		manageGcp()
+		return nil
 	}
 
 	// Get the suffix - unique number of GCP cluster which is common to all infrastructures (sql instance, filestore, bucket)

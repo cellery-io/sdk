@@ -25,22 +25,12 @@ const CELL_IMAGE_PATTERN = CELLERY_ID_PATTERN + "\\/" + CELLERY_ID_PATTERN + ":"
 const CELL_IMAGE_WITH_REGISTRY_PATTERN = "(" + DOMAIN_NAME_PATTERN + "\\/)?" + CELL_IMAGE_PATTERN
 
 const GROUP_NAME = "mesh.cellery.io"
-const BASE_API_URL = "http://localhost:8080"
 
 const CELL_IMAGE_EXT = ".zip"
 
-// Registry
 const CENTRAL_REGISTRY_HOST = "registry-1.docker.io"
 
 const EMPTY_STRING = ""
-const REGISTRY_ORGANIZATION = "wso2"
-const CONFIG_FILE = "Cellery.toml"
-
-const HTTP_METHOD_GET = "GET"
-const HTTP_METHOD_POST = "POST"
-const HTTP_METHOD_PATCH = "PATCH"
-const HTTP_METHOD_PUT = "PUT"
-const HTTP_METHOD_DELETE = "DELETE"
 
 const CELLERY_SETUP_MANAGE = "Manage"
 const CELLERY_SETUP_CREATE = "Create"
@@ -56,7 +46,6 @@ const CELLERY_MANAGE_STOP = "stop"
 const CELLERY_MANAGE_START = "start"
 const CELLERY_MANAGE_CLEANUP = "cleanup"
 
-const CELLERY_VM_URL = "http://localhost:8080/ubuntu/Ubuntu.vdi"
 const AWS_S3_BUCKET = "cellery-runtime-installation"
 const AWS_S3_ITEM_VM = "Cellery_Runtime_0.1.0.vdi.tar.gz"
 const AWS_S3_ITEM_CONFIG = "config"
