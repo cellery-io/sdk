@@ -53,7 +53,7 @@ cell.mesh.cellery.io/stock created
 What's next?
 --------------------------------------------------------
 Execute the following command to list running cells:
-  $ cellery ps
+  $ cellery list instances
 --------------------------------------------------------
 ```
 
@@ -86,7 +86,7 @@ cell.mesh.cellery.io/employee created
 What's next?
 --------------------------------------------------------
 Execute the following command to list running cells:
-  $ cellery ps
+  $ cellery list instances
 --------------------------------------------------------
 ```
 
@@ -111,9 +111,9 @@ Execute the following command to run the image:
 $ cellery run myorg/hr:1.0.0  -l employee -l stock
 Above commands will deploy the above three cells in the default namespace. To check the cell status run the following command
 
-	$ cellery ps
+	$ cellery list instances
 ```
-5. Execute `cellery ps` and confirm all cells are in Ready state. 
+5. Execute `cellery list instances` and confirm all cells are in Ready state.
 | NAME  | STATUS | GATEWAY |   SERVICES | AGE |
 | ------ | ------  | ------ | ------ | ------ |
 | employee | Ready | employee--gateway-service | 3 | 21s |
@@ -159,7 +159,7 @@ Sample Response:
 11. Deploed cells can be cleaned by below commands
 Run following commands to undeploy application.
 ```
-$ cellery stop employee
-$ cellery stop stock
-$ cellery stop hr
+$ cellery terminate employee
+$ cellery terminate stock
+$ cellery terminate hr
 ```
