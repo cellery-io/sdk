@@ -215,14 +215,14 @@ cell.mesh.cellery.io/helloworld created
 What's next?
 --------------------------------------------------------
 Execute the following command to list running cells:
-  $ cellery ps
+  $ cellery list instances
 --------------------------------------------------------
 ```
 
-5. Now the hello world cell is deployed, you can run the cellery ps command to see the status of the deployed cell. 
+5. Now the hello world cell is deployed, you can run the cellery list instances command to see the status of the deployed cell.
 Wait until the cell becomes into ‘Ready’ state.
 ```
-$ cellery ps
+$ cellery list instances
 NAME         STATUS     GATEWAY                       SERVICES   AGE
 helloworld   Ready   helloworld--gateway-service   1          3m
 ```
