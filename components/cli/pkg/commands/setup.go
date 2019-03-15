@@ -1102,13 +1102,13 @@ func cleanupGcp() error {
 	cleanupSpinner := util.StartNewSpinner("Removing GCP cluster")
 
 	// Delete GCP cluster
-	errCleanup := deleteGcpCluster(gcpService, projectName, zone, constants.GCP_CLUSTER_NAME + uniqueNumber)
+	errCleanup := deleteGcpCluster(gcpService, projectName, zone, constants.GCP_CLUSTER_NAME+uniqueNumber)
 	if errCleanup != nil {
 		cleanupSpinner.Stop(false)
 		fmt.Printf("Failed to cleanup GCP cluster: %v", errCleanup)
 	}
 	for i := 0; i < 15; i++ {
-		if gcpClusterExist(gcpService, projectName, zone, constants.GCP_CLUSTER_NAME + uniqueNumber) {
+		if gcpClusterExist(gcpService, projectName, zone, constants.GCP_CLUSTER_NAME+uniqueNumber) {
 			time.Sleep(60 * time.Second)
 		} else {
 			break
@@ -1129,7 +1129,7 @@ func cleanupGcp() error {
 		fmt.Printf("Failed to cleanup GCP cluster: %v", err)
 	}
 
-	errorDeleteSql := deleteSqlInstance(sqlService, projectName, constants.GCP_DB_INSTANCE_NAME + uniqueNumber)
+	errorDeleteSql := deleteSqlInstance(sqlService, projectName, constants.GCP_DB_INSTANCE_NAME+uniqueNumber)
 	if errorDeleteSql != nil {
 		cleanupSpinner.Stop(false)
 		fmt.Printf("Failed to cleanup GCP cluster: %v", errorDeleteSql)
@@ -1148,7 +1148,7 @@ func cleanupGcp() error {
 		cleanupSpinner.Stop(false)
 		fmt.Printf("Failed to cleanup GCP cluster: %v", err)
 	}
-	errDeleteFileStore := deleteFileStore(nfsService, projectName, zone, constants.GCP_NFS_SERVER_INSTANCE + uniqueNumber)
+	errDeleteFileStore := deleteFileStore(nfsService, projectName, zone, constants.GCP_NFS_SERVER_INSTANCE+uniqueNumber)
 	if errDeleteFileStore != nil {
 		fmt.Printf("Failed to cleanup GCP cluster: %v", errDeleteFileStore)
 	}
@@ -1160,12 +1160,12 @@ func cleanupGcp() error {
 		fmt.Printf("Error creating storage client: %v", err)
 	}
 
-	errorDeleteStorageObject := deleteGcpStorageObject(storageClient, constants.GCP_BUCKET_NAME + uniqueNumber, constants.INIT_SQL)
+	errorDeleteStorageObject := deleteGcpStorageObject(storageClient, constants.GCP_BUCKET_NAME+uniqueNumber, constants.INIT_SQL)
 	if err != nil {
 		fmt.Printf("Error deleting gcp storage object: %v", errorDeleteStorageObject)
 	}
 
-	errorDeleteStorage := deleteGcpStorage(storageClient, constants.GCP_BUCKET_NAME + uniqueNumber)
+	errorDeleteStorage := deleteGcpStorage(storageClient, constants.GCP_BUCKET_NAME+uniqueNumber)
 	if err != nil {
 		fmt.Printf("Error deleting gcp storage: %v", errorDeleteStorage)
 	}
@@ -1175,7 +1175,7 @@ func cleanupGcp() error {
 }
 
 func deleteGcpCluster(gcpService *container.Service, projectID string, zone string, clusterID string) error {
-	_, err := gcpService.Projects.Zones.Clusters.Delete(projectID,zone, clusterID).Do()
+	_, err := gcpService.Projects.Zones.Clusters.Delete(projectID, zone, clusterID).Do()
 	if err != nil {
 		return fmt.Errorf("failed to delete gcp cluster: %v", err)
 
@@ -1184,7 +1184,7 @@ func deleteGcpCluster(gcpService *container.Service, projectID string, zone stri
 }
 
 func deleteSqlInstance(service *sqladmin.Service, projectId string, instanceName string) error {
-	_, err := service.Instances.Delete(projectId,instanceName).Do()
+	_, err := service.Instances.Delete(projectId, instanceName).Do()
 	if err != nil {
 		return fmt.Errorf("failed to delete the sql instance: %v", err)
 	}
@@ -1192,7 +1192,7 @@ func deleteSqlInstance(service *sqladmin.Service, projectId string, instanceName
 }
 
 func deleteFileStore(service *file.Service, projectName, zone, storeName string) error {
-	_, err := service.Projects.Locations.Instances.Delete("projects/"+projectName+"/locations/"+zone + "/instances/" + storeName).Do()
+	_, err := service.Projects.Locations.Instances.Delete("projects/" + projectName + "/locations/" + zone + "/instances/" + storeName).Do()
 	if err != nil {
 		return fmt.Errorf("failed to delete nfs server %v", err)
 	}
