@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -19,20 +19,32 @@
 package main
 
 import (
+	"fmt"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/spf13/cobra"
 )
 
-func newSetupCommand() *cobra.Command {
+func newGCPCommand() *cobra.Command {
+	var isOutput bool
+	var addGlobalGW bool
+	var addObservability bool
 	cmd := &cobra.Command{
-		Use:   "setup",
-		Short: "Setup cellery runtime",
+		Use:   "gcp",
+		Short: "Use this command to create a gcp cellery envrioment",
 		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if addObservability && !addGlobalGW {
+				return fmt.Errorf("You can't deploy observability portal without the Global gateway")
+			}
+			return nil;
+		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetup()
+			commands.CreateGcpEnvironment()
 		},
 		Example: "  cellery setup",
 	}
-	cmd.AddCommand(newCreateCommand())
+	cmd.Flags().BoolVarP(&addGlobalGW, "add-global-gateway", "g", false, "cellery setup create gcp --add-global-gateway")
+	cmd.Flags().BoolVarP(&addObservability, "add-observability", "p", false, "cellery setup create gcp --add-global-gateway --add-observability")
+	cmd.Flags().BoolVarP(&isOutput, "output", "o", false, "output")
 	return cmd
 }
