@@ -967,6 +967,210 @@ func deployCelleryRuntime() error {
 	return nil
 }
 
+func deployGCPFullSetup () error {
+	gcpBucketName := configureGCPCredentials()
+	ctx := context.Background()
+
+	// Create a GKE client
+	gcpSpinner := util.StartNewSpinner("Creating GKE client")
+	setupGCPKubernetesCluster(ctx, gcpSpinner)
+	sqlService, sqlIpAddress, serviceAccountEmailAddress := setupGCPMysql(ctx, gcpSpinner)
+	fmt.Printf("Sql Ip address : %v", sqlIpAddress)
+
+	updateMysqlCredentailsOfArtifacts(gcpSpinner, sqlIpAddress)
+
+	configureSqlDatabase(ctx, gcpSpinner, gcpBucketName, serviceAccountEmailAddress, sqlService)
+
+	configureNFSServer(gcpSpinner, ctx)
+
+	// Deploy cellery runtime
+	gcpSpinner.SetNewAction("Deploying Cellery runtime")
+	deployCelleryRuntime()
+
+	gcpSpinner.Stop(true)
+	return nil
+}
+
+func configureNFSServer(gcpSpinner *util.Spinner, ctx context.Context) {
+	// Create NFS server
+	gcpSpinner.SetNewAction("Creating NFS server")
+	hcNfs, err := google.DefaultClient(ctx, file.CloudPlatformScope)
+	if err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error getting authenticated client: %v", err)
+	}
+	nfsService, err := file.New(hcNfs)
+	if err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error creating NFS server: %v", err)
+	}
+	if err := createNfsServer(nfsService); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error creating NFS server: %v", err)
+	}
+	nfsIpAddress, errIp := getNfsServerIp(nfsService)
+	fmt.Printf("Nfs Ip address : %v", nfsIpAddress)
+	if errIp != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error getting NFS server IP address: %v", errIp)
+	}
+	if err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.ARTIFACTS_PERSISTENT_VOLUME_YAML), "NFS_SERVER_IP", nfsIpAddress, -1); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error replacing in file artifacts-persistent-volume.yaml: %v", err)
+	}
+	if err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.ARTIFACTS_PERSISTENT_VOLUME_YAML), "NFS_SHARE_LOCATION", "/data", -1); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error replacing in file artifacts-persistent-volume.yaml: %v", err)
+	}
+}
+
+func configureSqlDatabase(ctx context.Context, gcpSpinner *util.Spinner, gcpBucketName string, serviceAccountEmailAddress string, sqlService *sqladmin.Service) {
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error creating storage client: %v", err)
+	}
+	// Create bucket
+	gcpSpinner.SetNewAction("Creating gcp bucket")
+	if err := create(client, projectName, gcpBucketName); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error creating storage client: %v", err)
+	}
+	// Upload init file to S3 bucket
+	gcpSpinner.SetNewAction("Uploading init.sql file to dcp bucket")
+	if err := uploadSqlFile(client, gcpBucketName, constants.INIT_SQL); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error Uploading Sql file: %v", err)
+	}
+	// Update bucket permission
+	gcpSpinner.SetNewAction("Updating bucket permission")
+	if err := updateBucketPermission(gcpBucketName, serviceAccountEmailAddress); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error Updating bucket permission: %v", err)
+	}
+	// Import sql script
+	gcpSpinner.SetNewAction("Importing sql script")
+	var uri = "gs://" + gcpBucketName + "/init.sql"
+	if err := importSqlScript(sqlService, projectName, constants.GCP_DB_INSTANCE_NAME+uniqueNumber, uri); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error Updating bucket permission: %v", err)
+	}
+	time.Sleep(30 * time.Second)
+	// Update sql instance
+	gcpSpinner.SetNewAction("Updating sql instance")
+	if err := updateInstance(sqlService, projectName, constants.GCP_DB_INSTANCE_NAME+uniqueNumber); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error Updating sql instance: %v", err)
+	}
+}
+
+func updateMysqlCredentailsOfArtifacts(gcpSpinner *util.Spinner, sqlIpAddress string) {
+	// Replace username in /global-apim/conf/datasources/master-datasources.xml
+	if err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.CONF, constants.DATA_SOURCES, constants.MASTER_DATA_SOURCES_XML), constants.DATABASE_USERNAME, constants.GCP_SQL_USER_NAME, -1); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("%v: %v", constants.ERROR_REPLACING_MASTER_DATASOURCES_XML, err)
+	}
+	// Replace password in /global-apim/conf/datasources/master-datasources.xml
+	if err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.CONF, constants.DATA_SOURCES, constants.MASTER_DATA_SOURCES_XML), constants.DATABASE_PASSWORD, constants.GCP_SQL_PASSWORD+uniqueNumber, -1); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("%v: %v", constants.ERROR_REPLACING_MASTER_DATASOURCES_XML, err)
+	}
+	// Replace host in /global-apim/conf/datasources/master-datasources.xml
+	if err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.CONF, constants.DATA_SOURCES, constants.MASTER_DATA_SOURCES_XML), constants.MYSQL_DATABASE_HOST, sqlIpAddress, -1); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("%v: %v", constants.ERROR_REPLACING_MASTER_DATASOURCES_XML, err)
+	}
+	// Replace username in /observability/sp/conf/deployment.yaml
+	if err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.OBSERVABILITY, constants.SP, constants.CONF, constants.DEPLOYMENT_YAML), constants.DATABASE_USERNAME, constants.GCP_SQL_USER_NAME, -1); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("%V: %v", constants.ERROR_REPLACING_OBSERVABILITY_YAML, err)
+	}
+	if err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.OBSERVABILITY, constants.SP, constants.CONF, constants.DEPLOYMENT_YAML), constants.DATABASE_PASSWORD, constants.GCP_SQL_PASSWORD+uniqueNumber, -1); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("%V: %v", constants.ERROR_REPLACING_OBSERVABILITY_YAML, err)
+	}
+	if err := util.ReplaceInFile(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.OBSERVABILITY, constants.SP, constants.CONF, constants.DEPLOYMENT_YAML), constants.MYSQL_DATABASE_HOST, sqlIpAddress, -1); err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("%V: %v", constants.ERROR_REPLACING_OBSERVABILITY_YAML, err)
+	}
+}
+
+func setupGCPMysql(ctx context.Context, gcpSpinner *util.Spinner) (*sqladmin.Service, string, string) {
+	hcSql, err := google.DefaultClient(ctx, sqladmin.CloudPlatformScope)
+	if err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error creating client: %v", err)
+	}
+	sqlService, err := sqladmin.New(hcSql)
+	if err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error creating sql service: %v", err)
+	}
+	//Create sql instance
+	gcpSpinner.SetNewAction("Creating sql instance")
+	_, err = createSqlInstance(ctx, sqlService, projectName, region, region, constants.GCP_DB_INSTANCE_NAME+uniqueNumber)
+	if err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Error creating sql instance: %v", err)
+	}
+	sqlIpAddress, serviceAccountEmailAddress := getSqlServieAccount(ctx, sqlService, projectName, constants.GCP_DB_INSTANCE_NAME+uniqueNumber)
+	return sqlService, sqlIpAddress, serviceAccountEmailAddress
+}
+
+func setupGCPKubernetesCluster (ctx context.Context, gcpSpinner *util.Spinner) {
+	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)
+	if err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Could not get authenticated client: %v", err)
+	}
+	gcpService, err := container.New(gkeClient)
+	if err != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Could not initialize gke client: %v", err)
+	}
+	// Create GCP cluster
+	gcpSpinner.SetNewAction("Creating GCP cluster")
+	errCreate := createGcpCluster(gcpService, constants.GCP_CLUSTER_NAME+uniqueNumber)
+	if errCreate != nil {
+		gcpSpinner.Stop(false)
+		fmt.Printf("Could not create cluster: %v", errCreate)
+	}
+	// Update kube config file
+	gcpSpinner.SetNewAction("Updating kube config cluster")
+	updateKubeConfig()
+}
+
+func configureGCPCredentials() string {
+	// Backup artifacts folder
+	artiFactsBackupExist, errBackupDir := util.FileExists(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS_OLD))
+	if errBackupDir == nil {
+		if artiFactsBackupExist {
+			if err := os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS)); err != nil {
+				fmt.Printf("Error replacing artifacts filel: %v", err)
+			}
+			if err := os.Rename(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS_OLD), filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS)); err != nil {
+				fmt.Printf("Error replacing artifacts filel: %v", err)
+			}
+		}
+	}
+	util.CopyDir(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS), filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS_OLD))
+	validateGcpConfigFile([]string{filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.CONF, constants.DATA_SOURCES, constants.MASTER_DATA_SOURCES_XML),
+		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.OBSERVABILITY, constants.SP, constants.CONF, constants.DEPLOYMENT_YAML),
+		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.ARTIFACTS_PERSISTENT_VOLUME_YAML),
+		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.MYSQL, constants.DB_SCRIPTS, constants.INIT_SQL)})
+	// Get the GCP cluster data
+	projectName, accountName, region, zone = getGcpData()
+	var gcpBucketName = constants.GCP_BUCKET_NAME + uniqueNumber
+	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP), ".json")
+	if len(jsonAuthFile) > 0 {
+		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
+	} else {
+		fmt.Printf("Could not find authentication json file in : %v", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP))
+		os.Exit(1)
+	}
+	return gcpBucketName
+}
+
 func validateGcpConfigFile(configFiles []string) error {
 	for i := 0; i < len(configFiles); i++ {
 		fileExist, fileExistError := util.FileExists(configFiles[i])
