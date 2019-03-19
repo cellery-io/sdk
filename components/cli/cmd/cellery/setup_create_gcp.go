@@ -24,13 +24,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newGCPCommand() *cobra.Command {
+func newSetupCreateGcpCommand() *cobra.Command {
 	var isOutput bool
 	var addGlobalGW bool
 	var addObservability bool
 	cmd := &cobra.Command{
 		Use:   "gcp",
-		Short: "Use this command to create a gcp cellery envrioment",
+		Short: "Create a Cellery runtime in gcp",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if addObservability && !addGlobalGW {
@@ -39,9 +39,9 @@ func newGCPCommand() *cobra.Command {
 			return nil;
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.CreateGcpEnvironment()
+			commands.RunSetupCreateGcp()
 		},
-		Example: "  cellery setup",
+		Example: "cellery setup create gcp",
 	}
 	cmd.Flags().BoolVarP(&addGlobalGW, "add-global-gateway", "g", false, "cellery setup create gcp --add-global-gateway")
 	cmd.Flags().BoolVarP(&addObservability, "add-observability", "p", false, "cellery setup create gcp --add-global-gateway --add-observability")

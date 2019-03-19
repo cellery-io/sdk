@@ -42,6 +42,7 @@ public class CelleryConstants {
     public static final String AUTO_SCALING_METRIC_OBJECT_CPU_UTILIZATION_PERCENTAGE = "CpuUtilizationPercentage";
     public static final String YAML = ".yaml";
     public static final String PROTOCOL_TCP = "TCP";
+    public static final String PROTOCOL_GRPC = "GRPC";
     public static final String PROTOCOL_HTTP = "HTTP";
     public static final String TARGET = "target";
     public static final String RESOURCES = "resources";

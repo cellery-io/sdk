@@ -24,13 +24,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newLocalCommand() *cobra.Command {
+func newSetupCreateLocalCommand() *cobra.Command {
 	var isOutput bool
 	var addGlobalGW bool
 	var addObservability bool
 	cmd := &cobra.Command{
 		Use:   "local",
-		Short: "Use this command to create a local cellery envrioment",
+		Short: "Create a local Cellery runtime",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if addObservability && !addGlobalGW {
@@ -39,9 +39,9 @@ func newLocalCommand() *cobra.Command {
 			return nil;
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.CreateLocalEnvironment()
+			commands.RunSetupCreateLocal()
 		},
-		Example: "  cellery setup",
+		Example: "cellery setup create local",
 	}
 	cmd.Flags().BoolVarP(&addGlobalGW, "add-global-gateway", "g", false, "cellery setup create local --add-global-gateway")
 	cmd.Flags().BoolVarP(&addObservability, "add-observability", "p", false, "cellery setup create local --add-global-gateway --add-observability")

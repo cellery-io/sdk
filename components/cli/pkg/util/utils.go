@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -25,6 +25,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/manifoldco/promptui"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -953,4 +954,25 @@ func GetCurrentPath() (string, error) {
 		return "", err
 	}
 	return dir, nil
+}
+
+func ContainsInStringArray(array []string, item string) bool {
+	for _, element := range array {
+		if element == item {
+			return true
+		}
+	}
+	return false
+}
+
+func GetYesOrNoFromUser(question string) (bool, error) {
+	prompt := promptui.Select{
+		Label: question,
+		Items: []string{"Yes", "No"},
+	}
+	_, result, err := prompt.Run()
+	if err != nil {
+		return false, fmt.Errorf("Prompt failed %v\n", err)
+	}
+	return result == "Yes", nil
 }

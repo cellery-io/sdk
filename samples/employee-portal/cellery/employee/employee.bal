@@ -1,5 +1,4 @@
 import ballerina/io;
-import ballerina/config;
 import celleryio/cellery;
 
 // Read API defintion from swagger file.
@@ -57,7 +56,7 @@ public function build(string orgName, string imageName, string imageVersion) {
     io:println("Building Employee Cell ...");
 
     // Map component parameters
-    cellery:setParameter(employeeComponent.parameters.SALARY_HOST, cellery:getHost(imageName, salaryComponent));
+    employeeComponent.parameters.SALARY_HOST.value = cellery:getHost(untaint imageName, salaryComponent);
 
     // Add components to Cell
     employeeCell.addComponent(employeeComponent);

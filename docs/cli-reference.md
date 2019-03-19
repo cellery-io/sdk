@@ -14,7 +14,7 @@ cellery build <BAL_FILE_NAME> -t <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION>
 ``` 
 Example : 
 ```
-cellery build my-project.bal -t wso2/my-cell:1.0.0
+cellery build my-project.bal wso2/my-cell:1.0.0
 ```
 
 ### Run

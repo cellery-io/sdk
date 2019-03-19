@@ -11,8 +11,8 @@ The component interaction diagram of the application is shown below.
 ## Deploying the sample
 1. Run the following command from the `sdk/samples/pet-service` directory:
     ```
-    $ cellery build pet-cell.bal -t pet-org/pet-service:1.0.0
-    cellery build petCell.bal -t pet-org/pet-service:1.0.0
+    $ cellery build pet-cell.bal pet-org/pet-service:1.0.0
+    cellery build petCell.bal pet-org/pet-service:1.0.0
     Building Pet Service Cell ...
     
     ✔ Building image pet-org/pet-service:1.0.0
@@ -39,13 +39,13 @@ The component interaction diagram of the application is shown below.
     What's next?
     --------------------------------------------------------
     Execute the following command to list running cells:
-     $ cellery ps
+     $ cellery list instances
     --------------------------------------------------------
     ```
 
 3. Wait until Cell gets into ‘Ready’ state. Use the command below to check if the Cell is in Ready state: 
     ```
-    $ cellery ps
+    $ cellery list instances
     NAME          STATUS     GATEWAY                        SERVICES   AGE
     pet-service   NotReady   pet-service--gateway-service   0          1m
     ```
@@ -120,7 +120,7 @@ following command from the debug pod:
 Issue the following commands to delete the pet-service sample and the debug pod:
     
 ```
-$ cellery stop pet-service
+$ cellery terminate pet-service
 cell.mesh.cellery.io "pet-service" deleted 
 ```    
 ```bash

@@ -46,7 +46,7 @@ func newListComponentsCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunListComponents(args[0])
 		},
-		Example: "  cellery components employee",
+		Example: "  cellery list components employee",
 	}
 	return cmd
 }
