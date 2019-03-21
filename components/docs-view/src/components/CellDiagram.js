@@ -34,6 +34,7 @@ const styles = {
 };
 
 class CellDiagram extends React.Component {
+
     static NodeType = {
         CELL: "cell",
         COMPONENT: "component",
@@ -42,10 +43,6 @@ class CellDiagram extends React.Component {
 
     static GRAPH_OPTIONS = {
         nodes: {
-            shapeProperties: {
-                borderRadius: 10
-            },
-            borderWidth: 1,
             size: 40,
             font: {
                 size: 15,
@@ -53,8 +50,7 @@ class CellDiagram extends React.Component {
             },
             scaling: {
                 max: 10000
-            },
-            chosen: false
+            }
         },
         edges: {
             width: 2,
@@ -91,7 +87,8 @@ class CellDiagram extends React.Component {
             }
         },
         interaction: {
-            selectConnectedEdges: false
+            selectConnectedEdges: false,
+            hover: true
         }
     };
 
@@ -132,7 +129,7 @@ class CellDiagram extends React.Component {
         const cellNodes = [];
         const availableCells = data.cells;
         const availableComponents = data.components.filter((component) => (focusedCell === component.cell))
-            .map((component) => component);
+            .map((component) => `${component.cell}:${component.name}`);
 
         const getGroupNodesIds = (group) => {
             const output = [];
@@ -177,11 +174,18 @@ class CellDiagram extends React.Component {
             return Object.values(nodePositions);
         };
 
+        const findPoint = (x, y, angle, distance) => {
+            const result = {};
+            result.x = Math.round(Math.cos(angle * Math.PI / 180) * distance + x);
+            result.y = Math.round(Math.sin(angle * Math.PI / 180) * distance + y);
+            return result;
+        };
+
         if (availableComponents) {
             availableComponents.forEach((node, index) => {
                 componentNodes.push({
-                    id: node.name,
-                    label: node.name,
+                    id: node,
+                    label: node.split(":")[1],
                     shape: "image",
                     image: "./component.svg",
                     group: CellDiagram.NodeType.COMPONENT
@@ -230,6 +234,14 @@ class CellDiagram extends React.Component {
         const nodes = new vis.DataSet(cellNodes);
         const edges = new vis.DataSet(dataEdges);
         nodes.add(componentNodes);
+        nodes.add({
+            id: `${focusedCell}:${CellDiagram.NodeType.GATEWAY}`,
+            label: CellDiagram.NodeType.GATEWAY,
+            shape: "image",
+            image: "./gateway.svg",
+            group: CellDiagram.NodeType.GATEWAY,
+            fixed: true
+        });
 
         const graphData = {
             nodes: nodes,
@@ -238,6 +250,10 @@ class CellDiagram extends React.Component {
 
         if (!this.network) {
             this.network = new vis.Network(this.dependencyGraph.current, graphData, CellDiagram.GRAPH_OPTIONS);
+
+            this.loader.current.style.visibility = "visible";
+            this.loader.current.style.height = "60vh";
+            this.dependencyGraph.current.style.visibility = "hidden";
 
             const spacing = 150;
             const allNodes = nodes.get({returnType: "Object"});
@@ -260,6 +276,23 @@ class CellDiagram extends React.Component {
                 };
             });
 
+            this.network.on("beforeDrawing", (ctx) => {
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(-ctx.canvas.offsetWidth, -(ctx.canvas.offsetHeight + 20),
+                    ctx.canvas.width, ctx.canvas.height);
+            });
+
+            this.network.on("afterDrawing", (ctx) => {
+                const centerPoint = getPolygonCentroid(getGroupNodePositions(CellDiagram.NodeType.COMPONENT));
+                const polygonRadius = getDistance(getGroupNodePositions(CellDiagram.NodeType.COMPONENT), centerPoint);
+                const size = polygonRadius + spacing;
+                const focusCellLabelPoint = findPoint(centerPoint.x, centerPoint.y, 270, size * Math.cos(180 / 8));
+                ctx.font = "bold 1.3rem Arial";
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#666666";
+                ctx.fillText(focusedCell, focusCellLabelPoint.x, focusCellLabelPoint.y + 20);
+            });
+
             this.network.on("stabilizationIterationsDone", () => {
                 const centerPoint = getPolygonCentroid(getGroupNodePositions(CellDiagram.NodeType.COMPONENT));
                 const polygonRadius = getDistance(getGroupNodePositions(CellDiagram.NodeType.COMPONENT),
@@ -268,13 +301,11 @@ class CellDiagram extends React.Component {
 
                 const focusedNode = nodes.get(focusedCell);
                 focusedNode.size = size;
+                focusedNode.label = undefined;
                 focusedNode.fixed = true;
-                focusedNode.interaction = {
-                    selectable: false,
-                    draggable: false
-                };
                 focusedNode.mass = polygonRadius / 10;
                 this.network.moveNode(focusedCell, centerPoint.x, centerPoint.y);
+                updatedNodes.push(focusedNode);
 
                 for (const nodeId in allNodes) {
                     if (allNodes[nodeId].group === CellDiagram.NodeType.COMPONENT) {
@@ -285,12 +316,30 @@ class CellDiagram extends React.Component {
                     }
                 }
 
-                updatedNodes.push(focusedNode);
+                // Placing gateway node
+                const gatewayNode = nodes.get(`${focusedCell}:${CellDiagram.NodeType.GATEWAY}`);
+                const gatewayPoint = findPoint(centerPoint.x, centerPoint.y, 90, size * Math.cos(180 / 8));
+
+                if (gatewayNode) {
+                    const x = gatewayPoint.x;
+                    const y = gatewayPoint.y;
+                    this.network.moveNode(gatewayNode.id, x, y);
+                    updatedNodes.push(gatewayNode);
+                }
+
                 nodes.update(updatedNodes);
             });
 
-            this.network.on("click", (event) => {
-                onClickNode(event.nodes[0]);
+            this.network.on("selectNode", (event) => {
+                this.network.unselectAll();
+                const clickedNode = nodes.get(event.nodes[0]);
+                if (clickedNode.group === CellDiagram.NodeType.CELL && clickedNode.id !== focusedCell) {
+                    onClickNode(event.nodes[0]);
+                }
+            });
+
+            this.network.on("dragging", (event) => {
+                this.network.unselectAll();
             });
         }
     };
@@ -303,7 +352,7 @@ class CellDiagram extends React.Component {
                 <div ref={this.loader} style={{visibility: "visible", height: "60vh"}} className={classes.progress}>
                     <CircularProgress/>
                 </div>
-                <div style={{visibility: "hidden", height: "100vh"}} ref={this.dependencyGraph}/>
+                <div style={{visibility: "hidden", height: "93vh"}} ref={this.dependencyGraph}/>
             </div>);
     };
 
@@ -313,7 +362,7 @@ CellDiagram.propTypes = {
     classes: PropTypes.object.isRequired,
     data: PropTypes.arrayOf(PropTypes.object),
     focusedCell: PropTypes.arrayOf(PropTypes.object),
-    onClickNode: PropTypes.func,
+    onClickNode: PropTypes.func
 };
 
 export default withStyles(styles)(CellDiagram);

@@ -35,6 +35,9 @@ const styles = {
     },
     title: {
         color: "#464646"
+    },
+    appBar: {
+        boxShadow : "none"
     }
 };
 
@@ -91,7 +94,7 @@ const App = ({data, classes}) => {
         <MuiThemeProvider theme={theme}>
             <CssBaseline/>
             <div className={classes.root}>
-                <AppBar position="static" color="default">
+                <AppBar position="static" color="default" className={classes.appBar}>
                     <Toolbar>
                         <CelleryLogo className={classes.celleryLogo} fontSize="large"/>
                         <Typography variant="h6" className={classes.title}>
