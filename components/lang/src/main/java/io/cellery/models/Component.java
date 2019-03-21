@@ -14,6 +14,7 @@ import java.util.Map;
 public class Component {
     String name;
     int replicas;
+    String gatewayType;
     Map<String, String> envVars;
     Map<String, String> labels;
     List<API> apis;

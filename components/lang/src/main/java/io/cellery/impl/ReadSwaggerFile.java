@@ -47,7 +47,7 @@ import static io.cellery.CelleryUtils.readSwaggerFile;
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "readSwaggerFile",
         args = {@Argument(name = "swaggerFilePath", type = TypeKind.STRING)},
-        returnType = {@ReturnType(type = TypeKind.ARRAY)},
+        returnType = {@ReturnType(type = TypeKind.ARRAY), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
 public class ReadSwaggerFile extends BlockingNativeCallableUnit {

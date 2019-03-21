@@ -1,8 +1,11 @@
 import ballerina/io;
+import ballerina/config;
 import celleryio/cellery;
 
+int salaryContainerPort = 8080;
 // Read API defintion from swagger file.
-cellery:ApiDefinition[] employeeAPIdefn = cellery:readSwaggerFile("./resources/employee.swagger.json");
+cellery:ApiDefinition[] employeeAPIdefn = (<cellery:ApiDefinition[]>cellery:readSwaggerFile(
+                                                                        "./resources/employee.swagger.json"));
 
 // Employee Component
 cellery:Component employeeComponent = {
@@ -11,18 +14,19 @@ cellery:Component employeeComponent = {
         image: "docker.io/celleryio/sampleapp-employee"
     },
     ingresses: {
-        employee: new cellery:HttpApiIngress(
-                      8080,
-                      "employee",
-                      employeeAPIdefn
-        )
+        employee: <cellery:HttpApiIngress>{
+            port: 8080,
+            context: "employee",
+            definitions: employeeAPIdefn,
+            expose: "local"
+        }
     },
-    parameters: {
-        SALARY_HOST: new cellery:Env(),
-        PORT: new cellery:Env(default = 8080)
+    envVars: {
+        SALARY_HOST: { value: "" },
+        PORT: { value: salaryContainerPort }
     },
     labels: {
-        cellery:TEAM:"HR"
+        team: "HR"
     }
 };
 
@@ -33,37 +37,37 @@ cellery:Component salaryComponent = {
         image: "docker.io/celleryio/sampleapp-salary"
     },
     ingresses: {
-        SalaryAPI: new cellery:HttpApiIngress(
-                8080,
-                "payroll",
-                [{
-                      path: "salary",
-                      method: "GET"
-                }]
-            )
+        SalaryAPI: <cellery:HttpApiIngress>{
+            port:salaryContainerPort,
+            context: "payroll",
+            definitions: [
+                {
+                    path: "salary",
+                    method: "GET"
+                }
+            ],
+            expose: "local"
+        }
     },
     labels: {
-        cellery:TEAM:"Finance",
-        cellery:OWNER:"Alice"
+        team: "Finance",
+        owner: "Alice"
     }
 };
 
-cellery:CellImage employeeCell = new();
+cellery:CellImage employeeCell = {
+    components: [
+        employeeComponent,
+        salaryComponent
+    ]
+};
 
-public function build(string orgName, string imageName, string imageVersion) {
+public function build(cellery:StructuredName sName) returns error? {
+    return cellery:createImage(employeeCell, sName);
+}
 
-    // Build EmployeeCell
-    io:println("Building Employee Cell ...");
-
-    // Map component parameters
-    employeeComponent.parameters.SALARY_HOST.value = cellery:getHost(untaint imageName, salaryComponent);
-
-    // Add components to Cell
-    employeeCell.addComponent(employeeComponent);
-    employeeCell.addComponent(salaryComponent);
-
-    // Expose API from Cell Gateway
-    employeeCell.exposeLocal(employeeComponent);
-
-    _ = cellery:createImage(employeeCell, orgName, imageName, imageVersion);
+public function run(cellery:StructuredName sName, map<string> instances) returns error? {
+    employeeCell.components[0].envVars.SALARY_HOST.value = cellery:getHost(untaint sName.instanceName, salaryComponent);
+    io:println(employeeCell);
+    //return cellery:createInstance(employeeCell, sName);
 }

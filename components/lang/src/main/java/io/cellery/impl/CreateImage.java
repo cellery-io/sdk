@@ -28,7 +28,6 @@ import io.cellery.models.AutoScalingPolicy;
 import io.cellery.models.AutoScalingResourceMetric;
 import io.cellery.models.AutoScalingSpec;
 import io.cellery.models.Cell;
-import io.cellery.models.CellCache;
 import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
 import io.cellery.models.ComponentHolder;
@@ -67,13 +66,10 @@ import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
@@ -82,13 +78,11 @@ import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
-import static io.cellery.CelleryConstants.PROTOCOL_HTTP;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getValidName;
-import static io.cellery.CelleryUtils.processParameters;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 
@@ -110,79 +104,107 @@ public class CreateImage extends BlockingNativeCallableUnit {
     private static final MustacheFactory mustacheFactory = new DefaultMustacheFactory();
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
 
-    private ComponentHolder componentHolder;
+    private ComponentHolder componentHolder = new ComponentHolder();
     private PrintStream out = System.out;
 
     public void execute(Context ctx) {
-        componentHolder = new ComponentHolder();
-        String cellVersion = ctx.getStringArgument(2);
         String orgName = ctx.getStringArgument(0);
         String cellName = getValidName(ctx.getStringArgument(1));
-        CellCache cellCache = CellCache.getInstance();
+        String cellVersion = ctx.getStringArgument(2);
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
-        processComponents((BMap) refArgument.getMap().get("components"));
-        processAPIs((BMap) refArgument.getMap().get("apis"));
-        processTCP((BMap) refArgument.getMap().get("tcp"));
-        processGRPC((BMap) refArgument.getMap().get("grpc"));
-        Set<Component> components = new HashSet<>(componentHolder.getComponentNameToComponentMap().values());
-        cellCache.setCellNameToComponentMap(cellName, components);
+        out.println(cellName + " " + cellVersion + " " + orgName);
+        LinkedHashMap<?, ?> components = ((BMap) refArgument.getMap().get("components")).getMap();
+        components.forEach((componentKey, componentValue) -> {
+            Component component = new Component();
+            out.println("=========================================");
+            out.println(componentKey + "-> " + componentValue);
+            LinkedHashMap attributeMap = ((BMap) componentValue).getMap();
+            // Set mandatory fields.
+            component.setName(((BString) attributeMap.get("name")).stringValue());
+            component.setReplicas((int) (((BInteger) attributeMap.get("replicas")).intValue()));
+            component.setService(component.getName());
+            component.setSource(((BString) ((BMap) attributeMap.get("source")).getMap().get("image")).stringValue());
+
+            //Process Optional fields
+            if (attributeMap.containsKey("ingresses")) {
+                processIngress(((BMap<?, ?>) attributeMap.get("ingresses")).getMap(), component);
+            }
+            if (attributeMap.containsKey("labels")) {
+                ((BMap<?, ?>) attributeMap.get("labels")).getMap().forEach((labelKey, labelValue) ->
+                        component.addLabel(labelKey.toString(), labelValue.toString()));
+            }
+            if (attributeMap.containsKey("autoscaling")) {
+                processAutoScalePolicy(((BMap<?, ?>) attributeMap.get("autoscaling")).getMap(), component);
+            }
+            out.println(component);
+            componentHolder.addComponent(component);
+        });
         generateCell(orgName, cellName, cellVersion);
         generateCellReference(cellName, cellVersion);
         ctx.setReturnValues(new BBoolean(true));
     }
 
-    private void processComponents(BMap<?, ?> components) {
-        components.getMap().forEach((key, value) -> {
-            LinkedHashMap componentValues = ((BMap) value).getMap();
-            Component component = new Component();
-            // Mandatory fields
-            component.setName(((BString) componentValues.get("name")).stringValue());
-            component.setService(getValidName(component.getName()));
-            component.setReplicas((int) ((BInteger) componentValues.get("replicas")).intValue());
-            component.setSource(((BMap<?, ?>) componentValues.get("source")).getMap().get("image").toString());
-
-            // Optional fields
-            if (componentValues.containsKey("ingresses")) {
-                processIngressPort(((BMap<?, ?>) componentValues.get("ingresses")).getMap(), component);
-            }
-            if (componentValues.containsKey("parameters")) {
-                processParameters(component, ((BMap<?, ?>) componentValues.get("parameters")).getMap());
-            }
-            if (componentValues.containsKey("labels")) {
-                ((BMap<?, ?>) componentValues.get("labels")).getMap().forEach((labelKey, labelValue) ->
-                        component.addLabel(labelKey.toString(), labelValue.toString()));
-            }
-            if (componentValues.containsKey("autoscaling")) {
-                processAutoScalePolicy(((BMap<?, ?>) componentValues.get("autoscaling")).getMap(), component);
-            }
-            componentHolder.addComponent(component);
-        });
-    }
-
-
     /**
-     * Extract the ingress port.
+     * Extract the ingresses.
      *
      * @param ingressMap list of ingresses defined
      * @param component  current component
      */
-    private void processIngressPort(LinkedHashMap<?, ?> ingressMap, Component component) {
-        AtomicInteger containerPort = new AtomicInteger(0);
-        AtomicInteger servicePort = new AtomicInteger(0);
-        ingressMap.forEach((name, entry) -> ((BMap<?, ?>) entry).getMap().forEach((key, value) -> {
-            if ("port".equals(key.toString())) {
-                containerPort.set((int) ((BInteger) value).intValue());
-            } else if ("targetPort".equals(key.toString())) {
-                servicePort.set((int) ((BInteger) value).intValue());
+    private void processIngress(LinkedHashMap<?, ?> ingressMap, Component component) {
+        out.println("Ingresses.....");
+        ingressMap.forEach((key, ingressValues) -> {
+            BMap ingressValueMap = ((BMap) ingressValues);
+            LinkedHashMap attributeMap = ingressValueMap.getMap();
+            switch (ingressValueMap.getType().getName()) {
+                case "HttpApiIngress":
+                    API httpAPI = new API();
+                    httpAPI.setContext(((BString) attributeMap.get("context")).stringValue());
+                    if ("Global".equals(((BString) attributeMap.get("expose")).stringValue())) {
+                        httpAPI.setGlobal(true);
+                    } else {
+                        httpAPI.setGlobal(false);
+                    }
+                    List<APIDefinition> apiDefinitions = new ArrayList<>();
+                    BValueArray ingressDefs = ((BValueArray) attributeMap.get("definitions"));
+                    for (int i = 0; i < ingressDefs.size(); i++) {
+                        APIDefinition apiDefinition = new APIDefinition();
+                        LinkedHashMap definitions = ((BMap) ingressDefs.getBValue(i)).getMap();
+                        apiDefinition.setPath(((BString) definitions.get("path")).stringValue());
+                        apiDefinition.setMethod(((BString) definitions.get("method")).stringValue());
+                        apiDefinitions.add(apiDefinition);
+                    }
+                    httpAPI.setDefinitions(apiDefinitions);
+                    httpAPI.setBackend(component.getService());
+                    component.addApi(httpAPI);
+                    out.println("HTTP " + key + "-> " + ingressValues + httpAPI);
+                    break;
+                case "TCPIngress":
+                    TCP tcp = new TCP();
+                    tcp.setPort((int) ((BInteger) attributeMap.get("port")).intValue());
+                    tcp.setBackendPort((int) ((BInteger) attributeMap.get("targetPort")).intValue());
+                    component.setProtocol(PROTOCOL_TCP);
+                    tcp.setBackendHost(component.getService());
+                    component.addTCP(tcp);
+                    break;
+                case "GRPCIngress":
+                    GRPC grpc = new GRPC();
+                    grpc.setPort((int) ((BInteger) attributeMap.get("port")).intValue());
+                    grpc.setBackendPort((int) ((BInteger) attributeMap.get("targetPort")).intValue());
+                    String protoFile = ((BString) attributeMap.get("protoFile")).stringValue();
+                    if (!protoFile.isEmpty()) {
+                        copyResourceToTarget(protoFile);
+                    }
+                    component.setProtocol(PROTOCOL_GRPC);
+                    grpc.setBackendHost(component.getService());
+                    component.addGRPC(grpc);
+                    break;
+                case "WebIngress":
+                    out.println("Web " + key + "-> " + ingressValues);
+                    break;
+                default:
+                    break;
             }
-        }));
-        if (servicePort.get() == 0) {
-            //HTTP ingress
-            component.addPorts(containerPort.get(), DEFAULT_GATEWAY_PORT);
-        } else {
-            //TCP ingress
-            component.addPorts(containerPort.get(), containerPort.get());
-        }
+        });
     }
 
     /**
@@ -206,67 +228,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         autoScalingPolicy.setMinReplicas(((BInteger) bScalePolicy.get("minReplicas")).intValue());
         autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get("maxReplicas")).intValue());
         autoScalingPolicy.setMetrics(autoScalingResourceMetrics);
-
         component.setAutoScaling(new AutoScaling(autoScalingPolicy, bOverridable));
-    }
-
-    private void processAPIs(BMap<?, ?> apiMap) {
-        apiMap.getMap().forEach((key, value) -> {
-            LinkedHashMap apiValues = ((BMap) value).getMap();
-            API api = new API();
-            api.setGlobal(((BBoolean) apiValues.get("global")).booleanValue());
-            String componentName = ((BString) apiValues.get("targetComponent")).stringValue();
-            LinkedHashMap<?, ?> ingress = ((BMap<?, ?>) apiValues.get("ingress")).getMap();
-            api.setContext(((BString) ingress.get("context")).stringValue());
-            List<APIDefinition> apiDefinitions = new ArrayList<>();
-            BValueArray ingressDefs = ((BValueArray) ingress.get("definitions"));
-            for (int i = 0; i < ingressDefs.size(); i++) {
-                APIDefinition apiDefinition = new APIDefinition();
-                LinkedHashMap definitions = ((BMap) ingressDefs.getBValue(i)).getMap();
-                apiDefinition.setPath(((BString) definitions.get("path")).stringValue());
-                apiDefinition.setMethod(((BString) definitions.get("method")).stringValue());
-                apiDefinitions.add(apiDefinition);
-            }
-            api.setDefinitions(apiDefinitions);
-            Component component = componentHolder.getComponent(componentName);
-            component.setProtocol(PROTOCOL_HTTP);
-            api.setBackend(component.getService());
-            component.addApi(api);
-        });
-    }
-
-    private void processTCP(BMap<?, ?> tcpMap) {
-        tcpMap.getMap().forEach((key, value) -> {
-            LinkedHashMap tcpValues = ((BMap) value).getMap();
-            TCP tcp = new TCP();
-            String componentName = ((BString) tcpValues.get("targetComponent")).stringValue();
-            LinkedHashMap<?, ?> ingress = ((BMap<?, ?>) tcpValues.get("ingress")).getMap();
-            tcp.setPort((int) ((BInteger) ingress.get("port")).intValue());
-            tcp.setBackendPort((int) ((BInteger) ingress.get("targetPort")).intValue());
-            Component component = componentHolder.getComponent(componentName);
-            component.setProtocol(PROTOCOL_TCP);
-            tcp.setBackendHost(component.getService());
-            component.addTCP(tcp);
-        });
-    }
-
-    private void processGRPC(BMap<?, ?> grpcMap) {
-        grpcMap.getMap().forEach((key, value) -> {
-            LinkedHashMap grpcValues = ((BMap) value).getMap();
-            GRPC grpc = new GRPC();
-            String componentName = ((BString) grpcValues.get("targetComponent")).stringValue();
-            LinkedHashMap<?, ?> ingress = ((BMap<?, ?>) grpcValues.get("ingress")).getMap();
-            grpc.setPort((int) ((BInteger) ingress.get("port")).intValue());
-            grpc.setBackendPort((int) ((BInteger) ingress.get("targetPort")).intValue());
-            String protoFile = ((BString) ingress.get("protoFile")).stringValue();
-            if (!protoFile.isEmpty()) {
-                copyResourceToTarget(protoFile);
-            }
-            Component component = componentHolder.getComponent(componentName);
-            component.setProtocol(PROTOCOL_GRPC);
-            grpc.setBackendHost(component.getService());
-            component.addGRPC(grpc);
-        });
     }
 
 
@@ -277,6 +239,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
 
         for (Component component : components) {
+            spec.setType("Envoy");
             spec.addHttpAPI(component.getApis());
             spec.addTCP(component.getTcpList());
             spec.addGRPC(component.getGrpcList());

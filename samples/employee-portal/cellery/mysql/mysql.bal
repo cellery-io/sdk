@@ -8,20 +8,24 @@ cellery:Component mysqlComponent = {
         image: "mirage20/samples-productreview-mysql"
     },
     ingresses: {
-        mysqlIngress: new cellery:TCPIngress(3306, 31406)
+        mysqlIngress: <cellery:TCPIngress>{
+            backendPort: 3306,
+            gatewayPort: 31406,
+            expose: "local"
+        }
     },
-    parameters: {
-        MYSQL_ROOT_PASSWORD: new cellery:Env(default = "root")
+    envVars: {
+        MYSQL_ROOT_PASSWORD: { value: "root" }
     }
 };
 
-cellery:CellImage mysqlCell = new();
+cellery:CellImage mysqlCell = {
+    components: [
+        mysqlComponent
+    ]
+};
 
-public function build(string orgName, string imageName, string imageVersion) {
+public function build(cellery:StructuredName sName) {
     //Build MySQL Cell
-    io:println("Building MySQL Cell ...");
-    mysqlCell.addComponent(mysqlComponent);
-    //Expose API from Cell Gateway
-    mysqlCell.exposeLocal(mysqlComponent);
-    _ = cellery:createImage(mysqlCell, orgName, imageName, imageVersion);
+    _ = cellery:createImage(mysqlCell, sName);
 }

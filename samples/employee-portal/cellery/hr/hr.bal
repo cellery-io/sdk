@@ -3,7 +3,6 @@ import celleryio/cellery;
 import myorg/employee;
 import myorg/stock;
 
-
 //HR component
 cellery:Component hrComponent = {
     name: "hr",
@@ -11,45 +10,46 @@ cellery:Component hrComponent = {
         image: "docker.io/celleryio/sampleapp-hr"
     },
     ingresses: {
-        "hr": new cellery:HttpApiIngress(
-                  8080,
-                  "hr-api",
-                  [{
-                      path: "/",
-                      method: "GET"
-                  }]
-        )
+        "hr": <cellery:HttpApiIngress>{
+            port: 8080,
+            context: "hr-api",
+            definitions: [
+                {
+                    path: "/",
+                    method: "GET"
+                }
+            ],
+            expose: "global"
+        }
     },
-    parameters: {
-        employeegw_url: new cellery:Env(),
-        stockgw_url: new cellery:Env()
+    envVars: {
+        employee_api_url: { value: "" },
+        stock_api_url: { value: "" }
+    },
+    dependencies: {
+        employeeCellDep: <cellery:StructuredName>{ orgName: "myorg", imageName: "employee", imageVersion: "1.0.0" },
+        stockCellDep: <cellery:StructuredName>{ orgName: "myorg", imageName: "stock", imageVersion: "1.0.0" }
     }
 };
 
 // Cell Intialization
-cellery:CellImage hrCell = new();
+cellery:CellImage hrCell = {
+    components: [
+        hrComponent
+    ]
+};
 
-public function build(string orgName, string imageName, string imageVersion) {
-    // Build HR cell
-    io:println("Building HR Cell ...");
-    hrCell.addComponent(hrComponent);
-
-    // Expose API from Cell Gateway & Global Gateway
-    hrCell.exposeGlobal(hrComponent);
-    _ = cellery:createImage(hrCell, orgName, imageName, imageVersion);
+public function build(cellery:StructuredName sName) returns error? {
+    return cellery:createImage(hrCell, sName);
 }
 
-
-public function run(string imageName, string imageVersion, string instanceName, map<string> dependenciesRef) {
+public function run(cellery:StructuredName sName, map<string> instances) returns error? {
     //Resolve employee gateway URL
-    employee:EmployeeReference employeeRef = new(untaint dependenciesRef["employee"] ?: "employee");
-    hrComponent.parameters.employeegw_url.value = employeeRef.getHost();
+    employee:EmployeeReference employeeRef = employee:getReferenceRecord(instances.employeeCellDep);
+    hrCell.components[0].envVars.employee_api_url.value = employeeRef.gatewayHost;
 
     //Resolve stock gateway URL
-    stock:StockReference stockRef = new(untaint dependenciesRef["stock"] ?: "stock");
-    hrComponent.parameters.stockgw_url.value = stockRef.getHost();
-
-    hrCell.addComponent(hrComponent);
-    _ = cellery:createInstance(hrCell, imageName, imageVersion, instanceName);
+    stock:StockReference stockRef = getReferenceRecord(instances.stockCellDep);
+    hrCell.components[0].envVars.stock_api_url.value = stockRef.gatewayHost;
+    return cellery:createInstance(hrCell, sName);
 }
-

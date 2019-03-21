@@ -15,12 +15,23 @@
 // under the License.
 import ballerina/log;
 
-public const string TEAM = "TEAM";
-public const string OWNER = "OWNER";
-public const string MAINTAINER = "MAINTAINER";
+public type StructuredName record{
+    string orgName;
+    string imageName;
+    string imageVersion;
+    string instanceName?;
+    !...;
+};
 
 # Pre-defined labels for cellery components.
-public type Label "TEAM"|"OWNER"|"MAINTAINER";
+public type Label record {
+    string team?;
+    string maintainer?;
+    string owner?;
+};
+
+# Ingress Expose types
+public type Expose "global"|"local";
 
 public type DockerSource record {
     string Dockerfile;
@@ -45,42 +56,6 @@ public type ApiDefinition record {
     !...;
 };
 
-public type API record {
-    string targetComponent;
-    boolean global;
-    HttpApiIngress ingress;
-    !...;
-};
-
-public type TCP record{
-    string targetComponent;
-    TCPIngress ingress;
-};
-
-public type GRPC record{
-    string targetComponent;
-    TCPIngress ingress;
-};
-
-public type Resiliency record {
-    RetryConfig retryConfig?;
-    FailoverConfig failoverConfig?;
-    !...;
-};
-
-public type RetryConfig record {
-    int interval;
-    int count;
-    float backOffFactor;
-    int maxWaitInterval;
-    !...;
-};
-
-public type FailoverConfig record {
-    int timeOut;
-    !...;
-};
-
 public type AutoScaling record {
     AutoScalingPolicy policy;
     boolean overridable = true;
@@ -94,215 +69,115 @@ public type AutoScalingPolicy record {
     !...;
 };
 
-public type CpuUtilizationPercentage object {
-    public int percentage;
-    public function __init(int percentage) {
-        self.percentage = percentage;
-    }
+public type CpuUtilizationPercentage record {
+    int percentage;
+    !...;
 };
 
 public type Component record {
     string name;
     ImageSource source;
     int replicas = 1;
-    map<TCPIngress|HttpApiIngress|GRPCIngress> ingresses?;
-    map<string> labels?;
-    map<ParamValue> parameters?;
+    map<TCPIngress|HttpApiIngress|GRPCIngress|WebIngress> ingresses?;
+    Label labels?;
+    map<Env> envVars?;
+    map<StructuredName> dependencies?;
     AutoScaling autoscaling?;
     !...;
 };
 
-public type TCPIngress object {
-    public int port;
-    public int targetPort;
-    public function __init(int port, int targetPort) {
-        self.port = port;
-        self.targetPort = targetPort;
-    }
+public type TCPIngress record {
+    int backendPort;
+    int gatewayPort;
+    Expose expose;
+    !...;
 };
 
-public type GRPCIngress object {
-    public int port;
-    public int targetPort;
-    public string protoFile;
-    public function __init(int port, int targetPort, string protoFile = "") {
-        self.port = port;
-        self.targetPort = targetPort;
-        self.protoFile = protoFile;
-    }
+public type GRPCIngress record {
+    *TCPIngress;
+    string protoFile?;
+    !...;
 };
 
-public type HttpApiIngress object {
-    public int port;
-    public string context;
-    public ApiDefinition[] definitions;
-
-    public function __init(int port, string context, ApiDefinition[] definitions) {
-        self.port = port;
-        self.context = context;
-        self.definitions = definitions;
-    }
+public type HttpApiIngress record {
+    int port;
+    string context;
+    ApiDefinition[] definitions;
+    Expose expose;
+    boolean authenticate = true;
+    !...;
 };
 
-public type ParamValue abstract object {
-    public string|int|boolean|float? value;
+public type WebIngress record {
+    int port;
+    URI uri;
+    TLS tls?;
+    OIDC oidc?;
+    !...;
 };
 
-public type Env object {
+public type URI record{
+    string vhost;
+    string context = "/";
+    !...;
+};
+
+public type TLS record{
+    string key;
+    string cert;
+    !...;
+};
+
+# OpenId Connect properties
+public type OIDC record {
+    string[] context;
+    string provider;
+    string clientId;
+    string clientSecret;
+    string redirectUrl;
+    string baseUrl;
+    string subjectClaim;
+    !...;
+};
+
+public type ParamValue record {
+    string|int|boolean|float value?;
+};
+
+public type Env record {
     *ParamValue;
-    public function __init(string|int|boolean|float? default = ()) {
-        self.value = default;
-    }
+    !...;
 };
 
-public type Secret object {
+public type Secret record {
     *ParamValue;
-    public string path;
-
-    public function __init() {
-        self.path = "";
-        self.value = "";
-    }
+    string mountPath;
+    !...;
 };
 
-public type CellImage object {
-    public map<Component> components = {};
-    public map<API> apis = {};
-    public map<TCP> tcp = {};
-    public map<GRPC> grpc = {};
-
-    public function addComponent(Component component) {
-        self.components[component.name] = component;
-    }
-
-    # Expose the all the ingresses in a component via Cell Gateway
-    #
-    # + component - The component record
-    public function exposeLocal(Component component) {
-        foreach var (name, ingressTemp) in component.ingresses {
-            if (ingressTemp is HttpApiIngress) {
-                self.apis[name] = {
-                    targetComponent: component.name,
-                    ingress: ingressTemp,
-                    global: false
-                };
-            } else if (ingressTemp is GRPCIngress){
-                self.grpc[name] = {
-                    targetComponent: component.name,
-                    ingress: ingressTemp
-                };
-            }
-            else if (ingressTemp is TCPIngress){
-                self.tcp[name] = {
-                    targetComponent: component.name,
-                    ingress: ingressTemp
-                };
-            }
-        }
-    }
-
-    # Expose a given ingress via Cell Gateway
-    #
-    # + component - The component record
-    # + ingressName - Name of the ingress to be exposed
-    public function exposeIngressLocal(Component component, string ingressName) {
-        TCPIngress|HttpApiIngress|GRPCIngress? ingress = component.ingresses[ingressName];
-        if (ingress is HttpApiIngress) {
-            self.apis[ingressName] = {
-                targetComponent: component.name,
-                ingress: ingress,
-                global: false
-            };
-        } else if (ingress is GRPCIngress){
-            self.grpc[ingressName] = {
-                targetComponent: component.name,
-                ingress: ingress
-            };
-        }
-        else if (ingress is TCPIngress){
-            self.tcp[ingressName] = {
-                targetComponent: component.name,
-                ingress: ingress
-            };
-        }
-        else {
-            error err = error("Ingress " + ingressName + " not found in the component " + component.name + ".");
-            panic err;
-        }
-    }
-
-    # Expose the all the HttpApiIngress ingresses in a component via Global Gateway
-    #
-    # + component - The component record
-    public function exposeGlobal(Component component) {
-        foreach var (name, ingressTemp) in component.ingresses {
-            if (ingressTemp is HttpApiIngress) {
-                self.apis[name] = {
-                    targetComponent: component.name,
-                    ingress: ingressTemp,
-                    global: true
-                };
-            }
-        }
-    }
-
-    # Expose a given ingress via Global Cell Gateway
-    #
-    # + component - The component record
-    # + ingressName - Name of the ingress to be exposed
-    public function exposeIngressGlobal(Component component, string ingressName) {
-        TCPIngress|HttpApiIngress|GRPCIngress? ingress = component.ingresses[ingressName];
-        if (ingress is HttpApiIngress) {
-            self.apis[ingressName] = {
-                targetComponent: component.name,
-                ingress: ingress,
-                global: true
-            };
-        } else if (ingress is GRPCIngress){
-            self.grpc[ingressName] = {
-                targetComponent: component.name,
-                ingress: ingress
-            };
-        }
-        else if (ingress is TCPIngress){
-            self.tcp[ingressName] = {
-                targetComponent: component.name,
-                ingress: ingress
-            };
-        }
-        else {
-            error err = error("Ingress " + ingressName + " not found in the component " + component.name + ".");
-            panic err;
-        }
-    }
-
+public type CellImage record {
+    Component[] components;
 };
 
 # Build the cell aritifacts
 #
 # + cellImage - The cell image definition
-# + orgName - The cell  image org
-# + imageName - The cell image name
-# + imageVersion - The cell image version
-# + return - true/false
-public extern function createImage(CellImage cellImage, string orgName,
-                                   string imageName, string imageVersion) returns (boolean|error);
+# + sname - The cell image org, name & version
+# + return - error
+public extern function createImage(CellImage cellImage, StructuredName sName) returns (error?);
 
 # Update the cell aritifacts with runtime changes
 #
 # + cellImage - The cell image definition
-# + imageName - The cell image name
-# + imageVersion - The cell image version
-# + instanceName - The cell instance name
+# + sName - The cell instance name
 # + return - true/false
-public extern function createInstance(CellImage cellImage, string imageName,
-                                      string imageVersion, string instanceName) returns (boolean|error);
+public extern function createInstance(CellImage cellImage, StructuredName sName) returns (error?);
 
 # Parse the swagger file and returns API Defintions
 #
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
-public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition[]);
+public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition[]|error);
 
 public function getHost(string cellImageName, Component component) returns (string) {
     return cellImageName + "--" + getValidName(component.name) + "-service";
@@ -310,15 +185,4 @@ public function getHost(string cellImageName, Component component) returns (stri
 
 function getValidName(string name) returns string {
     return name.toLower().replace("_", "-").replace(".", "-");
-}
-
-public function setParameter(Env|Secret? param, string|int|boolean|float value) {
-    if (param is (Env)) {
-        param.value = value;
-    } else if (param is Secret) {
-        param.value = value;
-    } else {
-        error err = error("Parameter not declared in the component.");
-        panic err;
-    }
 }
