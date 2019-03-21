@@ -26,6 +26,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -46,6 +47,8 @@ func newCliCommand() *cobra.Command {
 		newDescribeCommand(),
 		newStatusCommand(),
 		newLogsCommand(),
+		newLoginCommand(),
+		newLogoutCommand(),
 		newPushCommand(),
 		newPullCommand(),
 		newSetupCommand(),
@@ -56,7 +59,7 @@ func newCliCommand() *cobra.Command {
 }
 
 func main() {
-	logFileDirectory := filepath.Join(util.UserHomeDir(), ".cellery", "logs")
+	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")
 
 	// Creating the log directory if it does not exist

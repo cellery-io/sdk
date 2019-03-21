@@ -20,6 +20,7 @@ processing, dependency model generation, observability portal, etc, and docker i
 - Ballerina 0.990.3 
 - Go 1.11.2 or higher
 - Apache Maven 3.5.2 or higher
+- NPM 6.9.0+
 - Git
 
 #### Steps

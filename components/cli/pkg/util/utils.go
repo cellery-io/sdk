@@ -559,7 +559,7 @@ func ReplaceFile(fileToBeReplaced, fileToReplace string) error {
 	return nil
 }
 
-func ExecuteCommand(cmd *exec.Cmd, errorMessage string) error {
+func ExecuteCommand(cmd *exec.Cmd) error {
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)
 
@@ -570,13 +570,11 @@ func ExecuteCommand(cmd *exec.Cmd, errorMessage string) error {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("cellery : %v: %v \n", errorMessage, err)
-		os.Exit(1)
+		return err
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("cellery : %v: %v \n", errorMessage, err)
-		os.Exit(1)
+		return err
 	}
 	return nil
 }
@@ -617,8 +615,10 @@ func ExtractTarGzFile(extractTo, archive_name string) error {
 	cmd := exec.Command("tar", "-zxvf", archive_name)
 	cmd.Dir = extractTo
 
-	ExecuteCommand(cmd, "Error occured in extracting file :"+archive_name)
-
+	err := ExecuteCommand(cmd)
+	if err != nil {
+		fmt.Printf("Error occured in extracting file :"+archive_name)
+	}
 	return nil
 }
 
@@ -826,7 +826,7 @@ func ValidateImageTagWithRegistry(imageTag string) error {
 // AddImageToBalPath extracts the cell image in a temporary location and copies the relevant ballerina files to the
 // ballerina repo directory. This expects the BALLERINA_HOME environment variable to be set in th developer machine.
 func AddImageToBalPath(cellImage *CellImage) error {
-	cellImageFile := filepath.Join(UserHomeDir(), ".cellery", "repo", cellImage.Organization, cellImage.ImageName,
+	cellImageFile := filepath.Join(UserHomeDir(), constants.CELLERY_HOME, "repo", cellImage.Organization, cellImage.ImageName,
 		cellImage.ImageVersion, cellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	ballerinaOrganizationName := strings.Replace(cellImage.Organization, "-", "_", -1)
@@ -835,7 +835,7 @@ func AddImageToBalPath(cellImage *CellImage) error {
 	// Create temp directory
 	currentTime := time.Now()
 	timestamp := currentTime.Format("27065102350415")
-	tempPath := filepath.Join(UserHomeDir(), ".cellery", "tmp", timestamp)
+	tempPath := filepath.Join(UserHomeDir(), constants.CELLERY_HOME, "tmp", timestamp)
 	err := CreateDir(tempPath)
 	if err != nil {
 		return err

@@ -50,6 +50,28 @@ Usage :
 cellery list instances
 ```
 
+### Login
+Login to the Cellery Registry and save the credentials.
+Usage :
+```
+cellery login [REGISTRY]
+```
+Example :
+```
+cellery login
+```
+
+### Logout
+Remove the saved credentials.
+Usage :
+```
+cellery logout [REGISTRY]
+```
+Example :
+```
+cellery logout
+```
+
 ### Push
 Push cell image to the remote repository.  
 Usage : 

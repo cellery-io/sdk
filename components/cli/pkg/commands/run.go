@@ -37,7 +37,7 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
 
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	fmt.Printf("Running cell image: %s\n", util.Bold(cellImageTag))
 	zipLocation := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
@@ -49,7 +49,7 @@ func RunRun(cellImageTag string, instanceName string, dependencies []string) {
 	}
 
 	// Create tmp directory
-	tmpPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", parsedCellImage.ImageName)
+	tmpPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", parsedCellImage.ImageName)
 	err = util.CleanOrCreateDir(tmpPath)
 	if err != nil {
 		panic(err)

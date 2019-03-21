@@ -102,6 +102,8 @@ const APPLY = "apply"
 const CONFIG_MAP = "configmap"
 const KUBECTL_FLAG = "-f"
 
+const CELLERY_HUB_KEYRING_NAME = "hubcelleryio"
+
 const MINIMAL = "minimal"
 const WITH_OBSERVABILITY = "observability"
 const WITH_GLOBAL_GATEWAY = "global_gateway"

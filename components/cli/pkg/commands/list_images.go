@@ -28,6 +28,7 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -145,23 +146,23 @@ func intArrayToString(intArray []int) string {
 
 func getImagesArray() [][]string {
 	var images [][]string
-	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repo"))
+	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, organization := range organizations {
-		projects, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repo", organization))
+		projects, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", organization))
 		if err != nil {
 			log.Fatal(err)
 		}
 		for _, project := range projects {
-			versions, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), ".cellery", "repo",
+			versions, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
 				organization, project))
 			if err != nil {
 				log.Fatal(err)
 			}
 			for _, version := range versions {
-				size, err := util.GetFileSize(filepath.Join(util.UserHomeDir(), ".cellery", "repo",
+				size, err := util.GetFileSize(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
 					organization, project, version, project+".zip"))
 				if err != nil {
 					log.Fatal(err)

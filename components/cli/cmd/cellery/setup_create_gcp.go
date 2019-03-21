@@ -39,7 +39,26 @@ func newSetupCreateGcpCommand() *cobra.Command {
 			return nil;
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateGcp()
+			if !addGlobalGW && !addObservability {
+				err := commands.CreateMinimalGcpRuntime()
+				if err != nil {
+					fmt.Printf("cellery : %v:\n", err)
+				}
+			}
+
+			if addGlobalGW && !addObservability {
+				err := commands.CreateGcpRuntimeWithGlobalGateway()
+				if err != nil {
+					fmt.Printf("cellery : %v:\n", err)
+				}
+			}
+
+			if addGlobalGW && addObservability {
+				err := commands.CreateCompleteGcpRuntime()
+				if err != nil {
+					fmt.Printf("cellery : %v:\n", err)
+				}
+			}
 		},
 		Example: "cellery setup create gcp",
 	}

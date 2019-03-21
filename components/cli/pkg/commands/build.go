@@ -48,7 +48,7 @@ func RunBuild(tag string, fileName string) {
 	}
 	ballerinaOrganizationName := strings.Replace(parsedCellImage.Organization, "-", "_", -1)
 
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 
 	spinner := util.StartNewSpinner("Building image " + util.Bold(tag))

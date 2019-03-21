@@ -132,3 +132,8 @@ type GcpCore struct {
 	Account string `json:"account"`
 	Project string `json:"project"`
 }
+
+type RegistryCredentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}

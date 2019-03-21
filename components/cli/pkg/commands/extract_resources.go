@@ -36,7 +36,7 @@ func RunExtractResources(cellImage string, outputPath string) {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
 
-	repoLocation := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	imageLocation := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 
@@ -50,7 +50,7 @@ func RunExtractResources(cellImage string, outputPath string) {
 	// Create temp directory
 	currentTIme := time.Now()
 	timestamp := currentTIme.Format("27065102350415")
-	tempPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", timestamp)
+	tempPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", timestamp)
 	err = util.CreateDir(tempPath)
 	if err != nil {
 		util.ExitWithErrorMessage("Error while extracting resources from cell image", err)

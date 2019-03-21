@@ -37,7 +37,7 @@ func RunInspect(cellImage string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
-	cellImageFile := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+	cellImageFile := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	// Checking if the image is present in the local repo
@@ -50,7 +50,7 @@ func RunInspect(cellImage string) {
 	// Create temp directory
 	currentTime := time.Now()
 	timestamp := currentTime.Format("27065102350415")
-	tempPath := filepath.Join(util.UserHomeDir(), ".cellery", "tmp", timestamp)
+	tempPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", timestamp)
 	err = util.CreateDir(tempPath)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while reading the cell image", err)

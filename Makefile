@@ -46,6 +46,7 @@ build-cli:
 .PHONY: build-docs-view
 build-docs-view:
 	cd ${PROJECT_ROOT}/components/docs-view; \
+	npm ci; \
 	npm run build
 
 .PHONY: install-lang
@@ -62,6 +63,7 @@ install-cli:
 code.format: tools.goimports
 	@goimports -local $(PROJECT_PKG) -w -l $(GOFILES)
 	cd ${PROJECT_ROOT}/components/docs-view; \
+	npm ci; \
 	npm run lint
 
 .PHONY: tools tools.goimports

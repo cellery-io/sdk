@@ -17,3 +17,19 @@
  */
 
 package main
+
+import (
+	"github.com/spf13/cobra"
+)
+
+func newSetupManageCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "manage <command>",
+		Short: "Manage Cellery runtime",
+	}
+
+	cmd.AddCommand(
+		newSetupManageLocalCommand(),
+	)
+	return cmd
+}

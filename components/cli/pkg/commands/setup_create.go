@@ -26,7 +26,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-func createEnvironment() error {
+func createEnvironment() {
 	bold := color.New(color.Bold).SprintFunc()
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -42,17 +42,26 @@ func createEnvironment() error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to install environment: %v", err)
+		fmt.Printf("Failed to select an option: %v", err)
+		RunSetup()
 	}
 
 	switch value {
 	case constants.CELLERY_CREATE_LOCAL:
 		{
-			createLocal()
+			err := createLocal()
+			if err != nil {
+				fmt.Printf("cellery : %v:\n", err)
+				RunSetup()
+			}
 		}
 	case constants.CELLERY_CREATE_GCP:
 		{
-			createCompleteGcpRuntime()
+			err := createGcp()
+			if err != nil {
+				fmt.Printf("cellery : %v:\n", err)
+				RunSetup()
+			}
 		}
 	default:
 		{
@@ -66,5 +75,11 @@ func createEnvironment() error {
 	fmt.Println("======================")
 	fmt.Println("To create your first project, execute the command: ")
 	fmt.Println("  $ cellery init ")
-	return nil
+}
+
+func getCreateEnvironmentList() []string {
+	if isVmInstalled() {
+		return []string{constants.CELLERY_CREATE_GCP, constants.CELLERY_SETUP_BACK}
+	}
+	return []string{constants.CELLERY_CREATE_LOCAL, constants.CELLERY_CREATE_GCP, constants.CELLERY_SETUP_BACK}
 }

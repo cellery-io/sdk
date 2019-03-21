@@ -140,9 +140,10 @@ copyDebianDirectory() {
 copyBuildDirectories() {
     getBallerinaHome
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/${HOME_BALLERINA}/bre/lib/
-    mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/${HOME_BALLERINA}/lib/repo
+    mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/repo
+
     cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/${HOME_BALLERINA}/bre/lib/
-    cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/${HOME_BALLERINA}/lib/repo
+    cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/repo
 
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin
     cp ../../components/build/cellery ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin
