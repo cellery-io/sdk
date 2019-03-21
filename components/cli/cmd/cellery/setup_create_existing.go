@@ -38,7 +38,7 @@ func newExistingCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("In existing ;)")
+			//TODO Implement Deploying in to existing clusters
 		},
 		Example: "  cellery setup",
 	}

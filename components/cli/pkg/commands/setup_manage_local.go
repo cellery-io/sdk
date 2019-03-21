@@ -56,24 +56,21 @@ func manageLocal() error {
 			}()
 			err := util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "controlvm", constants.VM_NAME, "acpipowerbutton"))
 			if err != nil {
-				fmt.Printf("cellery : %v:\n", err)
-				os.Exit(1)
+				util.ExitWithErrorMessage("Failed to stop the VM",err)
 			}
 		}
 	case constants.CELLERY_MANAGE_START:
 		{
 			err := util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"))
 			if err != nil {
-				fmt.Printf("cellery : %v:\n", err)
-				os.Exit(1)
+				util.ExitWithErrorMessage("Failed to start the VM",err)
 			}
 		}
 	case constants.CELLERY_MANAGE_CLEANUP:
 		{
 			err := cleanupLocal()
 			if err != nil {
-				fmt.Printf("cellery : %v:\n", err)
-				os.Exit(1)
+				util.ExitWithErrorMessage("Failed to cleanup the VM",err)
 			}
 		}
 	default:

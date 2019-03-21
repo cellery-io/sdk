@@ -617,7 +617,7 @@ func ExtractTarGzFile(extractTo, archive_name string) error {
 
 	err := ExecuteCommand(cmd)
 	if err != nil {
-		fmt.Printf("Error occured in extracting file :"+archive_name)
+		fmt.Printf("Error occured in extracting file :" + archive_name)
 	}
 	return nil
 }

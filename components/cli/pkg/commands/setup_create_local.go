@@ -28,7 +28,7 @@ import (
 )
 
 func RunSetupCreateLocal() {
-	
+
 }
 
 func createLocal() error {
@@ -103,7 +103,7 @@ func installVM() error {
 	}()
 	vmLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.VM_FILE_NAME)
 	var commands [] []string
-	commands  = append(commands,
+	commands = append(commands,
 		[]string{"createvm", "--name", constants.VM_NAME, "--ostype", "Ubuntu_64", "--register"},
 		[]string{"modifyvm", constants.VM_NAME, "--ostype", "Ubuntu_64", "--cpus", "4", "--memory", "8000", "--natpf1", "guestkube,tcp,,6443,,6443", "--natpf1", "guestssh,tcp,,2222,,22", "--natpf1", "guesthttps,tcp,,443,,443", "--natpf1", "guesthttp,tcp,,80,,80"},
 		[]string{"storagectl", constants.VM_NAME, "--name", "hd1", "--add", "sata", "--portcount", "2"},
@@ -111,7 +111,7 @@ func installVM() error {
 		[]string{"startvm", constants.VM_NAME, "--type", "headless"},
 	)
 	for _, command := range commands {
-		err := util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE,command ...))
+		err := util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, command ...))
 		if err != nil {
 			return err
 		}

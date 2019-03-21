@@ -75,7 +75,7 @@ func createGcp() error {
 	return nil
 }
 
-func CreateMinimalGcpRuntime() error{
+func CreateMinimalGcpRuntime() error {
 	_ = configureGCPCredentials()
 	ctx := context.Background()
 
@@ -93,7 +93,7 @@ func CreateMinimalGcpRuntime() error{
 	return nil
 }
 
-func CreateGcpRuntimeWithGlobalGateway () error {
+func CreateGcpRuntimeWithGlobalGateway() error {
 	gcpBucketName := configureGCPCredentials()
 	ctx := context.Background()
 
@@ -115,8 +115,7 @@ func CreateGcpRuntimeWithGlobalGateway () error {
 	return nil
 }
 
-
-func CreateGcpRuntimeWithObservability () error {
+func CreateGcpRuntimeWithObservability() error {
 	gcpBucketName := configureGCPCredentials()
 	ctx := context.Background()
 
@@ -137,8 +136,6 @@ func CreateGcpRuntimeWithObservability () error {
 	gcpSpinner.Stop(true)
 	return nil
 }
-
-
 
 func CreateCompleteGcpRuntime() error {
 	gcpBucketName := configureGCPCredentials()
@@ -616,32 +613,31 @@ func deployCelleryRuntime(deploymentMethod string) error {
 
 func executeControllerArtifacts(artifactPath string) error {
 	var commands [] []string
-	commands  = append(commands,
+	commands = append(commands,
 		// Give permission
-		[]string{ constants.CREATE, "clusterrolebinding", "cluster-admin-binding", "--clusterrole", "cluster-admin", "--user", accountName},
+		[]string{constants.CREATE, "clusterrolebinding", "cluster-admin-binding", "--clusterrole", "cluster-admin", "--user", accountName},
 		// Setup Celley namespace, create service account and the docker registry credentials
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/system/ns-init.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/system/ns-init.yaml"},
 		// Istio
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/system/istio-crds.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/system/istio-crds.yaml"},
 		// Enabling Istio injection
-		[]string{ "label", "namespace", "default", "istio-injection=enabled"},
+		[]string{"label", "namespace", "default", "istio-injection=enabled"},
 		// Without security
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/system/istio-demo-cellery.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/system/istio-gateway.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/system/istio-demo-cellery.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/system/istio-gateway.yaml"},
 		// Install Cellery crds
-		//[]string{ constants.APPLY, constants.KUBECTL_FLAG, "https://raw.githubusercontent.com/wso2-cellery/mesh-controller/master/artifacts/01-cluster-role.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, "https://raw.githubusercontent.com/wso2-cellery/mesh-controller/master/artifacts/01-cluster-role.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/controller/02-service-account.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/controller/03-cluster-role-binding.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/controller/04-crd-cell.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/controller/05-crd-gateway.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/controller/06-crd-token-service.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/controller/07-crd-service.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/controller/08-config.yaml"},
-		[]string{ constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/controller/09-controller.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/01-cluster-role.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/02-service-account.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/03-cluster-role-binding.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/04-crd-cell.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/05-crd-gateway.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/06-crd-token-service.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/07-crd-service.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/08-config.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/controller/09-controller.yaml"},
 	)
 	for _, command := range commands {
-		err := util.ExecuteCommand(exec.Command(constants.KUBECTL,command ...))
+		err := util.ExecuteCommand(exec.Command(constants.KUBECTL, command ...))
 		if err != nil {
 			return err
 		}
@@ -649,35 +645,35 @@ func executeControllerArtifacts(artifactPath string) error {
 	return nil
 }
 
-func executeAPIMArtifacts(artifactPath string) error{
+func executeAPIMArtifacts(artifactPath string) error {
 	var commands [] []string
-	commands  = append(commands,
-	// Create apim NFS volumes and volume claims
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/global-apim/artifacts-persistent-volume.yaml", "-n", "cellery-system"},
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/global-apim/artifacts-persistent-volume-claim.yaml", "-n", "cellery-system"},
+	commands = append(commands,
+		// Create apim NFS volumes and volume claims
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/global-apim/artifacts-persistent-volume.yaml", "-n", "cellery-system"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/global-apim/artifacts-persistent-volume-claim.yaml", "-n", "cellery-system"},
 
-	// Create the gw config maps
-	[]string{constants.CREATE, constants.CONFIG_MAP, "gw-conf", "--from-file", artifactPath+"/k8s-artefacts/global-apim/conf", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "gw-conf-datasources", "--from-file", artifactPath+"/k8s-artefacts/global-apim/conf/datasources/", "-n", "cellery-system"},
+		// Create the gw config maps
+		[]string{constants.CREATE, constants.CONFIG_MAP, "gw-conf", "--from-file", artifactPath + "/k8s-artefacts/global-apim/conf", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "gw-conf-datasources", "--from-file", artifactPath + "/k8s-artefacts/global-apim/conf/datasources/", "-n", "cellery-system"},
 
-	// Create KM config maps
-	[]string{constants.CREATE, constants.CONFIG_MAP, "conf-identity", "--from-file", artifactPath+"/k8s-artefacts/global-apim/conf/identity", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "apim-template", "--from-file", artifactPath+"/k8s-artefacts/global-apim/conf/resources/api_templates", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "apim-tomcat", "--from-file", artifactPath+"/k8s-artefacts/global-apim/conf/tomcat", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "apim-security", "--from-file", artifactPath+"/k8s-artefacts/global-apim/conf/security", "-n", "cellery-system"},
+		// Create KM config maps
+		[]string{constants.CREATE, constants.CONFIG_MAP, "conf-identity", "--from-file", artifactPath + "/k8s-artefacts/global-apim/conf/identity", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "apim-template", "--from-file", artifactPath + "/k8s-artefacts/global-apim/conf/resources/api_templates", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "apim-tomcat", "--from-file", artifactPath + "/k8s-artefacts/global-apim/conf/tomcat", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "apim-security", "--from-file", artifactPath + "/k8s-artefacts/global-apim/conf/security", "-n", "cellery-system"},
 
-	//Create gateway deployment and the service
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/global-apim/global-apim.yaml", "-n", "cellery-system"},
+		//Create gateway deployment and the service
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/global-apim/global-apim.yaml", "-n", "cellery-system"},
 
-	// Wait till the gateway deployment availability
-	//[]string{"wait", "deployment.apps/gateway", "--for", "condition available", "--timeout", "6000s", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "sp-worker-siddhi", "--from-file", artifactPath+"/k8s-artefacts/global-apim/conf/identity", "-n", "cellery-system"},
-	// Install nginx-ingress for control plane ingress
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/system/mandatory.yaml"},
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/system/cloud-generic.yaml"},
+		// Wait till the gateway deployment availability
+		//[]string{"wait", "deployment.apps/gateway", "--for", "condition available", "--timeout", "6000s", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "sp-worker-siddhi", "--from-file", artifactPath + "/k8s-artefacts/global-apim/conf/identity", "-n", "cellery-system"},
+		// Install nginx-ingress for control plane ingress
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/system/mandatory.yaml"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/system/cloud-generic.yaml"},
 	)
 	for _, command := range commands {
-		err := util.ExecuteCommand(exec.Command(constants.KUBECTL,command ...))
+		err := util.ExecuteCommand(exec.Command(constants.KUBECTL, command ...))
 		if err != nil {
 			return err
 		}
@@ -687,35 +683,33 @@ func executeAPIMArtifacts(artifactPath string) error{
 
 func executeObservabilityArtifacts(artifactPath string) error {
 	var commands [] []string
-	commands  = append(commands,
-	// Create SP worker configmaps
-	[]string{constants.CREATE, constants.CONFIG_MAP, "sp-worker-conf", "--from-file", artifactPath+"/k8s-artefacts/observability/sp/conf", "-n", "cellery-system"},
+	commands = append(commands,
+		// Create SP worker configmaps
+		[]string{constants.CREATE, constants.CONFIG_MAP, "sp-worker-conf", "--from-file", artifactPath + "/k8s-artefacts/observability/sp/conf", "-n", "cellery-system"},
 
-	// Create SP worker deployment
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/observability/sp/sp-worker.yaml", "-n", "cellery-system"},
+		// Create SP worker deployment
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/observability/sp/sp-worker.yaml", "-n", "cellery-system"},
 
-	// Create observability portal deployment, service and ingress.
-	[]string{constants.CREATE, constants.CONFIG_MAP, "observability-portal-config", "--from-file", artifactPath+"/observability/node-server/config", "-n", "cellery-system"},
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/observability/portal/observability-portal.yaml", "-n", "cellery-system"},
+		// Create observability portal deployment, service and ingress.
+		[]string{constants.CREATE, constants.CONFIG_MAP, "observability-portal-config", "--from-file", artifactPath + "/observability/node-server/config", "-n", "cellery-system"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/observability/portal/observability-portal.yaml", "-n", "cellery-system"},
 
-	// Create K8s Metrics Config-maps
-	[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-prometheus-conf", "--from-file", artifactPath+"/k8s-artefacts/observability/prometheus/config", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-grafana-conf", "--from-file", artifactPath+"/k8s-artefacts/observability/grafana/config", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-grafana-datasources", "--from-file", artifactPath+"/k8s-artefacts/observability/grafana/datasources", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-grafana-dashboards", "--from-file", artifactPath+"/k8s-artefacts/observability/grafana/dashboards", "-n", "cellery-system"},
-	[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-grafana-dashboards-default", "--from-file", artifactPath+"/k8s-artefacts/observability/grafana/dashboards/default", "-n", "cellery-system"},
+		// Create K8s Metrics Config-maps
+		[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-prometheus-conf", "--from-file", artifactPath + "/k8s-artefacts/observability/prometheus/config", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-grafana-conf", "--from-file", artifactPath + "/k8s-artefacts/observability/grafana/config", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-grafana-datasources", "--from-file", artifactPath + "/k8s-artefacts/observability/grafana/datasources", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-grafana-dashboards", "--from-file", artifactPath + "/k8s-artefacts/observability/grafana/dashboards", "-n", "cellery-system"},
+		[]string{constants.CREATE, constants.CONFIG_MAP, "k8s-metrics-grafana-dashboards-default", "--from-file", artifactPath + "/k8s-artefacts/observability/grafana/dashboards/default", "-n", "cellery-system"},
 
-	// Create K8s Metrics deployment, service and ingress.
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/observability/prometheus/k8s-metrics-prometheus.yaml", "-n", "cellery-system"},
-	[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/observability/grafana/k8s-metrics-grafana.yaml", "-n", "cellery-system"},
+		// Create K8s Metrics deployment, service and ingress.
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/observability/prometheus/k8s-metrics-prometheus.yaml", "-n", "cellery-system"},
+		[]string{constants.APPLY, constants.KUBECTL_FLAG, artifactPath + "/k8s-artefacts/observability/grafana/k8s-metrics-grafana.yaml", "-n", "cellery-system"},
 	)
 	for _, command := range commands {
-		err := util.ExecuteCommand(exec.Command(constants.KUBECTL,command ...))
+		err := util.ExecuteCommand(exec.Command(constants.KUBECTL, command ...))
 		if err != nil {
 			return err
 		}
 	}
 	return nil
 }
-
-
