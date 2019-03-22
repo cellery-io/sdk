@@ -32,7 +32,6 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 	if isVmInstalled() {
 		util.ExitWithErrorMessage("Error creating VM", fmt.Errorf("installed VM already exists"))
 	}
-	vmName := ""
 	vmLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM)
 	repoCreateErr := util.CreateDir(vmLocation)
 	if repoCreateErr != nil {
@@ -43,15 +42,17 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 		spinner.Stop(true)
 	}()
 	if isCompleteSelected {
-		vmName = constants.AWS_S3_ITEM_VM_COMPLETE
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET,constants.AWS_S3_ITEM_VM_COMPLETE, vmLocation)
+		util.ExtractTarGzFile(vmLocation, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_VM_COMPLETE))
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_CONFIG_COMPLETE, vmLocation)
+		util.ReplaceFile(filepath.Join(util.UserHomeDir(), ".kube", "config"), filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_COMPLETE))
 	} else {
-		vmName = constants.AWS_S3_ITEM_VM_MINIMAL
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_MINIMAL, vmLocation)
+		util.ExtractTarGzFile(vmLocation, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_VM_MINIMAL))
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_CONFIG_MINIMAL, vmLocation)
+		util.ReplaceFile(filepath.Join(util.UserHomeDir(), ".kube", "config"), filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_MINIMAL))
 	}
-	util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, vmName, vmLocation)
-	util.ExtractTarGzFile(vmLocation, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, vmName))
-	util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_CONFIG, vmLocation)
-	util.ReplaceFile(filepath.Join(util.UserHomeDir(), ".kube", "config"), filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG))
-	installVM(isCompleteSelected)
+	installVM()
 }
 
 func createLocal() error {
@@ -80,22 +81,15 @@ func createLocal() error {
 	return nil
 }
 
-func installVM(isCompleteSelected bool) error {
-	vmName := constants.VM_NAME
-	if isCompleteSelected {
-		vmName = constants.VM_NAME
-	}
+func installVM() error {
+	vmPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.VM_FILE_NAME)
 	spinner := util.StartNewSpinner("Installing Cellery Runtime")
 	defer func() {
 		spinner.Stop(true)
 	}()
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "createvm", "--name", vmName, "--ostype", "Ubuntu_64", "--register"), "Error Installing VM")
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "modifyvm", vmName, "--ostype", "Ubuntu_64", "--cpus", "4", "--memory", "8000", "--natpf1", "guestkube,tcp,,6443,,6443", "--natpf1", "guestssh,tcp,,2222,,22", "--natpf1", "guesthttps,tcp,,443,,443", "--natpf1", "guesthttp,tcp,,80,,80"), "Error Installing VM")
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "storagectl", vmName, "--name", "hd1", "--add", "sata", "--portcount", "2"), "Error Installing VM")
-
-	vmLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.VM_FILE_NAME)
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "storageattach", vmName, "--storagectl", "hd1", "--port", "1", "--type", "hdd", "--medium", vmLocation), "Error Installing VM")
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", vmName, "--type", "headless"), "Error Installing VM")
+	util.ExecuteCommand(exec.Command("vboxmanage", "import", vmPath), "Error Installing VM")
+	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "modifyvm", constants.VM_NAME, "--ostype", "Ubuntu_64", "--cpus", "2", "--memory", "8000", "--natpf1", "guestkube,tcp,,6443,,6443", "--natpf1", "guestssh,tcp,,2222,,22", "--natpf1", "guesthttps,tcp,,443,,443", "--natpf1", "guesthttp,tcp,,80,,80"), "Error Installing VM")
+	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"), "Error Installing VM")
 
 	return nil
 }
