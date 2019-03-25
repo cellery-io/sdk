@@ -21,33 +21,40 @@ package commands
 import (
 	"bufio"
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"os/exec"
+	"regexp"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunDescribe(cellImage string) {
-	cmd := exec.Command("kubectl", "describe", "cells", cellImage)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Println(stdoutScanner.Text())
+	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), cellImage)
+	if instancePattern {
+		cmd := exec.Command("kubectl", "describe", "cells", cellImage)
+		stdoutReader, _ := cmd.StdoutPipe()
+		stdoutScanner := bufio.NewScanner(stdoutReader)
+		go func() {
+			for stdoutScanner.Scan() {
+				fmt.Println(stdoutScanner.Text())
+			}
+		}()
+		stderrReader, _ := cmd.StderrPipe()
+		stderrScanner := bufio.NewScanner(stderrReader)
+		go func() {
+			for stderrScanner.Scan() {
+				fmt.Println(stderrScanner.Text())
+			}
+		}()
+		err := cmd.Start()
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while fetching cell details", err)
 		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
+		err = cmd.Wait()
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while fetching cell details", err)
 		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching cell details", err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching cell details", err)
+	} else {
+		fmt.Println(string(util.ReadCellImageYaml(cellImage)))
 	}
 }

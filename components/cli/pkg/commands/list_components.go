@@ -22,11 +22,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -48,47 +45,14 @@ func RunListComponents(name string) {
 
 func getCellImageCompoents(cellImage string) []string {
 	var components []string
-	parsedCellImage, err := util.ParseImageTag(cellImage)
-	var cellImageZip string
-	if parsedCellImage.Registry == "" {
-		cellImageZip = path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
-	} else {
-		cellImageZip = path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
-	}
-
-	// Create tmp directory
-	tmpPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", "imageExtracted")
-	err = util.CleanOrCreateDir(tmpPath)
-	if err != nil {
-		panic(err)
-	}
-
-	err = util.Unzip(cellImageZip, tmpPath)
-	if err != nil {
-		panic(err)
-	}
-
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while extracting cell image", err)
-	}
-
-	cellYamlContent, err := ioutil.ReadFile(filepath.Join(tmpPath, constants.ZIP_ARTIFACTS, "cellery", parsedCellImage.ImageName+".yaml"))
-	if err != nil {
-		util.ExitWithErrorMessage("Error while reading cell image content", err)
-	}
+	cellYamlContent := util.ReadCellImageYaml(cellImage)
 	cellImageContent := &util.Cell{}
-	err = yaml.Unmarshal(cellYamlContent, cellImageContent)
+	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)
 	}
-
 	for i := 0; i < len(cellImageContent.CellSpec.ComponentTemplates); i++ {
 		components = append(components, cellImageContent.CellSpec.ComponentTemplates[i].Metadata.Name)
-	}
-	// Delete tmp directory
-	err = util.CleanOrCreateDir(tmpPath)
-	if err != nil {
-		util.ExitWithErrorMessage("Error while reading cell image content", err)
 	}
 	return components
 }

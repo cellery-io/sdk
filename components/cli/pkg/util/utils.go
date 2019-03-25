@@ -25,6 +25,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/miraj/sdk/components/cli/pkg/util"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -1014,4 +1015,35 @@ func OpenBrowser(url string) error {
 	} else {
 		return errors.New("unsupported platform")
 	}
+}
+
+func ReadCellImageYaml(cellImage string) []byte {
+	parsedCellImage, err := ParseImageTag(cellImage)
+	cellImageZip := path.Join(UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+
+	// Create tmp directory
+	tmpPath := filepath.Join(UserHomeDir(), constants.CELLERY_HOME, "tmp", "imageExtracted")
+	err = CleanOrCreateDir(tmpPath)
+	if err != nil {
+		panic(err)
+	}
+
+	err = util.Unzip(cellImageZip, tmpPath)
+	if err != nil {
+		panic(err)
+	}
+	if err != nil {
+		ExitWithErrorMessage("Error occurred while extracting cell image", err)
+	}
+
+	cellYamlContent, err := ioutil.ReadFile(filepath.Join(tmpPath, constants.ZIP_ARTIFACTS, "cellery", parsedCellImage.ImageName+".yaml"))
+	if err != nil {
+		ExitWithErrorMessage("Error while reading cell image content", err)
+	}
+	// Delete tmp directory
+	err = CleanOrCreateDir(tmpPath)
+	if err != nil {
+		ExitWithErrorMessage("Error while reading cell image content", err)
+	}
+	return cellYamlContent
 }
