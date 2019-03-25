@@ -22,17 +22,79 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/ghodss/yaml"
 )
 
-func RunListComponents(cellName string) {
+func RunListComponents(name string) {
+	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
+	if instancePattern {
+		displayComponentsTable(getCellInstanceComponents(name))
+	} else {
+		displayComponentsTable(getCellImageCompoents(name))
+	}
+}
+
+func getCellImageCompoents(cellImage string) []string {
+	var components []string
+	parsedCellImage, err := util.ParseImageTag(cellImage)
+	var cellImageZip string
+	if parsedCellImage.Registry == "" {
+		cellImageZip = path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+	} else {
+		cellImageZip = path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+	}
+
+	// Create tmp directory
+	tmpPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", "imageExtracted")
+	err = util.CleanOrCreateDir(tmpPath)
+	if err != nil {
+		panic(err)
+	}
+
+	err = util.Unzip(cellImageZip, tmpPath)
+	if err != nil {
+		panic(err)
+	}
+
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while extracting cell image", err)
+	}
+
+	cellYamlContent, err := ioutil.ReadFile(filepath.Join(tmpPath, constants.ZIP_ARTIFACTS, "cellery", parsedCellImage.ImageName+".yaml"))
+	if err != nil {
+		util.ExitWithErrorMessage("Error while reading cell image content", err)
+	}
+	cellImageContent := &util.Cell{}
+	err = yaml.Unmarshal(cellYamlContent, cellImageContent)
+	if err != nil {
+		util.ExitWithErrorMessage("Error while reading cell image content", err)
+	}
+
+	for i := 0; i < len(cellImageContent.CellSpec.ComponentTemplates); i++ {
+		components = append(components, cellImageContent.CellSpec.ComponentTemplates[i].Metadata.Name)
+	}
+	// Delete tmp directory
+	err = util.CleanOrCreateDir(tmpPath)
+	if err != nil {
+		util.ExitWithErrorMessage("Error while reading cell image content", err)
+	}
+	return components
+}
+
+func getCellInstanceComponents(cellName string) []string {
+	var components []string
 	cmd := exec.Command("kubectl", "get", "services", "-l", constants.GROUP_NAME+"/cell="+cellName, "-o", "json")
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
@@ -64,27 +126,24 @@ func RunListComponents(cellName string) {
 	if errJson != nil {
 		fmt.Println(errJson)
 	}
-
 	if len(jsonOutput.Items) == 0 {
-		fmt.Printf("Cannot find cell: %v \n", cellName)
+		util.ExitWithErrorMessage("Error listing components", fmt.Errorf("Cannot find cell: %v \n", cellName))
 	} else {
-		displayComponentsTable(jsonOutput.Items, cellName)
+		for i := 0; i < len(jsonOutput.Items); i++ {
+			var name string
+			name = strings.Replace(jsonOutput.Items[i].Metadata.Name, cellName+"--", "", -1)
+			name = strings.Replace(name, "-service", "", -1)
+			components = append(components, name)
+		}
 	}
+	return components
 }
 
-func displayComponentsTable(componentArray []util.ServiceItem, cellName string) {
+func displayComponentsTable(components []string) {
 	var tableData [][]string
 
-	for i := 0; i < len(componentArray); i++ {
-		var name string
-		name = strings.Replace(componentArray[i].Metadata.Name, cellName+"--", "", -1)
-		name = strings.Replace(name, "-service", "", -1)
-
-		//ports := strconv.Itoa(componentArray[i].Spec.Ports[0].Port)
-		//for j := 1; j < len(componentArray[i].Spec.Ports); j++ {
-		//	ports = ports + "/" + strconv.Itoa(componentArray[i].Spec.Ports[j].Port)
-		//}
-		component := []string{name}
+	for i := 0; i < len(components); i++ {
+		component := []string{components[i]}
 		tableData = append(tableData, component)
 	}
 
