@@ -25,7 +25,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -39,6 +38,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/manifoldco/promptui"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"

@@ -20,10 +20,12 @@ package commands
 
 import (
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func createEnvironment() error {

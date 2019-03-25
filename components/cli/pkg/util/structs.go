@@ -31,6 +31,10 @@ type CellImage struct {
 	ImageVersion string
 }
 
+type CellList struct {
+	Items []Cell `json:"items"`
+}
+
 type Cell struct {
 	CellMetaData CellMetaData `json:"metadata"`
 	CellSpec     CellSpec     `json:"spec"`
@@ -38,7 +42,15 @@ type Cell struct {
 }
 
 type CellMetaData struct {
-	CreationTimestamp string `json:"creationTimestamp"`
+	CreationTimestamp string          `json:"creationTimestamp"`
+	Annotations       CellAnnotations `json:"annotations"`
+	Name              string          `json:"name"`
+}
+
+type CellAnnotations struct {
+	Organization string `json:"mesh.cellery.io/cell-image-org"`
+	Name         string `json:"mesh.cellery.io/cell-image-name"`
+	Version      string `json:"mesh.cellery.io/cell-image-version"`
 }
 
 type CellSpec struct {
@@ -54,7 +66,9 @@ type ComponentTemplateMetadata struct {
 }
 
 type CellStatus struct {
-	Status string `json:"status"`
+	Status       string `json:"status"`
+	Gateway      string `json:"gatewayHostname"`
+	ServiceCount int    `json:"serviceCount"`
 }
 
 type CellPods struct {

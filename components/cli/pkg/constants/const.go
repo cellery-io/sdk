@@ -55,7 +55,7 @@ const AWS_REGION = "ap-south-1"
 
 const VM_NAME = "ubuntu-18.04"
 const VM_FILE_NAME = "ubuntu-18.04.ovf"
-const VM_DISK_NAME =  "ubuntu-18.04-disk001.vmdk"
+const VM_DISK_NAME = "ubuntu-18.04-disk001.vmdk"
 
 const GCP_CLUSTER_NAME = "cellery-cluster"
 const GCP_DB_INSTANCE_NAME = "cellery-sql"
@@ -111,7 +111,7 @@ const KUBECTL_FLAG = "-f"
 const CELLERY_HUB_KEYRING_NAME = "hubcelleryio"
 
 const BASIC = "Basic"
-const COMPLETE  = "Complete"
+const COMPLETE = "Complete"
 
-const K8S_ARTIFACTS_PATH_MAC  = "/Library/Cellery/artifacts"
+const K8S_ARTIFACTS_PATH_MAC = "/Library/Cellery/artifacts"
 const K8S_ARTIFACTS_PATH_UBUNTU = "/usr/share/cellery/artifacts"
