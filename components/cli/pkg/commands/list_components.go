@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
@@ -60,14 +61,12 @@ func getCellImageCompoents(cellImage string) []string {
 func getCellInstanceComponents(cellName string) []string {
 	var components []string
 	cmd := exec.Command("kubectl", "get", "services", "-l", constants.GROUP_NAME+"/cell="+cellName, "-o", "json")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := constants.EMPTY_STRING
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
+	outfile, errPrint := os.Create("./out.txt")
+	if errPrint != nil {
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", errPrint)
+	}
+	defer outfile.Close()
+	cmd.Stdout = outfile
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)
 	go func() {
@@ -84,9 +83,11 @@ func getCellInstanceComponents(cellName string) []string {
 		util.ExitWithErrorMessage("Error occurred while fetching components", err)
 	}
 
+	outputByteArray, err := ioutil.ReadFile("./out.txt")
+	os.Remove("./out.txt")
 	jsonOutput := &util.Service{}
 
-	errJson := json.Unmarshal([]byte(output), jsonOutput)
+	errJson := json.Unmarshal(outputByteArray, jsonOutput)
 	if errJson != nil {
 		fmt.Println(errJson)
 	}

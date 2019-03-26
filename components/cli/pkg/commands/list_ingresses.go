@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"os"
 	"os/exec"
 	"strings"
@@ -75,34 +76,47 @@ func displayApisTable(apiArray []util.GatewayHttpApi, cellName string) {
 	for i := 0; i < len(apiArray); i++ {
 		for j := 0; j < len(apiArray[i].Definitions); j++ {
 			url := cellName + "--gateway-service"
+			path := apiArray[i].Definitions[j].Path
+			context := apiArray[i].Context
+			method := apiArray[i].Definitions[j].Method
 
 			// Add the context of the Cell
-			if !strings.HasPrefix(apiArray[i].Context, "/") {
+			if !strings.HasPrefix(context, "/") {
 				url += "/"
 			}
-			url += apiArray[i].Context
+			url += context
 
 			// Add the path of the API definition
-			if apiArray[i].Definitions[j].Path != "/" {
+			if path != "/" {
 				if !strings.HasSuffix(url, "/") {
-					if !strings.HasPrefix(apiArray[i].Definitions[j].Path, "/") {
+					if !strings.HasPrefix(path, "/") {
 						url += "/"
 					}
 				} else {
-					if strings.HasPrefix(apiArray[i].Definitions[j].Path, "/") {
+					if strings.HasPrefix(path, "/") {
 						url = strings.TrimSuffix(url, "/")
 					}
 				}
-				url += apiArray[i].Definitions[j].Path
+				url += path
 			}
 
-			tableRecord := []string{apiArray[i].Context, apiArray[i].Definitions[j].Method, url}
+			// Add the global api url if globally exposed
+			globalUrl := ""
+			if apiArray[i].Global {
+				if path != "/" {
+					globalUrl = constants.WSO2_APIM_HOST + "/" + cellName + "/" + context + path
+				} else {
+					globalUrl = constants.WSO2_APIM_HOST + "/" + cellName + "/" + context
+				}
+			}
+
+			tableRecord := []string{context, method, url, globalUrl}
 			tableData = append(tableData, tableRecord)
 		}
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"CONTEXT", "METHOD", "URL"})
+	table.SetHeader([]string{"CONTEXT", "METHOD", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")
@@ -111,8 +125,10 @@ func displayApisTable(apiArray []util.GatewayHttpApi, cellName string) {
 	table.SetHeaderColor(
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold})
 	table.SetColumnColor(
+		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{})

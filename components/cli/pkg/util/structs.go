@@ -129,6 +129,7 @@ type GatewayHttpApi struct {
 	Backend     string              `json:"backend"`
 	Context     string              `json:"context"`
 	Definitions []GatewayDefinition `json:"definitions"`
+	Global 		bool				`json:"global"`
 }
 
 type GatewayDefinition struct {

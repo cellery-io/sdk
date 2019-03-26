@@ -34,7 +34,6 @@ import (
 
 func RunListInstances() {
 	cmd := exec.Command("kubectl", "get", "cells", "-o", "json")
-	output := ""
 	outfile, errPrint := os.Create("./out.txt")
 	if errPrint != nil {
 		util.ExitWithErrorMessage("Error occurred while fetching cell status", errPrint)
@@ -61,10 +60,9 @@ func RunListInstances() {
 
 	outputByteArray, err := ioutil.ReadFile("./out.txt")
 	os.Remove("./out.txt")
-	output = string(outputByteArray)
 	jsonOutput := util.CellList{}
 
-	errJson := json.Unmarshal([]byte(output), &jsonOutput)
+	errJson := json.Unmarshal(outputByteArray, &jsonOutput)
 	if errJson != nil {
 		fmt.Println(errJson)
 	}
