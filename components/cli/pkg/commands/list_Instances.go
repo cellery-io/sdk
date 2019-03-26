@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -33,14 +34,13 @@ import (
 
 func RunListInstances() {
 	cmd := exec.Command("kubectl", "get", "cells", "-o", "json")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
 	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
+	outfile, errPrint := os.Create("./out.txt")
+	if errPrint != nil {
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", errPrint)
+	}
+	defer outfile.Close()
+	cmd.Stdout = outfile
 
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)
@@ -59,6 +59,9 @@ func RunListInstances() {
 		util.ExitWithErrorMessage("Error occurred while fetching the running cell data", err)
 	}
 
+	outputByteArray, err := ioutil.ReadFile("./out.txt")
+	os.Remove("./out.txt")
+	output = string(outputByteArray)
 	jsonOutput := util.CellList{}
 
 	errJson := json.Unmarshal([]byte(output), &jsonOutput)
