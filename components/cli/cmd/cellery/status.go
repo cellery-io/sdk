@@ -30,7 +30,7 @@ import (
 
 func newStatusCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "status <cell-name>",
+		Use:   "status <instance-name>",
 		Short: "Performs a health check of a cell.",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)

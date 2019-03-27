@@ -30,7 +30,7 @@ import (
 
 func newDescribeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "describe <cell-name>",
+		Use:   "describe <instance-name|cell-image-name>",
 		Short: "Describes a cell image",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
@@ -49,7 +49,8 @@ func newDescribeCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunDescribe(args[0])
 		},
-		Example: "  cellery describe employee",
+		Example: "  cellery describe employee\n" +
+				 "  cellery describe cellery-samples/employee:1.0.0",
 	}
 	return cmd
 }

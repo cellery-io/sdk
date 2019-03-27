@@ -31,7 +31,7 @@ import (
 func newLogsCommand() *cobra.Command {
 	var component string
 	cmd := &cobra.Command{
-		Use:   "logs <cell-name>",
+		Use:   "logs <instance-name>",
 		Short: "Displays logs for either the cell instance, or a component of a running cell instance.",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
