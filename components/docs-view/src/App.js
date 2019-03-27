@@ -14,11 +14,46 @@
  * limitations under the License.
  */
 
-import CellDiagram from "./components/CellDiagram";
+import AppBar from "@material-ui/core/AppBar";
+import CellDiagramView from "./components/CellDiagramView";
+import CelleryLogo from "./icons/CelleryLogo";
+import CssBaseline from "@material-ui/core/CssBaseline/CssBaseline";
 import React from "react";
+import Toolbar from "@material-ui/core/Toolbar";
+import Typography from "@material-ui/core/Typography";
+import {MuiThemeProvider, createMuiTheme, withStyles} from "@material-ui/core/styles";
 import * as PropTypes from "prop-types";
 
-const App = ({data}) => {
+const styles = {
+    root: {
+        flexGrow: 1,
+        background: "#fff"
+    },
+    celleryLogo: {
+        width: 100,
+        marginRight: 10
+    },
+    title: {
+        color: "#464646"
+    },
+    appBar: {
+        boxShadow : "none"
+    }
+};
+
+// Create the main theme of the App
+const theme = createMuiTheme({
+    typography: {
+        useNextVariants: true
+    },
+    palette: {
+        primary: {
+            main: "#43ab01"
+        }
+    }
+});
+
+const App = ({data, classes}) => {
     const diagramData = {
         cells: [data.name],
         components: data.components.map((component) => (
@@ -33,7 +68,8 @@ const App = ({data}) => {
     // Recursively extract dependencies (including transitive dependencies if available)
     const extractData = (cell) => {
         if (cell.dependencies) {
-            cell.dependencies.forEach((dependency) => {
+            Object.keys(cell.dependencies).forEach((alias) => {
+                const dependency = cell.dependencies[alias];
                 diagramData.cells.push(dependency.name);
                 diagramData.dependencyLinks.push({
                     from: cell.name,
@@ -56,12 +92,26 @@ const App = ({data}) => {
     extractData(data);
 
     return (
-        <CellDiagram data={diagramData} focusedCell={data.name}/>
+        <MuiThemeProvider theme={theme}>
+            <CssBaseline/>
+            <div className={classes.root}>
+                <AppBar position="static" color="default" className={classes.appBar}>
+                    <Toolbar>
+                        <CelleryLogo className={classes.celleryLogo} fontSize="large"/>
+                        <Typography variant="h6" className={classes.title}>
+                                Image View
+                        </Typography>
+                    </Toolbar>
+                </AppBar>
+                <CellDiagramView data={diagramData} focusedCell={data.name}/>
+            </div>
+        </MuiThemeProvider>
     );
 };
 
 App.propTypes = {
-    data: PropTypes.object.isRequired
+    data: PropTypes.object.isRequired,
+    classes: PropTypes.object.isRequired
 };
 
-export default App;
+export default withStyles(styles)(App);

@@ -28,26 +28,26 @@ window.__CELL_METADATA__ = {
     name: "hr",
     version: "0.1.0",
     components: ["hr"],
-    dependencies: [
-        {
+    dependencies: {
+        employee: {
             org: "my-org",
             name: "employee",
             version: "0.1.0",
             components: ["employee", "salary"],
-            dependencies: [
-                {
+            dependencies: {
+                hrSystem: {
                     org: "my-org",
                     name: "people-hr",
                     version: "0.1.0",
                     components: ["people-hr"]
                 }
-            ]
+            }
         },
-        {
+        stock: {
             org: "my-org",
             name: "stock",
             version: "0.1.0",
             components: ["stock-options"],
         }
-    ]
+    }
 };

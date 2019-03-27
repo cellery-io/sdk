@@ -127,5 +127,5 @@ func RunInit() {
 
 	util.PrintSuccessMessage(fmt.Sprintf("Initialized project in directory: %s", util.Faint(projectDir)))
 	util.PrintWhatsNextMessage("build the image",
-		"cellery build "+projectName+"/"+projectName+".bal"+" -t [repo/]organization/image_name:version")
+		"cellery build "+projectName+"/"+projectName+".bal"+" [repo/]organization/image_name:version")
 }

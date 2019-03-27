@@ -1,15 +1,18 @@
 ## Contribute to Cellery
 The Cellery Team is pleased to welcome all contributors willing to join with us in our journey. 
 Cellery project is divided into few repositories as explained below. 
-[wso2-cellery/sdk](https://github.com/wso2-cellery/sdk/) : This repository contains the cellery specification implementation, 
+- [wso2-cellery/sdk](https://github.com/wso2-cellery/sdk/) - This repository contains the cellery specification 
+implementation, 
 CLI implementation, and installers for different operating systems.  
-[wso2-cellery/distribution](https://github.com/wso2-cellery/distribution/): This repository contains kubernetes artifacts 
+- [wso2-cellery/distribution](https://github.com/wso2-cellery/distribution/) - This repository contains kubernetes 
+artifacts 
 for cellery mesh runtime, and docker image generation for Global and cell API Manager.   
-[wso2-cellery/mesh-controller](https://github.com/wso2-cellery/mesh-controller/) : This repository includes the controller 
+- [wso2-cellery/mesh-controller](https://github.com/wso2-cellery/mesh-controller/) - This repository includes the 
+controller 
 for cell CRD in kubernetes.  
-[wso2-cellery/mesh-security](https://github.com/wso2-cellery/mesh-security): This includes cell based control plane 
+- [wso2-cellery/mesh-security](https://github.com/wso2-cellery/mesh-security) - This includes cell based control plane 
 components such as STS, and other related security functionality for overall cellery mesh.  
-[wso2-cellery/mesh-observability](https://github.com/wso2-cellery/mesh-observability): This repository includes the 
+- [wso2-cellery/mesh-observability](https://github.com/wso2-cellery/mesh-observability) - This repository includes the 
 observability related components such as WSO2 stream processor extensions, siddhi applications for tracing, telemetry 
 processing, dependency model generation, observability portal, etc, and docker images for observability control plane.  
 
@@ -20,6 +23,7 @@ processing, dependency model generation, observability portal, etc, and docker i
 - Ballerina 0.990.3 
 - Go 1.11.2 or higher
 - Apache Maven 3.5.2 or higher
+- NPM 6.9.0+
 - Git
 
 #### Steps

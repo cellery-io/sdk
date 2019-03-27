@@ -18,6 +18,9 @@
 package io.cellery;
 
 import com.esotericsoftware.yamlbeans.YamlWriter;
+import io.cellery.models.Component;
+import org.apache.commons.io.FileUtils;
+import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.File;
@@ -27,7 +30,12 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+
+import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
+import static io.cellery.CelleryConstants.RESOURCES;
+import static io.cellery.CelleryConstants.TARGET;
 
 /**
  * Cellery Utility methods.
@@ -57,6 +65,19 @@ public class CelleryUtils {
         return name.toLowerCase(Locale.getDefault()).replaceAll("\\P{Alnum}", "-");
     }
 
+
+    public static void processParameters(Component component, LinkedHashMap<?, ?> parameters) {
+        parameters.forEach((k, v) -> {
+            if (((BMap) v).getMap().get("value") != null) {
+                if (!((BMap) v).getMap().get("value").toString().isEmpty()) {
+                    component.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
+                }
+            } else {
+                component.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);
+            }
+            //TODO:Handle secrets
+        });
+    }
 
     /**
      * Write content to a File. Create the required directories if they don't not exists.
@@ -94,8 +115,36 @@ public class CelleryUtils {
             writer.close(); //don't add this to finally, because the text will not be flushed
             return stringWriter.toString();
         } catch (IOException e) {
-            throw new BallerinaException("Error occurred while generating yaml definition.");
+            throw new BallerinaException("Error occurred while generating yaml definition." + e.getMessage());
         }
     }
 
+    /**
+     * Copy file target/resources directory.
+     *
+     * @param sourcePath source file/directory path
+     */
+    public static void copyResourceToTarget(String sourcePath) {
+        File src = new File(sourcePath);
+        String targetPath = TARGET + File.separator + RESOURCES + File.separator + src.getName();
+        File dst = new File(targetPath);
+        // if source is file
+        try {
+            if (Files.isRegularFile(Paths.get(sourcePath))) {
+                if (Files.isDirectory(dst.toPath())) {
+                    // if destination is directory
+                    FileUtils.copyFileToDirectory(src, dst);
+                } else {
+                    // if destination is file
+                    FileUtils.copyFile(src, dst);
+                }
+            } else if (Files.isDirectory(Paths.get(sourcePath))) {
+                FileUtils.copyDirectory(src, dst);
+            }
+
+        } catch (IOException e) {
+            throw new BallerinaException("Error occured while copying resource file " + sourcePath +
+                    ". " + e.getMessage());
+        }
+    }
 }

@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -30,6 +31,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/99designs/keyring"
 	"github.com/docker/distribution/manifest"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/libtrust"
@@ -43,31 +45,82 @@ import (
 // RunPush parses the cell image name to recognize the Cellery Registry (A Docker Registry), Organization and version
 // and pushes to the Cellery Registry
 func RunPush(cellImage string) {
-	err := pushImage(cellImage, "", "")
-	if err != nil {
-		if strings.Contains(err.Error(), "401") {
-			username, password, err := util.RequestCredentials()
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to acquire credentials", err)
-			}
-			fmt.Println()
-
-			err = pushImage(cellImage, username, password)
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to push image", err)
-			}
-		} else {
-			util.ExitWithErrorMessage("Failed to pull image", err)
-		}
-	}
-}
-
-func pushImage(cellImage string, username string, password string) error {
 	parsedCellImage, err := util.ParseImageTag(cellImage)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
+
+	// Instantiating a native keyring
+	ring, err := keyring.Open(keyring.Config{
+		ServiceName: constants.CELLERY_HUB_KEYRING_NAME,
+	})
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while logging out", err)
+	}
+
+	// Reading the existing credentials
+	var registryCredentials = &util.RegistryCredentials{}
+	if err == nil {
+		ringItem, err := ring.Get(parsedCellImage.Registry)
+		if err == nil && ringItem.Data != nil {
+			err = json.Unmarshal(ringItem.Data, registryCredentials)
+		}
+	}
+	isCredentialsPresent := err == nil && registryCredentials.Username != "" &&
+		registryCredentials.Password != ""
+
+	if isCredentialsPresent {
+		// Pushing the image using the saved credentials
+		err = pushImage(parsedCellImage, registryCredentials.Username, registryCredentials.Password)
+		if err != nil {
+			util.ExitWithErrorMessage("Failed to push image", err)
+		}
+	} else {
+		// Pushing image without credentials
+		err = pushImage(parsedCellImage, "", "")
+		if err != nil {
+			if strings.Contains(err.Error(), "401") {
+				// Requesting the credentials since server responded with an Unauthorized status code
+				registryCredentials.Username, registryCredentials.Password, err = util.RequestCredentials()
+				if err != nil {
+					util.ExitWithErrorMessage("Failed to acquire credentials", err)
+				}
+				fmt.Println()
+
+				// Trying to push the image again with the provided credentials
+				err = pushImage(parsedCellImage, registryCredentials.Username, registryCredentials.Password)
+				if err != nil {
+					util.ExitWithErrorMessage("Failed to push image", err)
+				}
+
+				// Saving credentials
+				credentialsData, err := json.Marshal(registryCredentials)
+				if err != nil {
+					util.ExitWithErrorMessage("Error occurred while saving Credentials", err)
+				}
+				err = ring.Set(keyring.Item{
+					Key:  parsedCellImage.Registry,
+					Data: credentialsData,
+				})
+				if err == nil {
+					fmt.Printf("\n\n%s Saved Credentials for %s Registry", util.GreenBold("\U00002714"),
+						util.Bold(parsedCellImage.Registry))
+				} else {
+					fmt.Printf("\n\n%s %s", util.YellowBold("\U000026A0"),
+						"Error occurred while saving credentials")
+				}
+			} else {
+				util.ExitWithErrorMessage("Failed to pull image", err)
+			}
+		}
+	}
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully pushed cell image: %s", util.Bold(cellImage)))
+	util.PrintWhatsNextMessage("pull the image", "cellery pull "+cellImage)
+}
+
+func pushImage(parsedCellImage *util.CellImage, username string, password string) error {
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
+	cellImage := parsedCellImage.Registry + "/" + repository + ":" + parsedCellImage.ImageVersion
 
 	spinner := util.StartNewSpinner(fmt.Sprintf("Connecting to %s", util.Bold(parsedCellImage.Registry)))
 	defer func() {
@@ -86,7 +139,7 @@ func pushImage(cellImage string, username string, password string) error {
 	spinner.SetNewAction(fmt.Sprintf("Reading image %s from the Local Repository", util.Bold(imageName)))
 
 	// Reading the cell image
-	cellImageFilePath := filepath.Join(util.UserHomeDir(), ".cellery", "repo", parsedCellImage.Organization,
+	cellImageFilePath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	// Checking if the image is present in the local repo
@@ -94,7 +147,7 @@ func pushImage(cellImage string, username string, password string) error {
 	if !isImagePresent {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage(fmt.Sprintf("Failed to push image %s", util.Bold(cellImage)),
-			errors.New("Image not Found"))
+			errors.New("image not Found"))
 	}
 
 	cellImageFile, err := os.Open(cellImageFilePath)
@@ -186,8 +239,6 @@ func pushImage(cellImage string, username string, password string) error {
 
 	spinner.Stop(true)
 	fmt.Print("\n\nImage Digest : " + util.Bold(cellImageDigest))
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully pushed cell image: %s", util.Bold(cellImage)))
-	util.PrintWhatsNextMessage("pull the image", "cellery pull "+cellImage)
 
 	return nil
 }

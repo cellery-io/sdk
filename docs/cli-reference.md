@@ -14,7 +14,7 @@ cellery build <BAL_FILE_NAME> -t <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION>
 ``` 
 Example : 
 ```
-cellery build my-project.bal -t wso2/my-cell:1.0.0
+cellery build my-project.bal wso2/my-cell:1.0.0
 ```
 
 ### Run
@@ -50,6 +50,28 @@ Usage :
 cellery list instances
 ```
 
+### Login
+Login to the Cellery Registry and save the credentials.
+Usage :
+```
+cellery login [REGISTRY]
+```
+Example :
+```
+cellery login
+```
+
+### Logout
+Remove the saved credentials.
+Usage :
+```
+cellery logout [REGISTRY]
+```
+Example :
+```
+cellery logout
+```
+
 ### Push
 Push cell image to the remote repository.  
 Usage : 
@@ -77,6 +99,17 @@ List cell images that was pulled and built in the current machine.
 Usage : 
 ```
 cellery list images
+```
+
+### View image
+View the graphical representation of a Cell Image.
+Usage :
+```
+cellery view <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION>
+```
+Example :
+```
+cellery view wso2/my-cell:1.0.0
 ```
 
 ### Terminate

@@ -33,11 +33,24 @@ type CellImage struct {
 
 type Cell struct {
 	CellMetaData CellMetaData `json:"metadata"`
+	CellSpec     CellSpec     `json:"spec"`
 	CellStatus   CellStatus   `json:"status"`
 }
 
 type CellMetaData struct {
 	CreationTimestamp string `json:"creationTimestamp"`
+}
+
+type CellSpec struct {
+	ComponentTemplates []ComponentTemplate `json:"servicesTemplates"`
+}
+
+type ComponentTemplate struct {
+	Metadata ComponentTemplateMetadata `json:"metadata"`
+}
+
+type ComponentTemplateMetadata struct {
+	Name string `json:"name"`
 }
 
 type CellStatus struct {
@@ -131,4 +144,17 @@ type GcpCompute struct {
 type GcpCore struct {
 	Account string `json:"account"`
 	Project string `json:"project"`
+}
+
+type RegistryCredentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type CellImageMetaData struct {
+	Organization string                        `json:"org"`
+	Name         string                        `json:"name"`
+	Version      string                        `json:"version"`
+	Components   []string                      `json:"components"`
+	Dependencies map[string]*CellImageMetaData `json:"dependencies"`
 }

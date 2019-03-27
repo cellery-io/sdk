@@ -19,6 +19,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -46,17 +48,20 @@ func newCliCommand() *cobra.Command {
 		newDescribeCommand(),
 		newStatusCommand(),
 		newLogsCommand(),
+		newLoginCommand(),
+		newLogoutCommand(),
 		newPushCommand(),
 		newPullCommand(),
 		newSetupCommand(),
 		newExtractResourcesCommand(),
 		newInspectCommand(),
+		newViewCommand(),
 	)
 	return cmd
 }
 
 func main() {
-	logFileDirectory := filepath.Join(util.UserHomeDir(), ".cellery", "logs")
+	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")
 
 	// Creating the log directory if it does not exist
@@ -79,6 +84,13 @@ func main() {
 		log.Printf("Writing log to stdout because error occured while opening log file: %v", err)
 	} else {
 		log.SetOutput(logFile)
+	}
+
+	// Validating the environment
+	celleryHome := os.Getenv(constants.CELLERY_HOME_ENV_VAR)
+	if celleryHome == "" {
+		util.ExitWithErrorMessage("Error occurred while initializing",
+			errors.New("\"CELLERY_HOME\" environment variable not set"))
 	}
 
 	cmd := newCliCommand()

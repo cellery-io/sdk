@@ -2,9 +2,14 @@ apiVersion: mesh.cellery.io/v1alpha1
 kind: Cell
 metadata:
   name: stock-options
+  annotations:
+    mesh.cellery.io/cell-image-org: cellery-samples
+    mesh.cellery.io/cell-image-name: stock-options
+    mesh.cellery.io/cell-image-version: 1.0.0
 spec:
   gatewayTemplate:
     spec:
+      type: MicroGateway
       http:
       - context: stock
         definitions:

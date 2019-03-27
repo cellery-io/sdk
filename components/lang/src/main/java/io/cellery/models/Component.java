@@ -18,6 +18,7 @@ public class Component {
     Map<String, String> labels;
     List<API> apis;
     List<TCP> tcpList;
+    List<GRPC> grpcList;
     String source;
     String service;
     String protocol;
@@ -29,16 +30,21 @@ public class Component {
         labels = new HashMap<>();
         apis = new ArrayList<>();
         tcpList = new ArrayList<>();
+        grpcList = new ArrayList<>();
         containerPortToServicePortMap = new HashMap<>();
         replicas = 1;
     }
 
-    void addApi(API api) {
+    public void addApi(API api) {
         this.apis.add(api);
     }
 
-    void addTCP(TCP tcp) {
+    public void addTCP(TCP tcp) {
         this.tcpList.add(tcp);
+    }
+
+    public void addGRPC(GRPC grpc) {
+        this.grpcList.add(grpc);
     }
 
     public void addPorts(int containerMap, int servicePort) {

@@ -28,7 +28,7 @@ four microservices deployed across three different cells based on their responsi
 2. Go into the stock directory inside cellery directory, and build the Stocks Cell with `cellery build` command. Then 
 run the cell in the cellery mesh by executing `cellery run` command as shown below.
 ```
-$ cellery build stocks.bal -t myorg/stock:1.0.0
+$ cellery build stocks.bal myorg/stock:1.0.0
 Building Stock Cell ...
 
 ✔ Building image myorg/stock:1.0.0
@@ -53,7 +53,7 @@ cell.mesh.cellery.io/stock created
 What's next?
 --------------------------------------------------------
 Execute the following command to list running cells:
-  $ cellery ps
+  $ cellery list instances
 --------------------------------------------------------
 ```
 
@@ -61,7 +61,7 @@ Execute the following command to list running cells:
 mentioned commands.
 ```
 $ cd employee
-$ cellery build employee.bal -t myorg/employee:1.0.0
+$ cellery build employee.bal myorg/employee:1.0.0
 Building Employee Cell ...
 
 ✔ Building image myorg/employee:1.0.0
@@ -86,7 +86,7 @@ cell.mesh.cellery.io/employee created
 What's next?
 --------------------------------------------------------
 Execute the following command to list running cells:
-  $ cellery ps
+  $ cellery list instances
 --------------------------------------------------------
 ```
 
@@ -94,7 +94,7 @@ Execute the following command to list running cells:
 specifies the names of the other cells which hr app depends on. Execute the commands provided below to build and runt the HR cells.
 ```
 $ cd hr
-$ cellery build hr.bal -t myorg/hr:1.0.0
+$ cellery build hr.bal myorg/hr:1.0.0
 Building HR Cell ...
 Warning: Value is empty for environment variable "employeegw_url"
 Warning: Value is empty for environment variable "stockgw_url”
@@ -111,9 +111,9 @@ Execute the following command to run the image:
 $ cellery run myorg/hr:1.0.0  -l employee -l stock
 Above commands will deploy the above three cells in the default namespace. To check the cell status run the following command
 
-	$ cellery ps
+	$ cellery list instances
 ```
-5. Execute `cellery ps` and confirm all cells are in Ready state. 
+5. Execute `cellery list instances` and confirm all cells are in Ready state.
 | NAME  | STATUS | GATEWAY |   SERVICES | AGE |
 | ------ | ------  | ------ | ------ | ------ |
 | employee | Ready | employee--gateway-service | 3 | 21s |
@@ -159,7 +159,7 @@ Sample Response:
 11. Deploed cells can be cleaned by below commands
 Run following commands to undeploy application.
 ```
-$ cellery stop employee
-$ cellery stop stock
-$ cellery stop hr
+$ cellery terminate employee
+$ cellery terminate stock
+$ cellery terminate hr
 ```

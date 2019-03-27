@@ -5,9 +5,6 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.cellery.CelleryConstants.PROTOCOL_HTTP;
-import static io.cellery.CelleryConstants.PROTOCOL_TCP;
-
 /**
  * Component Holder Class.
  */
@@ -30,25 +27,11 @@ public class ComponentHolder {
         this.componentNameToComponentMap.put(component.getName(), component);
     }
 
-    public void addAPI(String componentName, API api) {
-        Component temp = componentNameToComponentMap.remove(componentName);
+    public Component getComponent(String componentName) {
+        Component temp = componentNameToComponentMap.get(componentName);
         if (temp == null) {
             throw new BallerinaException("Invalid component name " + componentName);
         }
-        temp.setProtocol(PROTOCOL_HTTP);
-        api.setBackend(temp.getService());
-        temp.addApi(api);
-        componentNameToComponentMap.put(componentName, temp);
-    }
-
-    public void addTCP(String componentName, TCP tcp) {
-        Component temp = componentNameToComponentMap.remove(componentName);
-        if (temp == null) {
-            throw new BallerinaException("Invalid component name " + componentName);
-        }
-        temp.setProtocol(PROTOCOL_TCP);
-        tcp.setBackendHost(temp.getService());
-        temp.addTCP(tcp);
-        componentNameToComponentMap.put(componentName, temp);
+        return temp;
     }
 }
