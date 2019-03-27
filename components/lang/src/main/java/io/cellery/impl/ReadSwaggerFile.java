@@ -21,6 +21,7 @@ import io.cellery.CelleryConstants;
 import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.bre.bvm.BLangVMErrors;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
 import org.ballerinalang.model.types.BArrayType;
@@ -31,7 +32,6 @@ import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
-import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -47,7 +47,7 @@ import static io.cellery.CelleryUtils.readSwaggerFile;
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "readSwaggerFile",
         args = {@Argument(name = "swaggerFilePath", type = TypeKind.STRING)},
-        returnType = {@ReturnType(type = TypeKind.ARRAY), @ReturnType(type = TypeKind.ERROR)},
+        returnType = {@ReturnType(type = TypeKind.OBJECT), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
 public class ReadSwaggerFile extends BlockingNativeCallableUnit {
@@ -55,7 +55,7 @@ public class ReadSwaggerFile extends BlockingNativeCallableUnit {
     public void execute(Context ctx) {
         BArrayType bArrayType =
                 new BArrayType(ctx.getProgramFile().getPackageInfo(CelleryConstants.CELLERY_PACKAGE).getTypeDefInfo(
-                        CelleryConstants.RECORD_NAME_DEFINITION).typeInfo.getType());
+                        CelleryConstants.RESOURCE_DEFINITION).typeInfo.getType());
         BValueArray bValueArray = new BValueArray(bArrayType);
         String swaggerFilePath = ctx.getNullableStringArgument(0);
         final String specification;
@@ -63,7 +63,9 @@ public class ReadSwaggerFile extends BlockingNativeCallableUnit {
             specification = readSwaggerFile(swaggerFilePath, Charset.defaultCharset());
             copyResourceToTarget(swaggerFilePath);
         } catch (IOException e) {
-            throw new BallerinaException("Unable to read swagger file. " + swaggerFilePath);
+            ctx.setReturnValues(BLangVMErrors.createError(ctx, "Error occurred while reading swagger file: "
+                    + swaggerFilePath));
+            return;
         }
         final Swagger swagger = new SwaggerParser().parse(specification);
         String basePath = swagger.getBasePath();
@@ -76,11 +78,12 @@ public class ReadSwaggerFile extends BlockingNativeCallableUnit {
                 pathDefinition.getOperationMap().forEach((httpMethod, operation) -> {
                     BMap<String, BValue> bmap = BLangConnectorSPIUtil.createBStruct(ctx,
                             CelleryConstants.CELLERY_PACKAGE,
-                            CelleryConstants.RECORD_NAME_DEFINITION,
+                            CelleryConstants.RESOURCE_DEFINITION,
                             finalBasePath + path, httpMethod.toString());
                     bValueArray.add(runCount.getAndIncrement(), bmap);
 
                 }));
-        ctx.setReturnValues(bValueArray);
+        ctx.setReturnValues(BLangConnectorSPIUtil.createBStruct(ctx, CelleryConstants.CELLERY_PACKAGE,
+                CelleryConstants.API_DEFINITION, bValueArray));
     }
 }

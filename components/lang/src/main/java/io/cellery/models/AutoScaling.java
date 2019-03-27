@@ -27,6 +27,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class AutoScaling {
-    AutoScalingPolicy policy;
-    boolean overridable;
+    private AutoScalingPolicy policy;
+    private boolean overridable;
 }

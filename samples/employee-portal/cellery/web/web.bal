@@ -11,7 +11,7 @@ cellery:Component webComponent = {
     ingresses: {
         webUI: <cellery:WebIngress>{    //web ingress will be always exposed globally.
             port: 8080,
-            uri: {
+            gatewayConfig: {
                 vhost: "abc.com",
                 context: "/demo" //default to “/”
             }
@@ -21,17 +21,16 @@ cellery:Component webComponent = {
 
 
 cellery:CellImage webCell = {
-    components: [
-        webComponent
-    ]
+    components: {
+        webComp: webComponent
+    }
 };
 
-public function build(cellery:StructuredName sName) returns error? {
-    return cellery:createImage(webCell, sName);
+public function build(cellery:ImageName iName) returns error? {
+    return cellery:createImage(webCell, iName);
 }
 
 
-public function run(cellery:StructuredName sName, map<string> instances) returns error? {
-    return cellery:createInstance(webCell, sName);
+public function run(cellery:ImageName iName, map<string> instances) returns error? {
+    return cellery:createInstance(webCell, iName);
 }
-

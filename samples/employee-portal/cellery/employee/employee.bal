@@ -4,9 +4,8 @@ import celleryio/cellery;
 
 int salaryContainerPort = 8080;
 // Read API defintion from swagger file.
-cellery:ApiDefinition[] employeeAPIdefn = (<cellery:ApiDefinition[]>cellery:readSwaggerFile(
-                                                                        "./resources/employee.swagger.json"));
-
+cellery:ApiDefinition employeeAPIdefn = (<cellery:ApiDefinition>cellery:readSwaggerFile(
+                                                                    "./resources/employee.swagger.json"));
 // Employee Component
 cellery:Component employeeComponent = {
     name: "employee",
@@ -17,7 +16,7 @@ cellery:Component employeeComponent = {
         employee: <cellery:HttpApiIngress>{
             port: 8080,
             context: "employee",
-            definitions: employeeAPIdefn,
+            definition: employeeAPIdefn,
             expose: "local"
         }
     },
@@ -40,12 +39,14 @@ cellery:Component salaryComponent = {
         SalaryAPI: <cellery:HttpApiIngress>{
             port:salaryContainerPort,
             context: "payroll",
-            definitions: [
-                {
-                    path: "salary",
-                    method: "GET"
-                }
-            ],
+            definition: {
+                resources: [
+                    {
+                        path: "salary",
+                        method: "GET"
+                    }
+                ]
+            },
             expose: "local"
         }
     },
@@ -56,18 +57,19 @@ cellery:Component salaryComponent = {
 };
 
 cellery:CellImage employeeCell = {
-    components: [
-        employeeComponent,
-        salaryComponent
-    ]
+    components: {
+        empComp: employeeComponent,
+        salaryComp: salaryComponent
+    }
 };
 
-public function build(cellery:StructuredName sName) returns error? {
-    return cellery:createImage(employeeCell, sName);
+public function build(cellery:ImageName iName) returns error? {
+    return cellery:createImage(employeeCell, iName);
 }
 
-public function run(cellery:StructuredName sName, map<string> instances) returns error? {
-    employeeCell.components[0].envVars.SALARY_HOST.value = cellery:getHost(untaint sName.instanceName, salaryComponent);
+public function run(cellery:ImageName iName, map<string> instances) returns error? {
+    employeeCell.components.empComp.envVars.SALARY_HOST.value = cellery:getHost(untaint iName.instanceName,
+        salaryComponent);
     io:println(employeeCell);
     //return cellery:createInstance(employeeCell, sName);
 }

@@ -20,12 +20,12 @@ cellery:Component mysqlComponent = {
 };
 
 cellery:CellImage mysqlCell = {
-    components: [
-        mysqlComponent
-    ]
+    components: {
+        mysqlComp: mysqlComponent
+    }
 };
 
-public function build(cellery:StructuredName sName) {
+public function build(cellery:ImageName iName) {
     //Build MySQL Cell
-    _ = cellery:createImage(mysqlCell, sName);
+    _ = cellery:createImage(mysqlCell, iName);
 }

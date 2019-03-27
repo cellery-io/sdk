@@ -29,7 +29,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class AutoScalingPolicy {
-    long minReplicas;
-    long maxReplicas;
-    List<AutoScalingResourceMetric> metrics;
+    private long minReplicas;
+    private long maxReplicas;
+    private List<AutoScalingResourceMetric> metrics;
 }

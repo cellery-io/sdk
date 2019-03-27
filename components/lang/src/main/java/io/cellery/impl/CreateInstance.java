@@ -19,8 +19,8 @@ package io.cellery.impl;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
 import io.cellery.models.Cell;
+import io.cellery.models.CellImage;
 import io.cellery.models.Component;
-import io.cellery.models.ComponentHolder;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
@@ -60,7 +60,7 @@ import static org.apache.commons.lang3.StringUtils.removePattern;
         isPublic = true
 )
 public class CreateInstance extends BlockingNativeCallableUnit {
-    private ComponentHolder componentHolder = new ComponentHolder();
+    private CellImage cellImage = new CellImage();
 
     public void execute(Context ctx) {
         String[] cellNameData = ctx.getStringArgument(0).split("/");
@@ -73,7 +73,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         cell.getSpec().getServicesTemplates().forEach(serviceTemplate -> {
             String componentName = serviceTemplate.getMetadata().getName();
             Map<String, String> updatedParams =
-                    componentHolder.getComponentNameToComponentMap().get(componentName).getEnvVars();
+                    cellImage.getComponentNameToComponentMap().get(componentName).getEnvVars();
             //Replace parameter values defined in the YAML.
             serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
                 if (updatedParams.containsKey(envVar.getName()) && !updatedParams.get(envVar.getName()).isEmpty()) {
@@ -114,7 +114,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             if (componentValues.containsKey("parameters")) {
                 processParameters(component, ((BMap<?, ?>) componentValues.get("parameters")).getMap());
             }
-            componentHolder.addComponent(component);
+            cellImage.addComponent(component);
         });
     }
 

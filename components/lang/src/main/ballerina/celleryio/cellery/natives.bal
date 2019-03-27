@@ -15,10 +15,10 @@
 // under the License.
 import ballerina/log;
 
-public type StructuredName record{
-    string orgName;
-    string imageName;
-    string imageVersion;
+public type ImageName record{
+    string org;
+    string name;
+    string ver;
     string instanceName?;
     !...;
 };
@@ -50,9 +50,14 @@ public type GitSource record {
     !...;
 };
 
-public type ApiDefinition record {
+public type ResourceDefinition record{
     string path;
     string method;
+    !...;
+};
+
+public type ApiDefinition record {
+    ResourceDefinition[] resources;
     !...;
 };
 
@@ -81,7 +86,7 @@ public type Component record {
     map<TCPIngress|HttpApiIngress|GRPCIngress|WebIngress> ingresses?;
     Label labels?;
     map<Env> envVars?;
-    map<StructuredName> dependencies?;
+    map<ImageName> dependencies?;
     AutoScaling autoscaling?;
     !...;
 };
@@ -102,7 +107,7 @@ public type GRPCIngress record {
 public type HttpApiIngress record {
     int port;
     string context;
-    ApiDefinition[] definitions;
+    ApiDefinition definition;
     Expose expose;
     boolean authenticate = true;
     !...;
@@ -110,7 +115,13 @@ public type HttpApiIngress record {
 
 public type WebIngress record {
     int port;
-    URI uri;
+    GatewayConfig gatewayConfig;
+    !...;
+};
+
+public type GatewayConfig record{
+    string vhost;
+    string context = "/";
     TLS tls?;
     OIDC oidc?;
     !...;
@@ -130,10 +141,10 @@ public type TLS record{
 
 # OpenId Connect properties
 public type OIDC record {
-    string[] context;
+    string[] nonSecureContexts = [];
     string provider;
     string clientId;
-    string clientSecret;
+    string clientSecret?;
     string redirectUrl;
     string baseUrl;
     string subjectClaim;
@@ -152,32 +163,33 @@ public type Env record {
 public type Secret record {
     *ParamValue;
     string mountPath;
+    boolean readOnly;
     !...;
 };
 
 public type CellImage record {
-    Component[] components;
+    map<Component> components;
 };
 
 # Build the cell aritifacts
 #
 # + cellImage - The cell image definition
-# + sname - The cell image org, name & version
+# + iName - The cell image org, name & version
 # + return - error
-public extern function createImage(CellImage cellImage, StructuredName sName) returns (error?);
+public extern function createImage(CellImage cellImage, ImageName iName) returns (error?);
 
 # Update the cell aritifacts with runtime changes
 #
 # + cellImage - The cell image definition
-# + sName - The cell instance name
+# + iName - The cell instance name
 # + return - true/false
-public extern function createInstance(CellImage cellImage, StructuredName sName) returns (error?);
+public extern function createInstance(CellImage cellImage, ImageName iName) returns (error?);
 
 # Parse the swagger file and returns API Defintions
 #
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
-public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition[]|error);
+public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition|error);
 
 public function getHost(string cellImageName, Component component) returns (string) {
     return cellImageName + "--" + getValidName(component.name) + "-service";

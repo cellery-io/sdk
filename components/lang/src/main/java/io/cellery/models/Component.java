@@ -12,19 +12,20 @@ import java.util.Map;
  */
 @Data
 public class Component {
-    String name;
-    int replicas;
-    String gatewayType;
-    Map<String, String> envVars;
-    Map<String, String> labels;
-    List<API> apis;
-    List<TCP> tcpList;
-    List<GRPC> grpcList;
-    String source;
-    String service;
-    String protocol;
-    Map<Integer, Integer> containerPortToServicePortMap;
-    AutoScaling autoScaling;
+    private String name;
+    private int replicas;
+    private String gatewayType;
+    private Map<String, String> envVars;
+    private Map<String, String> labels;
+    private List<API> apis;
+    private List<TCP> tcpList;
+    private List<GRPC> grpcList;
+    private List<Web> webList;
+    private String source;
+    private String service;
+    private String protocol;
+    private int containerPort;
+    private AutoScaling autoScaling;
 
     public Component() {
         envVars = new HashMap<>();
@@ -32,7 +33,7 @@ public class Component {
         apis = new ArrayList<>();
         tcpList = new ArrayList<>();
         grpcList = new ArrayList<>();
-        containerPortToServicePortMap = new HashMap<>();
+        webList = new ArrayList<>();
         replicas = 1;
     }
 
@@ -48,8 +49,8 @@ public class Component {
         this.grpcList.add(grpc);
     }
 
-    public void addPorts(int containerMap, int servicePort) {
-        this.containerPortToServicePortMap.put(containerMap, servicePort);
+    public void addWeb(Web webIngress) {
+        this.webList.add(webIngress);
     }
 
     public void addEnv(String key, String value) {

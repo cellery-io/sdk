@@ -17,9 +17,6 @@
  */
 package io.cellery.impl;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
 import io.cellery.CelleryConstants;
 import io.cellery.models.API;
 import io.cellery.models.APIDefinition;
@@ -28,17 +25,18 @@ import io.cellery.models.AutoScalingPolicy;
 import io.cellery.models.AutoScalingResourceMetric;
 import io.cellery.models.AutoScalingSpec;
 import io.cellery.models.Cell;
+import io.cellery.models.CellImage;
 import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
-import io.cellery.models.ComponentHolder;
 import io.cellery.models.GRPC;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.GatewayTemplate;
+import io.cellery.models.OIDC;
 import io.cellery.models.ServiceTemplate;
 import io.cellery.models.ServiceTemplateSpec;
 import io.cellery.models.TCP;
+import io.cellery.models.Web;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
-import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
@@ -48,6 +46,7 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.bre.bvm.BLangVMErrors;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBoolean;
@@ -59,24 +58,24 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.util.exceptions.BallerinaException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
+import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
+import static io.cellery.CelleryConstants.MICRO_GATEWAY;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
 import static io.cellery.CelleryConstants.TARGET;
@@ -93,31 +92,37 @@ import static io.cellery.CelleryUtils.writeToFile;
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "createImage",
         args = {@Argument(name = "cellImage", type = TypeKind.OBJECT),
-                @Argument(name = "orgName", type = TypeKind.STRING),
-                @Argument(name = "imageName", type = TypeKind.STRING),
-                @Argument(name = "imageVersion", type = TypeKind.STRING)},
-        returnType = {@ReturnType(type = TypeKind.STRING)},
+                @Argument(name = "iName", type = TypeKind.OBJECT)},
+        returnType = {@ReturnType(type = TypeKind.BOOLEAN), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
 public class CreateImage extends BlockingNativeCallableUnit {
-
-    private static final MustacheFactory mustacheFactory = new DefaultMustacheFactory();
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
 
-    private ComponentHolder componentHolder = new ComponentHolder();
+    private CellImage cellImage = new CellImage();
     private PrintStream out = System.out;
 
     public void execute(Context ctx) {
-        String orgName = ctx.getStringArgument(0);
-        String cellName = getValidName(ctx.getStringArgument(1));
-        String cellVersion = ctx.getStringArgument(2);
+        LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
+        cellImage.setOrgName(((BString) nameStruct.get("org")).stringValue());
+        cellImage.setCellName(((BString) nameStruct.get("name")).stringValue());
+        cellImage.setCellVersion(((BString) nameStruct.get("ver")).stringValue());
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
-        out.println(cellName + " " + cellVersion + " " + orgName);
         LinkedHashMap<?, ?> components = ((BMap) refArgument.getMap().get("components")).getMap();
+        try {
+            processComponents(components);
+            generateCell();
+            generateCellReference();
+        } catch (BallerinaException e) {
+            ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
+            return;
+        }
+        ctx.setReturnValues(new BBoolean(true));
+    }
+
+    private void processComponents(LinkedHashMap<?, ?> components) {
         components.forEach((componentKey, componentValue) -> {
             Component component = new Component();
-            out.println("=========================================");
-            out.println(componentKey + "-> " + componentValue);
             LinkedHashMap attributeMap = ((BMap) componentValue).getMap();
             // Set mandatory fields.
             component.setName(((BString) attributeMap.get("name")).stringValue());
@@ -127,7 +132,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
 
             //Process Optional fields
             if (attributeMap.containsKey("ingresses")) {
-                processIngress(((BMap<?, ?>) attributeMap.get("ingresses")).getMap(), component);
+                processHttpIngress(((BMap<?, ?>) attributeMap.get("ingresses")).getMap(), component);
             }
             if (attributeMap.containsKey("labels")) {
                 ((BMap<?, ?>) attributeMap.get("labels")).getMap().forEach((labelKey, labelValue) ->
@@ -137,11 +142,8 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 processAutoScalePolicy(((BMap<?, ?>) attributeMap.get("autoscaling")).getMap(), component);
             }
             out.println(component);
-            componentHolder.addComponent(component);
+            cellImage.addComponent(component);
         });
-        generateCell(orgName, cellName, cellVersion);
-        generateCellReference(cellName, cellVersion);
-        ctx.setReturnValues(new BBoolean(true));
     }
 
     /**
@@ -150,62 +152,120 @@ public class CreateImage extends BlockingNativeCallableUnit {
      * @param ingressMap list of ingresses defined
      * @param component  current component
      */
-    private void processIngress(LinkedHashMap<?, ?> ingressMap, Component component) {
+    private void processHttpIngress(LinkedHashMap<?, ?> ingressMap, Component component) {
         out.println("Ingresses.....");
         ingressMap.forEach((key, ingressValues) -> {
             BMap ingressValueMap = ((BMap) ingressValues);
             LinkedHashMap attributeMap = ingressValueMap.getMap();
             switch (ingressValueMap.getType().getName()) {
                 case "HttpApiIngress":
-                    API httpAPI = new API();
-                    httpAPI.setContext(((BString) attributeMap.get("context")).stringValue());
-                    if ("Global".equals(((BString) attributeMap.get("expose")).stringValue())) {
-                        httpAPI.setGlobal(true);
-                    } else {
-                        httpAPI.setGlobal(false);
-                    }
-                    List<APIDefinition> apiDefinitions = new ArrayList<>();
-                    BValueArray ingressDefs = ((BValueArray) attributeMap.get("definitions"));
-                    for (int i = 0; i < ingressDefs.size(); i++) {
-                        APIDefinition apiDefinition = new APIDefinition();
-                        LinkedHashMap definitions = ((BMap) ingressDefs.getBValue(i)).getMap();
-                        apiDefinition.setPath(((BString) definitions.get("path")).stringValue());
-                        apiDefinition.setMethod(((BString) definitions.get("method")).stringValue());
-                        apiDefinitions.add(apiDefinition);
-                    }
-                    httpAPI.setDefinitions(apiDefinitions);
-                    httpAPI.setBackend(component.getService());
-                    component.addApi(httpAPI);
-                    out.println("HTTP " + key + "-> " + ingressValues + httpAPI);
+                    processHttpIngress(component, attributeMap);
                     break;
                 case "TCPIngress":
-                    TCP tcp = new TCP();
-                    tcp.setPort((int) ((BInteger) attributeMap.get("port")).intValue());
-                    tcp.setBackendPort((int) ((BInteger) attributeMap.get("targetPort")).intValue());
-                    component.setProtocol(PROTOCOL_TCP);
-                    tcp.setBackendHost(component.getService());
-                    component.addTCP(tcp);
+                    processTCPIngress(component, attributeMap);
                     break;
                 case "GRPCIngress":
-                    GRPC grpc = new GRPC();
-                    grpc.setPort((int) ((BInteger) attributeMap.get("port")).intValue());
-                    grpc.setBackendPort((int) ((BInteger) attributeMap.get("targetPort")).intValue());
-                    String protoFile = ((BString) attributeMap.get("protoFile")).stringValue();
-                    if (!protoFile.isEmpty()) {
-                        copyResourceToTarget(protoFile);
-                    }
-                    component.setProtocol(PROTOCOL_GRPC);
-                    grpc.setBackendHost(component.getService());
-                    component.addGRPC(grpc);
+                    processGRPCIngress(component, attributeMap);
                     break;
                 case "WebIngress":
-                    out.println("Web " + key + "-> " + ingressValues);
+                    processWebIngress(component, attributeMap);
                     break;
                 default:
                     break;
             }
         });
     }
+
+    private void processGRPCIngress(Component component, LinkedHashMap attributeMap) {
+        GRPC grpc = new GRPC();
+        grpc.setPort((int) ((BInteger) attributeMap.get("gatewayPort")).intValue());
+        grpc.setBackendPort((int) ((BInteger) attributeMap.get("backendPort")).intValue());
+        String protoFile = ((BString) attributeMap.get("protoFile")).stringValue();
+        if (!protoFile.isEmpty()) {
+            copyResourceToTarget(protoFile);
+        }
+        component.setProtocol(PROTOCOL_GRPC);
+        component.setContainerPort(grpc.getBackendPort());
+        grpc.setBackendHost(component.getService());
+        component.addGRPC(grpc);
+    }
+
+    private void processTCPIngress(Component component, LinkedHashMap attributeMap) {
+        TCP tcp = new TCP();
+        tcp.setPort((int) ((BInteger) attributeMap.get("gatewayPort")).intValue());
+        tcp.setBackendPort((int) ((BInteger) attributeMap.get("backendPort")).intValue());
+        component.setProtocol(PROTOCOL_TCP);
+        component.setContainerPort(tcp.getBackendPort());
+        component.addTCP(tcp);
+    }
+
+    private void processHttpIngress(Component component, LinkedHashMap attributeMap) {
+        API httpAPI = new API();
+        httpAPI.setContext(((BString) attributeMap.get("context")).stringValue());
+        int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
+        // Validate the container port is same for all the ingresses.
+        if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
+            throw new BallerinaException("Invalid container port" + containerPort + ". Multiple container ports are " +
+                    "not supported.");
+        }
+        component.setContainerPort(containerPort);
+        if ("global".equals(((BString) attributeMap.get("expose")).stringValue())) {
+            httpAPI.setGlobal(true);
+        } else {
+            httpAPI.setGlobal(false);
+        }
+        List<APIDefinition> apiDefinitions = new ArrayList<>();
+        BValueArray resourceDefs =
+                (BValueArray) ((BMap<?, ?>) attributeMap.get("definition")).getMap().get("resources");
+        IntStream.range(0, (int) resourceDefs.size()).forEach(resourceIndex -> {
+            APIDefinition apiDefinition = new APIDefinition();
+            LinkedHashMap definitions = ((BMap) resourceDefs.getBValue(resourceIndex)).getMap();
+            apiDefinition.setPath(((BString) definitions.get("path")).stringValue());
+            apiDefinition.setMethod(((BString) definitions.get("method")).stringValue());
+            apiDefinitions.add(apiDefinition);
+        });
+        httpAPI.setDefinitions(apiDefinitions);
+        httpAPI.setBackend(component.getService());
+        component.addApi(httpAPI);
+    }
+
+    private void processWebIngress(Component component, LinkedHashMap attributeMap) {
+        Web webIngress = new Web();
+        LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
+        API httpAPI = new API();
+        int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
+        // Validate the container port is same for all the ingresses.
+        if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
+            throw new BallerinaException("Invalid container port" + containerPort + ". Multiple container ports are " +
+                    "not supported.");
+        }
+        component.setContainerPort(containerPort);
+        httpAPI.setGlobal(true);
+        httpAPI.setBackend(component.getService());
+        httpAPI.setContext(((BString) gatewayConfig.get("context")).stringValue());
+        webIngress.setHttpAPI(httpAPI);
+        webIngress.setVhost(((BString) gatewayConfig.get("vhost")).stringValue());
+        if (gatewayConfig.containsKey("tls")) {
+            // TLS enabled
+            LinkedHashMap tlsConfig = ((BMap) gatewayConfig.get("tls")).getMap();
+            webIngress.setTlsKey(((BString) tlsConfig.get("key")).stringValue());
+            webIngress.setTlsCert(((BString) tlsConfig.get("cert")).stringValue());
+        }
+        if (gatewayConfig.containsKey("oidc")) {
+            // OIDC enabled
+            LinkedHashMap oidcConfig = ((BMap) gatewayConfig.get("oidc")).getMap();
+            OIDC oidc = new OIDC();
+            oidc.setProvider(((BString) oidcConfig.get("provider")).stringValue());
+            oidc.setRedirectUrl(((BString) oidcConfig.get("redirectUrl")).stringValue());
+            oidc.setBaseUrl(((BString) oidcConfig.get("baseUrl")).stringValue());
+            oidc.setClientId(((BString) oidcConfig.get("clientId")).stringValue());
+            oidc.setClientSecret(((BString) oidcConfig.get("clientSecret")).stringValue());
+            oidc.setSubjectClaim(((BString) oidcConfig.get("subjectClaim")).stringValue());
+            webIngress.setOidc(oidc);
+        }
+        component.addWeb(webIngress);
+    }
+
 
     /**
      * Extract the scale policy.
@@ -232,17 +292,30 @@ public class CreateImage extends BlockingNativeCallableUnit {
     }
 
 
-    private void generateCell(String orgName, String name, String version) {
+    private void generateCell() {
         List<Component> components =
-                new ArrayList<>(componentHolder.getComponentNameToComponentMap().values());
+                new ArrayList<>(cellImage.getComponentNameToComponentMap().values());
         GatewaySpec spec = new GatewaySpec();
         List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
-
         for (Component component : components) {
-            spec.setType("Envoy");
-            spec.addHttpAPI(component.getApis());
-            spec.addTCP(component.getTcpList());
-            spec.addGRPC(component.getGrpcList());
+            if (component.getWebList().size() > 0) {
+                spec.setType(ENVOY_GATEWAY);
+                // Only Single web ingress is supported for 0.2.0
+                // Therefore we only process the 0th element
+                Web webIngress = component.getWebList().get(0);
+                spec.addHttpAPI(Collections.singletonList(webIngress.getHttpAPI()));
+                spec.setHostName(webIngress.getVhost());
+                spec.setOidc(webIngress.getOidc());
+            } else if (component.getApis().size() > 0) {
+                // HTTP ingress
+                spec.setType(MICRO_GATEWAY);
+                spec.addHttpAPI(component.getApis());
+            } else {
+                // TCP/GRPC ingress
+                spec.setType(ENVOY_GATEWAY);
+                spec.addGRPC(component.getGrpcList());
+                spec.addTCP(component.getTcpList());
+            }
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             templateSpec.setReplicas(component.getReplicas());
             templateSpec.setProtocol(component.getProtocol());
@@ -253,16 +326,11 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 }
                 envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
             });
-
-            //TODO:Fix service port
-            List<ContainerPort> ports = new ArrayList<>();
-            component.getContainerPortToServicePortMap().forEach((containerPort, servicePort) -> {
-                ports.add(new ContainerPortBuilder().withContainerPort(containerPort).build());
-                templateSpec.setServicePort(servicePort);
-            });
             templateSpec.setContainer(new ContainerBuilder()
                     .withImage(component.getSource())
-                    .withPorts(ports)
+                    .withPorts(new ContainerPortBuilder()
+                            .withContainerPort(component.getContainerPort())
+                            .build())
                     .withEnv(envVarList)
                     .build());
 
@@ -304,14 +372,14 @@ public class CreateImage extends BlockingNativeCallableUnit {
         CellSpec cellSpec = new CellSpec();
         cellSpec.setGatewayTemplate(gatewayTemplate);
         cellSpec.setServicesTemplates(serviceTemplateList);
-        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(name))
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, orgName)
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, name)
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, version)
+        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(cellImage.getCellName()))
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, cellImage.getOrgName())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, cellImage.getCellName())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, cellImage.getCellVersion())
                 .build();
         Cell cell = new Cell(objectMeta, cellSpec);
-
-        String targetPath = OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + name + YAML;
+        String targetPath =
+                OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + cellImage.getCellName() + YAML;
         try {
             writeToFile(toYaml(cell), targetPath);
         } catch (IOException e) {
@@ -321,72 +389,27 @@ public class CreateImage extends BlockingNativeCallableUnit {
 
     /**
      * Generate a Cell Reference that can be used by other cells.
-     *
-     * @param name The name of the Cell
      */
-    private void generateCellReference(String name, String cellVersion) {
-        String ballerinaPathName = name.replace("-", "_").toLowerCase(Locale.ENGLISH);
-
-        // Generating the context
-        Map<String, Object> context = new HashMap<>();
-        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_NAME, name);
-        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_VERSION, cellVersion);
-        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_GATEWAY_PORT, DEFAULT_GATEWAY_PORT);
-        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_GATEWAY_PROTOCOL, DEFAULT_GATEWAY_PROTOCOL);
-        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_COMPONENTS,
-                componentHolder.getComponentNameToComponentMap().values());
-        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_HANDLE_API_NAME,
-                (Function<Object, Object>) string -> convertToTitleCase((String) string, "/|-"));
-        context.put(CelleryConstants.CELL_REFERENCE_TEMPLATE_CONTEXT_HANDLE_TYPE_NAME,
-                (Function<Object, Object>) string -> convertToTitleCase((String) string, "-"));
-
-        // Writing the template to file
-        String targetFileNameWithPath = OUTPUT_DIRECTORY + File.separator + "bal" + File.separator + ballerinaPathName
-                + File.separator + ballerinaPathName + "_reference.bal";
-        writeMustacheTemplateToFile(context, targetFileNameWithPath);
-    }
-
-    /**
-     * Write a mustache template to a file.
-     *
-     * @param mustacheContext        The mustache context to be passed to the template
-     * @param targetFileNameWithPath The name of the target file name with path
-     */
-    private void writeMustacheTemplateToFile(Object mustacheContext, String targetFileNameWithPath) {
-        Mustache mustache = mustacheFactory.compile(CelleryConstants.CELL_REFERENCE_TEMPLATE_FILE);
-
-        // Writing the template to the file
+    private void generateCellReference() {
+        JSONObject json = new JSONObject();
+        cellImage.getComponentNameToComponentMap().forEach((componentName, component) -> {
+            component.getApis().forEach(api -> {
+                json.put(api.getContext() + "_api_url", DEFAULT_GATEWAY_PROTOCOL + "://{{instance_name}}--gateway" +
+                        "-service:" + DEFAULT_GATEWAY_PORT + "/" + api.getContext());
+            });
+            component.getTcpList().forEach(tcp -> {
+                json.put(componentName + "_tcp_port", tcp.getPort());
+            });
+            component.getGrpcList().forEach(grpc -> {
+                json.put(componentName + "_grpc_port", grpc.getPort());
+            });
+        });
+        String targetFileNameWithPath =
+                OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + cellImage.getCellName() + ".json";
         try {
-            StringWriter writer = new StringWriter();
-            mustache.execute(writer, mustacheContext).flush();
-            writeToFile(writer.toString(), targetFileNameWithPath);
+            writeToFile(json.toString(), targetFileNameWithPath);
         } catch (IOException e) {
-            throw new BallerinaException(e.getMessage() + " " + targetFileNameWithPath);
+            throw new BallerinaException("Error occurred while generating reference file " + targetFileNameWithPath);
         }
     }
-
-
-    /**
-     * Convert a string to title case.
-     *
-     * @param text      The text to be converted to title case
-     * @param separator The word separator
-     * @return The title case text
-     */
-    private String convertToTitleCase(String text, String separator) {
-        String[] wordsArray = text.split(separator);
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String word : wordsArray) {
-            if (word.length() >= 1) {
-                stringBuilder.append(word.substring(0, 1).toUpperCase(Locale.ENGLISH));
-            }
-            if (word.length() >= 2) {
-                stringBuilder.append(word.substring(1).toLowerCase(Locale.ENGLISH));
-            }
-        }
-        return stringBuilder.toString();
-    }
-
 }
-
-

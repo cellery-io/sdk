@@ -143,7 +143,7 @@ public class CelleryUtils {
             }
 
         } catch (IOException e) {
-            throw new BallerinaException("Error occured while copying resource file " + sourcePath +
+            throw new BallerinaException("Error occurred while copying resource file " + sourcePath +
                     ". " + e.getMessage());
         }
     }

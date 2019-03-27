@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TCP {
-    int port;
-    int backendPort;
-    String backendHost;
+    private int port;
+    private int backendPort;
+    private String backendHost;
 }

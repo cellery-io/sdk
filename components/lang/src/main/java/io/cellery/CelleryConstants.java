@@ -22,7 +22,8 @@ package io.cellery;
  */
 public class CelleryConstants {
     public static final String CELLERY_PACKAGE = "celleryio/cellery:0.0.0";
-    public static final String RECORD_NAME_DEFINITION = "ApiDefinition";
+    public static final String RESOURCE_DEFINITION = "ResourceDefinition";
+    public static final String API_DEFINITION = "ApiDefinition";
 
     public static final String CELL_REFERENCE_TEMPLATE_FILE = "cell_reference.bal.mustache";
     public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_NAME = "cellName";
@@ -38,6 +39,8 @@ public class CelleryConstants {
 
     // These should match the Ballerina object names of the Auto Scaling Metrics Objects
     public static final String AUTO_SCALING_METRIC_OBJECT_CPU_UTILIZATION_PERCENTAGE = "CpuUtilizationPercentage";
+    public static final String ENVOY_GATEWAY = "Envoy";
+    public static final String MICRO_GATEWAY = "MicroGateway";
     public static final String YAML = ".yaml";
     public static final String PROTOCOL_TCP = "TCP";
     public static final String PROTOCOL_GRPC = "GRPC";

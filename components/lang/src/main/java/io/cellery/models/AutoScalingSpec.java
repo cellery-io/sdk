@@ -28,6 +28,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class AutoScalingSpec {
-    boolean overridable;
-    HorizontalPodAutoscalerSpec policy;
+    private boolean overridable;
+    private HorizontalPodAutoscalerSpec policy;
 }

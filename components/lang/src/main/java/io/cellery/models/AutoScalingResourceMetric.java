@@ -27,6 +27,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class AutoScalingResourceMetric {
-    String name;
-    Integer value;
+    private String name;
+    private Integer value;
 }

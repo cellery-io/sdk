@@ -31,9 +31,10 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class GatewaySpec {
-    String type;
-    String hostName;
-    String tlsSecretName;
+    private String type;
+    private String hostName;
+    private String tlsSecretName;
+    private OIDC oidc;
     private @Singular("http")
     List<API> http;
     private @Singular("tcp")

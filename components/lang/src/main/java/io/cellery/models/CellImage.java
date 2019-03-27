@@ -1,18 +1,22 @@
 package io.cellery.models;
 
+import lombok.Data;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Component Holder Class.
+ * Cell Image model Class.
  */
-public class ComponentHolder {
-
+@Data
+public class CellImage {
     private Map<String, Component> componentNameToComponentMap;
+    private String orgName;
+    private String cellName;
+    private String cellVersion;
 
-    public ComponentHolder() {
+    public CellImage() {
         componentNameToComponentMap = new HashMap<>();
     }
 

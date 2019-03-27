@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -15,32 +15,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package io.cellery.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * API model.
+ * Open ID connect model.
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class API {
-    private List<APIDefinition> definitions;
-    private String context;
-    private String backend;
-    private boolean global;
+public class OIDC {
+    private String provider;
+    private String clientId;
+    private String clientSecret;
+    private String redirectUrl;
+    private String baseUrl;
+    private String subjectClaim;
+    private Set<String> nonSecureContexts;
 
-    public void addDefinition(APIDefinition definition) {
-        if (definitions == null) {
-            definitions = new ArrayList<>();
-        }
-        this.definitions.add(definition);
+    public OIDC() {
+        nonSecureContexts = new HashSet<>();
     }
 }

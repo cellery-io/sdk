@@ -69,10 +69,11 @@
             <version>${swagger.parser.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.spullara.mustache.java</groupId>
-            <artifactId>compiler</artifactId>
-            <version>${mustache.version}</version>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20180813</version>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -221,7 +222,7 @@
                                     <!-- TODO Remove io.fabric8 once the Ballerina K8s is upgraded -->
                                     <include>io.fabric8*</include>
                                     <include>io.swagger.parser.v3*</include>
-                                    <include>com.github.spullara.mustache.java*</include>
+                                    <include>org.json*</include>
                                     <include>com.esotericsoftware.yamlbeans*</include>
                                     <include>commons-io:commons-io</include>
                                     <include>commons-codec:commons-codec</include>
