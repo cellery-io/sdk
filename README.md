@@ -60,7 +60,7 @@ As mentioned in setup guide above, select Local to setup the local environment.
 This will download and install a pre-configured cellery runtime. Once the installation process is completed, 
 users can start working on a cellery project.
 
-Next add /etc/host entries to access cellery hosts such as APIM, Observability, etc
+Next add /etc/hosts entries to access cellery hosts such as APIM, Observability, etc
 ```
 127.0.0.1 wso2-apim cellery-dashboard wso2sp-observability-api wso2-apim-gateway
 ```
@@ -235,10 +235,10 @@ Password: admin
 ```
 
 7. Click on the API with name ‘helloworld_global_1_0_0_hello - 1.0.0’ which the global API published by the hello world 
-cell that you deployed.The subscribe and generate the token as described in WSO2 APIM documentation.  
+cell that you deployed.Then subscribe and generate the token as described in WSO2 APIM documentation.  
 
 8. Now you can invoke the API externally from your machine as shown below. The <access_token> is the token that you 
-generated in step - 7, and replace your taken instead of <access_token>. The context of the API can be derived from 
+generated in step - 7, and replace your token instead of <access_token>. The context of the API can be derived from 
 the API that was published in the API Manager, and the ‘sayHello’ is the resource that was implemented in the actual 
 hello world service.
 ```
