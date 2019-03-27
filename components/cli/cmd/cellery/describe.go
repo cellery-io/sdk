@@ -30,7 +30,7 @@ import (
 
 func newDescribeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "describe <cell-name>",
+		Use:   "describe <instance-name|cell-image-name>",
 		Short: "Describes a cell image",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
@@ -39,14 +39,18 @@ func newDescribeCommand() *cobra.Command {
 			}
 			isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
 			if err != nil || !isCellValid {
-				return fmt.Errorf("expects a valid cell name, received %s", args[0])
+				isCellImageValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELL_IMAGE_PATTERN), args[0])
+				if err != nil || !isCellImageValid {
+					return fmt.Errorf("expects a valid cell instance name or a cell image name, received %s", args[0])
+				}
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunDescribe(args[0])
 		},
-		Example: "  cellery describe employee",
+		Example: "  cellery describe employee\n" +
+				 "  cellery describe cellery-samples/employee:1.0.0",
 	}
 	return cmd
 }

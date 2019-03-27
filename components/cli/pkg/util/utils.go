@@ -25,7 +25,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -39,6 +38,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/manifoldco/promptui"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -1013,4 +1014,35 @@ func OpenBrowser(url string) error {
 	} else {
 		return errors.New("unsupported platform")
 	}
+}
+
+func ReadCellImageYaml(cellImage string) []byte {
+	parsedCellImage, err := ParseImageTag(cellImage)
+	cellImageZip := path.Join(UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+
+	// Create tmp directory
+	tmpPath := filepath.Join(UserHomeDir(), constants.CELLERY_HOME, "tmp", "imageExtracted")
+	err = CleanOrCreateDir(tmpPath)
+	if err != nil {
+		panic(err)
+	}
+
+	err = Unzip(cellImageZip, tmpPath)
+	if err != nil {
+		panic(err)
+	}
+	if err != nil {
+		ExitWithErrorMessage("Error occurred while extracting cell image", err)
+	}
+
+	cellYamlContent, err := ioutil.ReadFile(filepath.Join(tmpPath, constants.ZIP_ARTIFACTS, "cellery", parsedCellImage.ImageName+".yaml"))
+	if err != nil {
+		ExitWithErrorMessage("Error while reading cell image content", err)
+	}
+	// Delete tmp directory
+	err = CleanOrCreateDir(tmpPath)
+	if err != nil {
+		ExitWithErrorMessage("Error while reading cell image content", err)
+	}
+	return cellYamlContent
 }

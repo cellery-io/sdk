@@ -19,13 +19,7 @@
 package commands
 
 import (
-	"cloud.google.com/go/storage"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/manifoldco/promptui"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/sqladmin/v1beta4"
 	"io"
 	"log"
 	"os"
@@ -34,6 +28,14 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"cloud.google.com/go/storage"
+	"github.com/manifoldco/promptui"
+	"golang.org/x/oauth2/google"
+	sqladmin "google.golang.org/api/sqladmin/v1beta4"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"google.golang.org/api/container/v1"
 	"google.golang.org/api/file/v1"
@@ -86,7 +88,6 @@ func createMinimalGcpRuntime() {
 	deployMinimalCelleryRuntime()
 	gcpSpinner.Stop(true)
 }
-
 
 func createCompleteGcpRuntime() error {
 	gcpBucketName := configureGCPCredentials()

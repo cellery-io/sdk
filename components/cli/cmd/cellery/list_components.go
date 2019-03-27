@@ -30,7 +30,7 @@ import (
 
 func newListComponentsCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "components <cell-name>",
+		Use:   "components <instance-name|cell-image-name>",
 		Short: "List the components which the cell encapsulates",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
@@ -39,14 +39,18 @@ func newListComponentsCommand() *cobra.Command {
 			}
 			isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
 			if err != nil || !isCellValid {
-				return fmt.Errorf("expects a valid cell name, received %s", args[0])
+				isCellImageValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELL_IMAGE_PATTERN), args[0])
+				if err != nil || !isCellImageValid {
+					return fmt.Errorf("expects a valid cell instance name or a cell image name, received %s", args[0])
+				}
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunListComponents(args[0])
 		},
-		Example: "  cellery list components employee",
+		Example: "  cellery list components employee\n" +
+				 "  cellery list components cellery-samples/employee:1.0.0",
 	}
 	return cmd
 }

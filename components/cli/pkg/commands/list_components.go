@@ -22,26 +22,51 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/ghodss/yaml"
 )
 
-func RunListComponents(cellName string) {
+func RunListComponents(name string) {
+	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
+	if instancePattern {
+		displayComponentsTable(getCellInstanceComponents(name))
+	} else {
+		displayComponentsTable(getCellImageCompoents(name))
+	}
+}
+
+func getCellImageCompoents(cellImage string) []string {
+	var components []string
+	cellYamlContent := util.ReadCellImageYaml(cellImage)
+	cellImageContent := &util.Cell{}
+	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
+	if err != nil {
+		util.ExitWithErrorMessage("Error while reading cell image content", err)
+	}
+	for i := 0; i < len(cellImageContent.CellSpec.ComponentTemplates); i++ {
+		components = append(components, cellImageContent.CellSpec.ComponentTemplates[i].Metadata.Name)
+	}
+	return components
+}
+
+func getCellInstanceComponents(cellName string) []string {
+	var components []string
 	cmd := exec.Command("kubectl", "get", "services", "-l", constants.GROUP_NAME+"/cell="+cellName, "-o", "json")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := constants.EMPTY_STRING
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
+	outfile, errPrint := os.Create("./out.txt")
+	if errPrint != nil {
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", errPrint)
+	}
+	defer outfile.Close()
+	cmd.Stdout = outfile
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)
 	go func() {
@@ -58,33 +83,32 @@ func RunListComponents(cellName string) {
 		util.ExitWithErrorMessage("Error occurred while fetching components", err)
 	}
 
+	outputByteArray, err := ioutil.ReadFile("./out.txt")
+	os.Remove("./out.txt")
 	jsonOutput := &util.Service{}
 
-	errJson := json.Unmarshal([]byte(output), jsonOutput)
+	errJson := json.Unmarshal(outputByteArray, jsonOutput)
 	if errJson != nil {
 		fmt.Println(errJson)
 	}
-
 	if len(jsonOutput.Items) == 0 {
-		fmt.Printf("Cannot find cell: %v \n", cellName)
+		util.ExitWithErrorMessage("Error listing components", fmt.Errorf("Cannot find cell: %v \n", cellName))
 	} else {
-		displayComponentsTable(jsonOutput.Items, cellName)
+		for i := 0; i < len(jsonOutput.Items); i++ {
+			var name string
+			name = strings.Replace(jsonOutput.Items[i].Metadata.Name, cellName+"--", "", -1)
+			name = strings.Replace(name, "-service", "", -1)
+			components = append(components, name)
+		}
 	}
+	return components
 }
 
-func displayComponentsTable(componentArray []util.ServiceItem, cellName string) {
+func displayComponentsTable(components []string) {
 	var tableData [][]string
 
-	for i := 0; i < len(componentArray); i++ {
-		var name string
-		name = strings.Replace(componentArray[i].Metadata.Name, cellName+"--", "", -1)
-		name = strings.Replace(name, "-service", "", -1)
-
-		//ports := strconv.Itoa(componentArray[i].Spec.Ports[0].Port)
-		//for j := 1; j < len(componentArray[i].Spec.Ports); j++ {
-		//	ports = ports + "/" + strconv.Itoa(componentArray[i].Spec.Ports[j].Port)
-		//}
-		component := []string{name}
+	for i := 0; i < len(components); i++ {
+		component := []string{components[i]}
 		tableData = append(tableData, component)
 	}
 

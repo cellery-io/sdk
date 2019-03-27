@@ -21,12 +21,14 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/manifoldco/promptui"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/manifoldco/promptui"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func manageEnvironment() error {

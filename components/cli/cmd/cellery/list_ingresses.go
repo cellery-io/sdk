@@ -31,7 +31,7 @@ import (
 // newApisCommand creates a cobra command which can be invoked to get the APIs exposed by a cell
 func newListIngressesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ingresses <cell-name>",
+		Use:   "ingresses <instance-name|cell-image-name>",
 		Short: "List the exposed APIs of a cell instance",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
@@ -40,14 +40,18 @@ func newListIngressesCommand() *cobra.Command {
 			}
 			isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
 			if err != nil || !isCellValid {
-				return fmt.Errorf("expects a valid cell name, received %s", args[0])
+				isCellImageValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELL_IMAGE_PATTERN), args[0])
+				if err != nil || !isCellImageValid {
+					return fmt.Errorf("expects a valid cell instance name or a cell image name, received %s", args[0])
+				}
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunListIngresses(args[0])
 		},
-		Example: "  cellery list ingresses employee",
+		Example: "  cellery list ingresses employee\n" +
+				 "  cellery list ingresses cellery-samples/employee:1.0.0\n",
 	}
 	return cmd
 }

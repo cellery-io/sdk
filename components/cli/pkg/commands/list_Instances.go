@@ -20,30 +20,33 @@ package commands
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
+
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunListInstances() {
-	cmd := exec.Command("kubectl", "get", "cells")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
+	cmd := exec.Command("kubectl", "get", "cells", "-o", "json")
+	outfile, errPrint := os.Create("./out.txt")
+	if errPrint != nil {
+		util.ExitWithErrorMessage("Error occurred while fetching cell status", errPrint)
+	}
+	defer outfile.Close()
+	cmd.Stdout = outfile
+
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)
+
 	go func() {
 		for stderrScanner.Scan() {
 			fmt.Println(stderrScanner.Text())
-			if stderrScanner.Text() == "No resources found." {
-				os.Exit(0)
-			}
 		}
 	}()
 	err := cmd.Start()
@@ -54,4 +57,54 @@ func RunListInstances() {
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while fetching the running cell data", err)
 	}
+
+	outputByteArray, err := ioutil.ReadFile("./out.txt")
+	os.Remove("./out.txt")
+	jsonOutput := util.CellList{}
+
+	errJson := json.Unmarshal(outputByteArray, &jsonOutput)
+	if errJson != nil {
+		fmt.Println(errJson)
+	}
+	displayCellTable(jsonOutput)
+}
+
+func displayCellTable(cellData util.CellList) {
+	var tableData [][]string
+
+	for i := 0; i < len(cellData.Items); i++ {
+		age := util.GetDuration(util.ConvertStringToTime(cellData.Items[i].CellMetaData.CreationTimestamp))
+		instance := cellData.Items[i].CellMetaData.Name
+		cellImage := cellData.Items[i].CellMetaData.Annotations.Organization + "/" + cellData.Items[i].CellMetaData.Annotations.Name + ":" + cellData.Items[i].CellMetaData.Annotations.Version
+		gateway := cellData.Items[i].CellStatus.Gateway
+		components := cellData.Items[i].CellStatus.ServiceCount
+		status := cellData.Items[i].CellStatus.Status
+		tableRecord := []string{instance, cellImage, status, gateway, strconv.Itoa(components), age}
+		tableData = append(tableData, tableRecord)
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"INSTANCE", "CELL IMAGE", "STATUS", "GATEWAY", "COMPONENTS", "AGE"})
+	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+	table.SetAlignment(3)
+	table.SetRowSeparator("-")
+	table.SetCenterSeparator(" ")
+	table.SetColumnSeparator(" ")
+	table.SetHeaderColor(
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold})
+	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{})
+
+	table.AppendBulk(tableData)
+	table.Render()
 }

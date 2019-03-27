@@ -20,12 +20,14 @@ package commands
 
 import (
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/manifoldco/promptui"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/manifoldco/promptui"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunSetupCreateLocal(isCompleteSelected bool) {
@@ -42,7 +44,7 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 		spinner.Stop(true)
 	}()
 	if isCompleteSelected {
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET,constants.AWS_S3_ITEM_VM_COMPLETE, vmLocation)
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_COMPLETE, vmLocation)
 		util.ExtractTarGzFile(vmLocation, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_VM_COMPLETE))
 		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_CONFIG_COMPLETE, vmLocation)
 		util.ReplaceFile(filepath.Join(util.UserHomeDir(), ".kube", "config"), filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_COMPLETE))
