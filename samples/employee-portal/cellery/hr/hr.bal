@@ -24,7 +24,6 @@ cellery:Component hrComponent = {
         employeegw_url: new cellery:Env(),
         stockgw_url: new cellery:Env()
     }
-
 };
 
 // Cell Intialization

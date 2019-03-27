@@ -191,6 +191,23 @@
             </plugin>
 
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.2</version>
+                <executions>
+                    <execution>
+                        <id>distribution</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attached</goal>
+                        </goals>
+                        <configuration>
+                            <descriptorSourceDirectory>assembly</descriptorSourceDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>${shade.plugin.version}</version>
                 <executions>
@@ -201,7 +218,7 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <minimizeJar>true</minimizeJar>
+                            <!--<minimizeJar>true</minimizeJar>-->
                             <artifactSet>
                                 <includes>
                                     <!-- TODO Remove io.fabric8 once the Ballerina K8s is upgraded -->

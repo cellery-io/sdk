@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ ~ Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ ~
+ ~ Licensed under the Apache License, Version 2.0 (the "License");
+ ~ you may not use this file except in compliance with the License.
+ ~ You may obtain a copy of the License at
+ ~
+ ~      http://www.apache.org/licenses/LICENSE-2.0
+ ~
+ ~ Unless required by applicable law or agreed to in writing, software
+ ~ distributed under the License is distributed on an "AS IS" BASIS,
+ ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ~ See the License for the specific language governing permissions and
+ ~ limitations under the License.
+-->
+
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Ballerina-Kubernetes-Test-Suite">
+    <test name="ballerina-kubernetes-sample-tests" parallel="false">
+        <classes>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample1Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample2Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample3Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample4Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample5Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample7Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample8Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample9Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample10Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample11Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample12Test"/>
+            <!--<class name="org.ballerinax.kubernetes.test.samples.Sample13Test"/> Need jdbc connector-->
+            <class name="org.ballerinax.kubernetes.test.samples.Sample14Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample15Test"/>
+            <class name="org.ballerinax.kubernetes.test.samples.Sample16Test"/>
+        </classes>
+    </test>
+
+    <test name="ballerina-kubernetes-tests" parallel="false">
+        <classes>
+            <class name="org.ballerinax.kubernetes.test.EnvVarTest"/>
+            <class name="org.ballerinax.kubernetes.test.ResourceQuotaTest"/>
+            <class name="org.ballerinax.kubernetes.test.JobTest"/>
+            <class name="org.ballerinax.kubernetes.test.MainFunctionDeploymentTest"/>
+            <class name="org.ballerinax.kubernetes.test.ServiceTest"/>
+            <class name="org.ballerinax.kubernetes.test.DeploymentTest"/>
+            <class name="org.ballerinax.kubernetes.test.LivenessProbeTest"/>
+            <class name="org.ballerinax.kubernetes.test.ReadinessProbeTest"/>
+            <class name="org.ballerinax.kubernetes.test.IstioGatewayTest"/>
+            <class name="org.ballerinax.kubernetes.test.IstioVirtualServiceTest"/>
+            <class name="org.ballerinax.kubernetes.test.OpenShiftBuildConfigTest"/>
+            <class name="org.ballerinax.kubernetes.test.OpenShiftRouteTest"/>
+        </classes>
+    </test>
+
+</suite>
