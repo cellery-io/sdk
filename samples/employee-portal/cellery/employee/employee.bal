@@ -72,5 +72,5 @@ public function build(cellery:ImageName iName) returns error? {
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     employeeCell.components.empComp.envVars.SALARY_HOST.value = cellery:getHost(untaint iName.instanceName,
         salaryComponent);
-    return cellery:createInstance(employeeCell, sName);
+    return cellery:createInstance(employeeCell, iName);
 }
