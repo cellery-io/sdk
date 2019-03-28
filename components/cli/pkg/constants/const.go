@@ -23,6 +23,7 @@ const CELLERY_ID_PATTERN = "[a-z0-9]+(-[a-z0-9]+)*"
 const IMAGE_VERSION_PATTERN = "[0-9]+\\.[0-9]+\\.[0-9]+"
 const CELL_IMAGE_PATTERN = CELLERY_ID_PATTERN + "\\/" + CELLERY_ID_PATTERN + ":" + IMAGE_VERSION_PATTERN
 const CELL_IMAGE_WITH_REGISTRY_PATTERN = "(" + DOMAIN_NAME_PATTERN + "\\/)?" + CELL_IMAGE_PATTERN
+const DEPENDENCY_LINK_PATTERN = "(" + CELLERY_ID_PATTERN + "\\.)?" + CELLERY_ID_PATTERN + ":" + CELLERY_ID_PATTERN
 
 const GROUP_NAME = "mesh.cellery.io"
 
@@ -117,3 +118,5 @@ const K8S_ARTIFACTS_PATH_MAC = "/Library/Cellery/artifacts"
 const K8S_ARTIFACTS_PATH_UBUNTU = "/usr/share/cellery/artifacts"
 
 const WSO2_APIM_HOST = "https://wso2-apim-gateway"
+
+const CELLERY_IMAGE_DIR_ENV_VAR = "CELLERY_IMAGE_DIR"

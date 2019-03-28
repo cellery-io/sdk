@@ -37,7 +37,7 @@ const styles = {
         color: "#464646"
     },
     appBar: {
-        boxShadow : "none"
+        boxShadow: "none"
     }
 };
 

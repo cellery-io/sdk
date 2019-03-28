@@ -26,10 +26,10 @@ import (
 
 func newListInstancesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instances",
-		Short: "List all running cells",
+		Use:     "instances",
+		Short:   "List all running cells",
 		Aliases: []string{"instance", "inst"},
-		Args:  cobra.NoArgs,
+		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunListInstances()
 		},

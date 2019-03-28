@@ -238,7 +238,6 @@ func pushImage(parsedCellImage *util.CellImage, username string, password string
 	}
 
 	spinner.Stop(true)
-	fmt.Print("\n\nImage Digest : " + util.Bold(cellImageDigest))
-
+	fmt.Printf("\nImage Digest : %s\n", util.Bold(cellImageDigest))
 	return nil
 }

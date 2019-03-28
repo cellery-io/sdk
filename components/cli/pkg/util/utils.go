@@ -39,14 +39,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/manifoldco/promptui"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/fatih/color"
+	"github.com/manifoldco/promptui"
 	"github.com/tj/go-spin"
 	"golang.org/x/crypto/ssh/terminal"
 
@@ -690,18 +689,18 @@ func (s *Spinner) Stop(isSuccess bool) {
 func (s *Spinner) spin() {
 	if s.isSpinning == true {
 		if s.action != s.previousAction {
-			var icon string
-			if s.error {
-				icon = Red("\U0000274C")
-			} else {
-				icon = Green("\U00002714")
+			if s.previousAction != "" {
+				var icon string
+				if s.error {
+					icon = Red("\U0000274C")
+				} else {
+					icon = Green("\U00002714")
+				}
+				fmt.Printf("\r\x1b[2K%s %s\n", icon, s.previousAction)
 			}
-			fmt.Printf("\r\x1b[2K%s %s\n", icon, s.previousAction)
 			s.previousAction = s.action
 		}
-		if s.action == "" {
-			s.isSpinning = false
-		} else {
+		if s.action != "" {
 			fmt.Printf("\r\x1b[2K\033[36m%s\033[m %s", s.core.Next(), s.action)
 		}
 	}
@@ -925,14 +924,17 @@ func GetSourceFileName(filePath string) (string, error) {
 	return "", errors.New("Ballerina source file not found in extracted location: " + filePath)
 }
 
+// RunMethodExists checks if the run method exists in ballerina file
 func RunMethodExists(sourceFile string) (bool, error) {
-	bytes, err := ioutil.ReadFile(sourceFile)
+	sourceFileBytes, err := ioutil.ReadFile(sourceFile)
 	if err != nil {
 		return false, err
 	}
-	content := string(bytes)
-	// //check whether s contains substring text
-	return regexp.MatchString(".*(public)\\s+(function)\\s+(run)\\s*\\(\\s*(string)\\s+.*\\s(string)\\s+.*\\s(string)\\s+.*", content)
+
+	// Check whether s contains substring text
+	return regexp.MatchString(
+		".*(public)\\s+(function)\\s+(run)\\s*\\(\\s*(string)\\s+.*\\s(string)\\s+.*\\s(string)\\s+.*",
+		string(sourceFileBytes))
 }
 
 func ReplaceInFile(srcFile, oldString, newString string, replaceCount int) error {

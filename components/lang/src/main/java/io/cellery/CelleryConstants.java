@@ -17,8 +17,6 @@
  */
 package io.cellery;
 
-import java.io.File;
-
 /**
  * Collected constants of Cellery.
  */
@@ -49,10 +47,7 @@ public class CelleryConstants {
     public static final String DEFAULT_GATEWAY_PROTOCOL = "http";
     public static final int DEFAULT_GATEWAY_PORT = 80;
     public static final String DEFAULT_PARAMETER_VALUE = "";
-    public static final String CELLERY_HOME = System.getProperty("user.home") + File.separator +
-            ".cellery";
-    public static final String CELLERY_REPO_PATH = CELLERY_HOME + File.separator + "repo" + File.separator;
-    public static final String CELL_YAML_PATH = "artifacts" + File.separator + "cellery" + File.separator;
+    public static final String CELLERY_IMAGE_DIR_ENV_VAR = "CELLERY_IMAGE_DIR";
 
     public static final String ANNOTATION_CELL_IMAGE_ORG = "mesh.cellery.io/cell-image-org";
     public static final String ANNOTATION_CELL_IMAGE_NAME = "mesh.cellery.io/cell-image-name";

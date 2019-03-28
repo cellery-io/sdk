@@ -32,15 +32,33 @@ cellery run wso2/my-cell:1.0.0 -n my-cell-name1
 ```
 
 ### Run linking to dependencies
-Use a cellery image to create a running instance specifying an instance name
+Use a cellery image to create a running instance specifying an instance name.
 Input the same instance name to establish the link between the running cell instance and another cell which depends on it.  
 Usage : 
 ```
-cellery run <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION> -l <NAME-1>
+cellery run <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION> -l <ALIAS>:<NAME-1>
 ```
 Example : 
 ```
-cellery run wso2/cell2:1.0.1 -n mycell-2 -l mycell-1
+cellery run wso2/cell2:1.0.1 -n mycell-2 -l cell-1:mycell-1
+```
+
+### Run with dependencies
+Use a cellery image to create a running instance specifying an instance name along with its dependencies. (The images will be pulled from the Registry if required)
+Input the same instance name to establish the link between the running cell instance and another cell which depends on it.
+Any unspecified (no links provided) can be shared (if the Cell Image is the same) by using the `--share-instances` flag.
+You will be prompted the confirm the instances and the dependency tree before starting the instances.
+Usage : 
+```
+cellery run <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION> --with-dependencies
+cellery run <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION> --with-dependencies --share-instances
+cellery run <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION> --with-dependencies -l <PARENT-INSTANCE>.<ALIAS>:<NAME-1>
+```
+Example : 
+```
+cellery run wso2/cell2:1.0.1 -n mycell-2 -l cell-1:mycell-1
+cellery run wso2/cell2:1.0.1 -n mycell-2 --with-dependencies
+cellery run wso2/cell2:1.0.1 -n mycell-2 --with-dependencies --share-instances
 ```
 
 ### List instances

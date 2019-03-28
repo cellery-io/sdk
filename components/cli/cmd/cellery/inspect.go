@@ -30,8 +30,8 @@ import (
 // newListFilesCommand creates a command which can be invoked to list the files (directory structure) of a cell images.
 func newInspectCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "inspect <organization>/<cell-image>:<version>",
-		Short: "List the files in the cell image",
+		Use:     "inspect <organization>/<cell-image>:<version>",
+		Short:   "List the files in the cell image",
 		Aliases: []string{"insp"},
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)

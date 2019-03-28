@@ -31,9 +31,9 @@ import (
 // newApisCommand creates a cobra command which can be invoked to get the APIs exposed by a cell
 func newListIngressesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ingresses <instance-name|cell-image-name>",
+		Use:     "ingresses <instance-name|cell-image-name>",
 		Aliases: []string{"ingress", "ing"},
-		Short: "List the exposed APIs of a cell instance",
+		Short:   "List the exposed APIs of a cell instance",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
 			if err != nil {

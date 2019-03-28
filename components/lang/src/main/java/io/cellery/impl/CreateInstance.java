@@ -39,8 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static io.cellery.CelleryConstants.CELLERY_HOME;
-import static io.cellery.CelleryConstants.CELL_YAML_PATH;
+import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.processParameters;
 import static io.cellery.CelleryUtils.toYaml;
@@ -66,7 +65,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     public void execute(Context ctx) {
         String[] cellNameData = ctx.getStringArgument(0).split("/");
         String cellName = cellNameData[1];
-        String destinationPath = CELLERY_HOME + File.separator + "tmp" + File.separator + cellName + File.separator +
+        String destinationPath = System.getenv(CELLERY_IMAGE_DIR_ENV_VAR) + File.separator +
                 "artifacts" + File.separator + "cellery" + File.separator + cellName + YAML;
         Cell cell = getInstance(destinationPath);
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
@@ -101,7 +100,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     "pull/build the cell image ?");
         }
         if (cell == null) {
-            throw new BallerinaException("Unable to extract Cell Image yaml " + CELL_YAML_PATH);
+            throw new BallerinaException("Unable to extract Cell Image yaml " + destinationPath);
         }
         return cell;
     }

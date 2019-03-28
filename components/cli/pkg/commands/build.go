@@ -246,6 +246,8 @@ func generateMetaData(cellImage *util.CellImage, targetDir string) {
 			dependencyExists, err := util.FileExists(cellImageZip)
 			if !dependencyExists {
 				RunPull(dependency, true)
+				fmt.Printf("\r\x1b[2K%s Pulling Cell Image %s/%s:%s\n", util.Green("\U00002714"),
+					dependencyCellImage.Organization, dependencyCellImage.ImageName, dependencyCellImage.ImageVersion)
 			}
 
 			// Create temp directory
@@ -266,6 +268,9 @@ func generateMetaData(cellImage *util.CellImage, targetDir string) {
 			// Reading the dependency's metadata
 			metadataJsonContent, err := ioutil.ReadFile(
 				filepath.Join(tempPath, "artifacts", "cellery", "metadata.json"))
+			if err != nil {
+				util.ExitWithErrorMessage(errorMessage, err)
+			}
 			dependencyMetadata := &util.CellImageMetaData{}
 			err = json.Unmarshal(metadataJsonContent, dependencyMetadata)
 			if err != nil {

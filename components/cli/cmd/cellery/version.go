@@ -26,10 +26,10 @@ import (
 
 func newVersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "version",
-		Short: "Get cellery runtime version",
+		Use:     "version",
+		Short:   "Get cellery runtime version",
 		Aliases: []string{"v", "ver"},
-		Args:  cobra.NoArgs,
+		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunVersion()
 		},

@@ -107,8 +107,8 @@ func RunPull(cellImage string, silent bool) {
 			}
 		}
 	}
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully pulled cell image: %s", util.Bold(cellImage)))
 	if !silent {
+		util.PrintSuccessMessage(fmt.Sprintf("Successfully pulled cell image: %s", util.Bold(cellImage)))
 		util.PrintWhatsNextMessage("run the image", "cellery run "+cellImage)
 	}
 }
@@ -251,7 +251,6 @@ func pullImage(parsedCellImage *util.CellImage, username string, password string
 	if !silent {
 		spinner.Stop(true)
 	}
-	fmt.Print("\n\nImage Digest : " + util.Bold(cellImageDigest))
-
+	fmt.Printf("\nImage Digest : %s\n", util.Bold(cellImageDigest))
 	return nil
 }
