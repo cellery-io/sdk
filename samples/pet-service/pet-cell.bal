@@ -8,21 +8,23 @@ cellery:Component petComponent = {
         image: "docker.io/isurulucky/pet-service"
     },
     ingresses: {
-        stock: new cellery:HttpApiIngress(9090,
-            "petsvc",
-            [
-                {
-                    path: "/*",
-                    method: "GET"
-                }
-            ]
-        )
+        stock: <cellery:HttpApiIngress>{ port: 9090,
+            context: "petsvc",
+            definition: {
+                resources: [
+                    {
+                        path: "/*",
+                        method: "GET"
+                    }
+                ]
+            }
+        }
     },
     autoscaling: {
         policy: {
             minReplicas: 1,
             maxReplicas: 10,
-            cpuPercentage: new cellery:CpuUtilizationPercentage(50)
+            cpuPercentage: <cellery:CpuUtilizationPercentage>{ percentage: 50 }
         }
 
     }
@@ -37,14 +39,13 @@ cellery:Component debugComponent = {
     }
 };
 
-cellery:CellImage petCell = new();
+cellery:CellImage petCell = {
+    components:{
+        petComp:petComponent,
+        debugComp:debugComponent
+    }
+};
 
-public function build(string orgName, string imageName, string imageVersion) {
-    //Build Pet Cell
-    io:println("Building Pet Service Cell ...");
-    petCell.addComponent(petComponent);
-    petCell.addComponent(debugComponent);
-    //Expose API from Global Cell Gateway
-    petCell.exposeGlobal(petComponent);
-    _ = cellery:createImage(petCell, orgName, imageName, imageVersion);
+public function build(cellery:ImageName iName) returns error? {
+    return cellery:createImage(petCell, iName);
 }
