@@ -21,8 +21,8 @@ cellery:Component webComponent = {
                 },
                 oidc:
                 {
-                    nonSecureContexts: ["/testApp"], // Default [], optional field
-                    provider: "https://accounts.google.com",
+                    nonSecurePaths: ["/testApp"], // Default [], optional field
+                    discoveryUrl: "https://accounts.google.com",
                     clientId: "",
                     clientSecret: "",
                     redirectUrl: "http://pet-store.com/_auth/callback",

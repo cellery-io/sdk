@@ -107,7 +107,7 @@ public type GRPCIngress record {
 public type HttpApiIngress record {
     int port;
     string context;
-    ApiDefinition definition;
+    ApiDefinition? definition;
     Expose expose;
     boolean authenticate = true;
     !...;
@@ -141,13 +141,22 @@ public type TLS record{
 
 # OpenId Connect properties
 public type OIDC record {
-    string[] nonSecureContexts = [];
-    string provider;
+    string[] nonSecurePaths = [];
+    string[] securePaths = [];
+    string discoveryUrl;
     string clientId;
     string clientSecret?;
+    DCR dcr?;
     string redirectUrl;
     string baseUrl;
-    string subjectClaim;
+    string subjectClaim?;
+    !...;
+};
+
+public type DCR record {
+    string dcrUrl?;
+    string dcrUser;
+    string dcrPassword;
     !...;
 };
 
@@ -169,6 +178,7 @@ public type Secret record {
 
 public type CellImage record {
     map<Component> components;
+    !...;
 };
 
 # Build the cell aritifacts

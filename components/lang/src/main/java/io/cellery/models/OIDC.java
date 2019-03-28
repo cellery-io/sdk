@@ -29,15 +29,20 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 public class OIDC {
-    private String provider;
+    private String discoveryUrl;
     private String clientId;
     private String clientSecret;
     private String redirectUrl;
     private String baseUrl;
     private String subjectClaim;
-    private Set<String> nonSecureContexts;
+    private Set<String> nonSecurePaths;
+    private Set<String> securePaths;
+    private String dcrUrl;
+    private String dcrUser;
+    private String dcrPassword;
 
     public OIDC() {
-        nonSecureContexts = new HashSet<>();
+        securePaths = new HashSet<>();
+        nonSecurePaths = new HashSet<>();
     }
 }

@@ -47,11 +47,11 @@ public function build(cellery:ImageName iName) returns error? {
 
 public function run(cellery:ImageName iName, map<string> instances) returns error? {
     //Resolve employee gateway URL
-    employee:EmployeeReference employeeRef = employee:getReferenceRecord(instances.employeeCellDep);
+    employee:EmployeeReference employeeRef = cellery:getReferenceRecord(instances.employeeCellDep);
     hrCell.hrComp.envVars.employee_api_url.value = employeeRef.gatewayHost;
 
     //Resolve stock gateway URL
-    stock:StockReference stockRef = getReferenceRecord(instances.stockCellDep);
+    stock:StockReference stockRef = cellery:getReferenceRecord(instances.stockCellDep);
     hrCell.components.hrComp.envVars.stock_api_url.value = stockRef.gatewayHost;
     return cellery:createInstance(hrCell, iName);
 }

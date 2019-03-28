@@ -65,8 +65,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
@@ -141,7 +143,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
             if (attributeMap.containsKey("autoscaling")) {
                 processAutoScalePolicy(((BMap<?, ?>) attributeMap.get("autoscaling")).getMap(), component);
             }
-            out.println(component);
+            if (attributeMap.containsKey("dependencies")) {
+                processDependencies(((BMap<?, ?>) attributeMap.get("dependencies")).getMap());
+            }
             cellImage.addComponent(component);
         });
     }
@@ -153,7 +157,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
      * @param component  current component
      */
     private void processHttpIngress(LinkedHashMap<?, ?> ingressMap, Component component) {
-        out.println("Ingresses.....");
         ingressMap.forEach((key, ingressValues) -> {
             BMap ingressValueMap = ((BMap) ingressValues);
             LinkedHashMap attributeMap = ingressValueMap.getMap();
@@ -253,17 +256,53 @@ public class CreateImage extends BlockingNativeCallableUnit {
         }
         if (gatewayConfig.containsKey("oidc")) {
             // OIDC enabled
-            LinkedHashMap oidcConfig = ((BMap) gatewayConfig.get("oidc")).getMap();
-            OIDC oidc = new OIDC();
-            oidc.setProvider(((BString) oidcConfig.get("provider")).stringValue());
-            oidc.setRedirectUrl(((BString) oidcConfig.get("redirectUrl")).stringValue());
-            oidc.setBaseUrl(((BString) oidcConfig.get("baseUrl")).stringValue());
-            oidc.setClientId(((BString) oidcConfig.get("clientId")).stringValue());
-            oidc.setClientSecret(((BString) oidcConfig.get("clientSecret")).stringValue());
-            oidc.setSubjectClaim(((BString) oidcConfig.get("subjectClaim")).stringValue());
+            OIDC oidc = processOidc(((BMap) gatewayConfig.get("oidc")).getMap());
             webIngress.setOidc(oidc);
         }
         component.addWeb(webIngress);
+    }
+
+    private OIDC processOidc(LinkedHashMap oidcConfig) {
+        OIDC oidc = new OIDC();
+        oidc.setDiscoveryUrl(((BString) oidcConfig.get("discoveryUrl")).stringValue());
+        oidc.setRedirectUrl(((BString) oidcConfig.get("redirectUrl")).stringValue());
+        oidc.setBaseUrl(((BString) oidcConfig.get("baseUrl")).stringValue());
+        oidc.setClientId(((BString) oidcConfig.get("clientId")).stringValue());
+        BValueArray nonSecurePaths = ((BValueArray) oidcConfig.get("nonSecurePaths"));
+        Set<String> nonSecurePathList = new HashSet<>();
+        IntStream.range(0, (int) nonSecurePaths.size()).forEach(nonSecurePathIndex ->
+                nonSecurePathList.add(nonSecurePaths.getString(nonSecurePathIndex)));
+        oidc.setNonSecurePaths(nonSecurePathList);
+
+        BValueArray securePaths = ((BValueArray) oidcConfig.get("securePaths"));
+        Set<String> securePathList = new HashSet<>();
+        IntStream.range(0, (int) securePaths.size()).forEach(securePathIndex ->
+                securePathList.add(securePaths.getString(securePathIndex)));
+        oidc.setSecurePaths(securePathList);
+
+        // Optional fields
+        if (oidcConfig.containsKey("clientSecret")) {
+            // Not using DCR
+            oidc.setClientSecret(((BString) oidcConfig.get("clientSecret")).stringValue());
+        } else {
+            // Using DCR
+            oidc.setDcrUser(((BString) oidcConfig.get("dcrUser")).stringValue());
+            oidc.setDcrPassword(((BString) oidcConfig.get("dcrPassword")).stringValue());
+            if (oidcConfig.containsKey("dcrUrl")) {
+                // DCR url is optional
+                oidc.setDcrUrl(((BString) oidcConfig.get("dcrUrl")).stringValue());
+            }
+        }
+        if (oidc.getDcrUser() == null && oidc.getClientSecret() == null) {
+            //DCR or ClientSecret is not provided
+            throw new BallerinaException("Error while processing OIDC config. Either clientSecret of dcrUser need to " +
+                    "be specified. " + oidcConfig);
+        }
+        if (oidcConfig.containsKey("subjectClaim")) {
+            //optional field
+            oidc.setSubjectClaim(((BString) oidcConfig.get("subjectClaim")).stringValue());
+        }
+        return oidc;
     }
 
 
@@ -292,13 +331,33 @@ public class CreateImage extends BlockingNativeCallableUnit {
     }
 
 
+    private void processDependencies(LinkedHashMap<?, ?> dependencies) {
+        StringBuffer buffer = new StringBuffer();
+        dependencies.forEach((key, value) -> {
+            LinkedHashMap attributeMap = ((BMap) value).getMap();
+            final String depText = ((BString) attributeMap.get("org")).stringValue() + "/"
+                    + ((BString) attributeMap.get("name")).stringValue() + ":"
+                    + ((BString) attributeMap.get("ver")).stringValue();
+            buffer.append(key.toString()).append("=").append(depText).append("\n");
+        });
+        String targetFileNameWithPath =
+                OUTPUT_DIRECTORY + File.separator + "tmp" + File.separator + "dependencies.properties";
+        try {
+            writeToFile(buffer.toString(), targetFileNameWithPath);
+        } catch (IOException e) {
+            throw new BallerinaException("Error occurred while generating reference file " + targetFileNameWithPath);
+        }
+    }
+
     private void generateCell() {
         List<Component> components =
                 new ArrayList<>(cellImage.getComponentNameToComponentMap().values());
         GatewaySpec spec = new GatewaySpec();
+        ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
         List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
         for (Component component : components) {
             if (component.getWebList().size() > 0) {
+                templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
                 spec.setType(ENVOY_GATEWAY);
                 // Only Single web ingress is supported for 0.2.0
                 // Therefore we only process the 0th element
@@ -308,15 +367,20 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 spec.setOidc(webIngress.getOidc());
             } else if (component.getApis().size() > 0) {
                 // HTTP ingress
+                templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
                 spec.setType(MICRO_GATEWAY);
                 spec.addHttpAPI(component.getApis());
-            } else {
-                // TCP/GRPC ingress
+            } else if (component.getTcpList().size() > 0) {
+                // Only Single TCP ingress is supported for 0.2.0
+                // Therefore we only process the 0th element
                 spec.setType(ENVOY_GATEWAY);
-                spec.addGRPC(component.getGrpcList());
                 spec.addTCP(component.getTcpList());
+                templateSpec.setServicePort(component.getTcpList().get(0).getPort());
+            } else if (component.getGrpcList().size() > 0) {
+                spec.setType(ENVOY_GATEWAY);
+                templateSpec.setServicePort(component.getGrpcList().get(0).getPort());
+                spec.addGRPC(component.getGrpcList());
             }
-            ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             templateSpec.setReplicas(component.getReplicas());
             templateSpec.setProtocol(component.getProtocol());
             List<EnvVar> envVarList = new ArrayList<>();
@@ -336,27 +400,8 @@ public class CreateImage extends BlockingNativeCallableUnit {
 
             AutoScaling autoScaling = component.getAutoScaling();
             if (autoScaling != null) {
-                HorizontalPodAutoscalerSpecBuilder autoScaleSpecBuilder = new HorizontalPodAutoscalerSpecBuilder()
-                        .withMaxReplicas((int) autoScaling.getPolicy().getMaxReplicas())
-                        .withMinReplicas((int) autoScaling.getPolicy().getMinReplicas());
-
-                // Generating scale policy metrics config
-                for (AutoScalingResourceMetric metric : autoScaling.getPolicy().getMetrics()) {
-                    autoScaleSpecBuilder.addToMetrics(new MetricSpecBuilder()
-                            .withType(CelleryConstants.AUTO_SCALING_METRIC_RESOURCE)
-                            .withNewResource()
-                            .withName(metric.getName())
-                            .withTargetAverageUtilization(metric.getValue())
-                            .endResource()
-                            .build());
-                }
-
-                AutoScalingSpec autoScalingSpec = new AutoScalingSpec();
-                autoScalingSpec.setOverridable(autoScaling.isOverridable());
-                autoScalingSpec.setPolicy(autoScaleSpecBuilder.build());
-                templateSpec.setAutoscaling(autoScalingSpec);
+                templateSpec.setAutoscaling(generateAutoScaling(autoScaling));
             }
-
             ServiceTemplate serviceTemplate = new ServiceTemplate();
             serviceTemplate.setMetadata(new ObjectMetaBuilder()
                     .withName(component.getService())
@@ -387,6 +432,28 @@ public class CreateImage extends BlockingNativeCallableUnit {
         }
     }
 
+    private AutoScalingSpec generateAutoScaling(AutoScaling autoScaling) {
+        HorizontalPodAutoscalerSpecBuilder autoScaleSpecBuilder = new HorizontalPodAutoscalerSpecBuilder()
+                .withMaxReplicas((int) autoScaling.getPolicy().getMaxReplicas())
+                .withMinReplicas((int) autoScaling.getPolicy().getMinReplicas());
+
+        // Generating scale policy metrics config
+        for (AutoScalingResourceMetric metric : autoScaling.getPolicy().getMetrics()) {
+            autoScaleSpecBuilder.addToMetrics(new MetricSpecBuilder()
+                    .withType(CelleryConstants.AUTO_SCALING_METRIC_RESOURCE)
+                    .withNewResource()
+                    .withName(metric.getName())
+                    .withTargetAverageUtilization(metric.getValue())
+                    .endResource()
+                    .build());
+        }
+        AutoScalingSpec autoScalingSpec = new AutoScalingSpec();
+        autoScalingSpec.setOverridable(autoScaling.isOverridable());
+        autoScalingSpec.setPolicy(autoScaleSpecBuilder.build());
+        return autoScalingSpec;
+
+    }
+
     /**
      * Generate a Cell Reference that can be used by other cells.
      */
@@ -394,15 +461,12 @@ public class CreateImage extends BlockingNativeCallableUnit {
         JSONObject json = new JSONObject();
         cellImage.getComponentNameToComponentMap().forEach((componentName, component) -> {
             component.getApis().forEach(api -> {
-                json.put(api.getContext() + "_api_url", DEFAULT_GATEWAY_PROTOCOL + "://{{instance_name}}--gateway" +
-                        "-service:" + DEFAULT_GATEWAY_PORT + "/" + api.getContext());
+                String url = DEFAULT_GATEWAY_PROTOCOL + "://{{instance_name}}--gateway" +
+                        "-service:" + DEFAULT_GATEWAY_PORT + "/" + api.getContext();
+                json.put(api.getContext() + "_api_url", url.replaceAll("(?<!http:)//", "/"));
             });
-            component.getTcpList().forEach(tcp -> {
-                json.put(componentName + "_tcp_port", tcp.getPort());
-            });
-            component.getGrpcList().forEach(grpc -> {
-                json.put(componentName + "_grpc_port", grpc.getPort());
-            });
+            component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
+            component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
         });
         String targetFileNameWithPath =
                 OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + cellImage.getCellName() + ".json";

@@ -3,9 +3,7 @@ import ballerina/config;
 import celleryio/cellery;
 
 int salaryContainerPort = 8080;
-// Read API defintion from swagger file.
-cellery:ApiDefinition employeeAPIdefn = (<cellery:ApiDefinition>cellery:readSwaggerFile(
-                                                                    "./resources/employee.swagger.json"));
+
 // Employee Component
 cellery:Component employeeComponent = {
     name: "employee",
@@ -16,7 +14,7 @@ cellery:Component employeeComponent = {
         employee: <cellery:HttpApiIngress>{
             port: 8080,
             context: "employee",
-            definition: employeeAPIdefn,
+            definition: (),
             expose: "local"
         }
     },
@@ -64,12 +62,15 @@ cellery:CellImage employeeCell = {
 };
 
 public function build(cellery:ImageName iName) returns error? {
+    cellery:ApiDefinition employeeAPIdefn = (<cellery:ApiDefinition>cellery:readSwaggerFile(
+                                                                        "./resources/employee.swagger.json"));
+    cellery:HttpApiIngress httpAPI = <cellery:HttpApiIngress>(employeeComponent.ingresses.employee);
+    httpAPI.definition = employeeAPIdefn;
     return cellery:createImage(employeeCell, iName);
 }
 
-public function run(cellery:ImageName iName, map<string> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     employeeCell.components.empComp.envVars.SALARY_HOST.value = cellery:getHost(untaint iName.instanceName,
         salaryComponent);
-    io:println(employeeCell);
-    //return cellery:createInstance(employeeCell, sName);
+    return cellery:createInstance(employeeCell, sName);
 }
