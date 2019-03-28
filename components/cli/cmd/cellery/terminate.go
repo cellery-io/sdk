@@ -32,6 +32,7 @@ func newTerminateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "terminate <instance-name>",
 		Short: "Terminate a running cell instance",
+		Aliases: []string{"term"},
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
 			if err != nil {

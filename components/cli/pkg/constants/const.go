@@ -116,4 +116,4 @@ const COMPLETE = "Complete"
 const K8S_ARTIFACTS_PATH_MAC = "/Library/Cellery/artifacts"
 const K8S_ARTIFACTS_PATH_UBUNTU = "/usr/share/cellery/artifacts"
 
-const WSO2_APIM_HOST  = "https://wso2-apim-gateway"
+const WSO2_APIM_HOST = "https://wso2-apim-gateway"

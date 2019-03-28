@@ -30,7 +30,6 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
 func RunVersion() {
@@ -47,9 +46,7 @@ func RunVersion() {
 
 	// Printing Cellery version information
 	_, _ = boldWhite.Println("Cellery:")
-	fmt.Printf(" CLI Version:\t\t%s\n", version.BuildVersion())
-	fmt.Printf(" Built:\t\t\t%s\n", version.BuildTime())
-	fmt.Printf(" Git Commit:\t\t%s\n", version.BuildGitRevision())
+	fmt.Println(" CLI Version:\t\t0.2.0")
 	fmt.Printf(" OS/Arch:\t\t%s/%s\n", runtime.GOOS, runtime.GOARCH)
 	//fmt.Println(" Experimental:\t\ttrue") // TODO
 

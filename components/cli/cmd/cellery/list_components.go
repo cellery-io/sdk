@@ -32,6 +32,7 @@ func newListComponentsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "components <instance-name|cell-image-name>",
 		Short: "List the components which the cell encapsulates",
+		Aliases: []string{"component", "comp"},
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
 			if err != nil {
@@ -50,7 +51,7 @@ func newListComponentsCommand() *cobra.Command {
 			commands.RunListComponents(args[0])
 		},
 		Example: "  cellery list components employee\n" +
-				 "  cellery list components cellery-samples/employee:1.0.0",
+			"  cellery list components cellery-samples/employee:1.0.0",
 	}
 	return cmd
 }

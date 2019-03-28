@@ -22,17 +22,19 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+
 	"github.com/olekukonko/tablewriter"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/ghodss/yaml"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunListIngresses(name string) {
@@ -159,7 +161,7 @@ func displayCellImageApisTable(cellImageName string) {
 	for i := 0; i < len(cellImageContent.CellSpec.ComponentTemplates); i++ {
 		componentName := cellImageContent.CellSpec.ComponentTemplates[i].Metadata.Name
 		// Iterate HTTP and Web ingresses
-		for j :=0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.HttpApis); j++ {
+		for j := 0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.HttpApis); j++ {
 			ingress := cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.HttpApis[j]
 			backend := ingress.Backend
 			var ingressType = "web"
@@ -182,7 +184,7 @@ func displayCellImageApisTable(cellImageName string) {
 			}
 		}
 		// Iterate TCP ingresses
-		for j :=0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis); j++ {
+		for j := 0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis); j++ {
 			ingress := cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis[j]
 			backend := ingress.Backend
 			if componentName == backend {
@@ -196,7 +198,7 @@ func displayCellImageApisTable(cellImageName string) {
 			}
 		}
 		// Iterate GRPC ingresses
-		for j :=0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis); j++ {
+		for j := 0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis); j++ {
 			ingress := cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis[j]
 			backend := ingress.Backend
 			if componentName == backend {

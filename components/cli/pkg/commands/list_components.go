@@ -30,9 +30,10 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/ghodss/yaml"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/ghodss/yaml"
 )
 
 func RunListComponents(name string) {

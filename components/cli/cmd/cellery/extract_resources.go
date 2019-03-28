@@ -34,6 +34,7 @@ func newExtractResourcesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "extract-resources <organization>/<cell-image>:<version> <output-directory>",
 		Short: "Extract the resource files of a pulled image to the provided location",
+		Aliases: []string{"exctr"},
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
 			if err != nil {

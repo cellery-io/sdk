@@ -32,6 +32,7 @@ import (
 func newListIngressesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ingresses <instance-name|cell-image-name>",
+		Aliases: []string{"ingress", "ing"},
 		Short: "List the exposed APIs of a cell instance",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(1)(cmd, args)
@@ -51,7 +52,7 @@ func newListIngressesCommand() *cobra.Command {
 			commands.RunListIngresses(args[0])
 		},
 		Example: "  cellery list ingresses employee\n" +
-				 "  cellery list ingresses cellery-samples/employee:1.0.0\n",
+			"  cellery list ingresses cellery-samples/employee:1.0.0\n",
 	}
 	return cmd
 }
