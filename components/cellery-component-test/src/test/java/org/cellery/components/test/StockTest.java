@@ -31,11 +31,15 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public class StockTest implements SampleTest {
-    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve("employee-portal/cellery/stock");
-    private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve("target");
-    private static final Path CELLERY_PATH = TARGET_PATH.resolve("cellery");
+import static org.cellery.components.test.utils.CelleryTestConstants.*;
+
+public class StockTest {
+    private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
+    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + "/" + CELLERY + "/" + "stock");
+    private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
+    private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
 
     @BeforeClass
@@ -60,9 +64,9 @@ public class StockTest implements SampleTest {
     @Test
     public void validateMetaData() {
         Assert.assertEquals(cell.getMetadata().getName(), "stockimg");
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get("mesh.cellery.io/cell-image-org"), "test-org");
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get("mesh.cellery.io/cell-image-name"), "stockimg");
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get("mesh.cellery.io/cell-image-version"), "1.3.5");
+        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_MESH+"/"+CELLERY_IMAGE_ORG), "test-org");
+        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_MESH+"/"+CELLERY_IMAGE_NAME), "stockimg");
+        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_MESH+"/"+CELLERY_IMAGE_VERSION), "1.3.5");
     }
 
     @Test

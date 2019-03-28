@@ -27,16 +27,21 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
+import static org.cellery.components.test.utils.CelleryTestConstants.EMPLOYEE_PORTAL;
+import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public class EmployeeTest implements SampleTest {
-    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve("employee-portal/cellery/employee");
-    private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve("target");
-    private static final Path CELLERY_PATH = TARGET_PATH.resolve("cellery");
+public class EmployeeTest {
+    private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
+    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(EMPLOYEE_PORTAL+"/"+CELLERY+"/"+"employee");
+    private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
+    private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
