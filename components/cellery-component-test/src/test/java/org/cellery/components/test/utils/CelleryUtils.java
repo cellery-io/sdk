@@ -19,12 +19,6 @@ package org.cellery.components.test.utils;
 
 import com.esotericsoftware.yamlbeans.YamlReader;
 import io.cellery.models.Cell;
-import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
-import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.BallerinaFunction;
-import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.FileInputStream;
@@ -37,18 +31,8 @@ import static io.cellery.CelleryConstants.CELL_YAML_PATH;
 /**
  * Native function cellery:createInstance.
  */
-@BallerinaFunction(
-        orgName = "celleryio", packageName = "cellery:0.0.0",
-        functionName = "createInstance",
-        args = {@Argument(name = "imageName", type = TypeKind.STRING),
-                @Argument(name = "imageVersion", type = TypeKind.STRING),
-                @Argument(name = "cellImage", type = TypeKind.OBJECT),
-                @Argument(name = "instanceName", type = TypeKind.STRING)},
-        returnType = {@ReturnType(type = TypeKind.STRING)},
-        isPublic = true
-)
 
-public class CelleryUtils extends BlockingNativeCallableUnit {
+public class CelleryUtils {
     public static Cell getInstance(String destinationPath) {
         Cell cell;
         try (InputStreamReader fileReader = new InputStreamReader(new FileInputStream(destinationPath),
@@ -64,10 +48,5 @@ public class CelleryUtils extends BlockingNativeCallableUnit {
             throw new BallerinaException("Unable to extract Cell Image yaml " + CELL_YAML_PATH);
         }
         return cell;
-    }
-
-    @Override
-    public void execute(Context context) {
-
     }
 }

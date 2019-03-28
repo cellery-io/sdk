@@ -21,7 +21,7 @@ import io.cellery.models.Cell;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.utils.CelleryUtils;
-import org.cellery.components.test.utils.KubernetesTestUtils;
+import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -40,7 +40,7 @@ public class EmployeeTest implements SampleTest {
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
-        Assert.assertEquals(KubernetesTestUtils.compileBallerinaFile(SOURCE_DIR_PATH, "employee.bal",
+        Assert.assertEquals(LangTestUtils.compileBallerinaFile(SOURCE_DIR_PATH, "employee.bal",
                 "test-org", "test-img", "1.3.5"), 0);
         File artifactYaml = TARGET_PATH.resolve("emp.yaml").toFile();
         Assert.assertTrue(artifactYaml.exists());

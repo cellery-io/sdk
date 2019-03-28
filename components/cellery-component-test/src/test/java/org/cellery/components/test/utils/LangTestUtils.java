@@ -34,10 +34,10 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Kubernetes test utils.
+ * Language test utils.
  */
-public class KubernetesTestUtils {
-    private static final Log log = LogFactory.getLog(KubernetesTestUtils.class);
+public class LangTestUtils {
+    private static final Log log = LogFactory.getLog(LangTestUtils.class);
     private static final String JAVA_OPTS = "JAVA_OPTS";
     private static final Path DISTRIBUTION_PATH = Paths.get(FilenameUtils.separatorsToSystem(
             System.getProperty("ballerina.pack")));

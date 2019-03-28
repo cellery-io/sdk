@@ -22,7 +22,7 @@ import io.cellery.models.Cell;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.utils.CelleryUtils;
-import org.cellery.components.test.utils.KubernetesTestUtils;
+import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -40,7 +40,7 @@ public class MySQLTest implements SampleTest {
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
-        Assert.assertEquals(KubernetesTestUtils.compileBallerinaFile(SOURCE_DIR_PATH, "mysql.bal",
+        Assert.assertEquals(LangTestUtils.compileBallerinaFile(SOURCE_DIR_PATH, "mysql.bal",
                 "test-org", "mysql-img", "1.3.5"), 0);
         File artifactYaml = CELLERY_PATH.resolve("mysql-img.yaml").toFile();
         Assert.assertTrue(artifactYaml.exists());
