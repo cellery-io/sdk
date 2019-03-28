@@ -33,6 +33,8 @@ import static io.cellery.CelleryConstants.CELL_YAML_PATH;
  */
 
 public class CelleryUtils {
+    private CelleryUtils(){}
+
     public static Cell getInstance(String destinationPath) {
         Cell cell;
         try (InputStreamReader fileReader = new InputStreamReader(new FileInputStream(destinationPath),

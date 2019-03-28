@@ -149,11 +149,6 @@
                 <version>${ballerina.lang.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.ballerinax.docker</groupId>
-                <artifactId>docker-generator</artifactId>
-                <version>${docker.generator.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>me.snowdrop</groupId>
                 <artifactId>istio-model</artifactId>
                 <version>${snowdrop.istio.model.version}</version>
