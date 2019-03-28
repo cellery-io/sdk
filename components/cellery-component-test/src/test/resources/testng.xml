@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- ~ Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ ~ Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  ~
  ~ Licensed under the Apache License, Version 2.0 (the "License");
  ~ you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 <suite name="Ballerina-Kubernetes-Test-Suite">
     <test name="ballerina-kubernetes-sample-tests" parallel="false">
         <classes>
+            <!--TODO HRTest and EmplyeeTest will run once syntax being fixed-->
             <!--<class name="org.cellery.components.test.HRTest"/>-->
             <class name="org.cellery.components.test.StockTest"/>
             <class name="org.cellery.components.test.MySQLTest"/>
