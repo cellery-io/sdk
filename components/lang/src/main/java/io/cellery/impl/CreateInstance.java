@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -59,6 +60,7 @@ import static org.apache.commons.lang3.StringUtils.removePattern;
 )
 public class CreateInstance extends BlockingNativeCallableUnit {
     private CellImage cellImage = new CellImage();
+    private PrintStream out = System.out;
 
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
@@ -76,6 +78,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
                 if (updatedParams.containsKey(envVar.getName()) && !updatedParams.get(envVar.getName()).isEmpty()) {
                     envVar.setValue(updatedParams.get(envVar.getName()));
+                }
+            });
+            serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
+                if (envVar.getValue().isEmpty()) {
+                    out.println("Warning: Value is empty for environment variable \"" + envVar.getName() + "\"");
                 }
             });
 

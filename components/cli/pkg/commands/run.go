@@ -868,6 +868,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 
 		// Calling the run function
 		cmd := exec.Command("ballerina", cmdArgs...)
+		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 		stdoutReader, _ := cmd.StdoutPipe()
 		stdoutScanner := bufio.NewScanner(stdoutReader)
