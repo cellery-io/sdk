@@ -144,7 +144,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 processAutoScalePolicy(((BMap<?, ?>) attributeMap.get("autoscaling")).getMap(), component);
             }
             if (attributeMap.containsKey("dependencies")) {
-                processDependencies(((BMap<?, ?>) attributeMap.get("dependencies")).getMap());
+                generateDependenciesFile(((BMap<?, ?>) attributeMap.get("dependencies")).getMap());
             }
             cellImage.addComponent(component);
         });
@@ -331,7 +331,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
     }
 
 
-    private void processDependencies(LinkedHashMap<?, ?> dependencies) {
+    private void generateDependenciesFile(LinkedHashMap<?, ?> dependencies) {
         StringBuffer buffer = new StringBuffer();
         dependencies.forEach((key, value) -> {
             LinkedHashMap attributeMap = ((BMap) value).getMap();

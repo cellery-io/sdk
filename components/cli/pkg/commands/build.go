@@ -51,8 +51,6 @@ func RunBuild(tag string, fileName string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
-	ballerinaOrganizationName := strings.Replace(parsedCellImage.Organization, "-", "_", -1)
-
 	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 
@@ -70,9 +68,18 @@ func RunBuild(tag string, fileName string) {
 	}
 	_ = os.RemoveAll(targetDir)
 
+	var imageName = &util.CellImageName{
+		Organization: parsedCellImage.Organization,
+		Name:         parsedCellImage.ImageName,
+		Version:      parsedCellImage.ImageVersion,
+	}
+	iName, err := json.Marshal(imageName)
+	if err != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
+	}
 	// Executing the build method in the cell file
-	cmd := exec.Command("ballerina", "run", fileName+":build", parsedCellImage.Organization,
-		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
+	cmd := exec.Command("ballerina", "run", fileName+":build", string(iName))
 	execError := ""
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)
@@ -106,34 +113,6 @@ func RunBuild(tag string, fileName string) {
 	fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", outStr)
 
 	generateMetaData(parsedCellImage, targetDir)
-
-	// Creating additional Ballerina.toml file for ballerina reference project
-	tomlTemplate := "[project]\n" +
-		"org-name = \"" + ballerinaOrganizationName + "\"\n" +
-		"version = \"" + parsedCellImage.ImageVersion + "\"\n"
-	tomlFile, err := os.Create(filepath.Join(projectDir, "target", "bal", "Ballerina.toml"))
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error in creating Toml File", err)
-	}
-	defer func() {
-		err = tomlFile.Close()
-		if err != nil {
-			spinner.Stop(false)
-			util.ExitWithErrorMessage("Error occurred while cleaning up", err)
-		}
-	}()
-	writer := bufio.NewWriter(tomlFile)
-	_, err = writer.WriteString(tomlTemplate)
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while creating cell reference", err)
-	}
-	err = writer.Flush()
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred creating cell reference", err)
-	}
 
 	folderCopyError := util.CopyDir(targetDir, filepath.Join(projectDir, constants.ZIP_ARTIFACTS))
 	if folderCopyError != nil {
@@ -195,13 +174,6 @@ func RunBuild(tag string, fileName string) {
 	}
 
 	_ = os.Remove(zipSrc)
-
-	err = util.AddImageToBalPath(parsedCellImage)
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while saving cell reference to the Local Repository", err)
-	}
-
 	spinner.Stop(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully built cell image: %s", util.Bold(tag)))
 	util.PrintWhatsNextMessage("run the image", "cellery run "+tag)
@@ -269,7 +241,9 @@ func generateMetaData(cellImage *util.CellImage, targetDir string) {
 			metadataJsonContent, err := ioutil.ReadFile(
 				filepath.Join(tempPath, "artifacts", "cellery", "metadata.json"))
 			if err != nil {
-				util.ExitWithErrorMessage(errorMessage, err)
+				fmt.Println(dependenciesFileExists)
+				util.ExitWithErrorMessage(errorMessage+". metadata.json file not found for dependency: "+dependency,
+					err)
 			}
 			dependencyMetadata := &util.CellImageMetaData{}
 			err = json.Unmarshal(metadataJsonContent, dependencyMetadata)
@@ -305,9 +279,11 @@ func generateMetaData(cellImage *util.CellImage, targetDir string) {
 
 	// Writing the metadata file
 	outputFileMetadata := &util.CellImageMetaData{
-		Organization: cellImage.Organization,
-		Name:         cellImage.ImageName,
-		Version:      cellImage.ImageVersion,
+		CellImageName: util.CellImageName{
+			Organization: cellImage.Organization,
+			Name:         cellImage.ImageName,
+			Version:      cellImage.ImageVersion,
+		},
 		Components:   components,
 		Dependencies: dependenciesMap,
 	}

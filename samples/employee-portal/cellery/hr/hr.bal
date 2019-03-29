@@ -1,8 +1,5 @@
 import ballerina/io;
 import celleryio/cellery;
-import myorg/employee;
-import myorg/stock;
-
 //HR component
 cellery:Component hrComponent = {
     name: "hr",
@@ -46,12 +43,13 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 public function run(cellery:ImageName iName, map<string> instances) returns error? {
+    //TODO: Implement run method
     //Resolve employee gateway URL
-    employee:EmployeeReference employeeRef = cellery:getReferenceRecord(instances.employeeCellDep);
-    hrCell.hrComp.envVars.employee_api_url.value = employeeRef.gatewayHost;
+    //employee:EmployeeReference employeeRef = cellery:getReferenceRecord(instances.employeeCellDep);
+    //hrCell.hrComp.envVars.employee_api_url.value = employeeRef.gatewayHost;
 
     //Resolve stock gateway URL
-    stock:StockReference stockRef = cellery:getReferenceRecord(instances.stockCellDep);
-    hrCell.components.hrComp.envVars.stock_api_url.value = stockRef.gatewayHost;
-    return cellery:createInstance(hrCell, iName);
+    //stock:StockReference stockRef = cellery:getReferenceRecord(instances.stockCellDep);
+    //hrCell.components.hrComp.envVars.stock_api_url.value = stockRef.gatewayHost;
+    //return cellery:createInstance(hrCell, iName);
 }

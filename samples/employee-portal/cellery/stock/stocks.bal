@@ -32,5 +32,5 @@ cellery:CellImage stockCell = {
 public function build(cellery:ImageName iName) returns error? {
     //Build Stock Cell
     io:println("Building Stock Cell ...");
-    return cellery:createImage(stockCell,iName);
+    return cellery:createImage(stockCell, iName);
 }

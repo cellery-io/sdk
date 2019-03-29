@@ -231,14 +231,6 @@ func pullImage(parsedCellImage *util.CellImage, username string, password string
 			}
 			util.ExitWithErrorMessage("Error occurred while saving cell image to local repo", err)
 		}
-
-		err = util.AddImageToBalPath(parsedCellImage)
-		if err != nil {
-			if !silent {
-				spinner.Stop(false)
-			}
-			util.ExitWithErrorMessage("Error occurred while saving cell reference to the Local Repository", err)
-		}
 	} else {
 		if !silent {
 			spinner.Stop(false)

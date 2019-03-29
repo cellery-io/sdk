@@ -186,10 +186,14 @@ type RegistryCredentials struct {
 	Password string `json:"password"`
 }
 
+type CellImageName struct {
+	Organization string `json:"org"`
+	Name         string `json:"name"`
+	Version      string `json:"ver"`
+}
+
 type CellImageMetaData struct {
-	Organization string                        `json:"org"`
-	Name         string                        `json:"name"`
-	Version      string                        `json:"version"`
+	CellImageName
 	Components   []string                      `json:"components"`
 	Dependencies map[string]*CellImageMetaData `json:"dependencies"`
 }

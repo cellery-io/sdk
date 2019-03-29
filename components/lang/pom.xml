@@ -71,7 +71,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20180813</version>
+            <version>${org.json.version}</version>
         </dependency>
 
     </dependencies>
@@ -310,7 +310,7 @@
         <lombok.version>1.18.4</lombok.version>
         <fabric8.kubernetes.version>4.1.2</fabric8.kubernetes.version>
         <yaml.beans.version>1.13</yaml.beans.version>
-        <mustache.version>0.9.4</mustache.version>
+        <org.json.version>20180813</org.json.version>
         <swagger.parser.version>2.0.8</swagger.parser.version>
         <shade.plugin.version>3.2.1</shade.plugin.version>
     </properties>
