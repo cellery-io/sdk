@@ -66,16 +66,14 @@ public class CelleryUtils {
     }
 
 
-    public static void processParameters(Component component, LinkedHashMap<?, ?> parameters) {
+    public static void processParameters(LinkedHashMap<?, ?> parameters, Component component) {
         parameters.forEach((k, v) -> {
-            if (((BMap) v).getMap().get("value") != null) {
-                if (!((BMap) v).getMap().get("value").toString().isEmpty()) {
-                    component.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
-                }
-            } else {
+            if (((BMap) v).getMap().get("value").toString().isEmpty()) {
+                //value is empty for envVar
                 component.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);
+            } else {
+                component.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
             }
-            //TODO:Handle secrets
         });
     }
 

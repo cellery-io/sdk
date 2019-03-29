@@ -84,6 +84,7 @@ import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getValidName;
+import static io.cellery.CelleryUtils.processParameters;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 
@@ -145,6 +146,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
             }
             if (attributeMap.containsKey("dependencies")) {
                 generateDependenciesFile(((BMap<?, ?>) attributeMap.get("dependencies")).getMap());
+            }
+            if (attributeMap.containsKey("envVars")) {
+                processParameters(((BMap<?, ?>) attributeMap.get("envVars")).getMap(), component);
             }
             cellImage.addComponent(component);
         });
@@ -353,9 +357,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         List<Component> components =
                 new ArrayList<>(cellImage.getComponentNameToComponentMap().values());
         GatewaySpec spec = new GatewaySpec();
-        ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
         List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
         for (Component component : components) {
+            ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             if (component.getWebList().size() > 0) {
                 templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
                 spec.setType(ENVOY_GATEWAY);

@@ -52,19 +52,17 @@ import static org.apache.commons.lang3.StringUtils.removePattern;
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "createInstance",
-        args = {@Argument(name = "imageName", type = TypeKind.STRING),
-                @Argument(name = "imageVersion", type = TypeKind.STRING),
-                @Argument(name = "cellImage", type = TypeKind.OBJECT),
-                @Argument(name = "instanceName", type = TypeKind.STRING)},
-        returnType = {@ReturnType(type = TypeKind.STRING)},
+        args = {@Argument(name = "cellImage", type = TypeKind.OBJECT),
+                @Argument(name = "iName", type = TypeKind.OBJECT)},
+        returnType = {@ReturnType(type = TypeKind.BOOLEAN), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
 public class CreateInstance extends BlockingNativeCallableUnit {
     private CellImage cellImage = new CellImage();
 
     public void execute(Context ctx) {
-        String[] cellNameData = ctx.getStringArgument(0).split("/");
-        String cellName = cellNameData[1];
+        LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
+        String cellName = ((BString) nameStruct.get("name")).stringValue();
         String destinationPath = System.getenv(CELLERY_IMAGE_DIR_ENV_VAR) + File.separator +
                 "artifacts" + File.separator + "cellery" + File.separator + cellName + YAML;
         Cell cell = getInstance(destinationPath);
@@ -111,8 +109,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             Component component = new Component();
             // Mandatory fields
             component.setName(((BString) componentValues.get("name")).stringValue());
-            if (componentValues.containsKey("parameters")) {
-                processParameters(component, ((BMap<?, ?>) componentValues.get("parameters")).getMap());
+            if (componentValues.containsKey("envVars")) {
+                processParameters(((BMap<?, ?>) componentValues.get("envVars")).getMap(), component);
             }
             cellImage.addComponent(component);
         });

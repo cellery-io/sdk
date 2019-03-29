@@ -42,7 +42,7 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(hrCell, iName);
 }
 
-public function run(cellery:ImageName iName, map<string> instances) returns error? {
+public function run(cellery:ImageName iName, map<ImageName> instances) returns error? {
     //TODO: Implement run method
     //Resolve employee gateway URL
     //employee:EmployeeReference employeeRef = cellery:getReferenceRecord(instances.employeeCellDep);

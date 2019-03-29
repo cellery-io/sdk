@@ -181,6 +181,11 @@ public type CellImage record {
     !...;
 };
 
+# Open record to hold cell Reference fields.
+public type Reference record{
+
+};
+
 # Build the cell aritifacts
 #
 # + cellImage - The cell image definition
@@ -200,6 +205,12 @@ public extern function createInstance(CellImage cellImage, ImageName iName) retu
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
 public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition|error);
+
+//# Returns a Refernces record with url information
+//#
+//# + iName - Dependency Image Name
+//# + return - Reference record
+//public extern function getReferenceRecord(ImageName iName) returns (Reference|error);
 
 public function getHost(string cellImageName, Component component) returns (string) {
     return cellImageName + "--" + getValidName(component.name) + "-service";

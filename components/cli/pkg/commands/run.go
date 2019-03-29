@@ -853,8 +853,18 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		for _, envVar := range envVars {
 			cmdArgs = append(cmdArgs, "-e", envVar.Key+"="+envVar.Value)
 		}
-		cmdArgs = append(cmdArgs, balFilePath+":run", runningNode.MetaData.Organization+"/"+runningNode.MetaData.Name,
-			runningNode.MetaData.Version, instanceName, string(dependenciesJson))
+		var imageName = &dependencyInfo{
+			Organization: runningNode.MetaData.Organization,
+			Name:         runningNode.MetaData.Name,
+			Version:      runningNode.MetaData.Version,
+			InstanceName: instanceName,
+		}
+		iName, err := json.Marshal(imageName)
+		if err != nil {
+			util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
+		}
+
+		cmdArgs = append(cmdArgs, balFilePath+":run", string(iName), string(dependenciesJson))
 
 		// Calling the run function
 		cmd := exec.Command("ballerina", cmdArgs...)
