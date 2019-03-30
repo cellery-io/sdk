@@ -56,6 +56,8 @@ LOG_PREFIX="[$DATE $TIME]"
 BINARY_SIZE="0 MB"
 #k8s artifacts folder
 K8S_DIRECTORY="k8s-artefacts"
+RESOURCE_LOCATION=files
+BALLERINA_RUNTIME="ballerina-0.990.3"
 
 #Functions
 go_to_dir() {
@@ -154,16 +156,17 @@ copyBuildDirectory() {
     chmod -R 755 ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery
 
     #Copy ballerina to /Library/Ballerina
-    getBallerinaHome
-    mkdir -p ${TARGET_DIRECTORY}/darwinpkg/${HOME_BALLERINA}/bre/lib/
+    #getBallerinaHome
+    #mkdir -p ${TARGET_DIRECTORY}/darwinpkg/${HOME_BALLERINA}/bre/lib/
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
-    cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/darwinpkg/${HOME_BALLERINA}/bre/lib/
+    mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/runtime
+
+    cp -R $RESOURCE_LOCATION/ballerina-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/runtime
+    cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}//darwinpkg/Library/Cellery/
+
+    cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/runtime/${BALLERINA_RUNTIME}/bre/lib/
     cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
     chmod -R 755 ${TARGET_DIRECTORY}/darwinpkg
-
-    if [ -d "$K8S_DIRECTORY" ]; then
-        cp -R $K8S_DIRECTORY ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery
-    fi
 
     rm -rf ${TARGET_DIRECTORY}/package
     mkdir -p ${TARGET_DIRECTORY}/package
