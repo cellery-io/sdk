@@ -19,6 +19,8 @@ PROJECT_PKG := github.com/cellery-io/sdk
 GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)
+BALLERINA_VERSION := 0.990.3
+K8S_ARTEFACTS_REVISION := master
 
 MAIN_PACKAGES := cli
 
@@ -58,6 +60,36 @@ install-lang:
 install-cli:
 	cd ${PROJECT_ROOT}/components/cli; \
 	bash build.sh;
+
+.PHONY: copy-k8s-artefacts
+copy-k8s-artefacts:
+	cd ${PROJECT_ROOT}/installers; \
+	mkdir artefacts && cd artefacts && git init && git config core.sparsecheckout true && mkdir -p .git/info && \
+	echo installer/k8s-artefacts/ >> .git/info/sparse-checkout && \
+        git remote add -f origin https://github.com/wso2-cellery/distribution.git && \
+	git pull origin master && git checkout $(K8S_ARTEFACTS_REVISION); cd ..; \
+
+.PHONY: copy-ballerina-runtime
+copy-ballerina-runtime:
+	cd ${PROJECT_ROOT}/installers; \
+	curl --retry 5 https://product-dist.ballerina.io/downloads/$(BALLERINA_VERSION)/ballerina-$(BALLERINA_VERSION).zip \
+	--output ballerina-$(BALLERINA_VERSION).zip
+
+.PHONY: build-ubuntu-installer
+build-ubuntu-installer: copy-k8s-artefacts copy-ballerina-runtime
+	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
+	mkdir -p files; \
+	cp -r ../artefacts/installer/k8s-artefacts files/; \
+	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
+	bash build-ubuntu-x64.sh $(VERSION)
+
+.PHONY: build-mac-installer
+build-mac-installer: copy-k8s-artefacts copy-ballerina-runtime
+	cd ${PROJECT_ROOT}/installers/macOS-x64; \
+	mkdir -p files; \
+	cp -r ../artefacts/installer/k8s-artefacts files/; \
+	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
+	bash build-macos-x64.sh $(VERSION)
 
 .PHONY: install-docs-view
 install-docs-view:
