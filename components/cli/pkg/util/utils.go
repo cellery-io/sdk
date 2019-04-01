@@ -904,7 +904,7 @@ func RunMethodExists(sourceFile string) (bool, error) {
 		return false, err
 	}
 
-	// Check whether s contains substring text
+	// Check whether run method exists
 	return regexp.MatchString(
 		".*public(\\s)+function(\\s)+run(\\s)*\\((s)*cellery:ImageName(\\s)+.+(\\s)*,(\\s)*map<cellery:ImageName>(\\s)+.+(\\s)*\\)(\\s)+returns(\\s)+error\\?",
 		string(sourceFileBytes))

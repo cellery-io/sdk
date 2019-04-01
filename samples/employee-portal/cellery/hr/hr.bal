@@ -31,7 +31,7 @@ cellery:Component hrComponent = {
     }
 };
 
-// Cell Intialization
+// Cell Initialization
 cellery:CellImage hrCell = {
     components: {
         hrComp: hrComponent
@@ -46,7 +46,6 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
     //Resolve employee API URL
     cellery:Reference employeeRef = check cellery:getReferenceRecord(instances.employeeCellDep);
     hrCell.components.hrComp.envVars.employee_api_url.value = <string>employeeRef.employee_api_url;
-    io:println(hrCell);
 
     //Resolve stock API URL
     cellery:Reference stockRef = check cellery:getReferenceRecord(instances.stockCellDep);

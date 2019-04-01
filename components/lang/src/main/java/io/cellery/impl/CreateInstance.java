@@ -42,7 +42,7 @@ import java.util.Map;
 
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.YAML;
-import static io.cellery.CelleryUtils.processParameters;
+import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 import static org.apache.commons.lang3.StringUtils.removePattern;
@@ -117,7 +117,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             // Mandatory fields
             component.setName(((BString) componentValues.get("name")).stringValue());
             if (componentValues.containsKey("envVars")) {
-                processParameters(((BMap<?, ?>) componentValues.get("envVars")).getMap(), component);
+                processEnvVars(((BMap<?, ?>) componentValues.get("envVars")).getMap(), component);
             }
             cellImage.addComponent(component);
         });

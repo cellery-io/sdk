@@ -66,8 +66,14 @@ public class CelleryUtils {
     }
 
 
-    public static void processParameters(LinkedHashMap<?, ?> parameters, Component component) {
-        parameters.forEach((k, v) -> {
+    /**
+     * Process envVars and add to component.
+     *
+     * @param envVars   Map of EnvVars
+     * @param component targetComponent
+     */
+    public static void processEnvVars(LinkedHashMap<?, ?> envVars, Component component) {
+        envVars.forEach((k, v) -> {
             if (((BMap) v).getMap().get("value").toString().isEmpty()) {
                 //value is empty for envVar
                 component.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);

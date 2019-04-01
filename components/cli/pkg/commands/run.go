@@ -863,7 +863,6 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		if err != nil {
 			util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
 		}
-
 		cmdArgs = append(cmdArgs, balFilePath+":run", string(iName), string(dependenciesJson))
 
 		// Calling the run function

@@ -18,7 +18,6 @@
     <url>https://cellery.io</url>
 
     <dependencies>
-        <!-- ballerina-lang -->
         <dependency>
             <groupId>org.ballerinalang</groupId>
             <artifactId>ballerina-lang</artifactId>
@@ -36,8 +35,6 @@
             <type>zip</type>
             <classifier>ballerina-binary-repo</classifier>
         </dependency>
-
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -64,7 +61,6 @@
             <artifactId>json</artifactId>
             <version>${org.json.version}</version>
         </dependency>
-
     </dependencies>
 
     <build>

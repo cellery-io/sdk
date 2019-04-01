@@ -85,7 +85,7 @@ import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getValidName;
-import static io.cellery.CelleryUtils.processParameters;
+import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 
@@ -149,7 +149,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 generateDependenciesFile(((BMap<?, ?>) attributeMap.get("dependencies")).getMap());
             }
             if (attributeMap.containsKey("envVars")) {
-                processParameters(((BMap<?, ?>) attributeMap.get("envVars")).getMap(), component);
+                processEnvVars(((BMap<?, ?>) attributeMap.get("envVars")).getMap(), component);
             }
             cellImage.addComponent(component);
         });

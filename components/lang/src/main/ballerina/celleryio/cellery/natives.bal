@@ -179,9 +179,7 @@ public type CellImage record {
 };
 
 # Open record to hold cell Reference fields.
-public type Reference record{
-
-};
+public type Reference record{};
 
 # Build the cell aritifacts
 #
