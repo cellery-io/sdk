@@ -42,14 +42,14 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(hrCell, iName);
 }
 
-public function run(cellery:ImageName iName, map<ImageName> instances) returns error? {
-    //TODO: Implement run method
-    //Resolve employee gateway URL
-    //employee:EmployeeReference employeeRef = cellery:getReferenceRecord(instances.employeeCellDep);
-    //hrCell.hrComp.envVars.employee_api_url.value = employeeRef.gatewayHost;
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+    //Resolve employee API URL
+    cellery:Reference employeeRef = check cellery:getReferenceRecord(instances.employeeCellDep);
+    hrCell.components.hrComp.envVars.employee_api_url.value = <string>employeeRef.employee_api_url;
+    io:println(hrCell);
 
-    //Resolve stock gateway URL
-    //stock:StockReference stockRef = cellery:getReferenceRecord(instances.stockCellDep);
-    //hrCell.components.hrComp.envVars.stock_api_url.value = stockRef.gatewayHost;
-    //return cellery:createInstance(hrCell, iName);
+    //Resolve stock API URL
+    cellery:Reference stockRef = check cellery:getReferenceRecord(instances.stockCellDep);
+    hrCell.components.hrComp.envVars.stock_api_url.value = <string>stockRef.stock_api_url;
+    return cellery:createInstance(hrCell, iName);
 }

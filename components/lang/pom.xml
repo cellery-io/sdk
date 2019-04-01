@@ -18,6 +18,7 @@
     <url>https://cellery.io</url>
 
     <dependencies>
+        <!-- ballerina-lang -->
         <dependency>
             <groupId>org.ballerinalang</groupId>
             <artifactId>ballerina-lang</artifactId>
@@ -25,19 +26,7 @@
         </dependency>
         <dependency>
             <groupId>org.ballerinalang</groupId>
-            <version>${ballerina.version}</version>
             <artifactId>lib-creator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.ballerinalang</groupId>
-            <version>${ballerina.version}</version>
-            <artifactId>ballerina-log-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.ballerinalang</groupId>
-            <artifactId>ballerina-log-api</artifactId>
-            <type>zip</type>
-            <classifier>ballerina-binary-repo</classifier>
             <version>${ballerina.version}</version>
         </dependency>
         <dependency>
@@ -47,6 +36,8 @@
             <type>zip</type>
             <classifier>ballerina-binary-repo</classifier>
         </dependency>
+
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

@@ -77,6 +77,7 @@ import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
+import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
@@ -94,8 +95,8 @@ import static io.cellery.CelleryUtils.writeToFile;
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "createImage",
-        args = {@Argument(name = "cellImage", type = TypeKind.OBJECT),
-                @Argument(name = "iName", type = TypeKind.OBJECT)},
+        args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
+                @Argument(name = "iName", type = TypeKind.RECORD)},
         returnType = {@ReturnType(type = TypeKind.BOOLEAN), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
@@ -465,7 +466,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         JSONObject json = new JSONObject();
         cellImage.getComponentNameToComponentMap().forEach((componentName, component) -> {
             component.getApis().forEach(api -> {
-                String url = DEFAULT_GATEWAY_PROTOCOL + "://{{instance_name}}--gateway" +
+                String url = DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + "--gateway" +
                         "-service:" + DEFAULT_GATEWAY_PORT + "/" + api.getContext();
                 json.put(api.getContext() + "_api_url", url.replaceAll("(?<!http:)//", "/"));
             });
@@ -473,7 +474,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
         });
         String targetFileNameWithPath =
-                OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + cellImage.getCellName() + ".json";
+                OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + "Reference.json";
         try {
             writeToFile(json.toString(), targetFileNameWithPath);
         } catch (IOException e) {

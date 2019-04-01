@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/log;
 
 public type ImageName record{
     string org;
@@ -23,7 +22,6 @@ public type ImageName record{
     !...;
 };
 
-# Pre-defined labels for cellery components.
 public type Label record {
     string team?;
     string maintainer?;
@@ -139,7 +137,6 @@ public type TLS record{
     !...;
 };
 
-# OpenId Connect properties
 public type OIDC record {
     string[] nonSecurePaths = [];
     string[] securePaths = [];
@@ -206,11 +203,11 @@ public extern function createInstance(CellImage cellImage, ImageName iName) retu
 # + return - Array of ApiDefinitions
 public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition|error);
 
-//# Returns a Refernces record with url information
-//#
-//# + iName - Dependency Image Name
-//# + return - Reference record
-//public extern function getReferenceRecord(ImageName iName) returns (Reference|error);
+# Returns a Reference record with url information
+#
+# + iName - Dependency Image Name
+# + return - Reference record
+public extern function getReferenceRecord(ImageName iName) returns (Reference|error);
 
 public function getHost(string cellImageName, Component component) returns (string) {
     return cellImageName + "--" + getValidName(component.name) + "-service";

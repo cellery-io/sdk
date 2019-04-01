@@ -53,8 +53,8 @@ import static org.apache.commons.lang3.StringUtils.removePattern;
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "createInstance",
-        args = {@Argument(name = "cellImage", type = TypeKind.OBJECT),
-                @Argument(name = "iName", type = TypeKind.OBJECT)},
+        args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
+                @Argument(name = "iName", type = TypeKind.RECORD)},
         returnType = {@ReturnType(type = TypeKind.BOOLEAN), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )

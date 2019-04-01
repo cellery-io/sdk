@@ -17,6 +17,8 @@
  */
 package io.cellery;
 
+import java.io.File;
+
 /**
  * Collected constants of Cellery.
  */
@@ -24,21 +26,14 @@ public class CelleryConstants {
     public static final String CELLERY_PACKAGE = "celleryio/cellery:0.0.0";
     public static final String RESOURCE_DEFINITION = "ResourceDefinition";
     public static final String API_DEFINITION = "ApiDefinition";
-
-    public static final String CELL_REFERENCE_TEMPLATE_FILE = "cell_reference.bal.mustache";
-    public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_NAME = "cellName";
-    public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_VERSION = "cellVersion";
-    public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_GATEWAY_PORT = "cellGatewayPort";
-    public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_GATEWAY_PROTOCOL = "cellGatewayProtocol";
-    public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_COMPONENTS = "components";
-    public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_HANDLE_API_NAME = "handleApiName";
-    public static final String CELL_REFERENCE_TEMPLATE_CONTEXT_HANDLE_TYPE_NAME = "handleTypeName";
+    public static final String REFERENCE_DEFINITION = "Reference";
+    public static final String CELLERY_REPO_PATH =
+            System.getProperty("user.home") + File.separator + ".cellery" + File.separator + "repo";
 
     public static final String AUTO_SCALING_METRIC_RESOURCE = "Resource";
     public static final String AUTO_SCALING_METRIC_RESOURCE_CPU = "cpu";
 
     // These should match the Ballerina object names of the Auto Scaling Metrics Objects
-    public static final String AUTO_SCALING_METRIC_OBJECT_CPU_UTILIZATION_PERCENTAGE = "CpuUtilizationPercentage";
     public static final String ENVOY_GATEWAY = "Envoy";
     public static final String MICRO_GATEWAY = "MicroGateway";
     public static final String YAML = ".yaml";
@@ -51,6 +46,7 @@ public class CelleryConstants {
     public static final int DEFAULT_GATEWAY_PORT = 80;
     public static final String DEFAULT_PARAMETER_VALUE = "";
     public static final String CELLERY_IMAGE_DIR_ENV_VAR = "CELLERY_IMAGE_DIR";
+    public static final String INSTANCE_NAME_PLACEHOLDER = "{{instance_name}}";
 
     public static final String ANNOTATION_CELL_IMAGE_ORG = "mesh.cellery.io/cell-image-org";
     public static final String ANNOTATION_CELL_IMAGE_NAME = "mesh.cellery.io/cell-image-name";
