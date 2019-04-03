@@ -42,6 +42,7 @@ const EMPTY_STRING = ""
 
 const CELLERY_SETUP_MANAGE = "Manage"
 const CELLERY_SETUP_CREATE = "Create"
+const CELLERY_SETUP_MODIFY = "Modify"
 const CELLERY_SETUP_SWITCH = "Switch"
 const CELLERY_SETUP_BACK = "BACK"
 const CELLERY_SETUP_EXIT = "EXIT"

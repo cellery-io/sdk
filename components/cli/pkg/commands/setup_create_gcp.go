@@ -25,7 +25,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -529,12 +528,7 @@ func validateGcpConfigFile(configFiles []string) error {
 }
 
 func deployMinimalCelleryRuntime() error {
-	if runtime.GOOS == "darwin" {
-		util.CopyDir(constants.K8S_ARTIFACTS_PATH_MAC, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS))
-	}
-	if runtime.GOOS == "linux" {
-		util.CopyDir(constants.K8S_ARTIFACTS_PATH_UBUNTU, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS))
-	}
+	util.CopyDir(util.CelleryInstallationDir(), filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS))
 	var artifactPath = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS)
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
 	// Give permission

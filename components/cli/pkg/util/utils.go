@@ -480,6 +480,17 @@ func UserHomeDir() string {
 	return os.Getenv("HOME")
 }
 
+func CelleryInstallationDir() string {
+	var celleryInstallationDirectory string
+	if runtime.GOOS == "darwin" {
+		celleryInstallationDirectory = constants.K8S_ARTIFACTS_PATH_MAC
+	}
+	if runtime.GOOS == "linux" {
+		celleryInstallationDirectory = constants.K8S_ARTIFACTS_PATH_UBUNTU
+	}
+	return celleryInstallationDirectory
+}
+
 func CreateDir(dirPath string) error {
 	dirExist, _ := FileExists(dirPath)
 	if !dirExist {

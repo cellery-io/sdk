@@ -24,20 +24,17 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newSetupCommand() *cobra.Command {
+func newSetupModifyCommand() *cobra.Command {
+	var addObservability = false
 	cmd := &cobra.Command{
-		Use:   "setup",
-		Short: "Setup cellery runtime",
-		Args:  cobra.NoArgs,
+		Use:   "modify <command>",
+		Short: "Modify Cellery runtime",
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetup()
+			commands.RunSetupModify(addObservability)
 		},
-		Example: "  cellery setup",
 	}
-	cmd.AddCommand(
-		newSetupCreateCommand(),
-		newSetupManageCommand(),
-		newSetupModifyCommand(),
-	)
+
+	cmd.Flags().BoolVarP(&addObservability, "addObservability", "o", false,
+		"Add Observability")
 	return cmd
 }
