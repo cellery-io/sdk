@@ -242,8 +242,8 @@ public class CreateImage extends BlockingNativeCallableUnit {
                     httpAPI.setDefinitions(apiDefinitions);
                 }
             }
-            component.addApi(httpAPI);
         }
+        component.addApi(httpAPI);
     }
 
     private void processWebIngress(Component component, LinkedHashMap attributeMap) {

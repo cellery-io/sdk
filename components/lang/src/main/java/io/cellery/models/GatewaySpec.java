@@ -21,9 +21,11 @@ package io.cellery.models;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Singular;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Gateway Spec.
@@ -48,8 +50,8 @@ public class GatewaySpec {
         grpc = new ArrayList<>();
     }
 
-    public void addHttpAPI(List<API> api) {
-        http.addAll(api);
+    public void addHttpAPI(List<API> apis) {
+        http.addAll(apis.stream().filter(a -> StringUtils.isNotEmpty(a.getContext())).collect(Collectors.toList()));
     }
 
     public void addTCP(List<TCP> tcpIngress) {
