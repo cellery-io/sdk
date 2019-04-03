@@ -45,16 +45,16 @@ import static io.cellery.CelleryConstants.CELLERY_REPO_PATH;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 
 /**
- * Native function cellery:getReferenceRecord.
+ * Native function cellery:getReference.
  */
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
-        functionName = "getReferenceRecord",
+        functionName = "getReference",
         args = {@Argument(name = "cellImage", type = TypeKind.RECORD)},
         returnType = {@ReturnType(type = TypeKind.OBJECT), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
-public class GetReferenceRecord extends BlockingNativeCallableUnit {
+public class GetReference extends BlockingNativeCallableUnit {
 
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(0)).getMap();

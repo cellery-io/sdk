@@ -140,7 +140,7 @@ public type TLS record{
 public type OIDC record {
     string[] nonSecurePaths = [];
     string[] securePaths = [];
-    string discoveryUrl;
+    string providerUrl;
     string clientId;
     string|DCR clientSecret;
     string redirectUrl;
@@ -204,7 +204,7 @@ public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefin
 #
 # + iName - Dependency Image Name
 # + return - Reference record
-public extern function getReferenceRecord(ImageName iName) returns (Reference|error);
+public extern function getReference(ImageName iName) returns (Reference|error);
 
 public function getHost(string cellImageName, Component component) returns (string) {
     return cellImageName + "--" + getValidName(component.name) + "-service";

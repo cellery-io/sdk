@@ -29,7 +29,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 public class OIDC {
-    private String discoveryUrl;
+    private String providerUrl;
     private String clientId;
     private String clientSecret;
     private String redirectUrl;

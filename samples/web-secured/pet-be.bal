@@ -25,17 +25,7 @@ cellery:Component ordersComponent = {
     },
     ingresses: {
         orders: <cellery:HttpApiIngress>{
-            port: 80,
-            context: "orders",
-            definition: {
-                resources: [
-                    {
-                        path: "/*",
-                        method: "GET"
-                    }
-                ]
-            },
-            expose: "local"
+            port: 80
         }
     }
 };
@@ -49,17 +39,7 @@ cellery:Component customersComponent = {
     },
     ingresses: {
         customers: <cellery:HttpApiIngress>{
-            port: 80,
-            context: "customers",
-            definition: {
-                resources: [
-                    {
-                        path: "/*",
-                        method: "GET"
-                    }
-                ]
-            },
-            expose: "local"
+            port: 80
         }
     }
 };
@@ -73,17 +53,7 @@ cellery:Component catalogComponent = {
     },
     ingresses: {
         catalog: <cellery:HttpApiIngress>{
-            port: 80,
-            context: "catalog",
-            definition: {
-                resources: [
-                    {
-                        path: "/*",
-                        method: "GET"
-                    }
-                ]
-            },
-            expose: "local"
+            port: 80
         }
     }
 };
@@ -99,7 +69,8 @@ cellery:Component controllerComponent = {
     ingresses: {
         controller: <cellery:HttpApiIngress>{
             port: 80,
-            context: "controller"
+            context: "controller",
+            expose: "global"
         }
     },
     envVars: {

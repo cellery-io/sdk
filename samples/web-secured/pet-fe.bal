@@ -31,7 +31,7 @@ cellery:Component portalComponent = {
                 context: "/portal",
                 oidc: {
                     nonSecurePaths: ["/portal"], // Default [], optional field
-                    discoveryUrl: "https://idp.cellery-system/oauth2/token",
+                    providerUrl: "https://idp.cellery-system/oauth2/token",
                     clientId: "petstoreapplicationcelleryizza",
                     clientSecret: {
                         dcrUser: "admin",
@@ -75,7 +75,7 @@ public function build(cellery:ImageName iName) returns error? {
 // instances - The map dependency instances of the Cell instance to be created
 // return - The Cell instance
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-    cellery:Reference petStoreBackendRef = check cellery:getReferenceRecord(instances.petstorebackend);
+    cellery:Reference petStoreBackendRef = check cellery:getReference(instances.petstorebackend);
     portalComponent.envVars.PET_STORE_CELL_URL.value = <string>petStoreBackendRef.controller_api_url;
 
     return cellery:createInstance(petStoreFrontendCell, iName);

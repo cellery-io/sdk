@@ -97,7 +97,7 @@ public class CelleryUtils {
      */
     public static OIDC processOidc(LinkedHashMap oidcConfig) {
         OIDC oidc = new OIDC();
-        oidc.setDiscoveryUrl(((BString) oidcConfig.get("discoveryUrl")).stringValue());
+        oidc.setProviderUrl(((BString) oidcConfig.get("providerUrl")).stringValue());
         oidc.setRedirectUrl(((BString) oidcConfig.get("redirectUrl")).stringValue());
         oidc.setBaseUrl(((BString) oidcConfig.get("baseUrl")).stringValue());
         oidc.setClientId(((BString) oidcConfig.get("clientId")).stringValue());
