@@ -20,7 +20,14 @@ GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)
 BALLERINA_VERSION := 0.990.3
-K8S_ARTEFACTS_REVISION := master
+
+OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/lastSuccessfulBuild
+OBSERVABILITY_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/components/global/core/io.cellery.observability.siddhi.apps/target/
+OBSERVABILITY_SIDDHI_ARTIFACT := io.cellery.observability.siddhi.apps-0.1.1-SNAPSHOT.zip
+
+DISTRIBUTION_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/distribution/lastSuccessfulBuild
+DISTRIBUTION_ARTIFACTS_PATH := $(DISTRIBUTION_LAST_BUILD)/artifact
+DISTRIBUTION_K8S_ARTIFACT := k8s-artefacts.tar.gz
 
 MAIN_PACKAGES := cli
 
@@ -64,10 +71,10 @@ install-cli:
 .PHONY: copy-k8s-artefacts
 copy-k8s-artefacts:
 	cd ${PROJECT_ROOT}/installers; \
-	mkdir artefacts && cd artefacts && git init && git config core.sparsecheckout true && mkdir -p .git/info && \
-	echo installer/k8s-artefacts/ >> .git/info/sparse-checkout && \
-        git remote add -f origin https://github.com/wso2-cellery/distribution.git && \
-	git pull origin master && git checkout $(K8S_ARTEFACTS_REVISION); cd ..; \
+	curl --retry 5 $(DISTRIBUTION_ARTIFACTS_PATH)/$(DISTRIBUTION_K8S_ARTIFACT) --output $(DISTRIBUTION_K8S_ARTIFACT); \
+	curl --retry 5 $(OBSERVABILITY_ARTIFACTS_PATH)/$(OBSERVABILITY_SIDDHI_ARTIFACT) --output $(OBSERVABILITY_SIDDHI_ARTIFACT); \
+	tar -xvf $(DISTRIBUTION_K8S_ARTIFACT); \
+	unzip $(OBSERVABILITY_SIDDHI_ARTIFACT) -d k8s-artefacts/observability/siddhi
 
 .PHONY: copy-ballerina-runtime
 copy-ballerina-runtime:
@@ -79,7 +86,7 @@ copy-ballerina-runtime:
 build-ubuntu-installer: copy-k8s-artefacts copy-ballerina-runtime
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
 	mkdir -p files; \
-	cp -r ../artefacts/installer/k8s-artefacts files/; \
+	cp -r ../k8s-artefacts files/; \
 	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
 	bash build-ubuntu-x64.sh $(VERSION)
 
@@ -87,7 +94,7 @@ build-ubuntu-installer: copy-k8s-artefacts copy-ballerina-runtime
 build-mac-installer: copy-k8s-artefacts copy-ballerina-runtime
 	cd ${PROJECT_ROOT}/installers/macOS-x64; \
 	mkdir -p files; \
-	cp -r ../artefacts/installer/k8s-artefacts files/; \
+	cp -r ../k8s-artefacts files/; \
 	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
 	bash build-macos-x64.sh $(VERSION)
 
