@@ -19,35 +19,22 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
-	"os/exec"
-
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunTerminate(instanceName string) {
-	cmd := exec.Command("kubectl", "delete", "cell", instanceName)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
+	// Delete the Cell
+	output, err := util.ExecuteKubeCtlCmd(constants.DELETE, "cell", instanceName)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while stopping the cell instance", err)
+		util.ExitWithErrorMessage("Error occurred while stopping the cell instance: "+instanceName, fmt.Errorf(output))
 	}
-	err = cmd.Wait()
+
+	// Delete the TLS Secret
+	secretName := instanceName + "--tls-secret"
+	output, err = util.ExecuteKubeCtlCmd(constants.DELETE, "secret", secretName, constants.IGNORE_NOT_FOUND)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while stopping the cell instance", err)
+		util.ExitWithErrorMessage("Error occurred while deleting the secret: "+secretName, fmt.Errorf(output))
 	}
 }

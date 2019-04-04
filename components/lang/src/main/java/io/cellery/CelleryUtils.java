@@ -29,6 +29,7 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -171,6 +172,16 @@ public class CelleryUtils {
         } catch (IOException e) {
             throw new BallerinaException("Error occurred while generating yaml definition." + e.getMessage());
         }
+    }
+
+    /**
+     * Print a Warring message.
+     *
+     * @param message warning message
+     */
+    public static void printWarning(String message) {
+        PrintStream out = System.out;
+        out.println("Warning: " + message);
     }
 
     /**

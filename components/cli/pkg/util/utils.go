@@ -948,7 +948,7 @@ func RunMethodExists(sourceFile string) (bool, error) {
 
 	// Check whether run method exists
 	return regexp.MatchString(
-		".*public(\\s)+function(\\s)+run(\\s)*\\((s)*cellery:ImageName(\\s)+.+(\\s)*,(\\s)*map<cellery:ImageName>(\\s)+.+(\\s)*\\)(\\s)+returns(\\s)+error\\?",
+		`.*public(\s)+function(\s)+run(\s)*\((s)*cellery:ImageName(\s)+.+(\s)*,(\s)*map<cellery:ImageName>(\s)+.+(\s)*\)(\s)+returns(\s)+error\\?`,
 		string(sourceFileBytes))
 }
 
@@ -1064,4 +1064,33 @@ func ReadCellImageYaml(cellImage string) []byte {
 		ExitWithErrorMessage("Error while reading cell image content", err)
 	}
 	return cellYamlContent
+}
+
+// executeKubeCtlCmd executes a command using the kubectl
+func ExecuteKubeCtlCmd(arg ...string) (string, error) {
+	var output string
+	cmd := exec.Command(constants.KUBECTL, arg...)
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			output += stdoutScanner.Text()
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			output += stderrScanner.Text()
+		}
+	}()
+	err := cmd.Start()
+	if err != nil {
+		return output, err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return output, err
+	}
+	return output, nil
 }

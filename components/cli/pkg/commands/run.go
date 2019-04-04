@@ -305,7 +305,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 	spinner.SetNewAction("Starting main instance " + util.Bold(instanceName))
 	err = startCellInstance(imageDir, instanceName, mainNode, instanceEnvVars[instanceName])
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to start Cell instance"+instanceName, err)
+		util.ExitWithErrorMessage("Failed to start Cell instance "+instanceName, err)
 	}
 
 	spinner.Stop(true)
@@ -805,7 +805,7 @@ func extractImage(cellImage *util.CellImage, spinner *util.Spinner) (string, err
 
 // getCellInstance fetches the Cell instance data from the runtime
 func getCellInstance(instance string) (*util.Cell, error) {
-	output, err := executeKubeCtlCmd("get", "cell", instance, "-o", "json")
+	output, err := util.ExecuteKubeCtlCmd("get", "cell", instance, "-o", "json")
 	if err != nil {
 		return nil, fmt.Errorf(output)
 	}
@@ -906,16 +906,20 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 	}
 
 	// Applying the yaml
-	output, err := executeKubeCtlCmd(constants.APPLY, "-f", k8sYamlFile)
+	cellYamls, err := getYamlFiles(celleryDir)
 	if err != nil {
-		return fmt.Errorf("failed to create Cell instance %s from image %s/%s:%s due to %v", instanceName,
-			runningNode.MetaData.Organization, runningNode.MetaData.Name, runningNode.MetaData.Version,
-			fmt.Errorf(output))
+		return fmt.Errorf("failed to find yaml files in directory %s due to %v", celleryDir, err)
+	}
+	for _, v := range cellYamls {
+		output, err := util.ExecuteKubeCtlCmd(constants.APPLY, "-f", v)
+		if err != nil {
+			return fmt.Errorf("failed to create k8s artifacts %s from image %s due to %v", v, instanceName, fmt.Errorf(output))
+		}
 	}
 
 	// Waiting for the Cell to be Ready
 	for true {
-		output, err = executeKubeCtlCmd("wait", "--for", "condition=Ready", "cells.mesh.cellery.io/"+instanceName,
+		output, err := util.ExecuteKubeCtlCmd("wait", "--for", "condition=Ready", "cells.mesh.cellery.io/"+instanceName,
 			"--timeout", "30m")
 		if err != nil {
 			if !strings.Contains(output, "timed out") {
@@ -944,33 +948,21 @@ func generateRandomInstanceName(dependencyMetaData *util.CellImageMetaData) (str
 		strings.Replace(dependencyMetaData.Version, ".", "-", -1) + "-" + uuid, nil
 }
 
-// executeKubeCtlCmd executes a command using the kubectl
-func executeKubeCtlCmd(arg ...string) (string, error) {
-	var output string
-	cmd := exec.Command(constants.KUBECTL, arg...)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			output += stdoutScanner.Text()
+// Get list of yaml files in a dir.
+func getYamlFiles(path string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(path, func(path string, f os.FileInfo, _ error) error {
+		if !f.IsDir() {
+			if filepath.Ext(path) == ".yaml" {
+				files = append(files, path)
+			}
 		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			output += stderrScanner.Text()
-		}
-	}()
-	err := cmd.Start()
+		return nil
+	})
 	if err != nil {
-		return output, err
+		return nil, err
 	}
-	err = cmd.Wait()
-	if err != nil {
-		return output, err
-	}
-	return output, nil
+	return files, nil
 }
 
 // dependencyAliasLink is used to store the link information provided by the user

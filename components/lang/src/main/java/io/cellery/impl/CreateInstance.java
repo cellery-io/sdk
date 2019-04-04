@@ -21,6 +21,7 @@ import com.esotericsoftware.yamlbeans.YamlReader;
 import io.cellery.models.Cell;
 import io.cellery.models.CellImage;
 import io.cellery.models.Component;
+import io.cellery.models.OIDC;
 import io.cellery.models.Web;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
@@ -42,7 +43,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -50,6 +50,7 @@ import java.util.Map;
 
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.YAML;
+import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.processOidc;
 import static io.cellery.CelleryUtils.toYaml;
@@ -69,7 +70,6 @@ import static org.apache.commons.lang3.StringUtils.removePattern;
 )
 public class CreateInstance extends BlockingNativeCallableUnit {
     private CellImage cellImage = new CellImage();
-    private PrintStream out = System.out;
 
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
@@ -94,7 +94,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 });
                 serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
                     if (envVar.getValue().isEmpty()) {
-                        out.println("Warning: Value is empty for environment variable \"" + envVar.getName() + "\"");
+                        printWarning("Value is empty for environment variable \"" + envVar.getName() + "\"");
                     }
                 });
 
@@ -113,7 +113,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     }
                     // Set OIDC values
                     if (web.getOidc() != null) {
-                        cell.getSpec().getGatewayTemplate().getSpec().setOidc(web.getOidc());
+                        OIDC oidc = web.getOidc();
+                        if (StringUtils.isBlank(oidc.getClientSecret()) && StringUtils.isBlank(oidc.getDcrPassword())) {
+                            printWarning("OIDC client secret and DCR password are empty.");
+                        }
+                        cell.getSpec().getGatewayTemplate().getSpec().setOidc(oidc);
                     }
                 });
 
@@ -178,6 +182,12 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             LinkedHashMap tlsConfig = ((BMap) gatewayConfig.get("tls")).getMap();
             webIngress.setTlsKey(((BString) tlsConfig.get("key")).stringValue());
             webIngress.setTlsCert(((BString) tlsConfig.get("cert")).stringValue());
+            if (StringUtils.isBlank(webIngress.getTlsKey())) {
+                printWarning("TLS Key value is empty in component " + component.getName());
+            }
+            if (StringUtils.isBlank(webIngress.getTlsCert())) {
+                printWarning("TLS Cert value is empty in component " + component.getName());
+            }
         }
         if (gatewayConfig.containsKey("oidc")) {
             webIngress.setOidc(processOidc(((BMap) gatewayConfig.get("oidc")).getMap()));

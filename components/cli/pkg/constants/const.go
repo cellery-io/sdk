@@ -114,8 +114,10 @@ const ERROR_REPLACING_OBSERVABILITY_YAML = "Error replacing in file /observabili
 const KUBECTL = "kubectl"
 const CREATE = "create"
 const APPLY = "apply"
+const DELETE = "delete"
 const CONFIG_MAP = "configmap"
 const KUBECTL_FLAG = "-f"
+const IGNORE_NOT_FOUND = "--ignore-not-found"
 
 const CELLERY_HUB_KEYRING_NAME = "hubcelleryio"
 
