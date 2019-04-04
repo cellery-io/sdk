@@ -61,7 +61,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -78,10 +77,12 @@ import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
+import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getValidName;
+import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.processOidc;
 import static io.cellery.CelleryUtils.toYaml;
@@ -102,7 +103,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
 
     private CellImage cellImage = new CellImage();
-    private PrintStream out = System.out;
 
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
@@ -356,7 +356,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             List<EnvVar> envVarList = new ArrayList<>();
             component.getEnvVars().forEach((key, value) -> {
                 if (StringUtils.isEmpty(value)) {
-                    out.println("Warning: Value is empty for environment variable \"" + key + "\"");
+                    printWarning("Value is empty for environment variable \"" + key + "\"");
                 }
                 envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
             });
@@ -439,7 +439,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
         });
         String targetFileNameWithPath =
-                OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + "Reference.json";
+                OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + REFERENCE_FILE_NAME;
         try {
             writeToFile(json.toString(), targetFileNameWithPath);
         } catch (IOException e) {

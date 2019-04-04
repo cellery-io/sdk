@@ -43,6 +43,7 @@ import java.util.zip.ZipFile;
 
 import static io.cellery.CelleryConstants.CELLERY_REPO_PATH;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
+import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
 
 /**
  * Native function cellery:getReference.
@@ -85,7 +86,7 @@ public class GetReference extends BlockingNativeCallableUnit {
     private JSONObject readReferenceJSON(String zipFilePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(zipFilePath)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            String fileName = "artifacts" + File.separator + "ref" + File.separator + "Reference.json";
+            String fileName = "artifacts" + File.separator + "ref" + File.separator + REFERENCE_FILE_NAME;
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (entry.getName().matches(fileName)) {

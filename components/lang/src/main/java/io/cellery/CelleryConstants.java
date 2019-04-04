@@ -47,6 +47,7 @@ public class CelleryConstants {
     public static final String DEFAULT_PARAMETER_VALUE = "";
     public static final String CELLERY_IMAGE_DIR_ENV_VAR = "CELLERY_IMAGE_DIR";
     public static final String INSTANCE_NAME_PLACEHOLDER = "{{instance_name}}";
+    public static final String REFERENCE_FILE_NAME = "reference.json";
 
     public static final String ANNOTATION_CELL_IMAGE_ORG = "mesh.cellery.io/cell-image-org";
     public static final String ANNOTATION_CELL_IMAGE_NAME = "mesh.cellery.io/cell-image-name";
