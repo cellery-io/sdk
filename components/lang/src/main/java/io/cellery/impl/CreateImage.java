@@ -85,7 +85,7 @@ import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
-import static io.cellery.CelleryUtils.processOidc;
+import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 
@@ -246,36 +246,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
         }
         component.addApi(httpAPI);
     }
-
-    private void processWebIngress(Component component, LinkedHashMap attributeMap) {
-        Web webIngress = new Web();
-        LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
-        API httpAPI = new API();
-        int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
-        // Validate the container port is same for all the ingresses.
-        if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
-            throw new BallerinaException("Invalid container port" + containerPort + ". Multiple container ports are " +
-                    "not supported.");
-        }
-        component.setContainerPort(containerPort);
-        httpAPI.setGlobal(true);
-        httpAPI.setBackend(component.getService());
-        httpAPI.setContext(((BString) gatewayConfig.get("context")).stringValue());
-        webIngress.setHttpAPI(httpAPI);
-        webIngress.setVhost(((BString) gatewayConfig.get("vhost")).stringValue());
-        if (gatewayConfig.containsKey("tls")) {
-            // TLS enabled
-            LinkedHashMap tlsConfig = ((BMap) gatewayConfig.get("tls")).getMap();
-            webIngress.setTlsKey(((BString) tlsConfig.get("key")).stringValue());
-            webIngress.setTlsCert(((BString) tlsConfig.get("cert")).stringValue());
-        }
-        if (gatewayConfig.containsKey("oidc")) {
-            // OIDC enabled
-            webIngress.setOidc(processOidc(((BMap) gatewayConfig.get("oidc")).getMap()));
-        }
-        component.addWeb(webIngress);
-    }
-
 
     /**
      * Extract the scale policy.

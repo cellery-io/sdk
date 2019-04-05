@@ -21,8 +21,8 @@ import com.esotericsoftware.yamlbeans.YamlReader;
 import io.cellery.models.Cell;
 import io.cellery.models.CellImage;
 import io.cellery.models.Component;
+import io.cellery.models.GatewaySpec;
 import io.cellery.models.OIDC;
-import io.cellery.models.Web;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.internal.SerializationUtils;
@@ -44,6 +44,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -52,7 +53,7 @@ import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
-import static io.cellery.CelleryUtils.processOidc;
+import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 import static org.apache.commons.lang3.StringUtils.removePattern;
@@ -98,7 +99,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     }
                 });
 
-                // create secrets
+                // Update Gateway Config
+                GatewaySpec gatewaySpec = cell.getSpec().getGatewayTemplate().getSpec();
                 updatedComponent.getWebList().forEach(web -> {
                     // Create TLS secret yaml and set the name
                     if (StringUtils.isNoneEmpty(web.getTlsKey())) {
@@ -109,7 +111,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                                 Base64.encodeBase64String(web.getTlsCert().getBytes(StandardCharsets.UTF_8)));
                         String tlsSecretName = instanceName + "--tls-secret";
                         createSecret(tlsSecretName, tlsMap, destinationPath + File.separator + tlsSecretName + ".yaml");
-                        cell.getSpec().getGatewayTemplate().getSpec().setTlsSecretName(tlsSecretName);
+                        gatewaySpec.setTlsSecretName(tlsSecretName);
                     }
                     // Set OIDC values
                     if (web.getOidc() != null) {
@@ -117,8 +119,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                         if (StringUtils.isBlank(oidc.getClientSecret()) && StringUtils.isBlank(oidc.getDcrPassword())) {
                             printWarning("OIDC client secret and DCR password are empty.");
                         }
-                        cell.getSpec().getGatewayTemplate().getSpec().setOidc(oidc);
+                        gatewaySpec.setOidc(oidc);
                     }
+                    gatewaySpec.setHost(web.getVhost());
+                    gatewaySpec.addHttpAPI(Collections.singletonList(web.getHttpAPI()));
                 });
 
 
@@ -169,31 +173,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             BMap ingressValueMap = ((BMap) ingressValues);
             LinkedHashMap attributeMap = ingressValueMap.getMap();
             if ("WebIngress".equals(ingressValueMap.getType().getName())) {
-                processWebIngressSecrets(component, attributeMap);
+                processWebIngress(component, attributeMap);
             }
         });
     }
 
-    private void processWebIngressSecrets(Component component, LinkedHashMap attributeMap) {
-        LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
-        Web webIngress = new Web();
-        if (gatewayConfig.containsKey("tls")) {
-            // TLS enabled
-            LinkedHashMap tlsConfig = ((BMap) gatewayConfig.get("tls")).getMap();
-            webIngress.setTlsKey(((BString) tlsConfig.get("key")).stringValue());
-            webIngress.setTlsCert(((BString) tlsConfig.get("cert")).stringValue());
-            if (StringUtils.isBlank(webIngress.getTlsKey())) {
-                printWarning("TLS Key value is empty in component " + component.getName());
-            }
-            if (StringUtils.isBlank(webIngress.getTlsCert())) {
-                printWarning("TLS Cert value is empty in component " + component.getName());
-            }
-        }
-        if (gatewayConfig.containsKey("oidc")) {
-            webIngress.setOidc(processOidc(((BMap) gatewayConfig.get("oidc")).getMap()));
-        }
-        component.addWeb(webIngress);
-    }
 
     private String removeTags(String string) {
         //a tag is a sequence of characters starting with ! and ending with whitespace

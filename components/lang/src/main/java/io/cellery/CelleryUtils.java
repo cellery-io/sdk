@@ -18,9 +18,13 @@
 package io.cellery;
 
 import com.esotericsoftware.yamlbeans.YamlWriter;
+import io.cellery.models.API;
 import io.cellery.models.Component;
 import io.cellery.models.OIDC;
+import io.cellery.models.Web;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
@@ -73,6 +77,41 @@ public class CelleryUtils {
         return name.toLowerCase(Locale.getDefault()).replaceAll("\\P{Alnum}", "-");
     }
 
+
+    public static void processWebIngress(Component component, LinkedHashMap attributeMap) {
+        Web webIngress = new Web();
+        LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
+        API httpAPI = new API();
+        int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
+        // Validate the container port is same for all the ingresses.
+        if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
+            throw new BallerinaException("Invalid container port" + containerPort + ". Multiple container ports are " +
+                    "not supported.");
+        }
+        component.setContainerPort(containerPort);
+        httpAPI.setGlobal(true);
+        httpAPI.setBackend(component.getService());
+        httpAPI.setContext(((BString) gatewayConfig.get("context")).stringValue());
+        webIngress.setHttpAPI(httpAPI);
+        webIngress.setVhost(((BString) gatewayConfig.get("vhost")).stringValue());
+        if (gatewayConfig.containsKey("tls")) {
+            // TLS enabled
+            LinkedHashMap tlsConfig = ((BMap) gatewayConfig.get("tls")).getMap();
+            webIngress.setTlsKey(((BString) tlsConfig.get("key")).stringValue());
+            webIngress.setTlsCert(((BString) tlsConfig.get("cert")).stringValue());
+            if (StringUtils.isBlank(webIngress.getTlsKey())) {
+                printWarning("TLS Key value is empty in component " + component.getName());
+            }
+            if (StringUtils.isBlank(webIngress.getTlsCert())) {
+                printWarning("TLS Cert value is empty in component " + component.getName());
+            }
+        }
+        if (gatewayConfig.containsKey("oidc")) {
+            // OIDC enabled
+            webIngress.setOidc(processOidc(((BMap) gatewayConfig.get("oidc")).getMap()));
+        }
+        component.addWeb(webIngress);
+    }
 
     /**
      * Process envVars and add to component.
