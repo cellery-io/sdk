@@ -127,6 +127,7 @@ const COMPLETE = "Complete"
 
 const CELLERY_INSTALLATION_PATH_MAC = "/Library/Cellery"
 const CELLERY_INSTALLATION_PATH_UBUNTU = "/usr/share/cellery"
+const CELLERY_EXECUTABLE_PATH = "/runtime/executable/"
 
 const WSO2_APIM_HOST = "https://wso2-apim-gateway"
 

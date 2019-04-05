@@ -153,8 +153,6 @@ copyBuildDirectories() {
     cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
 
     cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/repo
-    chmod -R 0755 ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/
-    chmod 0644 ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/repo/celleryio/cellery/*/cellery.zip
     cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/runtime/${BALLERINA_RUNTIME}/bre/lib/
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin
     cp ../../components/build/cellery ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin

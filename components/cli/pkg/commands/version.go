@@ -52,7 +52,12 @@ func RunVersion() {
 
 	// Printing Ballerina version information
 	_, _ = boldWhite.Println("\nBallerina:")
-	balVersionCmd := exec.Command("ballerina", "version")
+	moduleMgr := &util.BLangManager{}
+	exePath, err := moduleMgr.GetExecutablePath()
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to get executable path", err)
+	}
+	balVersionCmd := exec.Command(exePath + "ballerina", "version")
 	balResult, err := balVersionCmd.Output()
 	if err != nil {
 		util.ExitWithErrorMessage("Ballerina not found",

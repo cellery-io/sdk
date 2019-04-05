@@ -867,7 +867,12 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		cmdArgs = append(cmdArgs, balFilePath+":run", string(iName), string(dependenciesJson))
 
 		// Calling the run function
-		cmd := exec.Command("ballerina", cmdArgs...)
+		moduleMgr := &util.BLangManager{}
+		exePath, err := moduleMgr.GetExecutablePath()
+		if err != nil {
+			util.ExitWithErrorMessage("Failed to get executable path", err)
+		}
+		cmd := exec.Command(exePath + "ballerina", cmdArgs...)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 		stdoutReader, _ := cmd.StdoutPipe()

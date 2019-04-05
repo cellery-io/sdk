@@ -10,5 +10,6 @@ then
 	echo "Remove configuration files."
 	sudo rm /usr/local/bin/cellery
 fi
+sudo rm -rf /usr/share/cellery/
 
 

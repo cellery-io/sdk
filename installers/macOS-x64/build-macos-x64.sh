@@ -172,8 +172,6 @@ copyBuildDirectory() {
 
     cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/runtime/${BALLERINA_RUNTIME}/bre/lib/
     cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
-    chmod -R 755 ${TARGET_DIRECTORY}/darwinpkg
-    chmod 0644 ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo/celleryio/cellery/*/cellery.zip
 
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/darwinpkg/Library/Cellery/docs-view
     cp -R ../../components/docs-view/build/* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/darwinpkg/Library/Cellery/docs-view

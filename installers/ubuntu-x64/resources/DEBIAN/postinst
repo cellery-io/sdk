@@ -7,3 +7,16 @@ fi
 if [ "$1" = abort-upgrade ]; then
 	echo "Aborting the installation without upgrading."
 fi
+
+#echo "Post installation process started"
+PRODUCT_HOME=/usr/share/cellery
+BALLERINA_RUNTIME="ballerina-0.990.3"
+
+# create a symlink so that executable path can be used without version
+SYMLINK_DIR=${PRODUCT_HOME}/runtime/executable
+mkdir -p ${SYMLINK_DIR}
+ln -sf ${PRODUCT_HOME}/runtime/${BALLERINA_RUNTIME}/bin/ballerina ${SYMLINK_DIR}/ballerina
+
+chmod -R 0755 ${PRODUCT_HOME}
+chmod 0644 ${PRODUCT_HOME}/repo/celleryio/cellery/*/cellery.zip
+#echo "Post installation process finished"

@@ -79,7 +79,12 @@ func RunBuild(tag string, fileName string) {
 		util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
 	}
 	// Executing the build method in the cell file
-	cmd := exec.Command("ballerina", "run", constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
+	moduleMgr := &util.BLangManager{}
+	exePath, err := moduleMgr.GetExecutablePath()
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to get executable path", err)
+	}
+	cmd := exec.Command(exePath + "ballerina", "run", constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
 	execError := ""
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)

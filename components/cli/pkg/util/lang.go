@@ -20,14 +20,17 @@ package util
 
 import (
 	"bufio"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 type LangManager interface {
 	Init() error
+	GetExecutablePath() (string, error)
 }
 
 type BLangManager struct{}
@@ -59,4 +62,15 @@ func (langMgr *BLangManager) Init() error {
 		return err
 	}
 	return nil
+}
+
+func (langMgr *BLangManager) GetExecutablePath() (string, error) {
+	exePath := strings.TrimSuffix(CelleryInstallationDir(), "/") + constants.CELLERY_EXECUTABLE_PATH
+	if _, err := os.Stat(exePath); os.IsNotExist(err) {
+		return "", nil
+	} else if err != nil {
+		return "", err
+	}
+	log.Printf("Executable path: %sballerina", exePath)
+	return exePath, nil
 }
