@@ -7,13 +7,13 @@ import ballerina/config;
 cellery:Component webComponent = {
     name: "web-ui",
     source: {
-        image: "docker.io/celleryio/sampleapp-petstore"
+        image: "wso2cellery/samples-hello-world-webapp"
     },
     ingresses: {
         webUI: <cellery:WebIngress>{
             port: 8080,
             gatewayConfig: {
-                vhost: "pet-store.com",
+                vhost: "hello.com",
                 context: "/items", //default to “/”
                 tls: {
                     key: "",
@@ -49,7 +49,6 @@ public function build(cellery:ImageName iName) returns error? {
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instance) returns error? {
     // Read key and crt values from the environment at runtime.
-    io:println("Run method");
     cellery:WebIngress webUI = <cellery:WebIngress>webCell.components.webComp.ingresses.webUI;
     webUI.gatewayConfig.tls.key = config:getAsString("tls.key");
     webUI.gatewayConfig.tls.cert = config:getAsString("tls.cert");

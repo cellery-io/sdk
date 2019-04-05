@@ -15,11 +15,11 @@ string JWT_SUB_TOKEN = "sub";
 string EMPLOYEE_NAME_HEADER = "x-emp-name";
 
 endpoint http:Client employeeDetailsEp {
-    url: config:getAsString("employeegw.url")
+    url: config:getAsString("employee.api.url")
 };
 
 endpoint http:Client stockOptionsEp {
-    url: config:getAsString("stockgw.url")
+    url: config:getAsString("stock.api.url")
 };
 
 @http:ServiceConfig {

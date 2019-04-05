@@ -78,6 +78,12 @@ public class CelleryUtils {
     }
 
 
+    /**
+     * Process Web Ingress and add to component.
+     *
+     * @param component    Component
+     * @param attributeMap WebIngress properties
+     */
     public static void processWebIngress(Component component, LinkedHashMap attributeMap) {
         Web webIngress = new Web();
         LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
