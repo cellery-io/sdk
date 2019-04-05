@@ -20,13 +20,10 @@
 npm ci
 npm run build
 
-if [[ -z "${CELLERY_HOME}" ]]
-then
-    if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        CELLERY_HOME=/usr/share/cellery
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        CELLERY_HOME=/Library/Cellery
-    fi
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    CELLERY_HOME=/usr/share/cellery
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    CELLERY_HOME=/Library/Cellery
 fi
 
 sudo rm -rf ${CELLERY_HOME}/docs-view
