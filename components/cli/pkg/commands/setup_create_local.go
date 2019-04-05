@@ -85,6 +85,7 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 			constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_MINIMAL))
 	}
 	installVM()
+	util.WaitForRuntime()
 }
 
 func createLocal() error {

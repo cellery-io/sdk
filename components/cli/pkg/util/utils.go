@@ -53,6 +53,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 var Bold = color.New(color.Bold).SprintFunc()
@@ -1091,4 +1092,34 @@ func ExecuteKubeCtlCmd(arg ...string) (string, error) {
 		return output, err
 	}
 	return output, nil
+}
+
+func WaitForRuntime() {
+	spinner := StartNewSpinner("Checking cluster status...")
+	err := kubectl.WaitForCluster(time.Hour)
+	if err != nil {
+		spinner.Stop(false)
+		ExitWithErrorMessage("Error while checking cluster status", err)
+	}
+	spinner.SetNewAction("Cluster status...OK")
+	spinner.Stop(true)
+
+	spinner = StartNewSpinner("Checking runtime status (Istio)...")
+	err = kubectl.WaitForDeployments("istio-system")
+	if err != nil {
+		spinner.Stop(false)
+		ExitWithErrorMessage("Error while checking runtime status (Istio)", err)
+	}
+	spinner.SetNewAction("Runtime status (Istio)...OK")
+	spinner.Stop(true)
+
+	spinner = StartNewSpinner("Checking runtime status (Cellery)...")
+	err = kubectl.WaitForDeployments("cellery-system")
+	if err != nil {
+		spinner.Stop(false)
+		ExitWithErrorMessage("Error while checking runtime status (Cellery)", err)
+	}
+	spinner.SetNewAction("Runtime status (Cellery)...OK")
+	spinner.Stop(true)
+
 }
