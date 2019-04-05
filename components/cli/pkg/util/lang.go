@@ -36,6 +36,20 @@ type LangManager interface {
 type BLangManager struct{}
 
 func (langMgr *BLangManager) Init() error {
+	// if the module is not present in the cellery installation directory, skip trying to copy
+	installPath := filepath.Join(CelleryInstallationDir(), "repo")
+	var paths []string
+	var err error
+	celleryModPath := filepath.Join(installPath, "celleryio", "cellery", "*", "cellery.zip")
+	if paths, err = filepath.Glob(celleryModPath); err != nil {
+		return err
+	}
+	if len(paths) == 0 {
+		// cellery module does not exist, can't copy
+		log.Printf("Cellery module not found at %s, hence not copying to user repository \n", celleryModPath)
+		return nil
+	}
+
 	userRepo := filepath.Join(UserHomeDir(), ".ballerina")
 	// if not exists, create the location
 	if _, err := os.Stat(userRepo); os.IsNotExist(err) {
@@ -46,7 +60,6 @@ func (langMgr *BLangManager) Init() error {
 		return err
 	}
 	// copy from cellery installation location to user repository
-	installPath := filepath.Join(CelleryInstallationDir(), "repo")
 	cmd := exec.Command("cp", "-r", installPath, userRepo)
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)

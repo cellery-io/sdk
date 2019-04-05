@@ -6,6 +6,7 @@ fi
 
 if [ "$1" = abort-upgrade ]; then
 	echo "Aborting the installation without upgrading."
+	exit 0
 fi
 
 #echo "Post installation process started"
