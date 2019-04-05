@@ -11,23 +11,12 @@ cellery:Component webComponent = {
     },
     ingresses: {
         webUI: <cellery:WebIngress>{
-            port: 8080,
+            port: 80,
             gatewayConfig: {
                 vhost: "hello.com",
-                context: "/items", //default to “/”
                 tls: {
                     key: "",
                     cert: ""
-                },
-                oidc:
-                {
-                    nonSecurePaths: ["/testApp"], // Default [], optional field
-                    providerUrl: "https://accounts.google.com",
-                    clientId: "",
-                    clientSecret: "",
-                    redirectUrl: "http://pet-store.com/_auth/callback",
-                    baseUrl: "http://pet-store.com/items/",
-                    subjectClaim: "given_name"
                 }
             }
 
@@ -48,11 +37,27 @@ public function build(cellery:ImageName iName) returns error? {
 
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instance) returns error? {
-    // Read key and crt values from the environment at runtime.
+    //Read TLS key file path from ENV and get the value
+    string tlsKey = readFile(config:getAsString("tls.key"));
+    string tlsCert = readFile(config:getAsString("tls.certs"));
+
+    //Assign values to cell
     cellery:WebIngress webUI = <cellery:WebIngress>webCell.components.webComp.ingresses.webUI;
-    webUI.gatewayConfig.tls.key = config:getAsString("tls.key");
-    webUI.gatewayConfig.tls.cert = config:getAsString("tls.cert");
-    webUI.gatewayConfig.oidc.clientId = config:getAsString("google.client.key");
-    webUI.gatewayConfig.oidc.clientSecret = config:getAsString("google.client.secret");
+    webUI.gatewayConfig.tls.key = tlsKey;
+    webUI.gatewayConfig.tls.cert = tlsCert;
     return cellery:createInstance(webCell, iName);
+}
+
+
+function readFile(string filePath) returns (string) {
+    io:ReadableByteChannel bchannel = io:openReadableFile(filePath);
+    io:ReadableCharacterChannel cChannel = new io:ReadableCharacterChannel(bchannel, "UTF-8");
+
+    var readOutput = cChannel.read(2000);
+    if (readOutput is string) {
+        return readOutput;
+    } else {
+        error err = error("Unable to read file " + filePath);
+        panic err;
+    }
 }
