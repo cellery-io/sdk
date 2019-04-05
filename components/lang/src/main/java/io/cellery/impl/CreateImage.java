@@ -52,6 +52,7 @@ import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
+import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
@@ -304,10 +305,20 @@ public class CreateImage extends BlockingNativeCallableUnit {
     private void generateDependenciesFile(LinkedHashMap<?, ?> dependencies) {
         StringBuffer buffer = new StringBuffer();
         dependencies.forEach((key, value) -> {
-            LinkedHashMap attributeMap = ((BMap) value).getMap();
-            final String depText = ((BString) attributeMap.get("org")).stringValue() + "/"
-                    + ((BString) attributeMap.get("name")).stringValue() + ":"
-                    + ((BString) attributeMap.get("ver")).stringValue();
+            String depText;
+            if ("string".equals(((BValue) value).getType().getName())) {
+                depText = ((BString) (value)).stringValue();
+                // Validate dependency text
+                if (!depText.matches("^([^/:]*)/([^/:]*):([^/:]*)$")) {
+                    throw new BallerinaException("expects <organization>/<cell-image>:<version> as the dependency, " +
+                            "received " + depText);
+                }
+            } else {
+                LinkedHashMap attributeMap = ((BMap) value).getMap();
+                depText = ((BString) attributeMap.get("org")).stringValue() + "/"
+                        + ((BString) attributeMap.get("name")).stringValue() + ":"
+                        + ((BString) attributeMap.get("ver")).stringValue();
+            }
             buffer.append(key.toString()).append("=").append(depText).append("\n");
         });
         String targetFileNameWithPath =

@@ -84,7 +84,7 @@ public type Component record {
     map<TCPIngress|HttpApiIngress|GRPCIngress|WebIngress> ingresses?;
     Label labels?;
     map<Env> envVars?;
-    map<ImageName> dependencies?;
+    map<ImageName|string> dependencies?;
     AutoScaling autoscaling?;
     !...;
 };

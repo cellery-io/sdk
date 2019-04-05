@@ -195,7 +195,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         component.addWeb(webIngress);
     }
 
-
     private String removeTags(String string) {
         //a tag is a sequence of characters starting with ! and ending with whitespace
         return removePattern(string, " ![^\\s]*");

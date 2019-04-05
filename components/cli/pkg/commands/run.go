@@ -850,7 +850,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		}
 
 		// Preparing the run command arguments
-		cmdArgs := []string{"run"}
+		cmdArgs := []string{"run", constants.BALLERINA_PRINT_RETURN_FLAG}
 		for _, envVar := range envVars {
 			cmdArgs = append(cmdArgs, "-e", envVar.Key+"="+envVar.Value)
 		}

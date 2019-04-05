@@ -118,6 +118,7 @@ const DELETE = "delete"
 const CONFIG_MAP = "configmap"
 const KUBECTL_FLAG = "-f"
 const IGNORE_NOT_FOUND = "--ignore-not-found"
+const BALLERINA_PRINT_RETURN_FLAG = "--printreturn"
 
 const CELLERY_HUB_KEYRING_NAME = "hubcelleryio"
 
