@@ -84,7 +84,7 @@ func RunBuild(tag string, fileName string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to get executable path", err)
 	}
-	cmd := exec.Command(exePath + "ballerina", "run", constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
+	cmd := exec.Command(exePath+"ballerina", "run", constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
 	execError := ""
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)

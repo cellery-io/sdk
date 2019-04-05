@@ -57,7 +57,7 @@ func RunVersion() {
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to get executable path", err)
 	}
-	balVersionCmd := exec.Command(exePath + "ballerina", "version")
+	balVersionCmd := exec.Command(exePath+"ballerina", "version")
 	balResult, err := balVersionCmd.Output()
 	if err != nil {
 		util.ExitWithErrorMessage("Ballerina not found",

@@ -20,12 +20,13 @@ package util
 
 import (
 	"bufio"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 type LangManager interface {

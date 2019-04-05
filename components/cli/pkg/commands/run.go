@@ -872,7 +872,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to get executable path", err)
 		}
-		cmd := exec.Command(exePath + "ballerina", cmdArgs...)
+		cmd := exec.Command(exePath+"ballerina", cmdArgs...)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 		stdoutReader, _ := cmd.StdoutPipe()
