@@ -37,7 +37,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -46,7 +45,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/cheggaaa/pb"
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/tj/go-spin"
@@ -618,7 +616,7 @@ func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 		d.Concurrency = 6
 	})
 
-	writer := &progressWriter{writer: file, size: s3ObjectSize, written: 0}
+	writer := &progressWriter{writer: file, size: s3ObjectSize}
 	writer.display = displayProgressBar
 
 	writer.init(s3ObjectSize)
@@ -634,27 +632,6 @@ func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 
 	writer.finish()
 	fmt.Println("Download completed", file.Name(), numBytes, "bytes")
-}
-
-func (pw *progressWriter) WriteAt(p []byte, off int64) (int, error) {
-	atomic.AddInt64(&pw.written, int64(len(p)))
-	if pw.display {
-		pw.bar.SetCurrent(pw.written)
-	}
-
-	return pw.writer.WriteAt(p, off)
-}
-
-func (pw *progressWriter) init(s3ObjectSize int64) {
-	if pw.display {
-		pw.bar = pb.StartNew(int(s3ObjectSize))
-	}
-}
-
-func (pw *progressWriter) finish() {
-	if pw.display {
-		pw.bar.Finish()
-	}
 }
 
 func GetS3ObjectSize(bucket, item string) int64 {

@@ -22,9 +22,8 @@ import (
 	"io"
 	"sync"
 
-	"github.com/cheggaaa/pb"
-
 	"github.com/tj/go-spin"
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
 type CellImage struct {
@@ -203,9 +202,30 @@ type CellImageMetaData struct {
 }
 
 type progressWriter struct {
-	written int64
 	writer  io.WriterAt
 	size    int64
 	bar     *pb.ProgressBar
 	display bool
+}
+
+func (pw *progressWriter) init(s3ObjectSize int64) {
+	if pw.display {
+		pw.bar = pb.StartNew(int(s3ObjectSize))
+		pw.bar.ShowSpeed = true
+		pw.bar.Format("[=>_]")
+		pw.bar.SetUnits(pb.U_BYTES_DEC)
+	}
+}
+
+func (pw *progressWriter) finish() {
+	if pw.display {
+		pw.bar.Finish()
+	}
+}
+
+func (pw *progressWriter) WriteAt(p []byte, off int64) (int, error) {
+	if pw.display {
+		pw.bar.Add64(int64(len(p)))
+	}
+	return pw.writer.WriteAt(p, off)
 }
