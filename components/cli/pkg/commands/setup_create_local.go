@@ -23,7 +23,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 
 	"github.com/manifoldco/promptui"
 
@@ -42,11 +41,9 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 	}
 
 	if isCompleteSelected {
-		confirmDownload, err := util.GetYesOrNoFromUser("Downloading " + constants.AWS_S3_ITEM_VM_COMPLETE +
-			" of size " +
-			strconv.FormatFloat(float64(util.GetS3ObjectSize(constants.AWS_S3_BUCKET,
-				constants.AWS_S3_ITEM_VM_COMPLETE))/(1024*1024*1024),
-				'f', 2, 64) + " GB. Do you wish to continue")
+		confirmDownload, err := util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your machine. Do you want to continue",
+			constants.AWS_S3_ITEM_VM_COMPLETE,
+			util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_COMPLETE))))
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to select an option", err)
 		}
@@ -63,11 +60,9 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 		util.ReplaceFile(filepath.Join(util.UserHomeDir(), ".kube", "config"), filepath.Join(util.UserHomeDir(),
 			constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_COMPLETE))
 	} else {
-		confirmDownload, err := util.GetYesOrNoFromUser("Downloading " + constants.AWS_S3_ITEM_VM_MINIMAL +
-			" of size " +
-			strconv.FormatFloat(float64(util.GetS3ObjectSize(constants.AWS_S3_BUCKET,
-				constants.AWS_S3_ITEM_VM_MINIMAL))/(1024*1024*1024),
-				'f', 2, 64) + " GB. Do you wish to continue")
+		confirmDownload, err := util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your machine. Do you want to continue",
+			constants.AWS_S3_ITEM_VM_MINIMAL,
+			util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_MINIMAL))))
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to select an option", err)
 		}
@@ -97,16 +92,22 @@ func createLocal() error {
 		Help:     util.Faint("[Use arrow keys]"),
 	}
 
+	sizeMinimal := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_MINIMAL))
+	sizeComplete := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_COMPLETE))
+
 	cellPrompt := promptui.Select{
-		Label:     util.YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.BASIC, constants.COMPLETE},
+		Label: util.YellowBold("?") + " Select the type of runtime",
+		Items: []string{
+			fmt.Sprintf("%s (size: %s)", constants.BASIC, sizeMinimal),
+			fmt.Sprintf("%s (size: %s)", constants.COMPLETE, sizeComplete),
+		},
 		Templates: cellTemplate,
 	}
-	_, value, err := cellPrompt.Run()
+	index, _, err := cellPrompt.Run()
 	if err != nil {
 		return fmt.Errorf("Failed to select an option: %v", err)
 	}
-	if value == constants.COMPLETE {
+	if index == 1 {
 		isCompleteSelected = true
 	}
 	RunSetupCreateLocal(isCompleteSelected)

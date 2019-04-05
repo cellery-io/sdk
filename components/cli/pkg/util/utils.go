@@ -39,6 +39,7 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/cheggaaa/pb.v1"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -1099,4 +1100,8 @@ func WaitForRuntime() {
 	spinner.SetNewAction("Runtime status (Cellery)...OK")
 	spinner.Stop(true)
 
+}
+
+func FormatBytesToString(size int64) string {
+	return pb.Format(size).To(pb.U_BYTES_DEC).String()
 }
