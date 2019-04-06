@@ -48,7 +48,7 @@ const CELLERY_SETUP_BACK = "BACK"
 const CELLERY_SETUP_EXIT = "EXIT"
 
 const CELLERY_CREATE_LOCAL = "Local"
-const CELLERY_CREATE_KUBEADM = "kubeadm"
+const CELLERY_CREATE_EXISTING_CLUSTER = "Existing cluster"
 const CELLERY_CREATE_GCP = "GCP"
 
 const CELLERY_MANAGE_STOP = "stop"
@@ -71,6 +71,7 @@ const GCP_DB_INSTANCE_NAME = "cellery-sql"
 const GCP_BUCKET_NAME = "cellery-gcp-bucket"
 const GCP_SQL_USER_NAME = "cellery-sql-user"
 const GCP_SQL_PASSWORD = "cellery-sql-user"
+const MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER = "wso2apim-with-analytics-rdbms-service"
 const GCP_NFS_SERVER_INSTANCE = "nfs-server"
 
 const GCP_NFS_CONFIG_NAME = "data"
@@ -84,7 +85,6 @@ const GCP_SQL_DISK_SIZE_GB = 20
 const ZIP_BALLERINA_SOURCE = "src"
 const ZIP_ARTIFACTS = "artifacts"
 
-const CELLERY_HOME_ENV_VAR = "CELLERY_HOME"
 const CELLERY_HOME_DOCS_VIEW_DIR = "docs-view"
 
 const CELLERY_HOME = ".cellery"
@@ -112,6 +112,7 @@ const INIT_SQL = "init.sql"
 const ERROR_REPLACING_APIM_MASTER_DATASOURCES_XML = "Error replacing in file /global-apim/conf/datasources/master-datasources.xml"
 const ERROR_REPLACING_OBSERVABILITY_YAML = "Error replacing in file /observability/sp/conf/deployment.yaml"
 const ERROR_REPLACING_IDP_MASTER_DATASOURCES_XML = "Error replacing in file /global-idp/conf/datasources/master-datasources.xml"
+const ERROR_REPLACING_INIT_SQL = "Error replacing in file /mysql/dbscripts/init.sql"
 
 const KUBECTL = "kubectl"
 const CREATE = "create"
@@ -134,3 +135,12 @@ const CELLERY_EXECUTABLE_PATH = "/runtime/executable/"
 const WSO2_APIM_HOST = "https://wso2-apim-gateway"
 
 const CELLERY_IMAGE_DIR_ENV_VAR = "CELLERY_IMAGE_DIR"
+
+const ROOT_DIR = "/"
+const VAR = "var"
+const TMP = "tmp"
+const CELLERY = "cellery"
+const APIM_REPOSITORY_DEPLOYMENT_SERVER = "apim_repository_deployment_server"
+
+const PERSISTENT_VOLUME = "Persistent volume"
+const NON_PERSISTENT_VOLUME = "Non persistent volume"

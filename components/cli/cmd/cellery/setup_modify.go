@@ -26,15 +26,18 @@ import (
 
 func newSetupModifyCommand() *cobra.Command {
 	var addObservability = false
+	var addApimGlobalGateway = false
 	cmd := &cobra.Command{
 		Use:   "modify <command>",
 		Short: "Modify Cellery runtime",
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupModify(addObservability)
+			commands.RunSetupModify(addApimGlobalGateway, addObservability)
 		},
 	}
 
 	cmd.Flags().BoolVarP(&addObservability, "addObservability", "o", false,
-		"Add Observability")
+		"Add observability")
+	cmd.Flags().BoolVarP(&addObservability, "addApimGlobalGateway", "g", false,
+		"Add apim global gateway")
 	return cmd
 }

@@ -16,22 +16,16 @@
  * under the License.
  */
 
-package main
+package kubectl
 
-import (
-	"github.com/spf13/cobra"
-)
+type Node struct {
+	Items []NodeItem `json:"items"`
+}
 
-func newSetupCreateCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "create <command>",
-		Short: "Create a Cellery runtime",
-	}
+type NodeItem struct {
+	Metadata NodeMetaData `json:"metadata"`
+}
 
-	cmd.AddCommand(
-		newSetupCreateLocalCommand(),
-		newSetupCreateGcpCommand(),
-		newSetupCreateOnExistingClusterCommand(),
-	)
-	return cmd
+type NodeMetaData struct {
+	Name string `json:"name"`
 }

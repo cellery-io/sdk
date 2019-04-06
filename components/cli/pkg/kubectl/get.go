@@ -19,6 +19,7 @@
 package kubectl
 
 import (
+	"encoding/json"
 	"os/exec"
 	"strings"
 
@@ -39,4 +40,19 @@ func GetDeploymentNames(namespace string) ([]string, error) {
 		return nil, err
 	}
 	return strings.Split(string(out), " "), nil
+}
+
+func GetMasterNodeName() (string, error) {
+	cmd := exec.Command(constants.KUBECTL, "get", "node", "--selector", "node-role.kubernetes.io/master",
+		"-o", "json")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	jsonOutput := &Node{}
+	err = json.Unmarshal([]byte(out), jsonOutput)
+	if err != nil {
+		return "", err
+	}
+	return jsonOutput.Items[0].Metadata.Name, nil
 }

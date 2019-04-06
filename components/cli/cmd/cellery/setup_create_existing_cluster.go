@@ -20,18 +20,21 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newSetupCreateCommand() *cobra.Command {
+func newSetupCreateOnExistingClusterCommand() *cobra.Command {
+	var isCompleteSetup = false
 	cmd := &cobra.Command{
-		Use:   "create <command>",
-		Short: "Create a Cellery runtime",
+		Use:   "existing",
+		Short: "Create a Cellery runtime in existing cluster",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			commands.RunSetupCreateOnExistingCluster(isCompleteSetup)
+		},
+		Example: "  cellery setup create existing",
 	}
-
-	cmd.AddCommand(
-		newSetupCreateLocalCommand(),
-		newSetupCreateGcpCommand(),
-		newSetupCreateOnExistingClusterCommand(),
-	)
+	cmd.Flags().BoolVarP(&isCompleteSetup, "complete", "c", false, "Create complete gcp setup")
 	return cmd
 }
