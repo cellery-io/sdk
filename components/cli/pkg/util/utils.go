@@ -1105,3 +1105,31 @@ func WaitForRuntime() {
 func FormatBytesToString(size int64) string {
 	return pb.Format(size).To(pb.U_BYTES_DEC).String()
 }
+
+func MergeKubeConfig(newConfigFile string) error {
+	newConf, err := kubectl.ReadConfig(newConfigFile)
+	if err != nil {
+		return err
+	}
+
+	confPath, err := kubectl.DefaultConfigPath()
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(confPath); err != nil {
+		if os.IsNotExist(err) {
+			// kube-config does not exist. Create a new one
+			return kubectl.WriteConfig(confPath, newConf)
+		} else {
+			return err
+		}
+	}
+
+	oldConf, err := kubectl.ReadConfig(confPath)
+	if err != nil {
+		return err
+	}
+	merged := kubectl.MergeConfig(oldConf, newConf)
+	return kubectl.WriteConfig(confPath, merged)
+}

@@ -57,8 +57,11 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 			constants.AWS_S3_ITEM_VM_COMPLETE))
 		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_CONFIG_COMPLETE, vmLocation,
 			false)
-		util.ReplaceFile(filepath.Join(util.UserHomeDir(), ".kube", "config"), filepath.Join(util.UserHomeDir(),
+		err = util.MergeKubeConfig(filepath.Join(util.UserHomeDir(),
 			constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_COMPLETE))
+		if err != nil {
+			util.ExitWithErrorMessage("Failed to merge kube-config file", err)
+		}
 	} else {
 		confirmDownload, err := util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your machine. Do you want to continue",
 			constants.AWS_S3_ITEM_VM_MINIMAL,
@@ -76,8 +79,11 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 			constants.AWS_S3_ITEM_VM_MINIMAL))
 		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_CONFIG_MINIMAL, vmLocation,
 			false)
-		util.ReplaceFile(filepath.Join(util.UserHomeDir(), ".kube", "config"), filepath.Join(util.UserHomeDir(),
+		err = util.MergeKubeConfig(filepath.Join(util.UserHomeDir(),
 			constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_MINIMAL))
+		if err != nil {
+			util.ExitWithErrorMessage("Failed to merge kube-config file", err)
+		}
 	}
 	installVM()
 	util.WaitForRuntime()
