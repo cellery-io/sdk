@@ -44,7 +44,7 @@ func RunImage() {
 	data := getImagesArray()
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"CELL", "VERSION", "SIZE", "CREATED"})
+	table.SetHeader([]string{"IMAGE", "SIZE", "CREATED"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")
@@ -53,10 +53,8 @@ func RunImage() {
 	table.SetHeaderColor(
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold})
 	table.SetColumnColor(
-		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{})
@@ -176,8 +174,7 @@ func getImagesArray() [][]string {
 					util.ExitWithErrorMessage("Error while listing images", err)
 				}
 				images = append(images, []string{
-					organization + "/" + project,
-					version,
+					fmt.Sprintf("%s/%s:%s", organization, project, version),
 					units.HumanSize(float64(size)),
 					fmt.Sprintf("%s ago", units.HumanDuration(time.Since(time.Unix(meta.BuildTimestamp, 0)))),
 				})

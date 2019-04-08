@@ -19,10 +19,11 @@
 package kubectl
 
 import (
-	"github.com/ghodss/yaml"
 	"io/ioutil"
 	"os/user"
 	"path/filepath"
+
+	"github.com/ghodss/yaml"
 )
 
 func DefaultConfigPath() (string, error) {
