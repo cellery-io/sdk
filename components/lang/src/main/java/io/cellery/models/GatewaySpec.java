@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 public class GatewaySpec {
     private String type;
     private String host;
-    private String tlsSecretName;
+    private String tlsSecret;
     private OIDC oidc;
     private @Singular("http")
     List<API> http;

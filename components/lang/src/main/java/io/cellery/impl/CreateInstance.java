@@ -111,7 +111,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                                 Base64.encodeBase64String(web.getTlsCert().getBytes(StandardCharsets.UTF_8)));
                         String tlsSecretName = instanceName + "--tls-secret";
                         createSecret(tlsSecretName, tlsMap, destinationPath + File.separator + tlsSecretName + ".yaml");
-                        gatewaySpec.setTlsSecretName(tlsSecretName);
+                        gatewaySpec.setTlsSecret(tlsSecretName);
                     }
                     // Set OIDC values
                     if (web.getOidc() != null) {
