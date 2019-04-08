@@ -66,7 +66,7 @@ import static org.apache.commons.lang3.StringUtils.removePattern;
         functionName = "createInstance",
         args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
                 @Argument(name = "iName", type = TypeKind.RECORD)},
-        returnType = {@ReturnType(type = TypeKind.BOOLEAN), @ReturnType(type = TypeKind.ERROR)},
+        returnType = {@ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
 public class CreateInstance extends BlockingNativeCallableUnit {

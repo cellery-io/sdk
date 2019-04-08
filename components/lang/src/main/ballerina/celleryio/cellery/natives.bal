@@ -32,7 +32,7 @@ public type Label record {
 public type Expose "global"|"local";
 
 public type DockerSource record {
-    string Dockerfile;
+    string dockerDir;
     string tag;
     !...;
 };
@@ -79,7 +79,7 @@ public type CpuUtilizationPercentage record {
 
 public type Component record {
     string name;
-    ImageSource source;
+    ImageSource|DockerSource source;
     int replicas = 1;
     map<TCPIngress|HttpApiIngress|GRPCIngress|WebIngress> ingresses?;
     Label labels?;

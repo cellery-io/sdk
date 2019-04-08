@@ -58,6 +58,9 @@ import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 import org.ballerinalang.util.exceptions.BallerinaException;
+import org.ballerinax.docker.generator.DockerArtifactHandler;
+import org.ballerinax.docker.generator.exceptions.DockerGenException;
+import org.ballerinax.docker.generator.models.DockerModel;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -74,6 +77,7 @@ import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
+import static io.cellery.CelleryConstants.IMAGE_SOURCE;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
@@ -97,7 +101,7 @@ import static io.cellery.CelleryUtils.writeToFile;
         functionName = "createImage",
         args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
                 @Argument(name = "iName", type = TypeKind.RECORD)},
-        returnType = {@ReturnType(type = TypeKind.BOOLEAN), @ReturnType(type = TypeKind.ERROR)},
+        returnType = {@ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
 public class CreateImage extends BlockingNativeCallableUnit {
@@ -118,9 +122,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             generateCellReference();
         } catch (BallerinaException e) {
             ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
-            return;
         }
-        ctx.setReturnValues(new BBoolean(true));
     }
 
     private void processComponents(LinkedHashMap<?, ?> components) {
@@ -131,8 +133,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             component.setName(((BString) attributeMap.get("name")).stringValue());
             component.setReplicas((int) (((BInteger) attributeMap.get("replicas")).intValue()));
             component.setService(component.getName());
-            component.setSource(((BString) ((BMap) attributeMap.get("source")).getMap().get("image")).stringValue());
-
+            processSource(component, attributeMap);
             //Process Optional fields
             if (attributeMap.containsKey("ingresses")) {
                 processIngress(((BMap<?, ?>) attributeMap.get("ingresses")).getMap(), component);
@@ -152,6 +153,25 @@ public class CreateImage extends BlockingNativeCallableUnit {
             }
             cellImage.addComponent(component);
         });
+    }
+
+    private void processSource(Component component, LinkedHashMap attributeMap) {
+        if ("ImageSource".equals(((BValue) attributeMap.get(IMAGE_SOURCE)).getType().getName())) {
+            //Image Source
+            component.setSource(((BString) ((BMap) attributeMap.get(IMAGE_SOURCE)).getMap()
+                    .get("image")).stringValue());
+        } else {
+            // Docker Source
+            LinkedHashMap dockerSourceMap = ((BMap) attributeMap.get(IMAGE_SOURCE)).getMap();
+            String tag = ((BString) dockerSourceMap.get("tag")).stringValue();
+            if (!tag.matches("[^/]+")) {
+                // <IMAGE_NAME>:1.0.0
+                throw new BallerinaException("Invalid docker tag: " + tag + ". Repository name is not supported when " +
+                        "building from Dockerfile");
+            }
+            createDockerImage(tag, ((BString) dockerSourceMap.get("dockerDir")).stringValue());
+            component.setSource(tag);
+        }
     }
 
     /**
@@ -402,7 +422,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
         autoScalingSpec.setOverridable(autoScaling.isOverridable());
         autoScalingSpec.setPolicy(autoScaleSpecBuilder.build());
         return autoScalingSpec;
-
     }
 
     /**
@@ -425,6 +444,17 @@ public class CreateImage extends BlockingNativeCallableUnit {
             writeToFile(json.toString(), targetFileNameWithPath);
         } catch (IOException e) {
             throw new BallerinaException("Error occurred while generating reference file " + targetFileNameWithPath);
+        }
+    }
+
+    private void createDockerImage(String imageName, String dockerDir) {
+        DockerModel dockerModel = new DockerModel();
+        dockerModel.setName(imageName);
+        try {
+            DockerArtifactHandler dockerArtifactHandler = new DockerArtifactHandler(dockerModel);
+            dockerArtifactHandler.buildImage(dockerModel, dockerDir);
+        } catch (DockerGenException | InterruptedException | IOException e) {
+            throw new BallerinaException("Error occurred while building Docker image " + e.getMessage());
         }
     }
 }
