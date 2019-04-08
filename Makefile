@@ -22,10 +22,14 @@ GIT_REVISION := $(shell git rev-parse --verify HEAD)
 BALLERINA_VERSION := 0.990.3
 
 OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/lastSuccessfulBuild
+OBSERVABILITY_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/components/global/*zip*
+OBSERVABILITY_ARTIFACTS := global.zip
+
 OBSERVABILITY_SIDDHI_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/components/global/core/io.cellery.observability.siddhi.apps/target/
 OBSERVABILITY_PORTAL_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/components/global/portal/io.cellery.observability.ui/target
-OBSERVABILITY_SIDDHI_ARTIFACT := io.cellery.observability.siddhi.apps-0.1.1-SNAPSHOT.zip
-OBSERVABILITY_PORTAL_ARTIFACT := io.cellery.observability.ui-0.1.1-SNAPSHOT.zip
+
+OBSERVABILITY_SIDDHI_ARTIFACT := global/core/io.cellery.observability.siddhi.apps/target/io.cellery.observability.siddhi.apps-*.zip
+OBSERVABILITY_PORTAL_ARTIFACT := global/portal/io.cellery.observability.ui/target/io.cellery.observability.ui-*.zip
 
 DISTRIBUTION_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/distribution/lastSuccessfulBuild
 DISTRIBUTION_ARTIFACTS_PATH := $(DISTRIBUTION_LAST_BUILD)/artifact
@@ -74,9 +78,9 @@ install-cli:
 copy-k8s-artefacts:
 	cd ${PROJECT_ROOT}/installers; \
 	curl --retry 5 $(DISTRIBUTION_ARTIFACTS_PATH)/$(DISTRIBUTION_K8S_ARTIFACT) --output $(DISTRIBUTION_K8S_ARTIFACT); \
-	curl --retry 5 $(OBSERVABILITY_SIDDHI_ARTIFACTS_PATH)/$(OBSERVABILITY_SIDDHI_ARTIFACT) --output $(OBSERVABILITY_SIDDHI_ARTIFACT); \
-	curl --retry 5 $(OBSERVABILITY_PORTAL_ARTIFACTS_PATH)/$(OBSERVABILITY_PORTAL_ARTIFACT) --output $(OBSERVABILITY_PORTAL_ARTIFACT); \
+	curl --retry 5 $(OBSERVABILITY_ARTIFACTS_PATH)/$(OBSERVABILITY_ARTIFACTS) --output $(OBSERVABILITY_ARTIFACTS); \
 	tar -xvf $(DISTRIBUTION_K8S_ARTIFACT); \
+	unzip $(OBSERVABILITY_ARTIFACTS); \
 	unzip $(OBSERVABILITY_SIDDHI_ARTIFACT) -d k8s-artefacts/observability/siddhi; \
 	mkdir -p k8s-artefacts/observability/node-server/config; \
 	unzip $(OBSERVABILITY_PORTAL_ARTIFACT) && cp config/* k8s-artefacts/observability/node-server/config/
