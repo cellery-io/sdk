@@ -20,6 +20,8 @@ GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)
 BALLERINA_VERSION := 0.990.3
+BALLERINA_JRE_LOCATION := ballerina-$(BALLERINA_VERSION)/bre/lib
+BALLERINA_BIN_LOCATION := ballerina-$(BALLERINA_VERSION)/bin
 
 OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/lastSuccessfulBuild
 OBSERVABILITY_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/components/global/*zip*
@@ -34,6 +36,8 @@ OBSERVABILITY_PORTAL_ARTIFACT := global/portal/io.cellery.observability.ui/targe
 DISTRIBUTION_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/distribution/lastSuccessfulBuild
 DISTRIBUTION_ARTIFACTS_PATH := $(DISTRIBUTION_LAST_BUILD)/artifact
 DISTRIBUTION_K8S_ARTIFACT := k8s-artefacts.tar.gz
+
+JRE_PATH ?= $(PROJECT_ROOT)/jre1.8.0_202
 
 MAIN_PACKAGES := cli
 
@@ -97,6 +101,9 @@ build-ubuntu-installer: copy-k8s-artefacts copy-ballerina-runtime
 	mkdir -p files; \
 	cp -r ../k8s-artefacts files/; \
 	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
+	chmod -R a+rx files/$(BALLERINA_JRE_LOCATION); \
+	cp -r $(JRE_PATH) files/$(BALLERINA_JRE_LOCATION); \
+	cp resources/ballerina files/$(BALLERINA_BIN_LOCATION); \
 	bash build-ubuntu-x64.sh $(VERSION)
 
 .PHONY: build-mac-installer
@@ -105,6 +112,9 @@ build-mac-installer: copy-k8s-artefacts copy-ballerina-runtime
 	mkdir -p files; \
 	cp -r ../k8s-artefacts files/; \
 	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
+	chmod -R a+rx files/$(BALLERINA_JRE_LOCATION); \
+	cp -r $(JRE_PATH) files/$(BALLERINA_JRE_LOCATION); \
+	cp darwin/Resources/ballerina files/$(BALLERINA_BIN_LOCATION); \
 	bash build-macos-x64.sh $(VERSION)
 
 .PHONY: install-docs-view
