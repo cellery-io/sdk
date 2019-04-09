@@ -1127,24 +1127,35 @@ func MergeKubeConfig(newConfigFile string) error {
 		return err
 	}
 
-	confPath, err := kubectl.DefaultConfigPath()
+	confFile, err := kubectl.DefaultConfigFile()
 	if err != nil {
 		return err
 	}
 
-	if _, err := os.Stat(confPath); err != nil {
+	if _, err := os.Stat(confFile); err != nil {
 		if os.IsNotExist(err) {
 			// kube-config does not exist. Create a new one
-			return kubectl.WriteConfig(confPath, newConf)
+			confDir, err := kubectl.DefaultConfigDir()
+			if err != nil {
+				return err
+			}
+			// Check for .kube directory and create if not present
+			if _, err := os.Stat(confDir); os.IsNotExist(err) {
+				err = os.Mkdir(confDir, 0755)
+				if err != nil {
+					return err
+				}
+			}
+			return kubectl.WriteConfig(confFile, newConf)
 		} else {
 			return err
 		}
 	}
 
-	oldConf, err := kubectl.ReadConfig(confPath)
+	oldConf, err := kubectl.ReadConfig(confFile)
 	if err != nil {
 		return err
 	}
 	merged := kubectl.MergeConfig(oldConf, newConf)
-	return kubectl.WriteConfig(confPath, merged)
+	return kubectl.WriteConfig(confFile, merged)
 }

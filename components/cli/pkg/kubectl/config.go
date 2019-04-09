@@ -26,12 +26,20 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-func DefaultConfigPath() (string, error) {
+func DefaultConfigDir() (string, error) {
 	u, err := user.Current()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(u.HomeDir, ".kube", "config"), nil
+	return filepath.Join(u.HomeDir, ".kube"), nil
+}
+
+func DefaultConfigFile() (string, error) {
+	dir, err := DefaultConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "config"), nil
 }
 
 func ReadConfig(file string) (*Config, error) {
