@@ -21,6 +21,8 @@ package commands
 import (
 	"os/exec"
 
+	"github.com/manifoldco/promptui"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -34,15 +36,60 @@ func RunSetupModify(addApimGlobalGateway, addObservability bool) {
 }
 
 func modifyRuntime() {
-	addApimGlobalGateway, err := util.GetYesOrNoFromUser("Do you want to enable API management and global gateway")
+	const enable = "Enable"
+	const disable = "Disable"
+	const back = "BACK"
+
+	enableApimgt := false
+	enableObservability := false
+
+	template := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   "\U000027A4 {{ .| bold }}",
+		Inactive: "  {{ . | faint }}",
+		Help:     util.Faint("[Use arrow keys]"),
+	}
+
+	apiMgtPrompt := promptui.Select{
+		Label:     util.YellowBold("?") + "API management and global gateway",
+		Items:     []string{enable, disable, back},
+		Templates: template,
+	}
+	_, apiMgtValue, err := apiMgtPrompt.Run()
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to select an option", err)
 	}
-	addObservability, err := util.GetYesOrNoFromUser("Do you want to enable observability")
+
+	switch apiMgtValue {
+	case enable:
+		enableApimgt = true
+	case disable:
+		enableApimgt = false
+	default:
+		RunSetup()
+		return
+	}
+
+	observabilityPrompt := promptui.Select{
+		Label:     util.YellowBold("?") + "Observability",
+		Items:     []string{enable, disable, back},
+		Templates: template,
+	}
+	_, observabilityValue, err := observabilityPrompt.Run()
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to select an option", err)
 	}
-	RunSetupModify(addApimGlobalGateway, addObservability)
+
+	switch observabilityValue {
+	case enable:
+		enableObservability = true
+	case disable:
+		enableObservability = false
+	default:
+		RunSetup()
+		return
+	}
+	RunSetupModify(enableApimgt, enableObservability)
 }
 
 func removeIdp(artifactPath, errorDeployingCelleryRuntime string) {
