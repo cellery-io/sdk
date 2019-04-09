@@ -356,7 +356,7 @@ func createGcpCluster(gcpService *container.Service, clusterName string) error {
 	for i := 0; i < 30; i++ {
 		resp, err := gcpService.Projects.Zones.Clusters.Get(projectName, zone, constants.GCP_CLUSTER_NAME+uniqueNumber).Do()
 		if err != nil {
-			time.Sleep(60 * time.Second)
+			time.Sleep(30 * time.Second)
 		} else {
 			if resp.Status == "RUNNING" {
 				fmt.Printf("Cluster: %v created", k8sCluster.Name)
