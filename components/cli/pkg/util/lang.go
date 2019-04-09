@@ -71,7 +71,11 @@ func (langMgr *BLangManager) Init() error {
 			execError += stderrScanner.Text()
 		}
 	}()
-	if err := cmd.Run(); err != nil {
+	if err := cmd.Start(); err != nil {
+		log.Printf("Error: %v \n", execError)
+		return err
+	}
+	if err := cmd.Wait(); err != nil {
 		log.Printf("Error: %v \n", execError)
 		return err
 	}
