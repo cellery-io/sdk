@@ -147,3 +147,6 @@ const NON_PERSISTENT_VOLUME = "Non persistent volume"
 
 const CELLERY_SQL_USER_NAME = "cellery-sql-user"
 const CELLERY_SQL_PASSWORD = "cellery-sql-user"
+
+const INGRESS_MODE_NODE_PORT = "Node port"
+const INGRESS_MODE_LOAD_BALANCER = "Load balancer"

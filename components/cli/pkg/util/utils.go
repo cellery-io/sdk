@@ -1183,3 +1183,27 @@ func IsCompleteSetupSelected() bool {
 	}
 	return isCompleteSelected
 }
+
+func IsLoadBalancerIngressTypeSelected() bool {
+	var isLoadBalancerSelected = false
+	cellTemplate := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   "\U000027A4 {{ .| bold }}",
+		Inactive: "  {{ . | faint }}",
+		Help:     Faint("[Use arrow keys]"),
+	}
+
+	cellPrompt := promptui.Select{
+		Label:     YellowBold("?") + " Select ingress mode",
+		Items:     []string{constants.INGRESS_MODE_NODE_PORT, constants.INGRESS_MODE_LOAD_BALANCER},
+		Templates: cellTemplate,
+	}
+	_, value, err := cellPrompt.Run()
+	if err != nil {
+		ExitWithErrorMessage("Failed to select an option: %v", err)
+	}
+	if value == constants.INGRESS_MODE_LOAD_BALANCER {
+		isLoadBalancerSelected = true
+	}
+	return isLoadBalancerSelected
+}

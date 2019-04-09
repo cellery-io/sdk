@@ -69,7 +69,7 @@ func RunSetupCreateOnExistingCluster(isPersistedVolumeVolume bool) {
 }
 
 func createRuntimeOnExistingClusterWithPersistedVolume() {
-	useNfs, err := util.GetYesOrNoFromUser(fmt.Sprintf("Do you want to use your NFS server"))
+	useNfs, err := util.GetYesOrNoFromUser(fmt.Sprintf("Use NFS server"))
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to select an option", err)
 	}
@@ -92,6 +92,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs() {
 }
 
 func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsComplete() {
+	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	createFoldersRequiredForMysqlPvc()
 	createFoldersRequiredForApimPvc()
@@ -116,11 +117,12 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsComplete() {
 	executeObservabilityArtifacts(artifactPath, errorDeployingCelleryRuntime, true)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
-	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 	gcpSpinner.Stop(true)
 }
 
 func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic() {
+	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	createFoldersRequiredForMysqlPvc()
 	createFoldersRequiredForApimPvc()
@@ -144,7 +146,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic() {
 	createIdp(artifactPath, errorDeployingCelleryRuntime)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
-	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 	gcpSpinner.Stop(true)
 }
 
@@ -178,6 +180,7 @@ func createRuntimeOnExistingClusterWithNonPersistedVolume() {
 }
 
 func createRuntimeOnExistingClusterWithNonPersistedVolumeBasic() {
+	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 
 	updateMysqlDataInK8sArtifacts(constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER, constants.CELLERY_SQL_USER_NAME,
@@ -199,12 +202,13 @@ func createRuntimeOnExistingClusterWithNonPersistedVolumeBasic() {
 	createIdp(artifactPath, errorDeployingCelleryRuntime)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
-	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 
 	gcpSpinner.Stop(true)
 }
 
 func createRuntimeOnExistingClusterWithNonPersistedVolumeComplete() {
+	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 
 	updateMysqlDataInK8sArtifacts(constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER, constants.CELLERY_SQL_USER_NAME,
@@ -227,7 +231,7 @@ func createRuntimeOnExistingClusterWithNonPersistedVolumeComplete() {
 	executeObservabilityArtifacts(artifactPath, errorDeployingCelleryRuntime, true)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
-	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 
 	gcpSpinner.Stop(true)
 }
@@ -305,6 +309,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfs() {
 }
 
 func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsComplete(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) {
+	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword)
 
@@ -323,12 +328,13 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsComplete(nfsServerI
 	executeObservabilityArtifacts(artifactPath, errorDeployingCelleryRuntime, true)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
-	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 
 	gcpSpinner.Stop(true)
 }
 
 func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) {
+	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword)
 
@@ -347,7 +353,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, 
 	createIdp(artifactPath, errorDeployingCelleryRuntime)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
-	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 
 	gcpSpinner.Stop(true)
 }
@@ -649,4 +655,18 @@ func labelMasterNode(errorDeployingCelleryRuntime string) {
 	// Label the node
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, "label", "nodes", nodeName, "disk=local", "--overwrite"),
 		errorDeployingCelleryRuntime)
+}
+
+func createNGinxForExistingCluster(artifactPath, errorMessage string, ingressModeLoadBalancerSelected bool) {
+	// Install nginx-ingress for control plane ingress
+	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.APPLY, constants.KUBECTL_FLAG,
+		artifactPath+"/k8s-artefacts/system/mandatory.yaml"), errorMessage)
+
+	if ingressModeLoadBalancerSelected {
+		util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.APPLY, constants.KUBECTL_FLAG,
+			artifactPath+"/k8s-artefacts/system/cloud-generic.yaml"), errorMessage)
+	} else {
+		util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.APPLY, constants.KUBECTL_FLAG,
+			artifactPath+"/k8s-artefacts/system/service-nodeport.yaml"), errorMessage)
+	}
 }
