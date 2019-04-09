@@ -17,6 +17,7 @@ BALLERINA_RUNTIME="ballerina-0.990.3"
 SYMLINK_DIR=${PRODUCT_HOME}/runtime/executable
 mkdir -p ${SYMLINK_DIR}
 ln -sf ${PRODUCT_HOME}/runtime/${BALLERINA_RUNTIME}/bin/ballerina ${SYMLINK_DIR}/ballerina
+ln -sf ${PRODUCT_HOME}/runtime/${BALLERINA_RUNTIME}/bre/lib/jre1.8.0_202 ${SYMLINK_DIR}/java
 
 chmod -R 0755 ${PRODUCT_HOME}
 chmod 0644 ${PRODUCT_HOME}/repo/celleryio/cellery/*/cellery.zip

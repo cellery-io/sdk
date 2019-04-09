@@ -29,7 +29,7 @@
 # NOTE: Borrowed generously from Apache Tomcat startup scripts.
 # -----------------------------------------------------------------------------
 
-JAVA_HOME=/Library/Cellery/runtime/executable/ballerina/bre/lib/jre1.8.0_202
+JAVA_HOME=/Library/Cellery/runtime/executable/java
 
 # OS specific support.  $var _must_ be set to either true or false.
 #ulimit -n 100000
