@@ -62,6 +62,8 @@ import org.ballerinax.docker.generator.DockerArtifactHandler;
 import org.ballerinax.docker.generator.exceptions.DockerGenException;
 import org.ballerinax.docker.generator.models.DockerModel;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -106,6 +108,7 @@ import static io.cellery.CelleryUtils.writeToFile;
 )
 public class CreateImage extends BlockingNativeCallableUnit {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
+    private static final Logger log = LoggerFactory.getLogger(CreateImage.class);
 
     private CellImage cellImage = new CellImage();
 
@@ -316,7 +319,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         try {
             writeToFile(buffer.toString(), targetFileNameWithPath);
         } catch (IOException e) {
-            throw new BallerinaException("Error occurred while generating reference file " + targetFileNameWithPath);
+            String errMsg = "Error occurred while generating dependencies.properties file " + targetFileNameWithPath;
+            log.error(errMsg, e);
+            throw new BallerinaException(errMsg);
         }
     }
 
@@ -399,7 +404,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         try {
             writeToFile(toYaml(cell), targetPath);
         } catch (IOException e) {
-            throw new BallerinaException(e.getMessage() + " " + targetPath);
+            String errMsg = "Error occurred while writing cell yaml " + targetPath;
+            log.error(errMsg, e);
+            throw new BallerinaException(errMsg);
         }
     }
 
@@ -443,7 +450,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         try {
             writeToFile(json.toString(), targetFileNameWithPath);
         } catch (IOException e) {
-            throw new BallerinaException("Error occurred while generating reference file " + targetFileNameWithPath);
+            String errMsg = "Error occurred while generating reference file " + targetFileNameWithPath;
+            log.error(errMsg, e);
+            throw new BallerinaException(errMsg);
         }
     }
 
@@ -454,7 +463,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
             DockerArtifactHandler dockerArtifactHandler = new DockerArtifactHandler(dockerModel);
             dockerArtifactHandler.buildImage(dockerModel, dockerDir);
         } catch (DockerGenException | InterruptedException | IOException e) {
-            throw new BallerinaException("Error occurred while building Docker image " + e.getMessage());
+            String errMsg = "Error occurred while building Docker image ";
+            log.error(errMsg, e);
+            throw new BallerinaException(errMsg + e.getMessage());
         }
     }
 }
