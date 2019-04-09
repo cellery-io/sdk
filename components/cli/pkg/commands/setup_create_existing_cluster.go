@@ -80,7 +80,7 @@ func createRuntimeOnExistingClusterWithPersistedVolume() {
 	}
 }
 
-func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs()  {
+func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs() {
 	var isCompleteSelected = false
 	isCompleteSelected = util.IsCompleteSetupSelected()
 
@@ -142,13 +142,13 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic() {
 
 	gcpSpinner.SetNewAction("Creating IDP")
 	createIdp(artifactPath, errorDeployingCelleryRuntime)
-	
+
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
 	createNGinx(artifactPath, errorDeployingCelleryRuntime)
 	gcpSpinner.Stop(true)
 }
 
-func createFoldersRequiredForMysqlPvc()  {
+func createFoldersRequiredForMysqlPvc() {
 	// Backup folders
 	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL),
 		filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL)+"-old")
@@ -156,7 +156,7 @@ func createFoldersRequiredForMysqlPvc()  {
 	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL))
 }
 
-func createFoldersRequiredForApimPvc()  {
+func createFoldersRequiredForApimPvc() {
 	// Backup folders
 	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
 		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER), filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP,
@@ -294,6 +294,17 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfs() {
 		util.ExitWithErrorMessage("Error occurred while getting user input", err)
 	}
 
+	var isCompleteSelected = false
+	isCompleteSelected = util.IsCompleteSetupSelected()
+
+	if isCompleteSelected {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithNfsComplete(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
+	} else {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
+	}
+}
+
+func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsComplete(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) {
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword)
 
@@ -307,6 +318,38 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfs() {
 
 	gcpSpinner.SetNewAction("Creating APIM")
 	executeAPIMArtifactsForPersistedVolumeWithNfs(artifactPath, errorDeployingCelleryRuntime)
+
+	gcpSpinner.SetNewAction("Creating Observability")
+	executeObservabilityArtifacts(artifactPath, errorDeployingCelleryRuntime, true)
+
+	gcpSpinner.SetNewAction("Creating ingress-nginx")
+	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+
+	gcpSpinner.Stop(true)
+}
+
+func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) {
+	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
+	updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword)
+
+	updateNfsDataInK8sArtifacts(nfsServerIp, fileShare)
+
+	var artifactPath = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS)
+	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
+
+	gcpSpinner.SetNewAction("Creating controller")
+	executeControllerArtifacts(artifactPath, errorDeployingCelleryRuntime)
+
+	gcpSpinner.SetNewAction("Configuring mysql")
+	updateIdpDataInK8sArtifacts(dbHostName, dbUserName, dbPassword)
+
+	gcpSpinner.SetNewAction("Creating IDP")
+	createIdp(artifactPath, errorDeployingCelleryRuntime)
+
+	gcpSpinner.SetNewAction("Creating ingress-nginx")
+	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+
+	gcpSpinner.Stop(true)
 }
 
 func updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword string) {
