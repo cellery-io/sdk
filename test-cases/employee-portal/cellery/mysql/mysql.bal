@@ -10,8 +10,7 @@ cellery:Component mysqlComponent = {
     ingresses: {
         mysqlIngress: <cellery:TCPIngress>{
             backendPort: 3306,
-            gatewayPort: 31406,
-            expose: "local"
+            gatewayPort: 31406
         }
     },
     envVars: {
