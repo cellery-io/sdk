@@ -41,7 +41,7 @@ import (
 // This also support linking instances to parts of the dependency tree
 // This command also strictly validates whether the requested Cell (and the dependencies are valid)
 func RunRun(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
-	dependencyLinks []string, envVars []string) {
+	dependencyLinks []string, envVars []string, assumeYes bool) {
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
 	parsedCellImage, err := util.ParseImageTag(cellImageTag)
 	if err != nil {
@@ -212,7 +212,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			util.ExitWithErrorMessage("Invalid instance linking", err)
 		}
 		spinner.SetNewAction("")
-		err = confirmDependencyTree(dependencyTree)
+		err = confirmDependencyTree(dependencyTree, assumeYes)
 		if err != nil {
 			spinner.Stop(false)
 			util.ExitWithErrorMessage("Failed to confirm the dependency tree", err)
@@ -296,7 +296,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			util.ExitWithErrorMessage("Invalid instance linking", err)
 		}
 		spinner.SetNewAction("")
-		err = confirmDependencyTree(mainNode)
+		err = confirmDependencyTree(mainNode, assumeYes)
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to confirm the dependency tree", err)
 		}
@@ -593,7 +593,7 @@ func validateDependencyTree(treeRoot *dependencyTreeNode) error {
 }
 
 // confirmDependencyTree confirms from the user whether the intended dependency tree had been resolved
-func confirmDependencyTree(tree *dependencyTreeNode) error {
+func confirmDependencyTree(tree *dependencyTreeNode, assumeYes bool) error {
 	var dependencyData [][]string
 	var traversedInstances []string
 	// Preparing instances table data
@@ -704,14 +704,16 @@ func confirmDependencyTree(tree *dependencyTreeNode) error {
 	}
 	fmt.Println()
 
-	fmt.Printf("%s Do you wish to continue with starting above Cell instances (Y/n)? ", util.YellowBold("?"))
-	reader := bufio.NewReader(os.Stdin)
-	confirmation, err := reader.ReadString('\n')
-	if err != nil {
-		return err
-	}
-	if strings.ToLower(strings.TrimSpace(confirmation)) == "n" {
-		return fmt.Errorf("running Cell aborted")
+	if !assumeYes {
+		fmt.Printf("%s Do you wish to continue with starting above Cell instances (Y/n)? ", util.YellowBold("?"))
+		reader := bufio.NewReader(os.Stdin)
+		confirmation, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		if strings.ToLower(strings.TrimSpace(confirmation)) == "n" {
+			return fmt.Errorf("running Cell aborted")
+		}
 	}
 	fmt.Println()
 	return nil
