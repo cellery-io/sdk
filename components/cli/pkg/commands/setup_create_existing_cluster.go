@@ -68,21 +68,33 @@ func RunSetupCreateOnExistingCluster(isPersistedVolumeVolume bool) {
 	util.WaitForRuntime()
 }
 
-func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs() {
+func createRuntimeOnExistingClusterWithPersistedVolume() {
+	useNfs, err := util.GetYesOrNoFromUser(fmt.Sprintf("Do you want to use your NFS server"))
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to select an option", err)
+	}
+	if useNfs {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithNfs()
+	} else {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs()
+	}
+}
+
+func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs()  {
+	var isCompleteSelected = false
+	isCompleteSelected = util.IsCompleteSetupSelected()
+
+	if isCompleteSelected {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsComplete()
+	} else {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic()
+	}
+}
+
+func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsComplete() {
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
-	// Backup folders
-	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL),
-		filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL)+"-old")
-	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
-		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER), filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP,
-		constants.CELLERY, constants.APIM_REPOSITORY_DEPLOYMENT_SERVER)+"-old")
-
-	// Create folders required by the mysql PVC
-	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL))
-
-	// Create folders required by the APIM PVC
-	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
-		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER))
+	createFoldersRequiredForMysqlPvc()
+	createFoldersRequiredForApimPvc()
 
 	updateMysqlDataInK8sArtifacts(constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER, constants.CELLERY_SQL_USER_NAME,
 		constants.CELLERY_SQL_PASSWORD)
@@ -108,27 +120,55 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs() {
 	gcpSpinner.Stop(true)
 }
 
+func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic() {
+	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
+	createFoldersRequiredForMysqlPvc()
+	createFoldersRequiredForApimPvc()
+
+	updateMysqlDataInK8sArtifacts(constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER, constants.CELLERY_SQL_USER_NAME,
+		constants.CELLERY_SQL_PASSWORD)
+
+	var artifactPath = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS)
+	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
+
+	gcpSpinner.SetNewAction("Creating controller")
+	labelMasterNode(errorDeployingCelleryRuntime)
+	executeControllerArtifacts(artifactPath, errorDeployingCelleryRuntime)
+
+	gcpSpinner.SetNewAction("Configuring mysql")
+	updateIdpDataInK8sArtifacts(constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER, constants.CELLERY_SQL_USER_NAME,
+		constants.CELLERY_SQL_PASSWORD)
+	configureMysqlOnExistingClusterWithPersistedVolume(artifactPath, errorDeployingCelleryRuntime)
+
+	gcpSpinner.SetNewAction("Creating IDP")
+	createIdp(artifactPath, errorDeployingCelleryRuntime)
+	
+	gcpSpinner.SetNewAction("Creating ingress-nginx")
+	createNGinx(artifactPath, errorDeployingCelleryRuntime)
+	gcpSpinner.Stop(true)
+}
+
+func createFoldersRequiredForMysqlPvc()  {
+	// Backup folders
+	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL),
+		filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL)+"-old")
+	// Create folders required by the mysql PVC
+	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL))
+}
+
+func createFoldersRequiredForApimPvc()  {
+	// Backup folders
+	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER), filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP,
+		constants.CELLERY, constants.APIM_REPOSITORY_DEPLOYMENT_SERVER)+"-old")
+	// Create folders required by the APIM PVC
+	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER))
+}
+
 func createRuntimeOnExistingClusterWithNonPersistedVolume() {
 	var isCompleteSelected = false
-	cellTemplate := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "\U000027A4 {{ .| bold }}",
-		Inactive: "  {{ . | faint }}",
-		Help:     util.Faint("[Use arrow keys]"),
-	}
-
-	cellPrompt := promptui.Select{
-		Label:     util.YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.BASIC, constants.COMPLETE},
-		Templates: cellTemplate,
-	}
-	_, value, err := cellPrompt.Run()
-	if err != nil {
-		util.ExitWithErrorMessage("Failed to select an option: %v", err)
-	}
-	if value == constants.COMPLETE {
-		isCompleteSelected = true
-	}
+	isCompleteSelected = util.IsCompleteSetupSelected()
 
 	if isCompleteSelected {
 		createRuntimeOnExistingClusterWithNonPersistedVolumeComplete()
@@ -267,14 +307,6 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfs() {
 
 	gcpSpinner.SetNewAction("Creating APIM")
 	executeAPIMArtifactsForPersistedVolumeWithNfs(artifactPath, errorDeployingCelleryRuntime)
-
-	gcpSpinner.SetNewAction("Creating Observability")
-	executeObservabilityArtifacts(artifactPath, errorDeployingCelleryRuntime, true)
-
-	gcpSpinner.SetNewAction("Creating ingress-nginx")
-	createNGinx(artifactPath, errorDeployingCelleryRuntime)
-
-	gcpSpinner.Stop(true)
 }
 
 func updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword string) {
@@ -551,18 +583,6 @@ func executeObservabilityArtifacts(artifactPath, errorDeployingCelleryRuntime st
 		errorDeployingCelleryRuntime)
 
 	return nil
-}
-
-func createRuntimeOnExistingClusterWithPersistedVolume() {
-	useNfs, err := util.GetYesOrNoFromUser(fmt.Sprintf("Do you want to use your NFS server"))
-	if err != nil {
-		util.ExitWithErrorMessage("Failed to select an option", err)
-	}
-	if useNfs {
-		createRuntimeOnExistingClusterWithPersistedVolumeWithNfs()
-	} else {
-		createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs()
-	}
 }
 
 func updateNfsDataInK8sArtifacts(nfsIpAddress, fileShare string) {
