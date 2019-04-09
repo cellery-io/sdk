@@ -45,11 +45,11 @@ import (
 func RunSetupCreateGcp(isCompleteSetup bool) {
 	projectName, accountName, region, zone = getGcpData()
 	if region == "" {
-		util.ExitWithErrorMessage("Error creating cluster", fmt.Errorf("region not found in gcloud " +
+		util.ExitWithErrorMessage("Error creating cluster", fmt.Errorf("region not found in gcloud "+
 			"config list. Please run `gcloud init` to set the region"))
 	}
 	if zone == "" {
-		util.ExitWithErrorMessage("Error creating cluster", fmt.Errorf("zone not found in gcloud " +
+		util.ExitWithErrorMessage("Error creating cluster", fmt.Errorf("zone not found in gcloud "+
 			"config list. Please run `gcloud init` to set the zone"))
 	}
 	if isCompleteSetup {
