@@ -1184,26 +1184,3 @@ func IsCompleteSetupSelected() bool {
 	return isCompleteSelected
 }
 
-func IsCompleteSetupSelected() bool {
-	var isCompleteSelected = false
-	cellTemplate := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "\U000027A4 {{ .| bold }}",
-		Inactive: "  {{ . | faint }}",
-		Help:     Faint("[Use arrow keys]"),
-	}
-
-	cellPrompt := promptui.Select{
-		Label:     YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.BASIC, constants.COMPLETE},
-		Templates: cellTemplate,
-	}
-	_, value, err := cellPrompt.Run()
-	if err != nil {
-		ExitWithErrorMessage("Failed to select an option: %v", err)
-	}
-	if value == constants.COMPLETE {
-		isCompleteSelected = true
-	}
-	return isCompleteSelected
-}
