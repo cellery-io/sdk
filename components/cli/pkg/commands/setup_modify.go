@@ -19,46 +19,28 @@
 package commands
 
 import (
-	"os"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunSetupModify(addApimGlobalGateway, addObservability bool) {
-	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), "artifacts"),
-		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS))
-	artifactPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS)
-	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
-
-	if addApimGlobalGateway {
-		// Remove IDP
-		removeIdp(artifactPath, errorDeployingCelleryRuntime)
-
-		// Create APIM global gateway
-		//executeAPIMArtifactsForPersistedVolumeWithoutNfs(artifactPath, errorDeployingCelleryRuntime)
-	}
-	if addObservability {
-		executeObservabilityArtifacts(artifactPath, errorDeployingCelleryRuntime, false)
+	err := runtime.UpdateRuntime(addApimGlobalGateway, addObservability)
+	if err != nil {
+		util.ExitWithErrorMessage("Fail to modify the cluster", err)
 	}
 }
 
 func modifyRuntime() {
-	addApimGlobalGateway, err := util.GetYesOrNoFromUser("Add apim global gateway")
+	addApimGlobalGateway, err := util.GetYesOrNoFromUser("Do you want to enable API management and global gateway")
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to select an option", err)
 	}
-	if !addApimGlobalGateway {
-		os.Exit(1)
-	}
-	addObservability, err := util.GetYesOrNoFromUser("Add observability")
+	addObservability, err := util.GetYesOrNoFromUser("Do you want to enable observability")
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to select an option", err)
-	}
-	if !addObservability {
-		os.Exit(1)
 	}
 	RunSetupModify(addApimGlobalGateway, addObservability)
 }

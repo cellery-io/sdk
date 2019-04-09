@@ -16,26 +16,34 @@
  * under the License.
  */
 
-package main
+package kubectl
 
 import (
-	"github.com/spf13/cobra"
+	"os"
+	"os/exec"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func newSetupModifyCommand() *cobra.Command {
-	var apimgt = false
-	var observability = false
-	cmd := &cobra.Command{
-		Use:   "modify <command>",
-		Short: "Modify Cellery runtime",
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupModify(apimgt, observability)
-		},
-	}
+func ApplyFileWithNamespace(file, namespace string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"apply",
+		"-f",
+		file,
+		"-n", namespace,
+	)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
 
-	cmd.Flags().BoolVar(&apimgt, "apimgt", false, "enable API Management in the runtime")
-	cmd.Flags().BoolVar(&observability, "observability", false, "enable Observability in the runtime")
-	return cmd
+func ApplyFile(file string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"apply",
+		"-f",
+		file,
+	)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

@@ -16,26 +16,12 @@
  * under the License.
  */
 
-package main
+package runtime
 
-import (
-	"github.com/spf13/cobra"
+type SystemComponent string
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+const (
+	ApiManager       SystemComponent = "ApiManager"
+	IdentityProvider SystemComponent = "IdentityProvider"
+	Observability    SystemComponent = "Observability"
 )
-
-func newSetupModifyCommand() *cobra.Command {
-	var apimgt = false
-	var observability = false
-	cmd := &cobra.Command{
-		Use:   "modify <command>",
-		Short: "Modify Cellery runtime",
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupModify(apimgt, observability)
-		},
-	}
-
-	cmd.Flags().BoolVar(&apimgt, "apimgt", false, "enable API Management in the runtime")
-	cmd.Flags().BoolVar(&observability, "observability", false, "enable Observability in the runtime")
-	return cmd
-}

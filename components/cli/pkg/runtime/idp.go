@@ -16,26 +16,37 @@
  * under the License.
  */
 
-package main
+package runtime
 
 import (
-	"github.com/spf13/cobra"
+	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
-func newSetupModifyCommand() *cobra.Command {
-	var apimgt = false
-	var observability = false
-	cmd := &cobra.Command{
-		Use:   "modify <command>",
-		Short: "Modify Cellery runtime",
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupModify(apimgt, observability)
-		},
+func addIdp() error {
+	for _, v := range buildIdpYamlPaths() {
+		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
+		if err != nil {
+			return err
+		}
 	}
+	return nil
+}
 
-	cmd.Flags().BoolVar(&apimgt, "apimgt", false, "enable API Management in the runtime")
-	cmd.Flags().BoolVar(&observability, "observability", false, "enable Observability in the runtime")
-	return cmd
+func deleteIdp() error {
+	for _, v := range buildIdpYamlPaths() {
+		err := kubectl.DeleteFileWithNamespace(v, "cellery-system")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func buildIdpYamlPaths() []string {
+	base := buildArtifactsPath(IdentityProvider)
+	return []string{
+		filepath.Join(base, "global-idp.yaml"),
+	}
 }
