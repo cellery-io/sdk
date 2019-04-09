@@ -365,10 +365,10 @@ You can terminate the cells that are started during this guide.
 
 ## Useful links
 - [Samples](https://github.com/wso2-cellery/samples)
-- [How to code cells?](https://github.com/wso2-cellery/sdk/blob/master/docs/cell-reference.md)
-- [CLI commands](https://github.com/wso2-cellery/sdk/blob/master/docs/cli-reference.md)
-- [Architecture](https://github.com/wso2-cellery/sdk/blob/master/docs/cellery-architecture.md)
+- [How to code cells?](docs/cell-reference.md)
+- [CLI commands](docs/cli-reference.md)
+- [Architecture](docs/cellery-architecture.md)
 
 ## Community 
 - [Cellery mailing list](https://groups.google.com/forum/#!forum/wso2-cellery-dev)
-- [How to contribute?](https://github.com/wso2-cellery/sdk/blob/master/CONTRIBUTING.md)
+- [How to contribute?](CONTRIBUTING.md)
