@@ -1210,7 +1210,7 @@ func IsLoadBalancerIngressTypeSelected() (bool, bool) {
 
 	cellPrompt := promptui.Select{
 		Label:     YellowBold("?") + " Select ingress mode",
-		Items:     []string{constants.INGRESS_MODE_NODE_PORT + " [kubeadm, minikube]", constants.INGRESS_MODE_LOAD_BALANCER + "[gcp, docker for desktop]", constants.CELLERY_SETUP_BACK},
+		Items:     []string{constants.INGRESS_MODE_NODE_PORT, constants.INGRESS_MODE_LOAD_BALANCER, constants.CELLERY_SETUP_BACK},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
