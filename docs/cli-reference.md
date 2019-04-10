@@ -36,7 +36,8 @@ Build an immutable cell image.
 ###### Parameters: 
 
 * Cell file: The .bal which has the cell definition
-* Cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION>
+* Cell image name: This is the image name, and it should be in format 
+<ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
 
 Ex: 
 
@@ -140,7 +141,7 @@ Push the cell image to the docker hub user account.
 
 ###### Parameters:
 
-* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION>
+* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
 
 Ex:
 
@@ -154,7 +155,7 @@ Pull the cell image from docker registry and include in the cellery local reposi
 
 ###### Parameters:
 
-* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION>
+* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
 
 Ex: 
  ```
@@ -211,7 +212,7 @@ List the files included in a cell image.
 
 ###### Parameters:
 
-* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION>
+* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
 
 Ex:
  ```
@@ -224,7 +225,7 @@ This will extract the resources folder of the cell image. This is useful to see 
 
 ###### Parameters:
 
-* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:<VERSION>
+* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
 
 ###### Flags (Optional):
 
