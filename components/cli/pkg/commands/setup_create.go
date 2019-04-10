@@ -48,15 +48,15 @@ func createEnvironment() error {
 	}
 
 	switch value {
-	case constants.CELLERY_CREATE_LOCAL:
+	case constants.CELLERY_SETUP_LOCAL:
 		{
 			createLocal()
 		}
-	case constants.CELLERY_CREATE_GCP:
+	case constants.CELLERY_SETUP_GCP:
 		{
 			createGcp()
 		}
-	case constants.CELLERY_CREATE_EXISTING_CLUSTER:
+	case constants.CELLERY_SETUP_EXISTING_CLUSTER:
 		{
 			createOnExistingCluster()
 		}
@@ -77,7 +77,7 @@ func createEnvironment() error {
 
 func getCreateEnvironmentList() []string {
 	if isVmInstalled() {
-		return []string{constants.CELLERY_CREATE_GCP, constants.CELLERY_CREATE_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
+		return []string{constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
 	}
-	return []string{constants.CELLERY_CREATE_LOCAL, constants.CELLERY_CREATE_GCP, constants.CELLERY_CREATE_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
+	return []string{constants.CELLERY_SETUP_LOCAL, constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
 }

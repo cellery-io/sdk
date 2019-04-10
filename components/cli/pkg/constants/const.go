@@ -47,9 +47,9 @@ const CELLERY_SETUP_SWITCH = "Switch"
 const CELLERY_SETUP_BACK = "BACK"
 const CELLERY_SETUP_EXIT = "EXIT"
 
-const CELLERY_CREATE_LOCAL = "Local"
-const CELLERY_CREATE_EXISTING_CLUSTER = "Existing cluster"
-const CELLERY_CREATE_GCP = "GCP"
+const CELLERY_SETUP_LOCAL = "Local"
+const CELLERY_SETUP_EXISTING_CLUSTER = "Existing cluster"
+const CELLERY_SETUP_GCP = "GCP"
 
 const CELLERY_MANAGE_STOP = "stop"
 const CELLERY_MANAGE_START = "start"
