@@ -71,11 +71,18 @@ func cleanupExistingCluster() error {
 		if err != nil {
 			util.ExitWithErrorMessage("failed to select option", err)
 		}
+		removeIngress, _, err := util.GetYesOrNoFromUser("Remove ingress", false)
+		if err != nil {
+			util.ExitWithErrorMessage("failed to select option", err)
+		}
 		gcpSpinner := util.StartNewSpinner("Cleaning up cluster")
 
 		kubectl.DeleteNameSpace("cellery-system")
 		if removeIstio {
 			kubectl.DeleteNameSpace("istio-system")
+		}
+		if removeIngress {
+			kubectl.DeleteNameSpace("ingress-nginx")
 		}
 		kubectl.DeleteAllCells()
 		kubectl.DeletePersistedVolume("wso2apim-local-pv")

@@ -296,7 +296,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfs() error {
 					return nil
 				},
 				Quest: interact.Quest{
-					Msg: util.Bold("NFS server ip: "),
+					Msg: util.Bold("NFS server IP: "),
 				},
 				Action: func(c interact.Context) interface{} {
 					nfsServerIp, _ = c.Ans().String()
