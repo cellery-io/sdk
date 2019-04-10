@@ -27,6 +27,19 @@ dpkg -i cellery-ubuntu-x64-0.2.0.deb
 #### Mac OS
 Download [cellery-0.2.0.pkg](https://wso2.org/jenkins/job/cellery/job/sdk/) and install it by following macOS package installation steps.
 
+#### Cellery Tooling (Optional)
+Set the following environment variable to enable Cellery tooling with VSCode. 
+
+##### Linux
+```
+BALLERINA_HOME=/usr/share/cellery/runtime/ballerina-0.990.3
+```
+
+##### Mac OS
+```
+BALLERINA_HOME=/Library/Cellery/runtime/ballerina-0.990.3
+```
+
 ### Set up cellery runtime
 Once the cellery is installed, verify the installation by executing `cellery version` command. 
 
