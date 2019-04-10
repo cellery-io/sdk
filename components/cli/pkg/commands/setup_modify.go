@@ -33,6 +33,7 @@ func RunSetupModify(addApimGlobalGateway, addObservability bool) {
 	if err != nil {
 		util.ExitWithErrorMessage("Fail to modify the cluster", err)
 	}
+	util.WaitForRuntime()
 }
 
 func modifyRuntime() {
