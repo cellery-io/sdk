@@ -1,0 +1,18 @@
+dist: xenial
+node_js:
+  - 9.11.2
+go:
+  - 1.11.x
+jdk:
+  - openjdk8
+cache:
+  directories:
+    - .autoconf
+    - $HOME/.m2
+before_install:
+  - npm i -g npm
+  - mkdir -p $HOME/gopath/src/github.com/cellery-io
+  - mv ${TRAVIS_BUILD_DIR} $GOPATH/src/github.com/cellery-io/sdk
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/cellery-io/sdk
+  - cd $HOME/gopath/src/github.com/cellery-io/sdk
+script: make all
