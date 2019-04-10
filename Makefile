@@ -20,6 +20,7 @@ GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)
 BALLERINA_VERSION := 0.990.3
+BALLERINA_DIST_LOCATION := /build/resources/ballerina-$(BALLERINA_VERSION).zip
 BALLERINA_JRE_LOCATION := ballerina-$(BALLERINA_VERSION)/bre/lib
 BALLERINA_BIN_LOCATION := ballerina-$(BALLERINA_VERSION)/bin
 
@@ -92,15 +93,17 @@ copy-k8s-artefacts:
 .PHONY: copy-ballerina-runtime
 copy-ballerina-runtime:
 	cd ${PROJECT_ROOT}/installers; \
+	[ -f $(BALLERINA_DIST_LOCATION) ] || \
 	curl --retry 5 https://product-dist.ballerina.io/downloads/$(BALLERINA_VERSION)/ballerina-$(BALLERINA_VERSION).zip \
-	--output ballerina-$(BALLERINA_VERSION).zip
+	--output $(BALLERINA_DIST_LOCATION)
+
 
 .PHONY: build-ubuntu-installer
 build-ubuntu-installer: copy-k8s-artefacts copy-ballerina-runtime
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
 	mkdir -p files; \
 	cp -r ../k8s-artefacts files/; \
-	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
+	unzip $(BALLERINA_DIST_LOCATION) -d files; \
 	chmod -R a+rx files/$(BALLERINA_JRE_LOCATION); \
 	cp -r $(JRE_PATH) files/$(BALLERINA_JRE_LOCATION); \
 	cp resources/ballerina files/$(BALLERINA_BIN_LOCATION); \
@@ -111,7 +114,7 @@ build-mac-installer: copy-k8s-artefacts copy-ballerina-runtime
 	cd ${PROJECT_ROOT}/installers/macOS-x64; \
 	mkdir -p files; \
 	cp -r ../k8s-artefacts files/; \
-	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
+	unzip $(BALLERINA_DIST_LOCATION) -d files; \
 	chmod -R a+rx files/$(BALLERINA_JRE_LOCATION); \
 	cp -r $(JRE_PATH) files/$(BALLERINA_JRE_LOCATION); \
 	cp darwin/Resources/ballerina files/$(BALLERINA_BIN_LOCATION); \
