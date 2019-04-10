@@ -85,3 +85,15 @@ func DeleteAllCells() error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+func DeletePersistedVolume(persistedVolume string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"delete",
+		"pv",
+		persistedVolume,
+		"--ignore-not-found",
+	)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
