@@ -591,7 +591,7 @@ func createController(artifactPath string, errorMessage string) {
 	// Istio
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/system/istio-crds.yaml"), errorMessage)
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
-	time.Sleep(5 * time.Second)
+	time.Sleep(20 * time.Second)
 
 	// Enabling Istio injection
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, "label", "namespace", "default", "istio-injection=enabled"), errorMessage)
