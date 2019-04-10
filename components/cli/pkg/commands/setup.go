@@ -117,6 +117,10 @@ func selectEnvironment() error {
 		return fmt.Errorf("failed to select cluster: %v", err)
 	}
 
+	if value == constants.CELLERY_SETUP_BACK {
+		RunSetup()
+	}
+
 	setContext(value)
 	fmt.Printf(util.GreenBold("\n\U00002714") + " Successfully configured Cellery.\n")
 	fmt.Println()
@@ -166,6 +170,7 @@ func getContexts() []string {
 	for i := 0; i < len(jsonOutput.Contexts); i++ {
 		contexts = append(contexts, jsonOutput.Contexts[i].Name)
 	}
+	contexts = append(contexts, constants.CELLERY_SETUP_BACK)
 	return contexts
 }
 

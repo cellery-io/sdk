@@ -44,12 +44,16 @@ func createOnExistingCluster() error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.PERSISTENT_VOLUME, constants.NON_PERSISTENT_VOLUME},
+		Items:     []string{constants.PERSISTENT_VOLUME, constants.NON_PERSISTENT_VOLUME, constants.CELLERY_SETUP_BACK},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
 		return fmt.Errorf("Failed to select an option: %v", err)
+	}
+	if value == constants.CELLERY_SETUP_BACK {
+		createEnvironment()
+		return nil
 	}
 	if value == constants.PERSISTENT_VOLUME {
 		isPersistedVolumeVolume = true
@@ -80,19 +84,29 @@ func createRuntimeOnExistingClusterWithPersistedVolume() {
 	}
 }
 
-func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs() {
+func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs() error {
 	var isCompleteSelected = false
-	isCompleteSelected = util.IsCompleteSetupSelected()
+	var backSelected = false
+	isCompleteSelected, backSelected = util.IsCompleteSetupSelected()
 
+	if backSelected {
+		createRuntimeOnExistingClusterWithPersistedVolume()
+		return nil
+	}
 	if isCompleteSelected {
 		createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsComplete()
 	} else {
 		createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic()
 	}
+	return nil
 }
 
-func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsComplete() {
-	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
+func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsComplete() error {
+	ingressModeLoadBalancerSelected, isBackSelected := util.IsLoadBalancerIngressTypeSelected()
+	if isBackSelected {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs()
+		return nil
+	}
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	createFoldersRequiredForMysqlPvc()
 	createFoldersRequiredForApimPvc()
@@ -119,10 +133,15 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsComplete() {
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 	gcpSpinner.Stop(true)
+	return nil
 }
 
-func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic() {
-	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
+func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic() error {
+	ingressModeLoadBalancerSelected, isBackSelected := util.IsLoadBalancerIngressTypeSelected()
+	if isBackSelected {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfs()
+		return nil
+	}
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	createFoldersRequiredForMysqlPvc()
 	createFoldersRequiredForApimPvc()
@@ -148,6 +167,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic() {
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 	gcpSpinner.Stop(true)
+	return nil
 }
 
 func createFoldersRequiredForMysqlPvc() {
@@ -168,19 +188,29 @@ func createFoldersRequiredForApimPvc() {
 		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER))
 }
 
-func createRuntimeOnExistingClusterWithNonPersistedVolume() {
+func createRuntimeOnExistingClusterWithNonPersistedVolume() error {
 	var isCompleteSelected = false
-	isCompleteSelected = util.IsCompleteSetupSelected()
+	var backSelected = false
+	isCompleteSelected, backSelected = util.IsCompleteSetupSelected()
 
+	if backSelected {
+		createOnExistingCluster()
+		return nil
+	}
 	if isCompleteSelected {
 		createRuntimeOnExistingClusterWithNonPersistedVolumeComplete()
 	} else {
 		createRuntimeOnExistingClusterWithNonPersistedVolumeBasic()
 	}
+	return nil
 }
 
-func createRuntimeOnExistingClusterWithNonPersistedVolumeBasic() {
-	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
+func createRuntimeOnExistingClusterWithNonPersistedVolumeBasic() error {
+	ingressModeLoadBalancerSelected, isBackSelected := util.IsLoadBalancerIngressTypeSelected()
+	if isBackSelected {
+		createRuntimeOnExistingClusterWithNonPersistedVolume()
+		return nil
+	}
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 
 	updateMysqlDataInK8sArtifacts(constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER, constants.CELLERY_SQL_USER_NAME,
@@ -205,10 +235,15 @@ func createRuntimeOnExistingClusterWithNonPersistedVolumeBasic() {
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 
 	gcpSpinner.Stop(true)
+	return nil
 }
 
-func createRuntimeOnExistingClusterWithNonPersistedVolumeComplete() {
-	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
+func createRuntimeOnExistingClusterWithNonPersistedVolumeComplete() error {
+	ingressModeLoadBalancerSelected, isBackSelected := util.IsLoadBalancerIngressTypeSelected()
+	if isBackSelected {
+		createRuntimeOnExistingClusterWithNonPersistedVolume()
+		return nil
+	}
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 
 	updateMysqlDataInK8sArtifacts(constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER, constants.CELLERY_SQL_USER_NAME,
@@ -234,9 +269,10 @@ func createRuntimeOnExistingClusterWithNonPersistedVolumeComplete() {
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 
 	gcpSpinner.Stop(true)
+	return nil
 }
 
-func createRuntimeOnExistingClusterWithPersistedVolumeWithNfs() {
+func createRuntimeOnExistingClusterWithPersistedVolumeWithNfs() error {
 	prefix := util.CyanBold("?")
 	nfsServerIp := ""
 	fileShare := ""
@@ -297,19 +333,29 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfs() {
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while getting user input", err)
 	}
-
 	var isCompleteSelected = false
-	isCompleteSelected = util.IsCompleteSetupSelected()
+	var backSelected = false
+
+	if backSelected {
+		createRuntimeOnExistingClusterWithPersistedVolume()
+		return nil
+	}
+	isCompleteSelected, backSelected = util.IsCompleteSetupSelected()
 
 	if isCompleteSelected {
 		createRuntimeOnExistingClusterWithPersistedVolumeWithNfsComplete(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
 	} else {
 		createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
 	}
+	return nil
 }
 
-func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsComplete(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) {
-	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
+func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsComplete(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) error {
+	ingressModeLoadBalancerSelected, isBackSelected := util.IsLoadBalancerIngressTypeSelected()
+	if isBackSelected {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithNfs()
+		return nil
+	}
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword)
 
@@ -331,10 +377,15 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsComplete(nfsServerI
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 
 	gcpSpinner.Stop(true)
+	return nil
 }
 
-func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) {
-	ingressModeLoadBalancerSelected := util.IsLoadBalancerIngressTypeSelected()
+func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) error {
+	ingressModeLoadBalancerSelected, isBackSelected := util.IsLoadBalancerIngressTypeSelected()
+	if isBackSelected {
+		createRuntimeOnExistingClusterWithPersistedVolumeWithNfs()
+		return nil
+	}
 	gcpSpinner := util.StartNewSpinner("Creating cellery runtime")
 	updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword)
 
@@ -356,6 +407,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, 
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
 
 	gcpSpinner.Stop(true)
+	return nil
 }
 
 func updateMysqlDataInK8sArtifacts(dbHostName, dbUserName, dbPassword string) {

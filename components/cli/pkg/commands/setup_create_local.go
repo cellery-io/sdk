@@ -106,12 +106,17 @@ func createLocal() error {
 		Items: []string{
 			fmt.Sprintf("%s (size: %s)", constants.BASIC, sizeMinimal),
 			fmt.Sprintf("%s (size: %s)", constants.COMPLETE, sizeComplete),
+			constants.CELLERY_SETUP_BACK,
 		},
 		Templates: cellTemplate,
 	}
 	index, _, err := cellPrompt.Run()
 	if err != nil {
 		return fmt.Errorf("Failed to select an option: %v", err)
+	}
+	if index == 2 {
+		createEnvironment()
+		return nil
 	}
 	if index == 1 {
 		isCompleteSelected = true
