@@ -54,6 +54,10 @@ func DeleteComponent(component SystemComponent) error {
 
 func UpdateRuntime(apiManagement, observability bool) error {
 	var err error
+	err = DeleteComponent(Observability)
+	if err != nil {
+		return err
+	}
 	if apiManagement {
 		err = DeleteComponent(IdentityProvider)
 		if err != nil {
