@@ -37,18 +37,6 @@ log_error() {
     echo "${LOG_PREFIX}[ERROR]" $1
 }
 
-getBallerinaHome() {
-    if [ -z "${HOME_BALLERINA}" ]; then
-        BALLERINA_VERSION=$(ballerina version | awk '{print $2}')
-        BALLERINA_DEFAULT_HOME_PREFIX="/Library/Ballerina/"
-        HOME_BALLERINA=${BALLERINA_DEFAULT_HOME_PREFIX}/ballerina-${BALLERINA_VERSION}
-        if [ ! -d $HOME_BALLERINA ]; then
-            log_error "BALLERINA_HOME cannot be found."
-            exit 1
-        fi
-    fi
-}
-
 #Check running user
 if (( $EUID != 0 )); then
     echo "Please run as root."
@@ -87,24 +75,6 @@ then
   echo "[2/5] [DONE] Successfully deleted cellery informations"
 else
   echo "[2/5] [ERROR] Could not delete cellery informations" >&2
-fi
-#remove cellery depended ballerina libraries
-getBallerinaHome
-[ -e ${HOME_BALLERINA}/bre/lib/cellery-*.jar ] && rm -f ${HOME_BALLERINA}/bre/lib/cellery-*.jar
-if [ $? -eq 0 ]
-then
-  echo "[3/5] [DONE] Successfully deleted cellery ballerina dependencies"
-else
-  echo "[3/5] [ERROR] Could not delete cellery ballerina dependencies" >&2
-fi
-
-#remove cellery depended ballerina repo
-[ -e "${HOME_BALLERINA}/lib/repo/celleryio" ] && rm -rf "${HOME_BALLERINA}/lib/repo/celleryio"
-if [ $? -eq 0 ]
-then
-  echo "[4/5] [DONE] Successfully deleted cellery ballerina libraries"
-else
-  echo "[4/5] [ERROR] Could not delete cellery ballerina libraries" >&2
 fi
 
 #remove cellery source distribution
