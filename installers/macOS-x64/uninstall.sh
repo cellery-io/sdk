@@ -63,27 +63,27 @@ echo "Cellery uninstalling process started"
 find "/usr/local/bin/" -name "cellery" | xargs rm
 if [ $? -eq 0 ]
 then
-  echo "[1/5] [DONE] Successfully deleted shortcut links"
+  echo "[1/3] [DONE] Successfully deleted shortcut links"
 else
-  echo "[1/5] [ERROR] Could not delete shortcut links" >&2
+  echo "[1/3] [ERROR] Could not delete shortcut links" >&2
 fi
 
 #forget from pkgutil
 pkgutil --forget "org.$PRODUCT.$VERSION" > /dev/null 2>&1
 if [ $? -eq 0 ]
 then
-  echo "[2/5] [DONE] Successfully deleted cellery informations"
+  echo "[2/3] [DONE] Successfully deleted cellery informations"
 else
-  echo "[2/5] [ERROR] Could not delete cellery informations" >&2
+  echo "[2/3] [ERROR] Could not delete cellery informations" >&2
 fi
 
 #remove cellery source distribution
 [ -e "/Library/Cellery" ] && rm -rf "/Library/Cellery"
 if [ $? -eq 0 ]
 then
-  echo "[5/5] [DONE] Successfully deleted cellery"
+  echo "[3/3] [DONE] Successfully deleted cellery"
 else
-  echo "[5/5] [ERROR] Could not delete cellery" >&2
+  echo "[3/3] [ERROR] Could not delete cellery" >&2
 fi
 
 echo "Cellery uninstall process finished"
