@@ -11,9 +11,11 @@ Users can add/remove components (Observability and APIM) selectively to these pa
 the current context of `kubectl` also will be updated, and cellery commands will be performed on the switched kubernetes context. 
     
 ### Create
-
+Setup cellery runtime. The setup can be an existing K8s cluster or new runtimes in either GCP or local environment.
+Refer readme files for [setting up in GCP](./setup/gcp-setup.md) and [setting up in local](./setup/local-setup.md) for detailed instructions.
 ### Manage
-
+Perform management operations on the targeted cellery runtime. Refer the readme file for [managing cellery runtime](./setup/manage-setup.md) for detailed instructions.
 ### Modify
-
+Modifies an existing cellery runtime. Refer the readme file for [modifying cellery runtime](./setup/modify-setup.md) for detailed instructions.
 ### Switch
+Switch between cellery runtimes. Refer the [switch command readme](./setup/switch-setup.md) for detailed instructions.
