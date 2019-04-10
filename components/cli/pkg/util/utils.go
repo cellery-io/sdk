@@ -975,16 +975,26 @@ func ContainsInStringArray(array []string, item string) bool {
 	return false
 }
 
-func GetYesOrNoFromUser(question string) (bool, error) {
+func GetYesOrNoFromUser(question string, withBackOption bool) (bool, bool, error) {
+	options := []string{}
+	var isBackSelected = false
+	if withBackOption {
+		options = []string{"Yes", "No", constants.CELLERY_SETUP_BACK}
+	} else {
+		options = []string{"Yes", "No"}
+	}
 	prompt := promptui.Select{
 		Label: question,
-		Items: []string{"Yes", "No"},
+		Items: options,
 	}
 	_, result, err := prompt.Run()
-	if err != nil {
-		return false, fmt.Errorf("Prompt failed %v\n", err)
+	if result == constants.CELLERY_SETUP_BACK{
+		isBackSelected = true
 	}
-	return result == "Yes", nil
+	if err != nil {
+		return false, isBackSelected, fmt.Errorf("Prompt failed %v\n", err)
+	}
+	return result == "Yes", isBackSelected, nil
 }
 
 // OpenBrowser opens up the provided URL in a browser

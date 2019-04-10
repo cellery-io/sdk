@@ -41,9 +41,9 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 	}
 
 	if isCompleteSelected {
-		confirmDownload, err := util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your machine. Do you want to continue",
+		confirmDownload, _, err := util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your machine. Do you want to continue",
 			constants.AWS_S3_ITEM_VM_COMPLETE,
-			util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_COMPLETE))))
+			util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_COMPLETE))), false)
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to select an option", err)
 		}
@@ -63,9 +63,9 @@ func RunSetupCreateLocal(isCompleteSelected bool) {
 			util.ExitWithErrorMessage("Failed to merge kube-config file", err)
 		}
 	} else {
-		confirmDownload, err := util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your machine. Do you want to continue",
+		confirmDownload, _, err := util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your machine. Do you want to continue",
 			constants.AWS_S3_ITEM_VM_MINIMAL,
-			util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_MINIMAL))))
+			util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_MINIMAL))), false)
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to select an option", err)
 		}

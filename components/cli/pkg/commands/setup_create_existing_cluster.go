@@ -73,9 +73,13 @@ func RunSetupCreateOnExistingCluster(isPersistedVolumeVolume bool) {
 }
 
 func createRuntimeOnExistingClusterWithPersistedVolume() {
-	useNfs, err := util.GetYesOrNoFromUser(fmt.Sprintf("Use NFS server"))
+	var isBackSelected = false
+	useNfs, isBackSelected, err := util.GetYesOrNoFromUser(fmt.Sprintf("Use NFS server"), true)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to select an option", err)
+	}
+	if isBackSelected {
+		createOnExistingCluster()
 	}
 	if useNfs {
 		createRuntimeOnExistingClusterWithPersistedVolumeWithNfs()
