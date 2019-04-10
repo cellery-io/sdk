@@ -61,3 +61,27 @@ func DeleteResourceWithNamespace(kind, instance, namespace string) error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+func DeleteNameSpace(nameSpace string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"delete",
+		"ns",
+		nameSpace,
+		"--ignore-not-found",
+	)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func DeleteAllCells() error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"delete",
+		"cells",
+		"--all",
+		"--ignore-not-found",
+	)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

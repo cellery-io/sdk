@@ -40,8 +40,9 @@ func manageEnvironment() error {
 	}
 
 	cellPrompt := promptui.Select{
-		Label:     util.YellowBold("?") + " Select a runtime",
-		Items:     []string{constants.CELLERY_SETUP_LOCAL, constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_BACK},
+		Label: util.YellowBold("?") + " Select a runtime",
+		Items: []string{constants.CELLERY_SETUP_LOCAL, constants.CELLERY_SETUP_GCP,
+			constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -57,6 +58,10 @@ func manageEnvironment() error {
 	case constants.CELLERY_SETUP_GCP:
 		{
 			manageGcp()
+		}
+	case constants.CELLERY_SETUP_EXISTING_CLUSTER:
+		{
+			manageExistingCluster()
 		}
 	default:
 		{
