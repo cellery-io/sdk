@@ -176,7 +176,7 @@ func configureBucketOnGcp(ctx context.Context, gcpSpinner *util.Spinner, gcpBuck
 		fmt.Printf("Error creating storage client: %v", err)
 	}
 	// Upload init file to S3 bucket
-	gcpSpinner.SetNewAction("Uploading init.sql file to dcp bucket")
+	gcpSpinner.SetNewAction("Uploading init.sql file to GCP bucket")
 	if err := uploadSqlFile(client, gcpBucketName, constants.INIT_SQL); err != nil {
 		gcpSpinner.Stop(false)
 		fmt.Printf("Error Uploading Sql file: %v", err)
@@ -590,6 +590,8 @@ func createController(artifactPath string, errorMessage string) {
 
 	// Istio
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.APPLY, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/system/istio-crds.yaml"), errorMessage)
+	// sleep for few seconds - this is to make sure that the CRDs are properly applied
+	time.Sleep(5 * time.Second)
 
 	// Enabling Istio injection
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, "label", "namespace", "default", "istio-injection=enabled"), errorMessage)

@@ -73,7 +73,7 @@ executing inline command with `cellery setup create gcp [--complete]`.
     ✔ Updating kube config cluster
     ✔ Creating sql instance
     ✔ Creating gcp bucket
-    ✔ Uploading init.sql file to dcp bucket
+    ✔ Uploading init.sql file to GCP bucket
     ✔ Updating bucket permission
     ✔ Importing sql script
     ✔ Updating sql instance
