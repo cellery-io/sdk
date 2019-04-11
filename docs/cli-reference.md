@@ -18,6 +18,7 @@
 Cellery setup command install and manage cellery runtimes. For this purpose it supports several sub commands. Please 
 refer the [setup command readme](cli-setup-command.md) for complete instructions.
 
+[Back to Command List](#cellery-cli-commands)
 
 #### Cellery Init
 
@@ -28,6 +29,8 @@ Ex:
  ```
     cellery init
  ```
+ 
+[Back to Command List](#cellery-cli-commands)
 
 #### Cellery Build
 
@@ -35,15 +38,17 @@ Build an immutable cell image.
 
 ###### Parameters: 
 
-* Cell file: The .bal which has the cell definition
-* Cell image name: This is the image name, and it should be in format 
-<ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
+* _Cell file: The .bal which has the cell definition_
+* _Cell image name: This is the image name, and it should be in format 
+<ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>_
 
 Ex: 
 
  ```
     cellery build my-project.bal wso2/my-cell:1.0.0
  ```
+
+[Back to Command List](#cellery-cli-commands)
 
 #### Cellery Run
 
@@ -55,12 +60,12 @@ Create a running instance from a cell image.
 
 ###### Flags (Optional): 
 
-* -y, --assume-yes : Flag to enable/disable prompting for confirmation before starting instance(s)
-* -e, --env : Set an environment variable for the cellery run method in the Cell file
-* -l, --link : Link an instance with a dependency alias
-* -n, --name : Name of the cell instance
-* -s, --share-instances : Share all instances among equivalent Cell Instances
-* -d, --start-dependencies : Start all the dependencies of this Cell Image in order
+* _-y, --assume-yes : Flag to enable/disable prompting for confirmation before starting instance(s)_
+* _-e, --env : Set an environment variable for the cellery run method in the Cell file_
+* _-l, --link : Link an instance with a dependency alias_
+* _-n, --name : Name of the cell instance_
+* _-s, --share-instances : Share all instances among equivalent Cell Instances_
+* _-d, --start-dependencies : Start all the dependencies of this Cell Image in order_
 
 Ex: 
 
@@ -74,6 +79,8 @@ Ex:
     cellery run wso2/my-cell:1.0.0 -y
  ```
 
+[Back to Command List](#cellery-cli-commands)
+
 #### Cellery List
 
 List running instances/cell images. This command can take four forms, for listing components, images, ingresses or instances.
@@ -84,7 +91,7 @@ List the components which the cell image/instance encapsulate.
 
 ###### Parameters: 
 
-* cell instance name/cell image name: Either the cell instance name and cell image name.
+* _cell instance name/cell image name: Either the cell instance name and cell image name._
 
 Ex:
  ```
@@ -107,7 +114,7 @@ List the exposed APIs of a cell image/instance.
 
 ###### Parameters: 
 
-* cell instance name/cell image name: Either the cell instance name and cell image name.
+* _cell instance name/cell image name: Either the cell instance name and cell image name._
 
 Ex: 
  ```
@@ -125,6 +132,8 @@ Ex:
     cellery list instances 
  ```
 
+[Back to Command List](#cellery-cli-commands)
+
 #### Cellery login
 
 Log in the user to the cellery image repository, which is docker hub, and caches the credentials in the key ring in their machine, therefore user doesn't need to repeat typing the credentials.
@@ -135,13 +144,15 @@ Ex:
     cellery login
  ```
 
+[Back to Command List](#cellery-cli-commands)
+
 #### Cellery Push
 
 Push the cell image to the docker hub user account.
 
 ###### Parameters:
 
-* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
+* _cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>_
 
 Ex:
 
@@ -149,18 +160,22 @@ Ex:
     cellery push wso2/my-cell:1.0.0
  ```
 
+[Back to Command List](#cellery-cli-commands)
+
 #### Cellery Pull
 
 Pull the cell image from docker registry and include in the cellery local repository.
 
 ###### Parameters:
 
-* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
+* _cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>_
 
 Ex: 
  ```
    cellery pull wso2/my-cell:1.0.0
  ```
+
+[Back to Command List](#cellery-cli-commands)
 
 #### Cellery Terminate
 
@@ -168,12 +183,14 @@ Terminate the running cell instance within cell runtime.
 
 ###### Parameters:
 
-* cell instance name: Name of the instance running in the cellery system
+* _cell instance name: Name of the instance running in the cellery system_
 
 Ex: 
  ```
    cellery terminate my-cell-inst
  ```
+ 
+ [Back to Command List](#cellery-cli-commands)
 
 #### Cellery Status
 
@@ -181,12 +198,14 @@ Check for the runtime status of the cell instance.
 
 ###### Parameters:
 
-* cell instance name: Name of the instance running in the cellery system
+* _cell instance name: Name of the instance running in the cellery system_
 
 Ex: 
  ```
    cellery status my-cell-inst
  ```
+ 
+[Back to Command List](#cellery-cli-commands)
 
 #### Cellery Logs
 
@@ -194,11 +213,11 @@ Fetch logs of all components or specific component within the cell instance and 
 
 ###### Parameters:
 
-* cell instance name: Name of the instance running in the cellery system
+* _cell instance name: Name of the instance running in the cellery system_
 
 ###### Flags (Optional):
 
-* -c, --component: Name of the component of which the logs are required
+* _-c, --component: Name of the component of which the logs are required_
 
 Ex: 
  ```
@@ -206,18 +225,22 @@ Ex:
    cellery logs my-cell-inst -c my-comp
  ```
 
+[Back to Command List](#cellery-cli-commands)
+
 #### Cellery Inspect
 
 List the files included in a cell image.
 
 ###### Parameters:
 
-* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
+* _cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>_
 
 Ex:
  ```
    cellery inspect wso2/my-cell:1.0.0
  ```
+
+[Back to Command List](#cellery-cli-commands)
 
 #### Cellery Extract Resources
 
@@ -225,14 +248,16 @@ This will extract the resources folder of the cell image. This is useful to see 
 
 ###### Parameters:
 
-* cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>
+* _cell image name: This is the image name, and it should be in format <ORGANIZATION_NAME>/<IMAGE_NAME>:\<VERSION>_
 
 ###### Flags (Optional):
 
-* -o, --output: The directory into which the resources should be extracted
+* _-o, --output: The directory into which the resources should be extracted_
 
 Ex:
  ```
    cellery extract-resources wso2/my-cell:1.0.0 
    cellery extract-resources wso2/my-cell:1.0.0 -o /my/output/resource
  ```
+
+[Back to Command List](#cellery-cli-commands)
