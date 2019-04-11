@@ -44,30 +44,41 @@ import (
 
 // RunPush parses the cell image name to recognize the Cellery Registry (A Docker Registry), Organization and version
 // and pushes to the Cellery Registry
-func RunPush(cellImage string) {
+func RunPush(cellImage string, username string, password string) {
 	parsedCellImage, err := util.ParseImageTag(cellImage)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
 
-	// Instantiating a native keyring
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: constants.CELLERY_HUB_KEYRING_NAME,
-	})
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while logging out", err)
+	var registryCredentials = &util.RegistryCredentials{
+		Username: username,
+		Password: password,
 	}
-
-	// Reading the existing credentials
-	var registryCredentials = &util.RegistryCredentials{}
-	if err == nil {
-		ringItem, err := ring.Get(parsedCellImage.Registry)
-		if err == nil && ringItem.Data != nil {
-			err = json.Unmarshal(ringItem.Data, registryCredentials)
-		}
+	if username != "" && password == "" {
+		username, password, err = util.RequestCredentials("Cellery Registry", username)
 	}
 	isCredentialsPresent := err == nil && registryCredentials.Username != "" &&
 		registryCredentials.Password != ""
+
+	var ring keyring.Keyring
+	if !isCredentialsPresent {
+		// Instantiating a native keyring
+		ring, err := keyring.Open(keyring.Config{
+			ServiceName: constants.CELLERY_HUB_KEYRING_NAME,
+		})
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while logging out", err)
+		}
+
+		if err == nil {
+			ringItem, err := ring.Get(parsedCellImage.Registry)
+			if err == nil && ringItem.Data != nil {
+				err = json.Unmarshal(ringItem.Data, registryCredentials)
+			}
+		}
+		isCredentialsPresent = err == nil && registryCredentials.Username != "" &&
+			registryCredentials.Password != ""
+	}
 
 	if isCredentialsPresent {
 		// Pushing the image using the saved credentials
@@ -99,16 +110,18 @@ func RunPush(cellImage string) {
 				if err != nil {
 					util.ExitWithErrorMessage("Error occurred while saving Credentials", err)
 				}
-				err = ring.Set(keyring.Item{
-					Key:  parsedCellImage.Registry,
-					Data: credentialsData,
-				})
-				if err == nil {
-					fmt.Printf("\n%s Saved Credentials for %s Registry", util.GreenBold("\U00002714"),
-						util.Bold(parsedCellImage.Registry))
-				} else {
-					fmt.Printf("\n\n%s %s", util.YellowBold("\U000026A0"),
-						"Error occurred while saving credentials")
+				if ring != nil {
+					err = ring.Set(keyring.Item{
+						Key:  parsedCellImage.Registry,
+						Data: credentialsData,
+					})
+					if err == nil {
+						fmt.Printf("\n%s Saved Credentials for %s Registry", util.GreenBold("\U00002714"),
+							util.Bold(parsedCellImage.Registry))
+					} else {
+						fmt.Printf("\n\n%s %s", util.YellowBold("\U000026A0"),
+							"Error occurred while saving credentials")
+					}
 				}
 			} else {
 				util.ExitWithErrorMessage("Failed to pull image", err)

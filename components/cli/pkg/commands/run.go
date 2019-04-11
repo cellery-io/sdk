@@ -788,7 +788,7 @@ func extractImage(cellImage *util.CellImage, spinner *util.Spinner) (string, err
 	}
 	if !imageExists {
 		spinner.Pause()
-		RunPull(cellImageTag, true)
+		RunPull(cellImageTag, true, "", "")
 		fmt.Println()
 		spinner.Resume()
 	}

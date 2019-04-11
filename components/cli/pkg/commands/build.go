@@ -223,7 +223,7 @@ func generateMetaData(cellImage *util.CellImage, targetDir string, spinner *util
 			dependencyExists, err := util.FileExists(cellImageZip)
 			if !dependencyExists {
 				spinner.Pause()
-				RunPull(dependency, true)
+				RunPull(dependency, true, "", "")
 				fmt.Println()
 				spinner.Resume()
 			}

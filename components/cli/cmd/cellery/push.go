@@ -19,6 +19,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
@@ -26,6 +28,8 @@ import (
 )
 
 func newPushCommand() *cobra.Command {
+	var username string
+	var password string
 	cmd := &cobra.Command{
 		Use:   "push [<registry>/]<organization>/<cell-image>:<version>",
 		Short: "Push cell image to the remote repository",
@@ -38,13 +42,18 @@ func newPushCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if password != "" && username == "" {
+				return fmt.Errorf("expects username if the password is provided, username not provided")
+			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunPush(args[0])
+			commands.RunPush(args[0], username, password)
 		},
 		Example: "  cellery push cellery-samples/employee:1.0.0\n" +
 			"  cellery push registry.foo.io/cellery-samples/employee:1.0.0",
 	}
+	cmd.Flags().StringVarP(&username, "username", "u", "", "Username for Cellery Registry")
+	cmd.Flags().StringVarP(&password, "password", "p", "", "Password for Cellery Registry")
 	return cmd
 }
