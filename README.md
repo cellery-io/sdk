@@ -13,7 +13,7 @@ Build, push/pull, run, scale and observe composites. Create secure APIs by defau
 
 ## Getting Started
 ### Pre requisites 
-1. kubectl v1.11 or higher (Execute `kubectl version` command and make sure kubectl client is v1.11 or higher. Please follow [instructions](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to install latest kubectl)
+1. kubectl v1.11.x (Execute `kubectl version` command and make sure kubectl client is v1.11.x Please follow [instructions](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to install kubectl v1.11.x)
 2. Existing Kubernetes cluster OR  
     VirtualBox (for a local installation including a Kubernetes cluster) OR
     Google Cloud SDK (to install cellery runtime in GCP)
