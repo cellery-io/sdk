@@ -403,7 +403,7 @@ func configureGCPCredentials() string {
 	if len(jsonAuthFile) > 0 {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
 	} else {
-		fmt.Printf("Could not find authentication json file in : %s. Please copy GCP service account credentials" +
+		fmt.Printf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
 			" json file into this directory.\n", filepath.Join(util.UserHomeDir(),
 			constants.CELLERY_HOME, constants.GCP))
 		os.Exit(1)

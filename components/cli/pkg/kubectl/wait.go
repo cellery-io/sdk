@@ -20,7 +20,6 @@ package kubectl
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"syscall"
 	"time"
@@ -41,7 +40,7 @@ func WaitForCondition(condition string, timeoutSeconds int, resourceName string,
 		resourceName,
 		"-n", namespace,
 	)
-	cmd.Stderr = os.Stderr
+	//cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
@@ -69,18 +68,29 @@ func WaitForCluster(timeout time.Duration) error {
 	return fmt.Errorf("cluster ready check timeout")
 }
 
-func WaitForDeployments(namespace string) error {
+func WaitForDeployments(namespace string, timeout time.Duration) error {
 	names, err := GetDeploymentNames(namespace)
 	if err != nil {
 		return err
 	}
+	start := time.Now()
 	for _, v := range names {
 		if len(v) == 0 {
 			continue
 		}
-		err := WaitForDeployment("available", -1, v, namespace)
-		if err != nil {
-			return err
+		// Check whether there is a timeout
+		if time.Since(start) > timeout {
+			return fmt.Errorf("deployment status check timeout. Please use 'kubectl get pods -n %s' to check the status", namespace)
+		}
+
+		for time.Since(start) < timeout {
+			err := WaitForDeployment("available", int(timeout.Seconds()), v, namespace)
+			if err != nil {
+				continue
+				// we ignore this error due to an unexpected error
+				// ".status.conditions accessor error: Failure is of the type string, expected map[string]interface{}"
+			}
+			break
 		}
 	}
 	return nil

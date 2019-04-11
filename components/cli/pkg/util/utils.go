@@ -1108,7 +1108,7 @@ func WaitForRuntime() {
 	spinner.Stop(true)
 
 	spinner = StartNewSpinner("Checking runtime status (Istio)...")
-	err = kubectl.WaitForDeployments("istio-system")
+	err = kubectl.WaitForDeployments("istio-system", time.Minute*15)
 	if err != nil {
 		spinner.Stop(false)
 		ExitWithErrorMessage("Error while checking runtime status (Istio)", err)
@@ -1117,7 +1117,7 @@ func WaitForRuntime() {
 	spinner.Stop(true)
 
 	spinner = StartNewSpinner("Checking runtime status (Cellery)...")
-	err = kubectl.WaitForDeployments("cellery-system")
+	err = kubectl.WaitForDeployments("cellery-system", time.Minute*5)
 	if err != nil {
 		spinner.Stop(false)
 		ExitWithErrorMessage("Error while checking runtime status (Cellery)", err)
