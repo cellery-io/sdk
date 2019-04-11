@@ -3,6 +3,7 @@
 Cellery allows you to enable/disable different system components so that you can modify your runtime for your requirements.
 This will only modify the configurations on your `cellery-system` namespace.
 
+**Note:** You may need to redeploy the cells which uses OIDC Dynamic client registration when you enable/disable API Management
 
 ## Usage
 
