@@ -18,7 +18,7 @@ Build, push/pull, run, scale and observe composites. Create secure APIs by defau
     VirtualBox (for a local installation including a Kubernetes cluster) OR
     Google Cloud SDK (to install cellery runtime in GCP)
 
-### How to Install
+### Setup Cellery CLI
 
 #### Linux
 Download the [cellery-ubuntu-x64-0.2.0.deb](https://wso2.org/jenkins/job/cellery/job/sdk/) and install it using dpkg command as shown below.
@@ -28,7 +28,7 @@ dpkg -i cellery-ubuntu-x64-0.2.0.deb
 #### Mac OS
 Download [cellery-0.2.0.pkg](https://wso2.org/jenkins/job/cellery/job/sdk/) and install using the standard macOS package installation process.
 
-#### Cellery Tooling (Optional)
+### Setup Cellery Tooling (Optional)
 1. Download and install [VS Code](https://code.visualstudio.com/Download).
 1. Install the [Ballerina vscode plugin 0.990.3](https://product-dist.ballerina.io/downloads/0.990.3/ballerina-vscode-plugin-0.990.3.vsix). 
 1. Open VS Code and navigate to `File|Code->preferences->settings->Extensions->Ballerina` and set the home value to following. 
@@ -44,7 +44,7 @@ Download [cellery-0.2.0.pkg](https://wso2.org/jenkins/job/cellery/job/sdk/) and 
 ```
 ![VSCode Settings](docs/images/vscode-settings.png)
 
-### Set up cellery runtime
+### Set up Cellery runtime
 Once Cellery is installed, verify the installation is working by executing `cellery version` command.
 
 You can install the cellery runtime locally as a virtual machine (`Local`), in Google Cloud Platform (`GCP`)
