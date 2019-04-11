@@ -552,7 +552,7 @@ func configureMysqlOnExistingClusterWithPersistedVolume(artifactPath, errorDeplo
 
 	// Wait till the mysql deployment availability
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, "wait", "deployment/wso2apim-with-analytics-mysql-deployment",
-		"--for", "condition=available", "--timeout", "300s", "-n", "cellery-system"), errorDeployingCelleryRuntime)
+		"--for", "condition=available", "--timeout", "900s", "-n", "cellery-system"), errorDeployingCelleryRuntime)
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.APPLY, constants.KUBECTL_FLAG,
 		artifactPath+"/k8s-artefacts/mysql/mysql-service.yaml", "-n", "cellery-system"), errorDeployingCelleryRuntime)
 }
@@ -591,7 +591,7 @@ func configureMysqlOnExistingClusterWithNonPersistedVolume(artifactPath, errorDe
 
 	// Wait till the mysql deployment availability
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, "wait", "deployment/wso2apim-with-analytics-mysql-deployment",
-		"--for", "condition=available", "--timeout", "300s", "-n", "cellery-system"), errorDeployingCelleryRuntime)
+		"--for", "condition=available", "--timeout", "900s", "-n", "cellery-system"), errorDeployingCelleryRuntime)
 	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.APPLY, constants.KUBECTL_FLAG,
 		artifactPath+"/k8s-artefacts/mysql/mysql-service.yaml", "-n", "cellery-system"), errorDeployingCelleryRuntime)
 }
