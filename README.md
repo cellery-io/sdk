@@ -28,22 +28,6 @@ dpkg -i cellery-ubuntu-x64-0.2.0.deb
 #### Mac OS
 Download [cellery-0.2.0.pkg](https://wso2.org/jenkins/job/cellery/job/sdk/) and install using the standard macOS package installation process.
 
-### Setup Cellery Tooling (Optional)
-1. Download and install [VS Code](https://code.visualstudio.com/Download).
-1. Install the [Ballerina vscode plugin 0.990.3](https://product-dist.ballerina.io/downloads/0.990.3/ballerina-vscode-plugin-0.990.3.vsix). 
-1. Open VS Code and navigate to `File|Code->preferences->settings->Extensions->Ballerina` and set the home value to following. 
-
-##### Linux
-```bash
-/usr/share/cellery/runtime/ballerina-0.990.3
-```
-
-##### Mac OS
-```bash
-/Library/Cellery/runtime/ballerina-0.990.3
-```
-![VSCode Settings](docs/images/vscode-settings.png)
-
 ### Set up Cellery runtime
 Once Cellery is installed, verify the installation is working by executing `cellery version` command.
 
@@ -67,7 +51,23 @@ Please follow the relevant link below for the chosen setup.
 
 #### [1. Local setup](docs/setup/local-setup.md)
 #### [2. Existing Cluster](docs/setup/existing-cluster.md)
-#### [3. GCP setup](docs/setup/gcp-setup.md)                                    
+#### [3. GCP setup](docs/setup/gcp-setup.md)     
+
+### Setup Cellery Tooling (Optional)
+1. Download and install [VS Code](https://code.visualstudio.com/Download).
+1. Install the [Ballerina vscode plugin 0.990.3](https://product-dist.ballerina.io/downloads/0.990.3/ballerina-vscode-plugin-0.990.3.vsix). 
+1. Open VS Code and navigate to `File|Code->preferences->settings->Extensions->Ballerina` and set the home value to following. 
+
+##### Linux
+```bash
+/usr/share/cellery/runtime/ballerina-0.990.3
+```
+
+##### Mac OS
+```bash
+/Library/Cellery/runtime/ballerina-0.990.3
+```
+![VSCode Settings](docs/images/vscode-settings.png)                               
 
 ### Quick start with cellery
 Let's quickly run a sample hello world cell by following below steps.
