@@ -56,7 +56,7 @@ Create a running instance from a cell image.
 
 ###### Parameters: 
 
-* Cell image name: name of a built Cell image
+* _Cell image name: name of a built Cell image_
 
 ###### Flags (Optional): 
 
