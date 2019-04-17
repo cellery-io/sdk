@@ -244,6 +244,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         }
 
         if (attributeMap.containsKey("expose")) {
+            httpAPI.setAuthenticate(((BBoolean) attributeMap.get("authenticate")).booleanValue());
             if ("global".equals(((BString) attributeMap.get("expose")).stringValue())) {
                 httpAPI.setGlobal(true);
                 httpAPI.setBackend(component.getService());

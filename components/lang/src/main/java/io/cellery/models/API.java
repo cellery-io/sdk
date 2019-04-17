@@ -22,7 +22,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,11 +35,5 @@ public class API {
     private String context;
     private String backend;
     private boolean global;
-
-    public void addDefinition(APIDefinition definition) {
-        if (definitions == null) {
-            definitions = new ArrayList<>();
-        }
-        this.definitions.add(definition);
-    }
+    private boolean authenticate;
 }
