@@ -21,7 +21,7 @@ package constants
 const DOMAIN_NAME_PATTERN = "[a-z0-9]+((-|.)[a-z0-9]+)*"
 const CELLERY_ID_PATTERN = "[a-z0-9]+(-[a-z0-9]+)*"
 const CELLERY_ALIAS_PATTERN = "[a-zA-Z0-9_-]+"
-const IMAGE_VERSION_PATTERN = "[0-9]+\\.[0-9]+\\.[0-9]+"
+const IMAGE_VERSION_PATTERN = "[a-z0-9]+((?:-|.)[a-z0-9]+)*"
 const CELL_IMAGE_PATTERN = CELLERY_ID_PATTERN + "\\/" + CELLERY_ID_PATTERN + ":" + IMAGE_VERSION_PATTERN
 const CELL_IMAGE_WITH_REGISTRY_PATTERN = "(" + DOMAIN_NAME_PATTERN + "\\/)?" + CELL_IMAGE_PATTERN
 const DEPENDENCY_LINK_PATTERN = "(" + CELLERY_ID_PATTERN + "\\.)?" + CELLERY_ALIAS_PATTERN + ":" + CELLERY_ID_PATTERN

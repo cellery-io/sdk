@@ -815,8 +815,7 @@ func ParseImageTag(cellImageString string) (parsedCellImage *CellImage, err erro
 	return cellImage, nil
 }
 
-// ValidateImageTag validates the image tag (without the registry in it). This checks the version to be in the format
-// of semantic versioning
+// ValidateImageTag validates the image tag (without the registry in it).
 func ValidateImageTag(imageTag string) error {
 	r := regexp.MustCompile("^([^/:]*)/([^/:]*):([^/:]*)$")
 	subMatch := r.FindStringSubmatch(imageTag)
@@ -828,29 +827,29 @@ func ValidateImageTag(imageTag string) error {
 	organization := subMatch[1]
 	isValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), organization)
 	if err != nil || !isValid {
-		return fmt.Errorf("expects a valid organization name (lower case letters, numbers and dashes), "+
-			"received %s", organization)
+		return fmt.Errorf("expects a valid organization name (lower case letters, numbers and dashes "+
+			"with only letters and numbers at the begining and end), received %s", organization)
 	}
 
 	imageName := subMatch[2]
 	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), imageName)
 	if err != nil || !isValid {
-		return fmt.Errorf("expects a valid image name (lower case letters, numbers and dashes), "+
-			"received %s", imageName)
+		return fmt.Errorf("expects a valid image name (lower case letters, numbers and dashes "+
+			"with only letters and numbers at the begining and end), received %s", imageName)
 	}
 
 	imageVersion := subMatch[3]
 	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.IMAGE_VERSION_PATTERN), imageVersion)
 	if err != nil || !isValid {
-		return fmt.Errorf("expects the image version to be in the format of Semantic Versioning "+
-			"(eg:- 1.0.0), received %s", imageVersion)
+		return fmt.Errorf("expects a valid image version (lower case letters, numbers, dashes and dots "+
+			"with only letters and numbers at the begining and end), received %s", imageVersion)
 	}
 
 	return nil
 }
 
 // ValidateImageTag validates the image tag (with the registry in it). The registry is an option element
-// in this validation. This checks the version to be in the format of semantic versioning
+// in this validation.
 func ValidateImageTagWithRegistry(imageTag string) error {
 	r := regexp.MustCompile("^(?:([^/:]*)/)?([^/:]*)/([^/:]*):([^/:]*)$")
 	subMatch := r.FindStringSubmatch(imageTag)
@@ -869,22 +868,22 @@ func ValidateImageTagWithRegistry(imageTag string) error {
 	organization := subMatch[2]
 	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), organization)
 	if err != nil || !isValid {
-		return fmt.Errorf("expects a valid organization name (lower case letters, numbers and dashes), "+
-			"received %s", organization)
+		return fmt.Errorf("expects a valid organization name (lower case letters, numbers and dashes "+
+			"with only letters and numbers at the begining and end), received %s", organization)
 	}
 
 	imageName := subMatch[3]
 	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), imageName)
 	if err != nil || !isValid {
-		return fmt.Errorf("expects a valid image name (lower case letters, numbers and dashes), "+
-			"received %s", imageName)
+		return fmt.Errorf("expects a valid image name (lower case letters, numbers and dashes "+
+			"with only letters and numbers at the begining and end), received %s", imageName)
 	}
 
 	imageVersion := subMatch[4]
 	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.IMAGE_VERSION_PATTERN), imageVersion)
 	if err != nil || !isValid {
-		return fmt.Errorf("expects the image version to be in the format of Semantic Versioning "+
-			"(eg:- 1.0.0), received %s", imageVersion)
+		return fmt.Errorf("expects a valid image version (lower case letters, numbers, dashes and dots "+
+			"with only letters and numbers at the begining and end), received %s", imageVersion)
 	}
 
 	return nil
