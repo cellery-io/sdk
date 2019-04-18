@@ -18,12 +18,22 @@
 
 package runtime
 
-type SystemComponent string
-
-const (
-	ApiManager       SystemComponent = "ApiManager"
-	IdentityProvider SystemComponent = "IdentityProvider"
-	Observability    SystemComponent = "Observability"
-	Controller       SystemComponent = "Controller"
-	System           SystemComponent = "System"
+import (
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
+
+func InstallController() error {
+	for _, v := range buildControllerYamlPaths() {
+		err := kubectl.ApplyFile(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func buildControllerYamlPaths() []string {
+	base := buildArtifactsPath(Controller)
+	return util.FindInDirectory(base, ".yaml")
+}

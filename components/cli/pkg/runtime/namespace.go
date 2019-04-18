@@ -18,12 +18,25 @@
 
 package runtime
 
-type SystemComponent string
+import (
+	"path/filepath"
 
-const (
-	ApiManager       SystemComponent = "ApiManager"
-	IdentityProvider SystemComponent = "IdentityProvider"
-	Observability    SystemComponent = "Observability"
-	Controller       SystemComponent = "Controller"
-	System           SystemComponent = "System"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
+
+func CreateCelleryNameSpace() error {
+	for _, v := range buildNameSpaceYamlPaths() {
+		err := kubectl.ApplyFile(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func buildNameSpaceYamlPaths() []string {
+	base := buildArtifactsPath(System)
+	return []string{
+		filepath.Join(base, "ns-init.yaml"),
+	}
+}

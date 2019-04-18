@@ -101,6 +101,10 @@ func buildArtifactsPath(component SystemComponent) string {
 		return filepath.Join(artifactsPath, "global-idp")
 	case Observability:
 		return filepath.Join(artifactsPath, "observability")
+	case Controller:
+		return filepath.Join(artifactsPath, "controller")
+	case System:
+		return filepath.Join(artifactsPath, "system")
 	default:
 		return filepath.Join(artifactsPath)
 	}

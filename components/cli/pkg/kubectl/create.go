@@ -74,3 +74,18 @@ func CreateConfigMap(name, confFile string) error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+func CreateClusterRoleBinding(clusterRole, user string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"create",
+		"clusterrolebinding",
+		"cluster-admin-binding",
+		"--clusterrole",
+		clusterRole,
+		"--user",
+		user,
+	)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

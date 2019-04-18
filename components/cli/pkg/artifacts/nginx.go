@@ -16,14 +16,28 @@
  * under the License.
  */
 
-package runtime
+package artifacts
 
-type SystemComponent string
+import (
+	"path/filepath"
 
-const (
-	ApiManager       SystemComponent = "ApiManager"
-	IdentityProvider SystemComponent = "IdentityProvider"
-	Observability    SystemComponent = "Observability"
-	Controller       SystemComponent = "Controller"
-	System           SystemComponent = "System"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
+
+func InstallNginx() error {
+	for _, file := range buildNginxYamlPaths() {
+		err := kubectl.ApplyFile(file)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func buildNginxYamlPaths() []string {
+	base := buildArtifactsPath(System)
+	return []string{
+		filepath.Join(base, "mandatory.yaml"),
+		filepath.Join(base, "cloud-generic.yaml"),
+	}
+}

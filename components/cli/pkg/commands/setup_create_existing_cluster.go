@@ -25,6 +25,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/artifacts"
+
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/oxequa/interact"
@@ -167,7 +169,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithoutNfsBasic() error {
 	configureMysqlOnExistingClusterWithPersistedVolume(artifactPath, errorDeployingCelleryRuntime)
 
 	gcpSpinner.SetNewAction("Creating IDP")
-	createIdp(artifactPath, errorDeployingCelleryRuntime)
+	createIdp(errorDeployingCelleryRuntime)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
@@ -234,7 +236,7 @@ func createRuntimeOnExistingClusterWithNonPersistedVolumeBasic() error {
 	configureMysqlOnExistingClusterWithNonPersistedVolume(artifactPath, errorDeployingCelleryRuntime)
 
 	gcpSpinner.SetNewAction("Creating IDP")
-	createIdp(artifactPath, errorDeployingCelleryRuntime)
+	createIdp(errorDeployingCelleryRuntime)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
@@ -406,7 +408,7 @@ func createRuntimeOnExistingClusterWithPersistedVolumeWithNfsBasic(nfsServerIp, 
 	updateIdpDataInK8sArtifacts(dbHostName, dbUserName, dbPassword)
 
 	gcpSpinner.SetNewAction("Creating IDP")
-	createIdp(artifactPath, errorDeployingCelleryRuntime)
+	createIdp(errorDeployingCelleryRuntime)
 
 	gcpSpinner.SetNewAction("Creating ingress-nginx")
 	createNGinxForExistingCluster(artifactPath, errorDeployingCelleryRuntime, ingressModeLoadBalancerSelected)
@@ -727,5 +729,16 @@ func createNGinxForExistingCluster(artifactPath, errorMessage string, ingressMod
 	} else {
 		util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.APPLY, constants.KUBECTL_FLAG,
 			artifactPath+"/k8s-artefacts/system/service-nodeport.yaml"), errorMessage)
+	}
+}
+
+func createIdp(errorDeployingCelleryRuntime string) {
+	// Create the IDP config maps
+	if err := artifacts.CreateIdpConfigMaps(); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+	// Create IDP deployment and the service
+	if err := artifacts.CreateIdp(); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 }

@@ -16,14 +16,36 @@
  * under the License.
  */
 
-package runtime
+package kubectl
 
-type SystemComponent string
+import (
+	"os"
+	"os/exec"
 
-const (
-	ApiManager       SystemComponent = "ApiManager"
-	IdentityProvider SystemComponent = "IdentityProvider"
-	Observability    SystemComponent = "Observability"
-	Controller       SystemComponent = "Controller"
-	System           SystemComponent = "System"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
+
+func ApplyLable(itemType, itemName, labelName string, overWrite bool) error {
+	var cmd *exec.Cmd
+	if overWrite {
+		cmd = exec.Command(
+			constants.KUBECTL,
+			"label",
+			itemType,
+			itemName,
+			labelName,
+			"--overwrite",
+		)
+	} else {
+		cmd = exec.Command(
+			constants.KUBECTL,
+			"label",
+			itemType,
+			itemName,
+			labelName,
+		)
+	}
+
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

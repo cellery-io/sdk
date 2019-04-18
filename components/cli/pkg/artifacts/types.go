@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package runtime
+package artifacts
 
 type SystemComponent string
 
@@ -26,4 +26,5 @@ const (
 	Observability    SystemComponent = "Observability"
 	Controller       SystemComponent = "Controller"
 	System           SystemComponent = "System"
+	Mysql            SystemComponent = "Mysql"
 )
