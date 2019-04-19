@@ -21,6 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
@@ -35,7 +37,7 @@ func InstallNginx() error {
 }
 
 func buildNginxYamlPaths() []string {
-	base := buildArtifactsPath(System)
+	base := buildArtifactsPath(runtime.System)
 	return []string{
 		filepath.Join(base, "mandatory.yaml"),
 		filepath.Join(base, "cloud-generic.yaml"),

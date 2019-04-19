@@ -21,6 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
@@ -35,7 +37,7 @@ func CreateGlobalGatewayConfigMaps() error {
 }
 
 func buildGlobalGatewayConfigMaps() []ConfigMap {
-	base := buildArtifactsPath(ApiManager)
+	base := buildArtifactsPath(runtime.ApiManager)
 	return []ConfigMap{
 		{"gw-conf", filepath.Join(base, "conf")},
 		{"gw-conf-datasources", filepath.Join(base, "conf", "datasources")},
@@ -57,7 +59,7 @@ func AddApim() error {
 }
 
 func buildApimYamlPaths() []string {
-	base := buildArtifactsPath(ApiManager)
+	base := buildArtifactsPath(runtime.ApiManager)
 	return []string{
 		filepath.Join(base, "global-apim.yaml"),
 	}

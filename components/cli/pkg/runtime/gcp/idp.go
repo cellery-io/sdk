@@ -21,6 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
@@ -45,7 +47,7 @@ func CreateIdp() error {
 }
 
 func buildIdpConfigMaps() []ConfigMap {
-	base := buildArtifactsPath(IdentityProvider)
+	base := buildArtifactsPath(runtime.IdentityProvider)
 	return []ConfigMap{
 		{"identity-server-conf", filepath.Join(base, "conf")},
 		{"identity-server-conf-datasources", filepath.Join(base, "conf", "datasources")},
@@ -55,7 +57,7 @@ func buildIdpConfigMaps() []ConfigMap {
 }
 
 func buildIdpYamlPaths() []string {
-	base := buildArtifactsPath(IdentityProvider)
+	base := buildArtifactsPath(runtime.IdentityProvider)
 	return []string{
 		filepath.Join(base, "global-idp.yaml"),
 	}

@@ -21,6 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -51,16 +53,16 @@ func UpdateInitSql(dbUserName, dbPassword string) error {
 
 func buildMysqlConfigFilesPath() []string {
 	var configFiles []string
-	configFiles = append(configFiles, filepath.Join(buildArtifactsPath(ApiManager), "conf", "datasources",
+	configFiles = append(configFiles, filepath.Join(buildArtifactsPath(runtime.ApiManager), "conf", "datasources",
 		"master-datasources.xml"))
-	configFiles = append(configFiles, filepath.Join(buildArtifactsPath(Observability), "sp", "conf", "deployment.yaml"))
-	configFiles = append(configFiles, filepath.Join(buildArtifactsPath(IdentityProvider), "conf", "datasources",
+	configFiles = append(configFiles, filepath.Join(buildArtifactsPath(runtime.Observability), "sp", "conf", "deployment.yaml"))
+	configFiles = append(configFiles, filepath.Join(buildArtifactsPath(runtime.IdentityProvider), "conf", "datasources",
 		"master-datasources.xml"))
 
 	return configFiles
 }
 
 func buildInitSqlPath() string {
-	base := buildArtifactsPath(Mysql)
+	base := buildArtifactsPath(runtime.Mysql)
 	return filepath.Join(base, "dbscripts", "init.sql")
 }

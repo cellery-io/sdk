@@ -21,6 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -29,20 +31,20 @@ type ConfigMap struct {
 	Path string
 }
 
-func buildArtifactsPath(component SystemComponent) string {
+func buildArtifactsPath(component runtime.SystemComponent) string {
 	artifactsPath := filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts")
 	switch component {
-	case ApiManager:
+	case runtime.ApiManager:
 		return filepath.Join(artifactsPath, "global-apim")
-	case IdentityProvider:
+	case runtime.IdentityProvider:
 		return filepath.Join(artifactsPath, "global-idp")
-	case Observability:
+	case runtime.Observability:
 		return filepath.Join(artifactsPath, "observability")
-	case Controller:
+	case runtime.Controller:
 		return filepath.Join(artifactsPath, "controller")
-	case System:
+	case runtime.System:
 		return filepath.Join(artifactsPath, "system")
-	case Mysql:
+	case runtime.Mysql:
 		return filepath.Join(artifactsPath, "mysql")
 	default:
 		return filepath.Join(artifactsPath)

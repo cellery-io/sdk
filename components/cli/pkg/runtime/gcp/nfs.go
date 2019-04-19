@@ -21,6 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -48,11 +50,11 @@ func CreatePersistentVolume() error {
 }
 
 func buildArtifactsPersistentVolumeYamlPath() string {
-	base := buildArtifactsPath(ApiManager)
+	base := buildArtifactsPath(runtime.ApiManager)
 	return filepath.Join(base, "artifacts-persistent-volume.yaml")
 }
 
 func buildArtifactsPersistentVolumeClaimYamlPath() string {
-	base := buildArtifactsPath(ApiManager)
+	base := buildArtifactsPath(runtime.ApiManager)
 	return filepath.Join(base, "artifacts-persistent-volume-claim.yaml")
 }

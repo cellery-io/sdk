@@ -21,6 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
@@ -35,7 +37,7 @@ func CreateObservabilityConfigMaps() error {
 }
 
 func buildObservabilityConfigMaps() []ConfigMap {
-	base := buildArtifactsPath(Observability)
+	base := buildArtifactsPath(runtime.Observability)
 	return []ConfigMap{
 		{"sp-worker-siddhi", filepath.Join(base, "siddhi")},
 		{"sp-worker-conf", filepath.Join(base, "sp", "conf")},
@@ -59,7 +61,7 @@ func AddObservability() error {
 }
 
 func buildObservabilityYamlPaths() []string {
-	base := buildArtifactsPath(Observability)
+	base := buildArtifactsPath(runtime.Observability)
 	return []string{
 		filepath.Join(base, "sp", "sp-worker.yaml"),
 		filepath.Join(base, "portal", "observability-portal.yaml"),
