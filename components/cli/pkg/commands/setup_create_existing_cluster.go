@@ -25,7 +25,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/artifacts"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime/gcp"
 
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
@@ -734,11 +734,11 @@ func createNGinxForExistingCluster(artifactPath, errorMessage string, ingressMod
 
 func createIdp(errorDeployingCelleryRuntime string) {
 	// Create the IDP config maps
-	if err := artifacts.CreateIdpConfigMaps(); err != nil {
+	if err := gcp.CreateIdpConfigMaps(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 	// Create IDP deployment and the service
-	if err := artifacts.CreateIdp(); err != nil {
+	if err := gcp.CreateIdp(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 }

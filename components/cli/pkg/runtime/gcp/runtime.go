@@ -16,13 +16,18 @@
  * under the License.
  */
 
-package artifacts
+package gcp
 
 import (
 	"path/filepath"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
+
+type ConfigMap struct {
+	Name string
+	Path string
+}
 
 func buildArtifactsPath(component SystemComponent) string {
 	artifactsPath := filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts")

@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package artifacts
+package gcp
 
 import (
 	"path/filepath"
@@ -25,8 +25,8 @@ import (
 )
 
 func CreateObservabilityConfigMaps() error {
-	for _, confMap := range buildObservabilityConfigMapPathsWithConfigName() {
-		err := kubectl.CreateConfigMapWithNamespace(confMap[0], confMap[1], "cellery-system")
+	for _, confMap := range buildObservabilityConfigMaps() {
+		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -34,9 +34,9 @@ func CreateObservabilityConfigMaps() error {
 	return nil
 }
 
-func buildObservabilityConfigMapPathsWithConfigName() [][]string {
+func buildObservabilityConfigMaps() []ConfigMap {
 	base := buildArtifactsPath(Observability)
-	return [][]string{
+	return []ConfigMap{
 		{"sp-worker-siddhi", filepath.Join(base, "siddhi")},
 		{"sp-worker-conf", filepath.Join(base, "sp", "conf")},
 		{"observability-portal-config", filepath.Join(base, "node-server", "config")},

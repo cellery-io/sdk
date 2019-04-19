@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package artifacts
+package gcp
 
 import (
 	"path/filepath"

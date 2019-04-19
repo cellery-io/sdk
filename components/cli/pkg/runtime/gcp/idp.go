@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package artifacts
+package gcp
 
 import (
 	"path/filepath"
@@ -24,9 +24,9 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
-func CreateGlobalGatewayConfigMaps() error {
-	for _, confMap := range buildGlobalGatewayConfigMapPathsWithConfigName() {
-		err := kubectl.CreateConfigMapWithNamespace(confMap[0], confMap[1], "cellery-system")
+func CreateIdpConfigMaps() error {
+	for _, confMap := range buildIdpConfigMaps() {
+		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -34,20 +34,8 @@ func CreateGlobalGatewayConfigMaps() error {
 	return nil
 }
 
-func buildGlobalGatewayConfigMapPathsWithConfigName() [][]string {
-	base := buildArtifactsPath(ApiManager)
-	return [][]string{
-		{"gw-conf", filepath.Join(base, "conf")},
-		{"gw-conf-datasources", filepath.Join(base, "conf", "datasources")},
-		{"conf-identity", filepath.Join(base, "conf", "identity")},
-		{"apim-template", filepath.Join(base, "conf", "resources", "api_templates")},
-		{"apim-tomcat", filepath.Join(base, "conf", "tomcat")},
-		{"apim-security", filepath.Join(base, "conf", "security")},
-	}
-}
-
-func AddApim() error {
-	for _, v := range buildApimYamlPaths() {
+func CreateIdp() error {
+	for _, v := range buildIdpYamlPaths() {
 		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
@@ -56,9 +44,19 @@ func AddApim() error {
 	return nil
 }
 
-func buildApimYamlPaths() []string {
-	base := buildArtifactsPath(ApiManager)
+func buildIdpConfigMaps() []ConfigMap {
+	base := buildArtifactsPath(IdentityProvider)
+	return []ConfigMap{
+		{"identity-server-conf", filepath.Join(base, "conf")},
+		{"identity-server-conf-datasources", filepath.Join(base, "conf", "datasources")},
+		{"identity-server-conf-identity", filepath.Join(base, "conf", "identity")},
+		{"identity-server-tomcat", filepath.Join(base, "conf", "tomcat")},
+	}
+}
+
+func buildIdpYamlPaths() []string {
+	base := buildArtifactsPath(IdentityProvider)
 	return []string{
-		filepath.Join(base, "global-apim.yaml"),
+		filepath.Join(base, "global-idp.yaml"),
 	}
 }

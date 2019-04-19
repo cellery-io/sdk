@@ -28,9 +28,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/artifacts"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime/gcp"
 
 	"cloud.google.com/go/storage"
 	"github.com/manifoldco/promptui"
@@ -159,7 +159,7 @@ func configureNfsOnGcp(gcpSpinner *util.Spinner, ctx context.Context) {
 		gcpSpinner.Stop(false)
 		fmt.Printf("Error getting NFS server IP address: %v", errIp)
 	}
-	if err := artifacts.UpdateNfsServerDetails(nfsIpAddress, "/data"); err != nil {
+	if err := gcp.UpdateNfsServerDetails(nfsIpAddress, "/data"); err != nil {
 		gcpSpinner.Stop(false)
 		fmt.Printf("Error replacing in file artifacts-persistent-volume.yaml: %v", err)
 	}
@@ -228,7 +228,7 @@ func configureMysqlOnGcp(ctx context.Context, gcpSpinner *util.Spinner) (*sqladm
 		constants.GCP_DB_INSTANCE_NAME+uniqueNumber)
 	fmt.Printf("Sql Ip address : %v", sqlIpAddress)
 
-	if err := artifacts.UpdateMysqlCredentials(constants.GCP_SQL_USER_NAME, constants.GCP_SQL_PASSWORD+uniqueNumber,
+	if err := gcp.UpdateMysqlCredentials(constants.GCP_SQL_USER_NAME, constants.GCP_SQL_PASSWORD+uniqueNumber,
 		sqlIpAddress); err != nil {
 		gcpSpinner.Stop(false)
 		fmt.Printf("Error updating file: %v", err)
@@ -362,7 +362,7 @@ func createGcpStorage(client *storage.Client, projectID, bucketName string) erro
 
 func uploadSqlFile(client *storage.Client, bucket, object string) error {
 	ctx := context.Background()
-	if err := artifacts.UpdateInitSql(constants.GCP_SQL_USER_NAME, constants.GCP_SQL_PASSWORD+uniqueNumber); err != nil {
+	if err := gcp.UpdateInitSql(constants.GCP_SQL_USER_NAME, constants.GCP_SQL_PASSWORD+uniqueNumber); err != nil {
 		return err
 	}
 	f, err := os.Open(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS,
@@ -587,12 +587,12 @@ func deployCompleteCelleryRuntime() {
 	createAllDeploymentArtifacts()
 
 	//Create gateway deployment and the service
-	if err := artifacts.AddApim(); err != nil {
+	if err := gcp.AddApim(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 
 	// Create observability
-	if err := artifacts.AddObservability(); err != nil {
+	if err := gcp.AddObservability(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 	//Create NGinx
@@ -601,14 +601,14 @@ func deployCompleteCelleryRuntime() {
 
 func createIdpGcp(errorDeployingCelleryRuntime string) {
 	// Create IDP deployment and the service
-	if err := artifacts.CreateIdp(); err != nil {
+	if err := gcp.CreateIdp(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 }
 
 func createNGinx(errorMessage string) {
 	// Install nginx-ingress for control plane ingress
-	if err := artifacts.InstallNginx(); err != nil {
+	if err := gcp.InstallNginx(); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 }
@@ -617,19 +617,19 @@ func createAllDeploymentArtifacts() {
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
 
 	// Create apim NFS volumes and volume claims
-	if err := artifacts.CreatePersistentVolume(); err != nil {
+	if err := gcp.CreatePersistentVolume(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 	// Create the gw config maps
-	if err := artifacts.CreateGlobalGatewayConfigMaps(); err != nil {
+	if err := gcp.CreateGlobalGatewayConfigMaps(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 	// Create Observability configmaps
-	if err := artifacts.CreateObservabilityConfigMaps(); err != nil {
+	if err := gcp.CreateObservabilityConfigMaps(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 	// Create the IDP config maps
-	if err := artifacts.CreateIdpConfigMaps(); err != nil {
+	if err := gcp.CreateIdpConfigMaps(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 }
