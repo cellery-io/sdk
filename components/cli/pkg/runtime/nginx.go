@@ -21,14 +21,12 @@ package runtime
 import (
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
-func CreateCelleryNameSpace() error {
-	for _, v := range buildNameSpaceYamlPaths() {
-		err := kubectl.ApplyFile(v)
+func installNginx(artifactsPath string, isLoadBalancerIngressMode bool) error {
+	for _, file := range buildNginxYamlPaths(artifactsPath, isLoadBalancerIngressMode) {
+		err := kubectl.ApplyFile(file)
 		if err != nil {
 			return err
 		}
@@ -36,9 +34,13 @@ func CreateCelleryNameSpace() error {
 	return nil
 }
 
-func buildNameSpaceYamlPaths() []string {
-	base := buildArtifactsPath(System, filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
-	return []string{
-		filepath.Join(base, "ns-init.yaml"),
+func buildNginxYamlPaths(artifactsPath string, isLoadBalancerIngressMode bool) []string {
+	base := buildArtifactsPath(System, artifactsPath)
+	yamls := []string{filepath.Join(base, "mandatory.yaml")}
+	if isLoadBalancerIngressMode {
+		yamls = append(yamls, filepath.Join(base, "cloud-generic.yaml"))
+	} else {
+		yamls = append(yamls, filepath.Join(base, "service-nodeport.yaml"))
 	}
+	return yamls
 }

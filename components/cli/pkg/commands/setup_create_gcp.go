@@ -546,7 +546,7 @@ func createController(errorMessage string) {
 	}
 
 	// Apply Istio CRDs
-	if err := runtime.ApplyIstioCrds(); err != nil {
+	if err := runtime.ApplyIstioCrds(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
@@ -559,12 +559,12 @@ func createController(errorMessage string) {
 	}
 
 	// Install istio
-	if err := runtime.InstallIstio(); err != nil {
+	if err := runtime.InstallIstio(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 
 	// Apply controller CRDs
-	if err := runtime.InstallController(); err != nil {
+	if err := runtime.InstallController(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 }

@@ -24,8 +24,8 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
-func addApim() error {
-	for _, v := range buildApimYamlPaths() {
+func addApim(artifactsPath string, isPersistentVolume bool) error {
+	for _, v := range buildApimYamlPaths(artifactsPath, isPersistentVolume) {
 		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
@@ -34,8 +34,8 @@ func addApim() error {
 	return nil
 }
 
-func deleteApim() error {
-	for _, v := range buildApimYamlPaths() {
+func deleteApim(artifactsPath string) error {
+	for _, v := range buildApimYamlPaths(artifactsPath, false) {
 		err := kubectl.DeleteFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
@@ -44,9 +44,36 @@ func deleteApim() error {
 	return nil
 }
 
-func buildApimYamlPaths() []string {
-	base := buildArtifactsPath(ApiManager)
+func CreateGlobalGatewayConfigMaps(artifactsPath string) error {
+	for _, confMap := range buildGlobalGatewayConfigMaps(artifactsPath) {
+		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func buildApimYamlPaths(artifactsPath string, isPersistentVolume bool) []string {
+	base := buildArtifactsPath(ApiManager, artifactsPath)
+	if isPersistentVolume {
+		return []string{
+			filepath.Join(base, "global-apim.yaml"),
+		}
+	}
 	return []string{
 		filepath.Join(base, "global-apim-volatile.yaml"),
+	}
+}
+
+func buildGlobalGatewayConfigMaps(artifactsPath string) []ConfigMap {
+	base := buildArtifactsPath(ApiManager, artifactsPath)
+	return []ConfigMap{
+		{"gw-conf", filepath.Join(base, "conf")},
+		{"gw-conf-datasources", filepath.Join(base, "conf", "datasources")},
+		{"conf-identity", filepath.Join(base, "conf", "identity")},
+		{"apim-template", filepath.Join(base, "conf", "resources", "api_templates")},
+		{"apim-tomcat", filepath.Join(base, "conf", "tomcat")},
+		{"apim-security", filepath.Join(base, "conf", "security")},
 	}
 }

@@ -23,8 +23,8 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func InstallController() error {
-	for _, v := range buildControllerYamlPaths() {
+func InstallController(artifactsPath string) error {
+	for _, v := range buildControllerYamlPaths(artifactsPath) {
 		err := kubectl.ApplyFile(v)
 		if err != nil {
 			return err
@@ -33,7 +33,7 @@ func InstallController() error {
 	return nil
 }
 
-func buildControllerYamlPaths() []string {
-	base := buildArtifactsPath(Controller)
+func buildControllerYamlPaths(artifactsPath string) []string {
+	base := buildArtifactsPath(Controller, artifactsPath)
 	return util.FindInDirectory(base, ".yaml")
 }

@@ -20,21 +20,24 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
 func newSetupCreateOnExistingClusterCommand() *cobra.Command {
 	var isCompleteSetup = false
+	var isPersistentVolume = false
+	var hasNfsStorage = false
+	var isLoadBalancerIngressMode = false
 	cmd := &cobra.Command{
 		Use:   "existing",
 		Short: "Create a Cellery runtime in existing cluster",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateOnExistingCluster(isCompleteSetup)
+		Args: func(cmd *cobra.Command, args []string) error {
+			return nil
 		},
 		Example: "  cellery setup create existing",
 	}
-	cmd.Flags().BoolVarP(&isCompleteSetup, "complete", "c", false, "Create complete gcp setup")
+	cmd.Flags().BoolVarP(&isCompleteSetup, "complete", "c", false, "Create complete setup")
+	cmd.Flags().BoolVarP(&isPersistentVolume, "persistent", "p", false, "Persistent volume")
+	cmd.Flags().BoolVarP(&hasNfsStorage, "nfs", "n", false, "Has an NFS storage")
+	cmd.Flags().BoolVarP(&isLoadBalancerIngressMode, "loadbalancer", "l", false, "Ingress mode is load balancer")
 	return cmd
 }

@@ -21,35 +21,110 @@ package runtime
 import (
 	"fmt"
 	"path/filepath"
+	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func AddComponent(component SystemComponent) error {
-	switch component {
-	case ApiManager:
-		return addApim()
-	case IdentityProvider:
-		return addIdp()
-	case Observability:
-		return addObservability()
-
-	default:
-		return fmt.Errorf("unknown system componenet %q", component)
-	}
+type ConfigMap struct {
+	Name string
+	Path string
 }
 
-func DeleteComponent(component SystemComponent) error {
-	switch component {
-	case ApiManager:
-		return deleteApim()
-	case IdentityProvider:
-		return deleteIdp()
-	case Observability:
-		return deleteObservability()
-	default:
-		return fmt.Errorf("unknown system componenet %q", component)
+type Nfs struct {
+	NfsServerIp string
+	FileShare   string
+	DbHostName  string
+	DbUserName  string
+	DbPassword  string
+}
+
+func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, hasNfsStorage,
+	isLoadBalancerIngressMode bool, nfs Nfs) error {
+	spinner := util.StartNewSpinner("Creating cellery runtime")
+	if isPersistentVolume && !hasNfsStorage {
+		createFoldersRequiredForMysqlPvc()
+		createFoldersRequiredForApimPvc()
 	}
+	dbHostName := constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER
+	dbUserName := constants.CELLERY_SQL_USER_NAME
+	dbPassword := constants.CELLERY_SQL_PASSWORD
+	if hasNfsStorage {
+		dbHostName = nfs.DbHostName
+		dbUserName = nfs.DbUserName
+		dbPassword = nfs.DbPassword
+		updateNfsServerDetails(nfs.NfsServerIp, nfs.FileShare, artifactsPath)
+	}
+	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, artifactsPath); err != nil {
+		spinner.Stop(false)
+		fmt.Printf("Error updating file: %v", err)
+	}
+	if err := updateInitSql(dbUserName, dbPassword, artifactsPath); err != nil {
+		spinner.Stop(false)
+		fmt.Printf("Error updating file: %v", err)
+	}
+	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
+	labelMasterNode(errorDeployingCelleryRuntime)
+
+	// Setup Cellery namespace
+	spinner.SetNewAction("Setting up cellery name space")
+	if err := CreateCelleryNameSpace(); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+
+	// Apply Istio CRDs
+	spinner.SetNewAction("Applying istio crds")
+	if err := ApplyIstioCrds(artifactsPath); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+	// sleep for few seconds - this is to make sure that the CRDs are properly applied
+	time.Sleep(20 * time.Second)
+
+	// Enabling Istio injection
+	spinner.SetNewAction("Enabling istio injection")
+	if err := kubectl.ApplyLable("namespace", "default", "istio-injection=enabled",
+		true); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+
+	// Install istio
+	spinner.SetNewAction("Installing istio")
+	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+
+	// Apply controller CRDs
+	spinner.SetNewAction("Creating controller")
+	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+
+	spinner.SetNewAction("Configuring mysql")
+	AddMysql(artifactsPath, isPersistentVolume)
+
+	if isCompleteSetup {
+		CreateGlobalGatewayConfigMaps(artifactsPath)
+		if isPersistentVolume {
+			createPersistentVolume(artifactsPath, hasNfsStorage)
+		}
+		spinner.SetNewAction("Adding apim")
+		addApim(artifactsPath, isPersistentVolume)
+
+		CreateObservabilityConfigMaps(artifactsPath)
+		spinner.SetNewAction("Adding observability")
+		addObservability(artifactsPath)
+	} else {
+		spinner.SetNewAction("Adding idp")
+		CreateIdpConfigMaps(artifactsPath)
+		addIdp(artifactsPath)
+	}
+	spinner.SetNewAction("Creating ingress-nginx")
+	installNginx(artifactsPath, isLoadBalancerIngressMode)
+	spinner.Stop(true)
+
+	return nil
 }
 
 func UpdateRuntime(apiManagement, observability bool) error {
@@ -92,8 +167,62 @@ func UpdateRuntime(apiManagement, observability bool) error {
 	return nil
 }
 
-func buildArtifactsPath(component SystemComponent) string {
-	artifactsPath := filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")
+func AddComponent(component SystemComponent) error {
+	switch component {
+	case ApiManager:
+		return addApim(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"), false)
+	case IdentityProvider:
+		return addIdp(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+	case Observability:
+		return addObservability(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+
+	default:
+		return fmt.Errorf("unknown system componenet %q", component)
+	}
+}
+
+func DeleteComponent(component SystemComponent) error {
+	switch component {
+	case ApiManager:
+		return deleteApim(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+	case IdentityProvider:
+		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+	case Observability:
+		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+	default:
+		return fmt.Errorf("unknown system componenet %q", component)
+	}
+}
+
+func labelMasterNode(errorDeployingCelleryRuntime string) {
+	nodeName, err := kubectl.GetMasterNodeName()
+	if err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+	if err := kubectl.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+}
+
+func createFoldersRequiredForMysqlPvc() {
+	// Backup folders
+	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL),
+		filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL)+"-old")
+	// Create folders required by the mysql PVC
+	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL))
+}
+
+func createFoldersRequiredForApimPvc() {
+	// Backup folders
+	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER), filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP,
+		constants.CELLERY, constants.APIM_REPOSITORY_DEPLOYMENT_SERVER)+"-old")
+	// Create folders required by the APIM PVC
+	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER))
+}
+
+func buildArtifactsPath(component SystemComponent, artifactsPath string) string {
 	switch component {
 	case ApiManager:
 		return filepath.Join(artifactsPath, "global-apim")
@@ -105,6 +234,8 @@ func buildArtifactsPath(component SystemComponent) string {
 		return filepath.Join(artifactsPath, "controller")
 	case System:
 		return filepath.Join(artifactsPath, "system")
+	case Mysql:
+		return filepath.Join(artifactsPath, "mysql")
 	default:
 		return filepath.Join(artifactsPath)
 	}

@@ -24,8 +24,8 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
-func ApplyIstioCrds() error {
-	for _, v := range buildIstioCrdsYamlPaths() {
+func ApplyIstioCrds(artifactsPath string) error {
+	for _, v := range buildIstioCrdsYamlPaths(artifactsPath) {
 		err := kubectl.ApplyFile(v)
 		if err != nil {
 			return err
@@ -35,8 +35,8 @@ func ApplyIstioCrds() error {
 
 }
 
-func InstallIstio() error {
-	for _, v := range buildIstioYamlPaths() {
+func InstallIstio(artifactsPath string) error {
+	for _, v := range buildIstioYamlPaths(artifactsPath) {
 		err := kubectl.ApplyFile(v)
 		if err != nil {
 			return err
@@ -45,16 +45,16 @@ func InstallIstio() error {
 	return nil
 }
 
-func buildIstioYamlPaths() []string {
-	base := buildArtifactsPath(System)
+func buildIstioYamlPaths(artifactsPath string) []string {
+	base := buildArtifactsPath(System, artifactsPath)
 	return []string{
 		filepath.Join(base, "istio-demo-cellery.yaml"),
 		filepath.Join(base, "istio-gateway.yaml"),
 	}
 }
 
-func buildIstioCrdsYamlPaths() []string {
-	base := buildArtifactsPath(System)
+func buildIstioCrdsYamlPaths(artifactsPath string) []string {
+	base := buildArtifactsPath(System, artifactsPath)
 	return []string{
 		filepath.Join(base, "istio-crds.yaml"),
 	}

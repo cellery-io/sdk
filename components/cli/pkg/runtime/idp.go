@@ -24,8 +24,8 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
-func addIdp() error {
-	for _, v := range buildIdpYamlPaths() {
+func addIdp(artifactsPath string) error {
+	for _, v := range buildIdpYamlPaths(artifactsPath) {
 		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
@@ -34,8 +34,8 @@ func addIdp() error {
 	return nil
 }
 
-func deleteIdp() error {
-	for _, v := range buildIdpYamlPaths() {
+func deleteIdp(artifactsPath string) error {
+	for _, v := range buildIdpYamlPaths(artifactsPath) {
 		err := kubectl.DeleteFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
@@ -44,9 +44,29 @@ func deleteIdp() error {
 	return nil
 }
 
-func buildIdpYamlPaths() []string {
-	base := buildArtifactsPath(IdentityProvider)
+func CreateIdpConfigMaps(artifactsPath string) error {
+	for _, confMap := range buildIdpConfigMaps(artifactsPath) {
+		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func buildIdpYamlPaths(artifactsPath string) []string {
+	base := buildArtifactsPath(IdentityProvider, artifactsPath)
 	return []string{
 		filepath.Join(base, "global-idp.yaml"),
+	}
+}
+
+func buildIdpConfigMaps(artifactsPath string) []ConfigMap {
+	base := buildArtifactsPath(IdentityProvider, artifactsPath)
+	return []ConfigMap{
+		{"identity-server-conf", filepath.Join(base, "conf")},
+		{"identity-server-conf-datasources", filepath.Join(base, "conf", "datasources")},
+		{"identity-server-conf-identity", filepath.Join(base, "conf", "identity")},
+		{"identity-server-tomcat", filepath.Join(base, "conf", "tomcat")},
 	}
 }
