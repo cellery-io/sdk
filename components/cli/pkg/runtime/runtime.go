@@ -104,20 +104,20 @@ func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, ha
 	spinner.SetNewAction("Configuring mysql")
 	AddMysql(artifactsPath, isPersistentVolume)
 
+	CreateGlobalGatewayConfigMaps(artifactsPath)
+	if isPersistentVolume {
+		createPersistentVolume(artifactsPath, hasNfsStorage)
+	}
+	CreateObservabilityConfigMaps(artifactsPath)
+	CreateIdpConfigMaps(artifactsPath)
+
 	if isCompleteSetup {
-		CreateGlobalGatewayConfigMaps(artifactsPath)
-		if isPersistentVolume {
-			createPersistentVolume(artifactsPath, hasNfsStorage)
-		}
 		spinner.SetNewAction("Adding apim")
 		addApim(artifactsPath, isPersistentVolume)
-
-		CreateObservabilityConfigMaps(artifactsPath)
 		spinner.SetNewAction("Adding observability")
 		addObservability(artifactsPath)
 	} else {
 		spinner.SetNewAction("Adding idp")
-		CreateIdpConfigMaps(artifactsPath)
 		addIdp(artifactsPath)
 	}
 	spinner.SetNewAction("Creating ingress-nginx")
