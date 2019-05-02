@@ -144,15 +144,15 @@ and [GCP setup](docs/setup/gcp-setup.md)     ,
 so that your browser will use the right IP address for `hello-world.com`. Use the `kubectl` tool to make sure the IP your service is running on:
     ```
     $ kubectl get ingress
-    NAME                     HOSTS             ADDRESS        PORTS   AGE
-    hello--gateway-ingress   hello-world.com   192.168.56.10   80      3m
+    NAME                              HOSTS                ADDRESS         PORTS   AGE
+    my-hello-world--gateway-ingress   my-hello-world.com   192.168.56.10   80      3m
     ```
-    Check it's correctly configured in `/etc/hosts` to resolve `hello-world.com` to one of those IPs. 
+    Check it's correctly configured in `/etc/hosts` to resolve `my-hello-world.com` to one of those IPs. 
     ```
-    192.168.56.10  hello-world.com
+    192.168.56.10  my-hello-world.com
     ```
 
-4) Now browse [http://hello-world.com/](http://hello-world.com/) and you will should see the cell web page running.
+4) Now browse [http://my-hello-world.com/](http://my-hello-world.com/) and you should see the cell web page running.
 
 Congratulations! You have successfully got running the first web cell running!  
 
