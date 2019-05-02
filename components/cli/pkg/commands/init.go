@@ -30,34 +30,34 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunInit() {
+func RunInit(projectName string) {
 	prefix := util.CyanBold("?")
-
-	projectName := ""
-	err := interact.Run(&interact.Interact{
-		Before: func(c interact.Context) error {
-			c.SetPrfx(color.Output, prefix)
-			return nil
-		},
-		Questions: []*interact.Question{
-			{
-				Before: func(c interact.Context) error {
-					c.SetPrfx(nil, util.CyanBold("?"))
-					c.SetDef("my-project", util.Faint("[my-project]"))
-					return nil
-				},
-				Quest: interact.Quest{
-					Msg: util.Bold("Project name: "),
-				},
-				Action: func(c interact.Context) interface{} {
-					projectName, _ = c.Ans().String()
-					return nil
+	if projectName == "" {
+		err := interact.Run(&interact.Interact{
+			Before: func(c interact.Context) error {
+				c.SetPrfx(color.Output, prefix)
+				return nil
+			},
+			Questions: []*interact.Question{
+				{
+					Before: func(c interact.Context) error {
+						c.SetPrfx(nil, util.CyanBold("?"))
+						c.SetDef("my-project", util.Faint("[my-project]"))
+						return nil
+					},
+					Quest: interact.Quest{
+						Msg: util.Bold("Project name: "),
+					},
+					Action: func(c interact.Context) interface{} {
+						projectName, _ = c.Ans().String()
+						return nil
+					},
 				},
 			},
-		},
-	})
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while initializing the project", err)
+		})
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while initializing the project", err)
+		}
 	}
 
 	cellTemplate := "import ballerina/config;\n" +

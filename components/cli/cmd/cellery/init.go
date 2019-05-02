@@ -25,12 +25,18 @@ import (
 )
 
 func newInitCommand() *cobra.Command {
+	var projectName = ""
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a cell project",
-		Args:  cobra.NoArgs,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				projectName = args[0]
+			}
+			return nil
+		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunInit()
+			commands.RunInit(projectName)
 		},
 		Example: "  cellery init",
 	}
