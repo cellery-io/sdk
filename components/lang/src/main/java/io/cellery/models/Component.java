@@ -26,6 +26,7 @@ public class Component {
     private String protocol;
     private int containerPort;
     private AutoScaling autoScaling;
+    private List<String> unsecuredPaths;
 
     public Component() {
         envVars = new HashMap<>();
@@ -34,6 +35,7 @@ public class Component {
         tcpList = new ArrayList<>();
         grpcList = new ArrayList<>();
         webList = new ArrayList<>();
+        unsecuredPaths = new ArrayList<>();
         replicas = 1;
     }
 
@@ -59,5 +61,9 @@ public class Component {
 
     public void addLabel(String key, String value) {
         this.labels.put(key, value);
+    }
+
+    public void addUnsecuredPaths(String context) {
+        this.unsecuredPaths.add(context);
     }
 }

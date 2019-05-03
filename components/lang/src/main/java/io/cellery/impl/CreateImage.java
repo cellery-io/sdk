@@ -31,6 +31,8 @@ import io.cellery.models.Component;
 import io.cellery.models.GRPC;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.GatewayTemplate;
+import io.cellery.models.STSTemplate;
+import io.cellery.models.STSTemplateSpec;
 import io.cellery.models.ServiceTemplate;
 import io.cellery.models.ServiceTemplateSpec;
 import io.cellery.models.TCP;
@@ -248,6 +250,13 @@ public class CreateImage extends BlockingNativeCallableUnit {
 
         if (attributeMap.containsKey("expose")) {
             httpAPI.setAuthenticate(((BBoolean) attributeMap.get("authenticate")).booleanValue());
+            if (!httpAPI.isAuthenticate()) {
+                String context = httpAPI.getContext();
+                if (!context.startsWith("/")) {
+                    context = "/" + context;
+                }
+                component.addUnsecuredPaths(context);
+            }
             if ("global".equals(((BString) attributeMap.get("expose")).stringValue())) {
                 httpAPI.setGlobal(true);
                 httpAPI.setBackend(component.getService());
@@ -334,6 +343,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 new ArrayList<>(cellImage.getComponentNameToComponentMap().values());
         GatewaySpec gatewaySpec = new GatewaySpec();
         List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
+        List<String> unsecuredPaths = new ArrayList<>();
+        STSTemplate stsTemplate = new STSTemplate();
+        STSTemplateSpec stsTemplateSpec = new STSTemplateSpec();
         for (Component component : components) {
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
             if (component.getWebList().size() > 0) {
@@ -361,6 +373,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 templateSpec.setServicePort(component.getGrpcList().get(0).getPort());
                 gatewaySpec.addGRPC(component.getGrpcList());
             }
+            unsecuredPaths.addAll(component.getUnsecuredPaths());
             templateSpec.setReplicas(component.getReplicas());
             templateSpec.setProtocol(component.getProtocol());
             List<EnvVar> envVarList = new ArrayList<>();
@@ -390,13 +403,15 @@ public class CreateImage extends BlockingNativeCallableUnit {
             serviceTemplate.setSpec(templateSpec);
             serviceTemplateList.add(serviceTemplate);
         }
-
+        stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
+        stsTemplate.setSpec(stsTemplateSpec);
         GatewayTemplate gatewayTemplate = new GatewayTemplate();
         gatewayTemplate.setSpec(gatewaySpec);
 
         CellSpec cellSpec = new CellSpec();
         cellSpec.setGatewayTemplate(gatewayTemplate);
         cellSpec.setServicesTemplates(serviceTemplateList);
+        cellSpec.setStsTemplate(stsTemplate);
         ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(cellImage.getCellName()))
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, cellImage.getOrgName())
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, cellImage.getCellName())
