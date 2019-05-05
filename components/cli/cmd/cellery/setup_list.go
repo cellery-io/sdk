@@ -18,24 +18,16 @@
 
 package main
 
-import (
-	"github.com/spf13/cobra"
+import "github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
-)
-
-func newSetupCleanupExistingCommand() *cobra.Command {
-	var istio = false
-	var ingress = false
+func newSetupListCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "existing",
-		Short: "Cleanup existing cluster setup",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunCleanupExisting(istio, ingress)
-		},
+		Use:   "list <command>",
+		Short: "List k8s clusters",
 	}
-	cmd.Flags().BoolVarP(&istio, "istio", "i", false, "Remove istio")
-	cmd.Flags().BoolVarP(&ingress, "ingress", "n", false, "Remove ingress")
+
+	cmd.AddCommand(
+		newSetupListClustersCommand(),
+	)
 	return cmd
 }

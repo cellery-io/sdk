@@ -38,6 +38,7 @@ func newSetupCommand() *cobra.Command {
 		newSetupCreateCommand(),
 		newSetupCleanupCommand(),
 		newSetupModifyCommand(),
+		newSetupListCommand(),
 	)
 	return cmd
 }
