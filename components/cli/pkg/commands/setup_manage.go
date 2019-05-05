@@ -73,7 +73,7 @@ func manageEnvironment() error {
 
 func getManageLabel() string {
 	var manageLabel string
-	if isVmInstalled() {
+	if IsVmInstalled() {
 		if isVmRuning() {
 			manageLabel = constants.VM_NAME + " is running. Select `Stop` to stop the VM"
 		} else {
@@ -86,7 +86,7 @@ func getManageLabel() string {
 }
 
 func isVmRuning() bool {
-	if isVmInstalled() {
+	if IsVmInstalled() {
 		cmd := exec.Command(constants.VBOX_MANAGE, "showvminfo", constants.VM_NAME)
 		stdoutReader, _ := cmd.StdoutPipe()
 		stdoutScanner := bufio.NewScanner(stdoutReader)
@@ -114,7 +114,7 @@ func isVmRuning() bool {
 }
 
 func getManageEnvOptions() []string {
-	if isVmInstalled() {
+	if IsVmInstalled() {
 		if isVmRuning() {
 			return []string{constants.CELLERY_MANAGE_STOP, constants.CELLERY_MANAGE_CLEANUP, constants.CELLERY_SETUP_BACK}
 		} else {
@@ -124,7 +124,7 @@ func getManageEnvOptions() []string {
 	return []string{constants.CELLERY_SETUP_BACK}
 }
 
-func isVmInstalled() bool {
+func IsVmInstalled() bool {
 	cmd := exec.Command(constants.VBOX_MANAGE, "list", "vms")
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)

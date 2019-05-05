@@ -19,13 +19,26 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newSetupManageLocalCommand() *cobra.Command {
+func newSetupCleanupLocalCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "local",
-		Short: "Manage local Cellery runtime",
+		Short: "Cleanup local setup",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if !commands.IsVmInstalled() {
+				return fmt.Errorf("VM is not installed")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			commands.RunCleanupLocal()
+		},
 	}
 	return cmd
 }

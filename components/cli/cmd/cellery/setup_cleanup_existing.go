@@ -24,20 +24,18 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newSetupCommand() *cobra.Command {
+func newSetupCleanupExistingCommand() *cobra.Command {
+	var istio = false
+	var ingress = false
 	cmd := &cobra.Command{
-		Use:   "setup",
-		Short: "Setup cellery runtime",
+		Use:   "existing",
+		Short: "Cleanup gcp setup",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetup()
+			commands.RunCleanupExisting(istio, ingress)
 		},
-		Example: "  cellery setup",
 	}
-	cmd.AddCommand(
-		newSetupCreateCommand(),
-		newSetupCleanupCommand(),
-		newSetupModifyCommand(),
-	)
+	cmd.Flags().BoolVarP(&istio, "istio", "i", false, "Remove istio")
+	cmd.Flags().BoolVarP(&ingress, "ingress", "n", false, "Remove ingress")
 	return cmd
 }

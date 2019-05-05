@@ -76,7 +76,7 @@ func createEnvironment() error {
 }
 
 func getCreateEnvironmentList() []string {
-	if isVmInstalled() {
+	if IsVmInstalled() {
 		return []string{constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
 	}
 	return []string{constants.CELLERY_SETUP_LOCAL, constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}

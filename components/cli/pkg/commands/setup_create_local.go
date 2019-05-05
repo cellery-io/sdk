@@ -31,7 +31,7 @@ import (
 )
 
 func RunSetupCreateLocal(isCompleteSelected bool) {
-	if isVmInstalled() {
+	if IsVmInstalled() {
 		util.ExitWithErrorMessage("Error creating VM", fmt.Errorf("installed VM already exists"))
 	}
 	vmLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM)

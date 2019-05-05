@@ -65,7 +65,7 @@ func manageLocal() error {
 		}
 	case constants.CELLERY_MANAGE_CLEANUP:
 		{
-			cleanupLocal()
+			RunCleanupLocal()
 		}
 	default:
 		{
@@ -75,7 +75,7 @@ func manageLocal() error {
 	return nil
 }
 
-func cleanupLocal() error {
+func RunCleanupLocal() error {
 	spinner := util.StartNewSpinner("Removing Cellery Runtime")
 	defer func() {
 		spinner.Stop(true)

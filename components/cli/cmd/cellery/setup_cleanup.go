@@ -22,14 +22,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newSetupManageCommand() *cobra.Command {
+func newSetupCleanupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "manage <command>",
-		Short: "Manage Cellery runtime",
+		Use:   "cleanup <command>",
+		Short: "Cleanup Cellery runtime",
 	}
-
 	cmd.AddCommand(
-		newSetupManageLocalCommand(),
+		newSetupCleanupLocalCommand(),
+		newSetupCleanupGcpCommand(),
+		newSetupCleanupExistingCommand(),
 	)
 	return cmd
 }

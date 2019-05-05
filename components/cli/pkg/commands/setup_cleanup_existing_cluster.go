@@ -75,7 +75,7 @@ func cleanupExistingCluster() error {
 		if err != nil {
 			util.ExitWithErrorMessage("failed to select option", err)
 		}
-		gcpSpinner := util.StartNewSpinner("Cleaning up cluster")
+		spinner := util.StartNewSpinner("Cleaning up cluster")
 
 		kubectl.DeleteNameSpace("cellery-system")
 		if removeIstio {
@@ -87,7 +87,31 @@ func cleanupExistingCluster() error {
 		kubectl.DeleteAllCells()
 		kubectl.DeletePersistedVolume("wso2apim-local-pv")
 		kubectl.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
-		gcpSpinner.Stop(true)
+		spinner.Stop(true)
+	}
+	return nil
+}
+
+func RunCleanupExisting(removeIstio, removeIngress bool) error {
+	confirmCleanup, _, err := util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
+		"delete all your cells and data)", false)
+	if err != nil {
+		util.ExitWithErrorMessage("failed to select option", err)
+	}
+	if confirmCleanup {
+		spinner := util.StartNewSpinner("Cleaning up cluster")
+
+		kubectl.DeleteNameSpace("cellery-system")
+		if removeIstio {
+			kubectl.DeleteNameSpace("istio-system")
+		}
+		if removeIngress {
+			kubectl.DeleteNameSpace("ingress-nginx")
+		}
+		kubectl.DeleteAllCells()
+		kubectl.DeletePersistedVolume("wso2apim-local-pv")
+		kubectl.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
+		spinner.Stop(true)
 	}
 	return nil
 }
