@@ -143,7 +143,8 @@ func ValidateGcpCluster(cluster string) error {
 	if err != nil {
 		fmt.Printf("Failed to list clusters: %v", err)
 	}
-	if !util.ContainsInStringArray(clusters, cluster) {
+	uniqueNumber := strings.Split(cluster, constants.GCP_CLUSTER_NAME)[1]
+	if !util.ContainsInStringArray(clusters, constants.GCP_CLUSTER_NAME+uniqueNumber) {
 		return fmt.Errorf("gcp cluster %s doesn't exist", cluster)
 	}
 	return nil

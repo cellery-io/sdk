@@ -19,7 +19,11 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
@@ -36,7 +40,8 @@ func newSetupCleanupGcpCommand() *cobra.Command {
 			return commands.ValidateGcpCluster(args[0])
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunCleanupGcp(args[0])
+			uniqueNumber := strings.Split(args[0], constants.GCP_CLUSTER_NAME)[1]
+			commands.RunCleanupGcp(constants.GCP_CLUSTER_NAME + uniqueNumber)
 		},
 	}
 	return cmd
