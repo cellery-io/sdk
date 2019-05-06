@@ -26,13 +26,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 
 	"github.com/docker/distribution/manifest"
 	"github.com/docker/distribution/manifest/schema1"

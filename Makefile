@@ -56,7 +56,7 @@ install: install-lang install-cli install-docs-view
 
 .PHONY: build-lang
 build-lang:
-	cd ${PROJECT_ROOT}/components/lang; \
+	cd ${PROJECT_ROOT}/components; \
 	mvn clean install;
 
 .PHONY: build-cli
