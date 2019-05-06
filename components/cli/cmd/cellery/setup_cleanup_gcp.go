@@ -29,6 +29,7 @@ import (
 )
 
 func newSetupCleanupGcpCommand() *cobra.Command {
+	var uniqueNumber string
 	cmd := &cobra.Command{
 		Use:   "gcp",
 		Short: "Cleanup gcp setup",
@@ -47,7 +48,9 @@ func newSetupCleanupGcpCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			uniqueNumber := strings.Split(args[0], constants.GCP_CLUSTER_NAME)[1]
+			if len(strings.Split(args[0], constants.GCP_CLUSTER_NAME)) > 1 {
+				uniqueNumber = strings.Split(args[0], constants.GCP_CLUSTER_NAME)[1]
+			}
 			commands.RunCleanupGcp(constants.GCP_CLUSTER_NAME + uniqueNumber)
 		},
 	}
