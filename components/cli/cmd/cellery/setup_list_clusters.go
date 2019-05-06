@@ -26,8 +26,9 @@ import (
 
 func newSetupListClustersCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "clusters <command>",
+		Use:   "clusters",
 		Short: "List k8s clusters",
+		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunSetupListClusters()
 		},
