@@ -20,8 +20,12 @@ package kubectl
 
 import (
 	"io/ioutil"
+	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 
 	"github.com/ghodss/yaml"
 )
@@ -119,4 +123,16 @@ func mergeContexts(old []*ContextInfo, new []*ContextInfo) []*ContextInfo {
 		}
 	}
 	return old
+}
+
+func UseContext(context string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"config",
+		"use-context",
+		context,
+	)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+	return nil
 }

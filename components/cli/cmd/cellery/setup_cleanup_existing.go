@@ -35,7 +35,7 @@ func newSetupCleanupExistingCommand() *cobra.Command {
 			commands.RunCleanupExisting(istio, ingress)
 		},
 	}
-	cmd.Flags().BoolVarP(&istio, "istio", "i", false, "Remove istio")
-	cmd.Flags().BoolVarP(&ingress, "ingress", "n", false, "Remove ingress")
+	cmd.Flags().BoolVar(&istio, "istio", false, "Remove istio")
+	cmd.Flags().BoolVar(&ingress, "ingress", false, "Remove ingress")
 	return cmd
 }

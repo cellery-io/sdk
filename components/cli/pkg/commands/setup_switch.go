@@ -19,35 +19,15 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"os/exec"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunSwitchCommand(context string) error {
-	cmd := exec.Command(constants.KUBECTL, "config", "use-context", context)
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-
-	execError := ""
-	go func() {
-		for stderrScanner.Scan() {
-			execError += stderrScanner.Text()
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("Error in executing cellery setup: %v \n", err)
-		os.Exit(1)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while configuring cellery: \x1b[0m %v \n", execError)
-		os.Exit(1)
+	if err := kubectl.UseContext(context); err != nil {
+		util.ExitWithErrorMessage("Failed to switch cluster", err)
 	}
 	return nil
 }

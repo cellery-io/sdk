@@ -19,13 +19,13 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 func newSetupCleanupGcpCommand() *cobra.Command {
@@ -37,7 +37,14 @@ func newSetupCleanupGcpCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return commands.ValidateGcpCluster(args[0])
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			valid, err := commands.ValidateGcpCluster(args[0])
+			if !valid || err != nil {
+				return fmt.Errorf("Gcp cluster " + args[0] + " doesn't exist")
+			}
+			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			uniqueNumber := strings.Split(args[0], constants.GCP_CLUSTER_NAME)[1]

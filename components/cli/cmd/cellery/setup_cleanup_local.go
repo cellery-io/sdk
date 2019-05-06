@@ -30,7 +30,8 @@ func newSetupCleanupLocalCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "local",
 		Short: "Cleanup local setup",
-		Args: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if !commands.IsVmInstalled() {
 				return fmt.Errorf("VM is not installed")
 			}

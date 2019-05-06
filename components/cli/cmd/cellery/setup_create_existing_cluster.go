@@ -42,13 +42,15 @@ func newSetupCreateOnExistingClusterCommand() *cobra.Command {
 		Use:   "existing",
 		Short: "Create a Cellery runtime in existing cluster",
 		Args: func(cmd *cobra.Command, args []string) error {
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if isPersistentVolume && hasNfsStorage {
 				nfs = runtime.Nfs{nfsServerIp, fileShare, dbHostName,
 					dbUserName, dbPassword}
 			}
 			return validateUserInputForExistingCluster(hasNfsStorage, nfsServerIp, fileShare, dbHostName, dbUserName,
 				dbPassword)
-			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfsStorage,

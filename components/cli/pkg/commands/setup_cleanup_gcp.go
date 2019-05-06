@@ -119,35 +119,38 @@ func cleanupGcp() error {
 	return nil
 }
 
-func ValidateGcpCluster(cluster string) error {
+func ValidateGcpCluster(cluster string) (bool, error) {
+	valid := false
 	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP), ".json")
 
 	if len(jsonAuthFile) > 0 {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
 	} else {
-		fmt.Printf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
+		return valid, fmt.Errorf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
 			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP))
-		os.Exit(1)
 	}
 	ctx := context.Background()
 	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)
 	if err != nil {
-		fmt.Printf("Failed to create gke client: %v", err)
+		return valid, fmt.Errorf("failed to create gke client: %v", err)
 	}
 	gcpService, err := container.New(gkeClient)
 	if err != nil {
-		fmt.Printf("Failed to create gcp service: %v", err)
+		return valid, fmt.Errorf("failed to create gcp service: %v", err)
 	}
 	projectName, accountName, region, zone = getGcpData()
 	clusters, err := getClusterList(gcpService, projectName, zone)
 	if err != nil {
-		fmt.Printf("Failed to list clusters: %v", err)
+		return valid, fmt.Errorf("failed to list clusters: %v", err)
 	}
-	uniqueNumber := strings.Split(cluster, constants.GCP_CLUSTER_NAME)[1]
-	if !util.ContainsInStringArray(clusters, constants.GCP_CLUSTER_NAME+uniqueNumber) {
-		return fmt.Errorf("gcp cluster %s doesn't exist", cluster)
+	clusterNameSlice := strings.Split(cluster, constants.GCP_CLUSTER_NAME)
+	if len(clusterNameSlice) > 1 {
+		uniqueNumber := strings.Split(cluster, constants.GCP_CLUSTER_NAME)[1]
+		if util.ContainsInStringArray(clusters, constants.GCP_CLUSTER_NAME+uniqueNumber) {
+			valid = true
+		}
 	}
-	return nil
+	return valid, nil
 }
 
 func RunCleanupGcp(value string) error {
