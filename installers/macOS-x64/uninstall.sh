@@ -46,13 +46,15 @@ fi
 echo "Welcome to Cellery Uninstaller"
 echo "The following packages will be REMOVED:"
 echo "  cellery"
-while true; do
-    read -p "Do you wish to continue [Y/n]?" answer
-    [[ $answer == "y" || $answer == "Y" || $answer == "" ]] && break
-    [[ $answer == "n" || $answer == "N" ]] && exit 0
-    echo "Please answer with 'y' or 'n'"
-done
 
+if [[ -z "$1" ||  "$1" != "-y" ]]; then
+    while true; do
+        read -p "Do you wish to continue [Y/n]?" answer
+        [[ $answer == "y" || $answer == "Y" || $answer == "" ]] && break
+        [[ $answer == "n" || $answer == "N" ]] && exit 0
+        echo "Please answer with 'y' or 'n'"
+    done
+fi
 
 #Need to replace these with install preparation script
 VERSION=__VERSION__
