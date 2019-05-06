@@ -31,6 +31,9 @@ import (
 )
 
 func RunSetupCreateLocal(isCompleteSelected bool) {
+	if util.IsCommandAvailable("VBoxManage") {
+		util.ExitWithErrorMessage("Error creating VM", fmt.Errorf("VBoxManage not installed"))
+	}
 	if IsVmInstalled() {
 		util.ExitWithErrorMessage("Error creating VM", fmt.Errorf("installed VM already exists"))
 	}

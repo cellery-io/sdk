@@ -1215,3 +1215,11 @@ func IsLoadBalancerIngressTypeSelected() (bool, bool) {
 	}
 	return isLoadBalancerSelected, isBackSelected
 }
+
+func IsCommandAvailable(name string) bool {
+	cmd := exec.Command("command", "-v", name)
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
+}
