@@ -24,6 +24,10 @@
             <class name="org.cellery.components.test.StockTest"/>
             <class name="org.cellery.components.test.MySQLTest"/>
             <class name="org.cellery.components.test.EmployeeTest"/>
+            <class name="org.cellery.components.test.HelloWebTest"/>
+            <class name="org.cellery.components.test.PetStoreFeTest"/>
+            <class name="org.cellery.components.test.PetStoreBeTest"/>
+            <class name="org.cellery.components.test.PetServiceTest"/>
         </classes>
     </test>
 
