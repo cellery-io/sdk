@@ -26,15 +26,17 @@ import (
 
 func newSetupCreateLocalCommand() *cobra.Command {
 	var isCompleteSetup = false
+	var confirmed = false
 	cmd := &cobra.Command{
 		Use:   "local",
 		Short: "Create a local Cellery runtime",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateLocal(isCompleteSetup)
+			commands.RunSetupCreateLocal(isCompleteSetup, confirmed)
 		},
 		Example: "  cellery setup create local",
 	}
 	cmd.Flags().BoolVarP(&isCompleteSetup, "complete", "c", false, "Create complete local setup")
+	cmd.Flags().BoolVarP(&confirmed, "confirmed", "y", false, "Confirm setup creation")
 	return cmd
 }

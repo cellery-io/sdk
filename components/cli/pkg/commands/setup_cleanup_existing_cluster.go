@@ -92,11 +92,15 @@ func cleanupExistingCluster() error {
 	return nil
 }
 
-func RunCleanupExisting(removeIstio, removeIngress bool) error {
-	confirmCleanup, _, err := util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
-		"delete all your cells and data)", false)
-	if err != nil {
-		util.ExitWithErrorMessage("failed to select option", err)
+func RunCleanupExisting(removeIstio, removeIngress, confirmed bool) error {
+	var err error
+	var confirmCleanup = confirmed
+	if !confirmed {
+		confirmCleanup, _, err = util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
+			"delete all your cells and data)", false)
+		if err != nil {
+			util.ExitWithErrorMessage("failed to select option", err)
+		}
 	}
 	if confirmCleanup {
 		spinner := util.StartNewSpinner("Cleaning up cluster")
