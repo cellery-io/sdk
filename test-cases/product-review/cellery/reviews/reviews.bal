@@ -12,38 +12,42 @@
 import ballerina/io;
 import celleryio/cellery;
 
-//Reviews Component
+////Reviews Component
 cellery:Component reviewsComponent = {
     name: "pet-service",
     source: {
         image: "celleryio/samples-productreview-reviews"
     },
     ingresses: {
-        reviewsAPI: new cellery:HttpApiIngress(8080,
-            "reviews-1",
-            [
-                {
-                    path: "/*",
-                    method: "GET"
-                }
-            ]
-        )
+        controller: <cellery:HttpApiIngress>{
+            port: 8080,
+            context: "reviews-1",
+            definition: {
+                resources: [
+                    {
+                        path: "/*",
+                        method: "GET"
+                    }
+                ]
+            },
+            expose: "global"
+        }
     },
-    parameters: {
-        PORT: new cellery:Env(default = "8080"),
-        PRODUCTS_HOST: new cellery:Env(),
-        PRODUCTS_PORT: new cellery:Env(),
-        PRODUCTS_CONTEXT: new cellery:Env(),
-        CUSTOMERS_HOST: new cellery:Env(),
-        CUSTOMERS_PORT: new cellery:Env(),
-        CUSTOMERS_CONTEXT: new cellery:Env(),
-        RATINGS_HOST: new cellery:Env(),
-        RATINGS_PORT: new cellery:Env(),
-        DATABASE_HOST: new cellery:Env(),
-        DATABASE_PORT: new cellery:Env(),
-        DATABASE_USERNAME: new cellery:Env(default = "root"),
-        DATABASE_PASSWORD: new cellery:Env(default = "root"),
-        DATABASE_NAME: new cellery:Env(default = "reviews_db")
+    envVars: {
+        PORT: { value: 8080 },
+        PRODUCTS_HOST: { value: "" },
+        PRODUCTS_PORT: { value: "" },
+        PRODUCTS_CONTEXT: { value: "" },
+        CUSTOMERS_HOST: { value: "" },
+        CUSTOMERS_PORT: { value: "" },
+        CUSTOMERS_CONTEXT: { value: "" },
+        RATINGS_HOST: { value: "" },
+        RATINGS_PORT: { value: "" },
+        DATABASE_HOST: { value: "" },
+        DATABASE_PORT: { value: "" },
+        DATABASE_USERNAME: { value: "root" },
+        DATABASE_PASSWORD: { value: "root" },
+        DATABASE_NAME: { value: "reviews_db" }
     }
 };
 
@@ -55,28 +59,36 @@ cellery:Component ratingComponent = {
         image: "celleryio/samples-productreview-ratings"
     },
     ingresses: {
-        ratingsAPI: new cellery:HttpApiIngress(8080,
-            "reviews-1",
-            [
-                {
-                    path: "/*",
-                    method: "GET"
-                }
-            ]
-        )
+        controller: <cellery:HttpApiIngress>{
+            port: 8080,
+            context: "ratings-1",
+            definition: {
+                resources: [
+                    {
+                        path: "/*",
+                        method: "GET"
+                    }
+                ]
+            },
+            expose: "local"
+        }
     },
-    parameters: {
-        PORT: new cellery:Env(default = "8080")
+    envVars: {
+        PORT: { value: 8080 }
     }
 };
 
-cellery:CellImage reviewCell = new();
+cellery:CellImage reviewCell = {
+    components: {
+        reviews: reviewsComponent,
+        rating: ratingComponent
+    }
+};
 
-public function build(string orgName, string imageName, string imageVersion) {
-    reviewCell.addComponent(reviewsComponent);
-    reviewCell.addComponent(ratingComponent);
-    reviewCell.exposeGlobal(reviewsComponent);
-    _ = cellery:createImage(reviewCell, orgName, imageName, imageVersion);
+public function build(cellery:ImageName iName) returns error? {
+    return cellery:createImage(reviewCell, iName);
 }
 
-//TODO: Implement run method
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+    return cellery:createInstance(reviewCell, iName);
+}

@@ -12,81 +12,82 @@
 import ballerina/io;
 import celleryio/cellery;
 
-cellery:ApiDefinition[] customerAPIDef = [{
-    path: "/*",
-    method: "GET"
-}];
-
-cellery:ApiDefinition[] productsAPIDef = [{
-    path: "/*",
-    method: "GET"
-}];
-
-// customer Component
-cellery:Component customers = {
+// Salary Component
+cellery:Component customersComponent = {
     name: "customers",
     source: {
         image: "celleryio/samples-productreview-customers"
     },
     ingresses: {
-        customerAPI: new cellery:HttpApiIngress(
-                         8080,
-                         "customers-1",
-                         customerAPIDef
-        )
+        customerAPI: <cellery:HttpApiIngress>{
+            port:8080,
+            context: "customers-1",
+            definition: {
+                resources: [
+                    {
+                        path: "/*",
+                        method: "GET"
+                    }
+                ]
+            },
+            expose: "local"
+        }
     },
-    parameters: {
-        CATEGORIES_HOST: new cellery:Env(),
-        CATEGORIES_PORT: new cellery:Env(default = 8000)
+    envVars: {
+        CATEGORIES_HOST: { value: "" },
+        CATEGORIES_PORT: { value: 8000 }
     }
 };
 
-// products Component
-cellery:Component products = {
+cellery:Component productsComponent = {
     name: "products",
     source: {
         image: "celleryio/samples-productreview-products"
     },
     ingresses: {
-        productsAPI: new cellery:HttpApiIngress(
-                         8080,
-                         "products-1",
-                         productsAPIDef
-        )
+        customerAPI: <cellery:HttpApiIngress>{
+            port:8080,
+            context: "products-1",
+            definition: {
+                resources: [
+                    {
+                        path: "/*",
+                        method: "GET"
+                    }
+                ]
+            },
+            expose: "local"
+        }
     }
 };
 
-// categories Component
-cellery:Component categories = {
+cellery:Component categoriesComponent = {
     name: "categories",
     source: {
         image: "celleryio/samples-productreview-categories"
     },
     ingresses: {
-        categoriesGRPC: new cellery:GRPCIngress(
-                            8000,
-                            8000
-        )
+        customerAPI: <cellery:GRPCIngress>{
+            backendPort:8000,
+            gatewayPort:8000
+        }
     }
 };
 
-cellery:CellImage productCell = new();
+cellery:CellImage productCell = {
+    components: {
+        customers: customersComponent,
+        products: productsComponent,
+        categories: categoriesComponent
+    }
+};
 
-public function build(string orgName, string imageName, string imageVersion) {
-    io:println("Building product cell ...");
+public function build(cellery:ImageName iName) returns error? {
+    return cellery:createImage(productCell, iName);
+}
 
-    // Map component parameters
-    customers.parameters.CATEGORIES_HOST.value = cellery:getHost(untaint imageName, categories);
-
-    // Add components to Cell
-    productCell.addComponent(categories);
-    productCell.addComponent(products);
-    productCell.addComponent(customers);
-
-    // Expose API from Cell Gateway
-    productCell.exposeLocal(customers);
-    productCell.exposeLocal(products);
-    productCell.exposeLocal(categories);
-
-    _ = cellery:createImage(productCell, orgName, imageName, imageVersion);
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+    categoriesComponent.envVars.CATEGORIES_HOST.value = cellery:getHost(untaint iName.instanceName,
+        categoriesComponent);
+    return cellery:createInstance(productCell, iName);
 }
