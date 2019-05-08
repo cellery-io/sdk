@@ -584,11 +584,11 @@ func ExecuteCommand(cmd *exec.Cmd, errorMessage string) error {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		ExitWithErrorMessage("Error executing command", err)
+		return err
 	}
 	err = cmd.Wait()
 	if err != nil {
-		ExitWithErrorMessage("Error executing command", err)
+		return err
 	}
 	return nil
 }
@@ -596,7 +596,7 @@ func ExecuteCommand(cmd *exec.Cmd, errorMessage string) error {
 func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 	file, err := os.Create(filepath.Join(path, item))
 	if err != nil {
-		ExitWithErrorMessage("Failed to download from s3 bucket", fmt.Errorf("Error downloading from file", err))
+		ExitWithErrorMessage("Failed to download "+item+" from s3 bucket "+bucket, fmt.Errorf("Error downloading from file", err))
 	}
 
 	defer file.Close()
@@ -900,12 +900,12 @@ func PrintSuccessMessage(message string) {
 func GetSourceFileName(filePath string) (string, error) {
 	d, err := os.Open(filePath)
 	if err != nil {
-		ExitWithErrorMessage("Error opening file", err)
+		ExitWithErrorMessage("Error opening file "+filePath, err)
 	}
 	defer d.Close()
 	fi, err := d.Readdir(-1)
 	if err != nil {
-		ExitWithErrorMessage("Error reading file", err)
+		ExitWithErrorMessage("Error reading file "+filePath, err)
 	}
 	for _, fi := range fi {
 		if fi.Mode().IsRegular() && strings.HasSuffix(fi.Name(), ".bal") {
