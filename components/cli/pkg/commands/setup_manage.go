@@ -21,7 +21,6 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -98,13 +97,11 @@ func isVmRuning() bool {
 		}()
 		err := cmd.Start()
 		if err != nil {
-			fmt.Printf("Error occurred while checking VM status: %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Error occurred while checking VM status", err)
 		}
 		err = cmd.Wait()
 		if err != nil {
-			fmt.Printf("\x1b[31;1m Error occurred while checking VM status \x1b[0m %v \n", err)
-			os.Exit(1)
+			util.ExitWithErrorMessage("Error occurred while checking VM status", err)
 		}
 		if strings.Contains(output, "running (since") {
 			return true
@@ -136,13 +133,11 @@ func IsVmInstalled() bool {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("Error occurred while checking if VMs installed: %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while checking if VMs installed", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while checking if VMs installed \x1b[0m %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while checking if VMs installed", err)
 	}
 
 	if strings.Contains(output, constants.VM_NAME) {

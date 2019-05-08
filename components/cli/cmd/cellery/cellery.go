@@ -19,7 +19,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -93,7 +92,6 @@ func main() {
 
 	cmd := newCliCommand()
 	if err := cmd.Execute(); err != nil {
-		log.Fatal(fmt.Sprintf("%s: %s", "cellery", err))
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error executing cellery command", err)
 	}
 }

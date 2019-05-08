@@ -69,14 +69,16 @@ func manageGcp() error {
 }
 
 func cleanupGcp() error {
-	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP), ".json")
+	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP),
+		".json")
 
 	if len(jsonAuthFile) > 0 {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
 	} else {
-		fmt.Printf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
-			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP))
-		os.Exit(1)
+		util.ExitWithErrorMessage("Failed to cleanup gcp setup", fmt.Errorf("Could not find "+
+			"authentication json file in : %s. Please copy GCP service account credentials"+
+			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME,
+			constants.GCP)))
 	}
 	ctx := context.Background()
 	projectName, accountName, region, zone = getGcpData()
@@ -154,14 +156,16 @@ func ValidateGcpCluster(cluster string) (bool, error) {
 }
 
 func RunCleanupGcp(value string) error {
-	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP), ".json")
+	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP),
+		".json")
 
 	if len(jsonAuthFile) > 0 {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
 	} else {
-		fmt.Printf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
-			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP))
-		os.Exit(1)
+		util.ExitWithErrorMessage("Failed to cleanup gcp setup", fmt.Errorf("Could not find "+
+			"authentication json file in : %s. Please copy GCP service account credentials"+
+			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME,
+			constants.GCP)))
 	}
 	ctx := context.Background()
 	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)

@@ -93,13 +93,13 @@ func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, ha
 
 	// Install istio
 	spinner.SetNewAction("Installing istio")
-	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
+	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 
 	// Apply controller CRDs
 	spinner.SetNewAction("Creating controller")
-	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
+	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 
@@ -172,11 +172,11 @@ func UpdateRuntime(apiManagement, observability bool) error {
 func AddComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return addApim(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"), false)
+		return addApim(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), false)
 	case IdentityProvider:
-		return addIdp(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+		return addIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case Observability:
-		return addObservability(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+		return addObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
@@ -186,11 +186,11 @@ func AddComponent(component SystemComponent) error {
 func DeleteComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return deleteApim(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+		return deleteApim(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case IdentityProvider:
-		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case Observability:
-		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}

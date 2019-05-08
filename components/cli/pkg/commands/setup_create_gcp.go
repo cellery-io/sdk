@@ -282,10 +282,10 @@ func configureGCPCredentials() string {
 	if len(jsonAuthFile) > 0 {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
 	} else {
-		fmt.Printf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
-			" json file into this directory.\n", filepath.Join(util.UserHomeDir(),
-			constants.CELLERY_HOME, constants.GCP))
-		os.Exit(1)
+		util.ExitWithErrorMessage("Failed to create gcp cluster", fmt.Errorf(
+			"Could not find authentication json file in : %s. Please copy GCP service account credentials"+
+				" json file into this directory.\n", filepath.Join(util.UserHomeDir(),
+				constants.CELLERY_HOME, constants.GCP)))
 	}
 	return gcpBucketName
 }
@@ -527,8 +527,7 @@ func validateGcpConfigFile(configFiles []string) error {
 	for i := 0; i < len(configFiles); i++ {
 		fileExist, fileExistError := util.FileExists(configFiles[i])
 		if fileExistError != nil || !fileExist {
-			fmt.Printf("Cannot find file : %v", configFiles[i])
-			os.Exit(1)
+			util.ExitWithErrorMessage("Failed validate config file", fmt.Errorf("Cannot find file : %v", configFiles[i]))
 		}
 	}
 	return nil
@@ -546,7 +545,7 @@ func createController(errorMessage string) {
 	}
 
 	// Apply Istio CRDs
-	if err := runtime.ApplyIstioCrds(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
+	if err := runtime.ApplyIstioCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
@@ -559,12 +558,12 @@ func createController(errorMessage string) {
 	}
 
 	// Install istio
-	if err := runtime.InstallIstio(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
+	if err := runtime.InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 
 	// Apply controller CRDs
-	if err := runtime.InstallController(filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts")); err != nil {
+	if err := runtime.InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 }

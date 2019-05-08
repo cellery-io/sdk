@@ -22,8 +22,9 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
@@ -57,13 +58,11 @@ func getContexts() []string {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("Error in executing cellery setup: %v \n", err)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Failed to select an option", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("\x1b[31;1m Error occurred while configuring cellery: \x1b[0m %v \n", execError)
-		os.Exit(1)
+		util.ExitWithErrorMessage("Error occurred while configuring cellery", err)
 	}
 	jsonOutput := &Config{}
 	errJson := json.Unmarshal([]byte(output), jsonOutput)

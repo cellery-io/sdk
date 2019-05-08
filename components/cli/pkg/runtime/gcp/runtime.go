@@ -21,6 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -32,7 +34,7 @@ type ConfigMap struct {
 }
 
 func buildArtifactsPath(component runtime.SystemComponent) string {
-	artifactsPath := filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", "k8s-artefacts")
+	artifactsPath := filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", constants.K8S_ARTIFACTS)
 	switch component {
 	case runtime.ApiManager:
 		return filepath.Join(artifactsPath, "global-apim")

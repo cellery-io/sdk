@@ -77,9 +77,9 @@ func createEnvironment() error {
 
 func getCreateEnvironmentList() []string {
 	if util.IsCommandAvailable("VBoxManage") {
-		if IsVmInstalled() {
-			return []string{constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
+		if !IsVmInstalled() {
+			return []string{constants.CELLERY_SETUP_LOCAL, constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
 		}
 	}
-	return []string{constants.CELLERY_SETUP_LOCAL, constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
+	return []string{constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
 }

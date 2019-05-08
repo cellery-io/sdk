@@ -19,11 +19,8 @@
 package commands
 
 import (
-	"os/exec"
-
 	"github.com/manifoldco/promptui"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -91,16 +88,4 @@ func modifyRuntime() {
 		return
 	}
 	RunSetupModify(enableApimgt, enableObservability)
-}
-
-func removeIdp(artifactPath, errorDeployingCelleryRuntime string) {
-	// Delete the IDP config maps
-	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.DELETE, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/global-idp/conf", "-n", "cellery-system"), errorDeployingCelleryRuntime)
-	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.DELETE, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/global-idp/conf/datasources", "-n", "cellery-system"), errorDeployingCelleryRuntime)
-	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.DELETE, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/global-idp/conf/identity", "-n", "cellery-system"), errorDeployingCelleryRuntime)
-	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.DELETE, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/global-idp/conf/tomcat", "-n", "cellery-system"), errorDeployingCelleryRuntime)
-
-	// Delete IDP deployment and the service
-	util.ExecuteCommand(exec.Command(constants.KUBECTL, constants.DELETE, constants.KUBECTL_FLAG, artifactPath+"/k8s-artefacts/global-idp/global-idp.yaml", "-n", "cellery-system"), errorDeployingCelleryRuntime)
-
 }

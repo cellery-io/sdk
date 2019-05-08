@@ -38,6 +38,6 @@ func newSetupCleanupExistingCommand() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&istio, "istio", false, "Remove istio")
 	cmd.Flags().BoolVar(&ingress, "ingress", false, "Remove ingress")
-	cmd.Flags().BoolVarP(&confirmed, "confirmed", "y", false, "Confirm setup creation")
+	cmd.Flags().BoolVarP(&confirmed, "assume-yes", "y", false, "Confirm setup creation")
 	return cmd
 }

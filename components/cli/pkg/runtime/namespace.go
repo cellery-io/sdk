@@ -21,6 +21,8 @@ package runtime
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
@@ -37,7 +39,7 @@ func CreateCelleryNameSpace() error {
 }
 
 func buildNameSpaceYamlPaths() []string {
-	base := buildArtifactsPath(System, filepath.Join(util.CelleryInstallationDir(), "k8s-artefacts"))
+	base := buildArtifactsPath(System, filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	return []string{
 		filepath.Join(base, "ns-init.yaml"),
 	}
