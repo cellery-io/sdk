@@ -97,11 +97,11 @@ func isVmRuning() bool {
 		}()
 		err := cmd.Start()
 		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while checking VM status", err)
+			util.ExitWithErrorMessage("Error occurred while starting to check VM status", err)
 		}
 		err = cmd.Wait()
 		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while checking VM status", err)
+			util.ExitWithErrorMessage("Error occurred while waiting to check VM status", err)
 		}
 		if strings.Contains(output, "running (since") {
 			return true
@@ -133,11 +133,11 @@ func IsVmInstalled() bool {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while checking if VMs installed", err)
+		util.ExitWithErrorMessage("Error occurred while starting to check if VMs installed", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while checking if VMs installed", err)
+		util.ExitWithErrorMessage("Error occurred while waiting to check if VMs installed", err)
 	}
 
 	if strings.Contains(output, constants.VM_NAME) {
