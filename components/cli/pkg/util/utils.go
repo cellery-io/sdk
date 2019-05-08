@@ -851,7 +851,7 @@ func ValidateImageTag(imageTag string) error {
 // ValidateImageTag validates the image tag (with the registry in it). The registry is an option element
 // in this validation.
 func ValidateImageTagWithRegistry(imageTag string) error {
-	r := regexp.MustCompile("^(?:([^/:]*)/)?([^/:]*)/([^/:]*):([^/:]*)$")
+	r := regexp.MustCompile("^(?:([^/]*)/)?([^/:]*)/([^/:]*):([^/:]*)$")
 	subMatch := r.FindStringSubmatch(imageTag)
 
 	if subMatch == nil {
