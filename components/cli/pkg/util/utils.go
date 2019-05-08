@@ -596,7 +596,7 @@ func ExecuteCommand(cmd *exec.Cmd, errorMessage string) error {
 func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 	file, err := os.Create(filepath.Join(path, item))
 	if err != nil {
-		ExitWithErrorMessage("Failed to download "+item+" from s3 bucket "+bucket, fmt.Errorf("Error downloading from file", err))
+		ExitWithErrorMessage("Failed to create file path " + path, fmt.Errorf("Error downloading from file", err))
 	}
 
 	defer file.Close()
@@ -624,7 +624,7 @@ func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 			Key:    aws.String(item),
 		})
 	if err != nil {
-		ExitWithErrorMessage("Error in downloading from file", err)
+		ExitWithErrorMessage("Failed to download "+item+" from s3 bucket "+bucket, fmt.Errorf("Error downloading from file", err))
 	}
 
 	writer.finish()
