@@ -584,13 +584,11 @@ func ExecuteCommand(cmd *exec.Cmd, errorMessage string) error {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("cellery : %v: %v \n", errorMessage, err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error executing command", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("cellery : %v: %v \n", errorMessage, err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error executing command", err)
 	}
 	return nil
 }
@@ -598,8 +596,7 @@ func ExecuteCommand(cmd *exec.Cmd, errorMessage string) error {
 func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 	file, err := os.Create(filepath.Join(path, item))
 	if err != nil {
-		fmt.Printf("Error in downloading from file: %v \n", err)
-		os.Exit(1)
+		ExitWithErrorMessage("Failed to download from s3 bucket", fmt.Errorf("Error downloading from file", err))
 	}
 
 	defer file.Close()
@@ -627,8 +624,7 @@ func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 			Key:    aws.String(item),
 		})
 	if err != nil {
-		fmt.Printf("Error in downloading from file: %v \n", err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error in downloading from file", err)
 	}
 
 	writer.finish()
@@ -904,14 +900,12 @@ func PrintSuccessMessage(message string) {
 func GetSourceFileName(filePath string) (string, error) {
 	d, err := os.Open(filePath)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error opening file", err)
 	}
 	defer d.Close()
 	fi, err := d.Readdir(-1)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		ExitWithErrorMessage("Error reading file", err)
 	}
 	for _, fi := range fi {
 		if fi.Mode().IsRegular() && strings.HasSuffix(fi.Name(), ".bal") {
@@ -1217,7 +1211,7 @@ func IsLoadBalancerIngressTypeSelected() (bool, bool) {
 }
 
 func IsCommandAvailable(name string) bool {
-	cmd := exec.Command("command", "-v", name)
+	cmd := exec.Command("/bin/sh", "-c", "command -v "+name)
 	if err := cmd.Run(); err != nil {
 		return false
 	}

@@ -37,6 +37,6 @@ func newSetupCreateLocalCommand() *cobra.Command {
 		Example: "  cellery setup create local",
 	}
 	cmd.Flags().BoolVarP(&isCompleteSetup, "complete", "c", false, "Create complete local setup")
-	cmd.Flags().BoolVarP(&confirmed, "confirmed", "y", false, "Confirm setup creation")
+	cmd.Flags().BoolVarP(&confirmed, "assume-yes", "y", false, "Confirm setup creation")
 	return cmd
 }

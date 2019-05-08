@@ -42,7 +42,7 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 	vmLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM)
 	repoCreateErr := util.CreateDir(vmLocation)
 	if repoCreateErr != nil {
-		os.Exit(1)
+		util.ExitWithErrorMessage("Failed to create vm directory", err)
 	}
 
 	if isCompleteSelected {
