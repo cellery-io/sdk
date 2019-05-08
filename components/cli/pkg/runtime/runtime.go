@@ -36,13 +36,15 @@ type ConfigMap struct {
 type Nfs struct {
 	NfsServerIp string
 	FileShare   string
-	DbHostName  string
-	DbUserName  string
-	DbPassword  string
+}
+type MysqlDb struct {
+	DbHostName string
+	DbUserName string
+	DbPassword string
 }
 
 func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, hasNfsStorage,
-	isLoadBalancerIngressMode bool, nfs Nfs) error {
+	isLoadBalancerIngressMode bool, nfs Nfs, db MysqlDb) error {
 	spinner := util.StartNewSpinner("Creating cellery runtime")
 	if isPersistentVolume && !hasNfsStorage {
 		createFoldersRequiredForMysqlPvc()
@@ -52,9 +54,9 @@ func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, ha
 	dbUserName := constants.CELLERY_SQL_USER_NAME
 	dbPassword := constants.CELLERY_SQL_PASSWORD
 	if hasNfsStorage {
-		dbHostName = nfs.DbHostName
-		dbUserName = nfs.DbUserName
-		dbPassword = nfs.DbPassword
+		dbHostName = db.DbHostName
+		dbUserName = db.DbUserName
+		dbPassword = db.DbPassword
 		updateNfsServerDetails(nfs.NfsServerIp, nfs.FileShare, artifactsPath)
 	}
 	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, artifactsPath); err != nil {

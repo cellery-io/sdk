@@ -40,6 +40,7 @@ func createOnExistingCluster() error {
 	var isLoadBalancerIngressMode = false
 	var isBackSelected = false
 	var nfs runtime.Nfs
+	var db runtime.MysqlDb
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -69,7 +70,7 @@ func createOnExistingCluster() error {
 			util.ExitWithErrorMessage("Failed to select an option", err)
 		}
 		if hasNfsStorage {
-			nfs, err = getNfsData()
+			nfs, db, err = getPersistentVolumeDataWithNfs()
 		}
 		if isBackSelected {
 			createOnExistingCluster()
@@ -90,24 +91,24 @@ func createOnExistingCluster() error {
 	if err != nil {
 		return fmt.Errorf("Failed to get user input: %v", err)
 	}
-	RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs)
+	RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db)
 
 	return nil
 }
 
 func RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
-	nfs runtime.Nfs) {
+	nfs runtime.Nfs, db runtime.MysqlDb) {
 	artifactsPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.K8S_ARTIFACTS)
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), artifactsPath)
 	if err := runtime.CreateRuntime(artifactsPath, isCompleteSetup, isPersistentVolume, hasNfsStorage,
-		isLoadBalancerIngressMode, nfs); err != nil {
+		isLoadBalancerIngressMode, nfs, db); err != nil {
 		fmt.Printf("Error deploying cellery runtime: %v", err)
 	}
 	util.WaitForRuntime()
 }
 
-func getNfsData() (runtime.Nfs, error) {
+func getPersistentVolumeDataWithNfs() (runtime.Nfs, runtime.MysqlDb, error) {
 	prefix := util.CyanBold("?")
 	nfsServerIp := ""
 	fileShare := ""
@@ -164,6 +165,6 @@ func getNfsData() (runtime.Nfs, error) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while getting user input", err)
 	}
-	return runtime.Nfs{nfsServerIp, fileShare, dbHostName, dbUserName,
-		dbPassword}, nil
+	return runtime.Nfs{nfsServerIp, fileShare},
+		runtime.MysqlDb{dbHostName, dbUserName, dbPassword}, nil
 }

@@ -33,6 +33,7 @@ func newSetupCreateOnExistingClusterCommand() *cobra.Command {
 	var hasNfsStorage = false
 	var isLoadBalancerIngressMode = false
 	var nfs runtime.Nfs
+	var db runtime.MysqlDb
 	var nfsServerIp = ""
 	var fileShare = ""
 	var dbHostName = ""
@@ -41,33 +42,31 @@ func newSetupCreateOnExistingClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "existing",
 		Short: "Create a Cellery runtime in existing cluster",
-		Args: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
+		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			hasNfsStorage := useNfsStorage(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
 			if isPersistentVolume && hasNfsStorage {
-				nfs = runtime.Nfs{nfsServerIp, fileShare, dbHostName,
-					dbUserName, dbPassword}
+				nfs = runtime.Nfs{nfsServerIp, fileShare}
+				db = runtime.MysqlDb{dbHostName, dbUserName, dbPassword}
 			}
 			return validateUserInputForExistingCluster(hasNfsStorage, nfsServerIp, fileShare, dbHostName, dbUserName,
 				dbPassword)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfsStorage,
-				isLoadBalancerIngressMode, nfs)
+				isLoadBalancerIngressMode, nfs, db)
 		},
 		Example: "  cellery setup create existing",
 	}
-	cmd.Flags().BoolVarP(&isCompleteSetup, "complete", "c", false, "Create complete setup")
-	cmd.Flags().BoolVarP(&isPersistentVolume, "persistent", "p", false, "Persistent volume")
-	cmd.Flags().BoolVarP(&hasNfsStorage, "nfs", "n", false, "Has an NFS storage")
-	cmd.Flags().BoolVarP(&isLoadBalancerIngressMode, "loadbalancer", "l", false,
+	cmd.Flags().BoolVar(&isCompleteSetup, "complete", false, "Create complete setup")
+	cmd.Flags().BoolVar(&isPersistentVolume, "persistent", false, "Persistent volume")
+	cmd.Flags().BoolVar(&isLoadBalancerIngressMode, "loadbalancer", false,
 		"Ingress mode is load balancer")
-	cmd.Flags().StringVarP(&nfsServerIp, "ip", "i", "", "NFS Server Ip")
-	cmd.Flags().StringVarP(&fileShare, "fileshare", "f", "", "NFS file share")
-	cmd.Flags().StringVarP(&dbHostName, "host", "d", "", "Database host")
-	cmd.Flags().StringVarP(&dbUserName, "username", "u", "", "Database user name")
-	cmd.Flags().StringVarP(&dbPassword, "password", "w", "", "Database password")
+	cmd.Flags().StringVar(&nfsServerIp, "nfsServerIp", "", "NFS Server Ip")
+	cmd.Flags().StringVar(&fileShare, "nfsFileshare", "", "NFS file share")
+	cmd.Flags().StringVar(&dbHostName, "dbHost", "", "Database host")
+	cmd.Flags().StringVar(&dbUserName, "dbUsername", "", "Database user name")
+	cmd.Flags().StringVar(&dbPassword, "dbPassword", "", "Database password")
 	return cmd
 }
 
@@ -78,45 +77,45 @@ func validateUserInputForExistingCluster(hasNfsStorage bool, nfsServerIp, fileSh
 	if hasNfsStorage {
 		errMsg = "Missing input:"
 		if nfsServerIp == "" {
-			errMsg += " ip,"
+			errMsg += " nfsServerIp,"
 			valid = false
 		}
 		if fileShare == "" {
-			errMsg += " fileshare,"
+			errMsg += " nfsFileshare,"
 			valid = false
 		}
 		if dbHostName == "" {
-			errMsg += " host,"
+			errMsg += " dbHost,"
 			valid = false
 		}
 		if dbUserName == "" {
-			errMsg += " username,"
+			errMsg += " dbUsername,"
 			valid = false
 		}
 		if dbPassword == "" {
-			errMsg += " password,"
+			errMsg += " dbPassword,"
 			valid = false
 		}
 	} else {
 		errMsg = "Unexpected input:"
 		if nfsServerIp != "" {
-			errMsg += " --ip " + nfsServerIp + ","
+			errMsg += " --nfsServerIp " + nfsServerIp + ","
 			valid = false
 		}
 		if fileShare != "" {
-			errMsg += " --fileshare " + fileShare + ","
+			errMsg += " --nfsFileshare " + fileShare + ","
 			valid = false
 		}
 		if dbHostName != "" {
-			errMsg += " --host " + dbHostName + ","
+			errMsg += " --dbHost " + dbHostName + ","
 			valid = false
 		}
 		if dbUserName != "" {
-			errMsg += " --username " + dbUserName + ","
+			errMsg += " --dbUsername " + dbUserName + ","
 			valid = false
 		}
 		if dbPassword != "" {
-			errMsg += " --password " + dbPassword + ","
+			errMsg += " --dbPassword " + dbPassword + ","
 			valid = false
 		}
 	}
@@ -124,4 +123,11 @@ func validateUserInputForExistingCluster(hasNfsStorage bool, nfsServerIp, fileSh
 		return fmt.Errorf(errMsg)
 	}
 	return nil
+}
+
+func useNfsStorage(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword string) bool {
+	if nfsServerIp != "" || fileShare != "" || dbHostName != "" || dbUserName != "" || dbPassword != "" {
+		return true
+	}
+	return false
 }
