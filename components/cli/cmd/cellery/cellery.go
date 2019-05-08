@@ -92,6 +92,6 @@ func main() {
 
 	cmd := newCliCommand()
 	if err := cmd.Execute(); err != nil {
-		util.ExitWithErrorMessage("Error executing cellery command", err)
+		util.ExitWithErrorMessage("Error executing cellery main function", err)
 	}
 }
