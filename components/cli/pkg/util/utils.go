@@ -596,7 +596,7 @@ func ExecuteCommand(cmd *exec.Cmd, errorMessage string) error {
 func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 	file, err := os.Create(filepath.Join(path, item))
 	if err != nil {
-		ExitWithErrorMessage("Failed to create file path " + path, err)
+		ExitWithErrorMessage("Failed to create file path "+path, err)
 	}
 
 	defer file.Close()

@@ -89,7 +89,7 @@ func RunExtractResources(cellImage string, outputPath string) {
 
 		absOutputPath, _ := filepath.Abs(outputPath)
 		fmt.Printf("\nExtracted Resources: %s", util.Bold(absOutputPath))
-		util.PrintSuccessMessage(fmt.Sprintf("Successfully extracred cell image resources: %s", util.Bold(cellImage)))
+		util.PrintSuccessMessage(fmt.Sprintf("Successfully extracted cell image resources: %s", util.Bold(cellImage)))
 	} else {
 		fmt.Printf("\n%s No resources available in %s\n", util.CyanBold("\U00002139"), util.Bold(cellImage))
 	}
