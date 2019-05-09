@@ -34,6 +34,57 @@ import (
 )
 
 func RunStatus(cellName string) {
+	cellCreationTime, cellStatus, err := getCellSummary(cellName)
+	if err != nil {
+		util.ExitWithErrorMessage("Error running cell status", fmt.Errorf("cannot find cell %v \n", cellName))
+	}
+	displayStatusSummaryTable(cellCreationTime, cellStatus)
+	fmt.Println("\n")
+	fmt.Println("  -COMPONENTS-\n")
+	displayStatusDetailedTable(getPodDetails(cellName), cellName)
+}
+
+func getCellSummary(cellName string) (cellCreationTime, cellStatus string, err error) {
+	cellCreationTime = ""
+	cellStatus = ""
+	cmd := exec.Command("kubectl", "get", "cells", cellName, "-o", "json")
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	output := ""
+	go func() {
+		for stdoutScanner.Scan() {
+			output = output + stdoutScanner.Text()
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			output = output + stderrScanner.Text()
+		}
+	}()
+	err = cmd.Start()
+	if err != nil {
+		return "", "", err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return "", "", err
+	}
+
+	jsonOutput := &util.Cell{}
+
+	errJson := json.Unmarshal([]byte(output), jsonOutput)
+	if errJson != nil {
+		fmt.Println(errJson)
+	}
+	duration := util.GetDuration(util.ConvertStringToTime(jsonOutput.CellMetaData.CreationTimestamp))
+	cellStatus = jsonOutput.CellStatus.Status
+
+	return duration, cellStatus, err
+}
+
+func getPodDetails(cellName string) []util.Pod {
 	cmd := exec.Command("kubectl", "get", "pods", "-l", constants.GROUP_NAME+"/cell="+cellName, "-o", "json")
 	output := ""
 
@@ -66,56 +117,7 @@ func RunStatus(cellName string) {
 	if errJson != nil {
 		fmt.Println(errJson)
 	}
-
-	if len(jsonOutput.Items) == 0 {
-		fmt.Printf("Cannot find cell: %v \n", cellName)
-	} else {
-		cellCreationTime, cellStatus := getCellSummary(cellName)
-		displayStatusSummaryTable(cellCreationTime, cellStatus)
-		fmt.Println("\n")
-		fmt.Println("  -COMPONENTS-\n")
-		displayStatusDetailedTable(jsonOutput.Items, cellName)
-	}
-}
-
-func getCellSummary(cellName string) (cellCreationTime, cellStatus string) {
-	cellCreationTime = ""
-	cellStatus = ""
-	cmd := exec.Command("kubectl", "get", "cells", cellName, "-o", "json")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching cell status", err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching cell status", err)
-	}
-
-	jsonOutput := &util.Cell{}
-
-	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson != nil {
-		fmt.Println(errJson)
-	}
-	duration := util.GetDuration(util.ConvertStringToTime(jsonOutput.CellMetaData.CreationTimestamp))
-	cellStatus = jsonOutput.CellStatus.Status
-
-	return duration, cellStatus
+	return jsonOutput.Items
 }
 
 func displayStatusSummaryTable(cellCreationTime, cellStatus string) error {
