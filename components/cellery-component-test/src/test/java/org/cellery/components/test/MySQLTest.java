@@ -51,7 +51,7 @@ public class MySQLTest {
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         String imgData = "{\"org\":\"test-org\", \"name\":\"mysql-img\", \"ver\":\"1.3.5\"}";
-        Assert.assertEquals(LangTestUtils.compileBallerinaFile(SOURCE_DIR_PATH, "mysql.bal", imgData), 0);
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "mysql.bal", imgData), 0);
         File artifactYaml = CELLERY_PATH.resolve("mysql-img.yaml").toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve("mysql-img.yaml").toString());

@@ -54,7 +54,7 @@ public class PetStoreFeTest {
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         String imgData = "{\"org\":\"myorg\", \"name\":\"petfe\", \"ver\":\"1.0.0\"}";
-        Assert.assertEquals(LangTestUtils.compileBallerinaFile(SOURCE_DIR_PATH, "pet-fe.bal", imgData), 0);
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-fe.bal", imgData), 0);
         File artifactYaml = CELLERY_PATH.resolve("petfe.yaml").toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve("petfe.yaml").toString());

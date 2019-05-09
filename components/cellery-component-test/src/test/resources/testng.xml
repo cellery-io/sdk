@@ -28,6 +28,8 @@
             <class name="org.cellery.components.test.PetStoreFeTest"/>
             <class name="org.cellery.components.test.PetStoreBeTest"/>
             <class name="org.cellery.components.test.PetServiceTest"/>
+            <class name="org.cellery.components.test.WebTlsTest"/>
+            <class name="org.cellery.components.test.DockerSourceTest"/>
         </classes>
     </test>
 

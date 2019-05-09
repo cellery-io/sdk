@@ -37,6 +37,7 @@ import java.util.Map;
  * Language test utils.
  */
 public class LangTestUtils {
+
     private static final Log log = LogFactory.getLog(LangTestUtils.class);
     private static final String JAVA_OPTS = "JAVA_OPTS";
     private static final Path DISTRIBUTION_PATH = Paths.get(FilenameUtils.separatorsToSystem(
@@ -58,8 +59,13 @@ public class LangTestUtils {
         }
     }
 
+    private static int compileCellBuildFunction(Path sourceDirectory, String fileName, String imgData, Map<String,
+            String> envVar) throws InterruptedException, IOException {
+        return compileBallerinaFunction(BUILD, sourceDirectory, fileName, imgData, "", envVar);
+    }
+
     /**
-     * Compile a ballerina file in a given directory
+     * Compile a cell file with build function as the entry point
      *
      * @param sourceDirectory Ballerina source directory
      * @param fileName        Ballerina source file name
@@ -67,9 +73,16 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    private static int compileBallerinaFile(Path sourceDirectory, String fileName, String imgData, Map<String,
-            String> envVar) throws InterruptedException,
-            IOException {
+    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, String imgData)
+            throws InterruptedException, IOException {
+
+        return compileCellBuildFunction(sourceDirectory, fileName, imgData, new HashMap<>());
+    }
+
+    private static int compileBallerinaFunction(String action, Path sourceDirectory, String fileName,
+                                                String imgData, String instanceData,
+                                                Map<String, String> envVar) throws IOException, InterruptedException {
+
         Path ballerinaInternalLog = Paths.get(sourceDirectory.toAbsolutePath().toString(), "ballerina-internal.log");
         if (ballerinaInternalLog.toFile().exists()) {
             log.warn("Deleting already existing ballerina-internal.log file.");
@@ -77,7 +90,7 @@ public class LangTestUtils {
         }
 
         ProcessBuilder pb = new ProcessBuilder(BALLERINA_COMMAND, RUN,
-                fileName + ':' + BUILD, imgData);
+                fileName + ':' + action, imgData + " " + instanceData);
         log.info(COMPILING + sourceDirectory.resolve(fileName).normalize());
         log.debug(EXECUTING_COMMAND + pb.command());
         pb.directory(sourceDirectory.toFile());
@@ -96,21 +109,8 @@ public class LangTestUtils {
             log.error("ballerina-internal.log file found. content: ");
             log.error(FileUtils.readFileToString(ballerinaInternalLog.toFile()));
         }
-        return exitCode;
-    }
 
-    /**
-     * Compile a ballerina file in a given directory
-     *
-     * @param sourceDirectory Ballerina source directory
-     * @param fileName        Ballerina source file name
-     * @return Exit code
-     * @throws InterruptedException if an error occurs while compiling
-     * @throws IOException          if an error occurs while writing file
-     */
-    public static int compileBallerinaFile(Path sourceDirectory, String fileName, String imgData) throws
-            InterruptedException, IOException {
-        return compileBallerinaFile(sourceDirectory, fileName, imgData, new HashMap<>());
+        return exitCode;
     }
 
     private static synchronized void addJavaAgents(Map<String, String> envProperties) {

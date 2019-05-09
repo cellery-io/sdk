@@ -50,7 +50,7 @@ public class EmployeeTest {
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         String st = "{\"org\":\"wso2\", \"name\":\"emp\", \"ver\":\"1.0.0\"}";
-        Assert.assertEquals(LangTestUtils.compileBallerinaFile(SOURCE_DIR_PATH, "employee.bal", st), 0);
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "employee.bal", st), 0);
         File artifactYaml = CELLERY_PATH.resolve("emp.yaml").toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve("emp.yaml").toString());

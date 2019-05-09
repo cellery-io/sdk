@@ -29,10 +29,10 @@ cellery:Component mysqlComponent = {
     }
 };
 
-cellery:CellImage mysqlCell =  {
-      components: {
-          mysqlComp: mysqlComponent
-      }
+cellery:CellImage mysqlCell = {
+    components: {
+        mysqlComp: mysqlComponent
+    }
 };
 
 public function build(cellery:ImageName iName) returns error? {

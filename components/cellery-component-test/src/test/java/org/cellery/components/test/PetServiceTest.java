@@ -54,7 +54,7 @@ public class PetServiceTest {
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         String imgData = "{\"org\":\"wso2\", \"name\":\"petservice\", \"ver\":\"1.0.0\"}";
-        Assert.assertEquals(LangTestUtils.compileBallerinaFile(SOURCE_DIR_PATH, "pet-cell.bal", imgData), 0);
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-cell.bal", imgData), 0);
         File artifactYaml = CELLERY_PATH.resolve("petservice.yaml").toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve("petservice.yaml").toString());

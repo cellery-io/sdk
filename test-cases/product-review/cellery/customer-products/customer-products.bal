@@ -20,7 +20,7 @@ cellery:Component customersComponent = {
     },
     ingresses: {
         customerAPI: <cellery:HttpApiIngress>{
-            port:8080,
+            port: 8080,
             context: "customers-1",
             definition: {
                 resources: [
@@ -46,7 +46,7 @@ cellery:Component productsComponent = {
     },
     ingresses: {
         customerAPI: <cellery:HttpApiIngress>{
-            port:8080,
+            port: 8080,
             context: "products-1",
             definition: {
                 resources: [
@@ -68,8 +68,8 @@ cellery:Component categoriesComponent = {
     },
     ingresses: {
         customerAPI: <cellery:GRPCIngress>{
-            backendPort:8000,
-            gatewayPort:8000
+            backendPort: 8000,
+            gatewayPort: 8000
         }
     }
 };
