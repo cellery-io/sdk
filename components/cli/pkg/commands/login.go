@@ -47,7 +47,7 @@ func RunLogin(registryURL string, username string, password string) {
 	var isCredentialsAlreadyPresent bool
 	if !isCredentialsProvided {
 		// Reading the existing credentials
-		registryCredentials, err := credManager.GetCredentials(registryURL)
+		registryCredentials, err = credManager.GetCredentials(registryURL)
 		if registryCredentials == nil {
 			registryCredentials = &credentials.RegistryCredentials{
 				Registry: registryURL,
