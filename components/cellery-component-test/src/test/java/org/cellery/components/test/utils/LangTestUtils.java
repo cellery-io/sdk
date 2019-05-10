@@ -17,21 +17,30 @@
  */
 package org.cellery.components.test.utils;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.cellery.components.test.models.CellImageInfo;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Language test utils.
@@ -65,7 +74,7 @@ public class LangTestUtils {
     }
 
     /**
-     * Compile a cell file with build function as the entry point
+     * Compile a ballerina file in a given directory
      *
      * @param sourceDirectory Ballerina source directory
      * @param fileName        Ballerina source file name
@@ -77,6 +86,27 @@ public class LangTestUtils {
             throws InterruptedException, IOException {
 
         return compileCellBuildFunction(sourceDirectory, fileName, imgData, new HashMap<>());
+    }
+
+    /**
+     * Compile a ballerina file in a given directory
+     *
+     * @param sourceDirectory Ballerina source directory
+     * @param fileName        Ballerina source file name
+     * @return Exit code
+     * @throws InterruptedException if an error occurs while compiling
+     * @throws IOException          if an error occurs while writing file
+     */
+    private static int compileCellRunFunction(Path sourceDirectory, String fileName, String imgData,
+                                              Map<String, String> envVar) throws InterruptedException, IOException {
+        String instancesData = getDependancyInfo(sourceDirectory);
+        return compileBallerinaFunction(RUN, sourceDirectory, fileName, imgData, instancesData, envVar);
+    }
+
+    public static int compileCellRunFunction(Path sourceDirectory, String fileName, String imgData)
+            throws InterruptedException, IOException {
+
+        return compileCellRunFunction(sourceDirectory, fileName, imgData, new HashMap<>());
     }
 
     private static int compileBallerinaFunction(String action, Path sourceDirectory, String fileName,
@@ -132,5 +162,30 @@ public class LangTestUtils {
             return "";
         }
         return jacocoArgLine + " ";
+    }
+
+    public static String getDependancyInfo(Path source) {
+        String txtPath =
+                source.toAbsolutePath().toString() + File.separator + "target" + File.separator + "tmp" +
+                        File.separator + "dependencies.properties";
+        try (InputStream input =
+                     new FileInputStream(txtPath)) {
+            Properties dependencyProperties = new Properties();
+            dependencyProperties.load(input);
+
+            HashMap<String, CellImageInfo> dependencyMap = new HashMap<>();
+            for (Map.Entry<Object, Object> e : dependencyProperties.entrySet()) {
+                String key = e.getKey().toString();
+                String org = e.getValue().toString().split("/")[0];
+                String name = e.getValue().toString().split("/")[1].split(":")[0];
+                String ver = e.getValue().toString().split("/")[1].split(":")[1];
+                CellImageInfo cell = new CellImageInfo(org, name, ver);
+                dependencyMap.put(key, cell);
+            }
+            Gson dependencyJSON = new GsonBuilder().create();
+            return dependencyJSON.toJson(dependencyMap);
+        } catch (IOException ex) {
+            return "{}";
+        }
     }
 }
