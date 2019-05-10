@@ -32,4 +32,6 @@ public class CelleryTestConstants {
     public static final String CELLERY_IMAGE_ORG = "mesh.cellery.io/cell-image-org";
     public static final String CELLERY_IMAGE_NAME = "mesh.cellery.io/cell-image-name";
     public static final String CELLERY_IMAGE_VERSION = "mesh.cellery.io/cell-image-version";
+    public static final String YAML = ".yaml";
+    public static final String BAL = ".bal";
 }

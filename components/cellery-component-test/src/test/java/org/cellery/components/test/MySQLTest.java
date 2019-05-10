@@ -21,6 +21,7 @@ package org.cellery.components.test;
 import io.cellery.models.Cell;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
+import org.cellery.components.test.models.CellImageInfo;
 import org.cellery.components.test.utils.CelleryUtils;
 import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
@@ -33,12 +34,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.EMPLOYEE_PORTAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
+import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
 public class MySQLTest {
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
@@ -47,14 +50,14 @@ public class MySQLTest {
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "mysql-img", "1.0.0");
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
-        String imgData = "{\"org\":\"test-org\", \"name\":\"mysql-img\", \"ver\":\"1.3.5\"}";
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "mysql.bal", imgData), 0);
-        File artifactYaml = CELLERY_PATH.resolve("mysql-img.yaml").toFile();
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "mysql" + BAL, cellImageInfo), 0);
+        File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve("mysql-img.yaml").toString());
+        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
     @Test
@@ -69,13 +72,13 @@ public class MySQLTest {
 
     @Test
     public void validateMetaData() {
-        Assert.assertEquals(cell.getMetadata().getName(), "mysql-img");
+        Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
-                "test-org");
+                cellImageInfo.getOrg());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
-                "mysql-img");
+                cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
-                "1.3.5");
+                cellImageInfo.getVer());
     }
 
     @Test

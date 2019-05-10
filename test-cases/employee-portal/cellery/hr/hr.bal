@@ -45,10 +45,10 @@ public function build(cellery:ImageName iName) returns error? {
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     //Resolve employee API URL
     cellery:Reference employeeRef = check cellery:getReference(instances.employeeCellDep);
-    hrCell.components.hrComp.envVars.employee_api_url.value = <string>employeeRef.employee_api_url;
+    hrComponent.envVars.employee_api_url.value = <string>employeeRef.employee_api_url;
 
     //Resolve stock API URL
     cellery:Reference stockRef = check cellery:getReference(instances.stockCellDep);
-    hrCell.components.hrComp.envVars.stock_api_url.value = <string>stockRef.stock_api_url;
+    hrComponent.envVars.stock_api_url.value = <string>stockRef.stock_api_url;
     return cellery:createInstance(hrCell, iName);
 }

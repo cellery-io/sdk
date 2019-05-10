@@ -23,6 +23,7 @@ import io.cellery.models.GatewaySpec;
 import io.cellery.models.ServiceTemplate;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
+import org.cellery.components.test.models.CellImageInfo;
 import org.cellery.components.test.utils.CelleryUtils;
 import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
@@ -36,12 +37,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.PET_CARE_STORE;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
+import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
 public class PetStoreBeTest {
 
@@ -50,17 +53,15 @@ public class PetStoreBeTest {
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private String orgName = "myorg";
-    private String imageName = "petbe";
-    private String version = "1.0.0";
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petbe", "1.0.0");
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
-        String imgData = "{\"org\":\"myorg\", \"name\":\"petbe\", \"ver\":\"1.0.0\"}";
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-be.bal", imgData), 0);
-        File artifactYaml = CELLERY_PATH.resolve("petbe.yaml").toFile();
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-be" + BAL, cellImageInfo), 0);
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "pet-be" + BAL, cellImageInfo), 0);
+        File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve("petbe.yaml").toString());
+        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
     @Test
@@ -80,13 +81,13 @@ public class PetStoreBeTest {
 
     @Test
     public void validateMetaData() {
-        Assert.assertEquals(cell.getMetadata().getName(), imageName);
+        Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
-                orgName);
+                cellImageInfo.getOrg());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
-                imageName);
+                cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
-                version);
+                cellImageInfo.getVer());
     }
 
     @Test

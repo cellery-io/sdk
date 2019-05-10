@@ -21,6 +21,7 @@ package org.cellery.components.test;
 import io.cellery.models.Cell;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
+import org.cellery.components.test.models.CellImageInfo;
 import org.cellery.components.test.utils.CelleryUtils;
 import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
@@ -33,12 +34,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.DOCKER_SOURCE;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
+import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
 public class DockerSourceTest {
 
@@ -47,17 +50,17 @@ public class DockerSourceTest {
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private String orgName = "wso2";
-    private String imageName = "docker-source";
-    private String version = "1.0.0";
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "docker-source", "1.0.0");
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
-        String imgData = "{\"org\":\"wso2\", \"name\":\"docker-source\", \"ver\":\"1.0.0\"}";
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "docker-source.bal", imgData), 0);
-        File artifactYaml = CELLERY_PATH.resolve("docker-source.yaml").toFile();
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "docker-source" + BAL,
+                cellImageInfo), 0);
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "docker-source" + BAL,
+                cellImageInfo), 0);
+        File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve("docker-source.yaml").toString());
+        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
     @Test
@@ -77,13 +80,13 @@ public class DockerSourceTest {
 
     @Test
     public void validateMetaData() {
-        Assert.assertEquals(cell.getMetadata().getName(), imageName);
+        Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
-                orgName);
+                cellImageInfo.getOrg());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
-                imageName);
+                cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
-                version);
+                cellImageInfo.getVer());
     }
 
     @Test
@@ -100,7 +103,7 @@ public class DockerSourceTest {
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getBackend(), "hellox");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getContext(), "/hellox");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions().get(0)
-                        .getPath(), "/sayHellox");
+                .getPath(), "/sayHellox");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions().get(0)
                 .getMethod(), "GET");
         Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).isGlobal());
@@ -111,7 +114,7 @@ public class DockerSourceTest {
     public void validateServicesTemplates() {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "hello");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "wso2/sampleapp-hello");
+                cellImageInfo.getOrg() + "/sampleapp-hello");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
                 getContainerPort().intValue(), 9090);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
@@ -119,7 +122,7 @@ public class DockerSourceTest {
 
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "hellox");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getImage(),
-                "wso2/sampleapp-hellox");
+                cellImageInfo.getOrg() + "/sampleapp-hellox");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getPorts().get(0).
                 getContainerPort().intValue(), 9090);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getReplicas(), 1);
