@@ -40,6 +40,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
+import static org.cellery.components.test.utils.CelleryTestConstants.ARTIFACTS;
+import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
+import static org.cellery.components.test.utils.CelleryTestConstants.DEPENDENCIES_PROPERTIES;
+import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
+import static org.cellery.components.test.utils.CelleryTestConstants.TMP;
+import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
+
 /**
  * Language test utils.
  */
@@ -66,7 +73,17 @@ public class LangTestUtils {
             br.lines().forEach(log::info);
         }
     }
-
+    /**
+     * Compile and Executes the Build function of the Cell file with env variables.
+     *
+     * @param sourceDirectory Ballerina source directory
+     * @param fileName        Ballerina source file name
+     * @param cellImageInfo   Information of the cell
+     * @param envVar          environment variables required to build the cell
+     * @return Exit code
+     * @throws InterruptedException if an error occurs while compiling
+     * @throws IOException          if an error occurs while writing file
+     */
     public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo
             , Map<String, String> envVar) throws InterruptedException, IOException {
 
@@ -74,10 +91,11 @@ public class LangTestUtils {
     }
 
     /**
-     * Compile a ballerina file in a given directory
+     * Compile and Executes the build function of the Cell file.
      *
      * @param sourceDirectory Ballerina source directory
      * @param fileName        Ballerina source file name
+     * @param cellImageInfo   Information of the cell
      * @return Exit code
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
@@ -89,10 +107,12 @@ public class LangTestUtils {
     }
 
     /**
-     * Compile a ballerina file in a given directory
+     * Compile and Executes the run function of the Cell file with env variables.
      *
      * @param sourceDirectory Ballerina source directory
      * @param fileName        Ballerina source file name
+     * @param cellImageInfo   Information of the cell
+     * @param envVar          environment variables required to run the cell
      * @return Exit code
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
@@ -106,6 +126,16 @@ public class LangTestUtils {
         return compileBallerinaFunction(RUN, sourceDirectory, fileName, cellImageInfo, instancesData, envVar);
     }
 
+    /**
+     * Compile and Executes the run function of the Cell file.
+     *
+     * @param sourceDirectory Ballerina source directory
+     * @param fileName        Ballerina source file name
+     * @param cellImageInfo   Information of the cell
+     * @return Exit code
+     * @throws InterruptedException if an error occurs while compiling
+     * @throws IOException          if an error occurs while writing file
+     */
     public static int compileCellRunFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo)
             throws InterruptedException, IOException {
 
@@ -184,8 +214,8 @@ public class LangTestUtils {
     private static Map<String, CellImageInfo> getDependancyInfo(Path source) {
 
         String txtPath =
-                source.toAbsolutePath().toString() + File.separator + "target" + File.separator + "tmp" +
-                        File.separator + "dependencies.properties";
+                source.toAbsolutePath().toString() + File.separator + TARGET + File.separator + TMP +
+                        File.separator + DEPENDENCIES_PROPERTIES;
         Map<String, CellImageInfo> dependencyMap = new HashMap<>();
         try (InputStream input =
                      new FileInputStream(txtPath)) {
@@ -210,13 +240,13 @@ public class LangTestUtils {
 
         Path tmpDirPath = Files.createTempDirectory("cellery-sample");
         tmpDirPath.toFile().deleteOnExit();
-        File source = new File(sourceDir.toString() + File.separator + "target" + File.separator + "cellery" +
-                File.separator + imageName + ".yaml");
-        File cellDir = new File(tmpDirPath.toString() + File.separator + "artifacts" + File.separator + "cellery");
+        File source = new File(sourceDir.toString() + File.separator + TARGET + File.separator + CELLERY +
+                File.separator + imageName + YAML);
+        File cellDir = new File(tmpDirPath.toString() + File.separator + ARTIFACTS + File.separator + CELLERY);
         cellDir.deleteOnExit();
         boolean folderCreated = cellDir.mkdirs();
         if (folderCreated) {
-            File dest = new File(cellDir.toPath().toString() + File.separator + imageName + ".yaml");
+            File dest = new File(cellDir.toPath().toString() + File.separator + imageName + YAML);
             dest.deleteOnExit();
             Files.copy(source.toPath(), dest.toPath());
             return tmpDirPath.toString();

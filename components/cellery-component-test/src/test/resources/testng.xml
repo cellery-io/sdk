@@ -20,16 +20,16 @@
 <suite name="Ballerina-Kubernetes-Test-Suite">
     <test name="ballerina-kubernetes-sample-tests" parallel="false">
         <classes>
-            <class name="org.cellery.components.test.StockTest"/>
-            <class name="org.cellery.components.test.EmployeeTest"/>
-            <class name="org.cellery.components.test.HRTest"/>
-            <class name="org.cellery.components.test.MySQLTest"/>
-            <class name="org.cellery.components.test.HelloWebTest"/>
-            <class name="org.cellery.components.test.PetStoreFeTest"/>
-            <class name="org.cellery.components.test.PetStoreBeTest"/>
-            <class name="org.cellery.components.test.PetServiceTest"/>
-            <class name="org.cellery.components.test.WebTlsTest"/>
-            <class name="org.cellery.components.test.DockerSourceTest"/>
+            <class name="org.cellery.components.test.scenarios.employee.StockTest"/>
+            <class name="org.cellery.components.test.scenarios.employee.EmployeeTest"/>
+            <class name="org.cellery.components.test.scenarios.employee.HRTest"/>
+            <class name="org.cellery.components.test.scenarios.employee.MySQLTest"/>
+            <class name="org.cellery.components.test.scenarios.web.HelloWebTest"/>
+            <class name="org.cellery.components.test.scenarios.petstore.PetStoreFeTest"/>
+            <class name="org.cellery.components.test.scenarios.petstore.PetStoreBeTest"/>
+            <class name="org.cellery.components.test.scenarios.petservice.PetServiceTest"/>
+            <class name="org.cellery.components.test.scenarios.tlsweb.WebTlsTest"/>
+            <class name="org.cellery.components.test.scenarios.dockersource.DockerSourceTest"/>
         </classes>
     </test>
 

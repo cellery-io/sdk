@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.cellery.components.test;
+package org.cellery.components.test.scenarios.employee;
 
 import io.cellery.models.Cell;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
@@ -43,19 +43,18 @@ import static org.cellery.components.test.utils.CelleryTestConstants.EMPLOYEE_PO
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
-public class HRTest {
+public class StockTest {
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
     private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + File.separator + CELLERY +
-            File.separator + "hr");
+            File.separator + "stock");
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "hr-img", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "stock", "1.0.0");
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "hr" + BAL, cellImageInfo), 0);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "hr" + BAL, cellImageInfo), 0);
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "stocks" + BAL, cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -84,25 +83,19 @@ public class HRTest {
 
     @Test
     public void validateGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(), "hr");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(), "hr-api");
+        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(), "stock");
+        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(), "stock");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
                 getMethod(), "GET");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
-                getPath(), "/");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+                getPath(), "/options");
     }
 
     @Test
-    public void validateServicesTemplates() {
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "hr");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0).
-                getName(), "stock_api_url");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
-                getName(), "employee_api_url");
+    public void validateServiceTemplates() {
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "stock");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "docker.io/celleryio/sampleapp-hr");
+                "docker.io/celleryio/sampleapp-stock");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
                 getContainerPort().intValue(), 8080);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);

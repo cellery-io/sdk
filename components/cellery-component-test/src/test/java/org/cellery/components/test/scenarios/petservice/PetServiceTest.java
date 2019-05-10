@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.cellery.components.test;
+package org.cellery.components.test.scenarios.petservice;
 
 import io.cellery.models.Cell;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
@@ -39,22 +39,23 @@ import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
-import static org.cellery.components.test.utils.CelleryTestConstants.EMPLOYEE_PORTAL;
+import static org.cellery.components.test.utils.CelleryTestConstants.PET_SERVICE;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
-public class StockTest {
+public class PetServiceTest {
+
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
-    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + File.separator + CELLERY +
-            File.separator + "stock");
+    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(PET_SERVICE);
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "stock", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petservice", "1.0.0");
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "stocks" + BAL, cellImageInfo), 0);
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-cell" + BAL, cellImageInfo)
+                , 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -71,6 +72,11 @@ public class StockTest {
     }
 
     @Test
+    public void validateKind() {
+        Assert.assertEquals(cell.getKind(), "Cell");
+    }
+
+    @Test
     public void validateMetaData() {
         Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
@@ -83,23 +89,39 @@ public class StockTest {
 
     @Test
     public void validateGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(), "stock");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(), "stock");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
-                getMethod(), "GET");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
-                getPath(), "/options");
+        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(), "petsvc");
+        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
     }
 
     @Test
-    public void validateServiceTemplates() {
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "stock");
+    public void validateServicesTemplates() {
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "debug");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "docker.io/celleryio/sampleapp-stock");
+                "docker.io/mirage20/k8s-debug-tools");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
-                getContainerPort().intValue(), 8080);
+                getContainerPort().intValue(), 0);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 80);
+
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "pet-service");
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getImage(),
+                "docker.io/isurulucky/pet-service");
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getPorts().get(0).
+                getContainerPort().intValue(), 9090);
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getReplicas(), 1);
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getServicePort(), 80);
+
+        Assert.assertTrue(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().isOverridable());
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
+                .getMaxReplicas(), new Integer(10));
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
+                .getMinReplicas(), new Integer(1));
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
+                .getMetrics().get(0).getResource().getName(), "cpu");
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
+                .getMetrics().get(0).getResource().getTargetAverageUtilization(), new Integer(50));
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
+                .getMetrics().get(0).getType(), "Resource");
+
     }
 
     @AfterClass
@@ -107,4 +129,3 @@ public class StockTest {
         KubernetesUtils.deleteDirectory(String.valueOf(TARGET_PATH));
     }
 }
-

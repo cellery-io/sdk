@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.cellery.components.test;
+package org.cellery.components.test.scenarios.tlsweb;
 
 import io.cellery.models.Cell;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;

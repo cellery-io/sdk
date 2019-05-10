@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.cellery.components.test;
+package org.cellery.components.test.scenarios.petstore;
 
 import io.cellery.models.Cell;
 import io.cellery.models.GatewaySpec;

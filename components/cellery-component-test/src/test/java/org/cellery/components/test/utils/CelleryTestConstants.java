@@ -23,6 +23,9 @@ package org.cellery.components.test.utils;
 public class CelleryTestConstants {
     public static final String CELLERY = "cellery";
     public static final String TARGET = "target";
+    public static final String ARTIFACTS = "artifacts";
+    public static final String TMP = "tmp";
+    public static final String DEPENDENCIES_PROPERTIES = "dependencies.properties";
     public static final String EMPLOYEE_PORTAL = "employee-portal";
     public static final String HELLO_WEB = "hello-web";
     public static final String PET_CARE_STORE = "pet-care-store";
