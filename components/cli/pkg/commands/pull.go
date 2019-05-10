@@ -61,10 +61,7 @@ func RunPull(cellImage string, isSilent bool, username string, password string) 
 				"please use inline flags instead", err)
 		}
 		savedCredentials, err := credManager.GetCredentials(parsedCellImage.Registry)
-		if err != nil {
-			util.ExitWithErrorMessage("failed to read saved credentials", err)
-		}
-		if savedCredentials.Username != "" && savedCredentials.Password != "" {
+		if err == nil && savedCredentials.Username != "" && savedCredentials.Password != "" {
 			registryCredentials = savedCredentials
 			isCredentialsPresent = true
 		} else {
