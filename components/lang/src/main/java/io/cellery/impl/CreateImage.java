@@ -87,6 +87,7 @@ import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
+import static io.cellery.CelleryConstants.PROTO_FILE;
 import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
@@ -215,9 +216,11 @@ public class CreateImage extends BlockingNativeCallableUnit {
         GRPC grpc = new GRPC();
         grpc.setPort((int) ((BInteger) attributeMap.get("gatewayPort")).intValue());
         grpc.setBackendPort((int) ((BInteger) attributeMap.get("backendPort")).intValue());
-        String protoFile = ((BString) attributeMap.get("protoFile")).stringValue();
-        if (!protoFile.isEmpty()) {
-            copyResourceToTarget(protoFile);
+        if (attributeMap.containsKey(PROTO_FILE)) {
+            String protoFile = ((BString) attributeMap.get(PROTO_FILE)).stringValue();
+            if (!protoFile.isEmpty()) {
+                copyResourceToTarget(protoFile);
+            }
         }
         component.setProtocol(PROTOCOL_GRPC);
         component.setContainerPort(grpc.getBackendPort());

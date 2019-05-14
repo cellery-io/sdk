@@ -37,6 +37,7 @@ public class CelleryConstants {
     // These should match the Ballerina object names of the Auto Scaling Metrics Objects
     public static final String ENVOY_GATEWAY = "Envoy";
     public static final String MICRO_GATEWAY = "MicroGateway";
+    public static final String PROTO_FILE = "protoFile";
     public static final String YAML = ".yaml";
     public static final String PROTOCOL_TCP = "TCP";
     public static final String PROTOCOL_GRPC = "GRPC";
