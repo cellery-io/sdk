@@ -14,7 +14,7 @@ import celleryio/cellery;
 
 ////Reviews Component
 cellery:Component reviewsComponent = {
-    name: "pet-service",
+    name: "reviews",
     source: {
         image: "celleryio/samples-productreview-reviews"
     },
@@ -36,18 +36,21 @@ cellery:Component reviewsComponent = {
     envVars: {
         PORT: { value: 8080 },
         PRODUCTS_HOST: { value: "" },
-        PRODUCTS_PORT: { value: "" },
+        PRODUCTS_PORT: { value: 80 },
         PRODUCTS_CONTEXT: { value: "" },
         CUSTOMERS_HOST: { value: "" },
-        CUSTOMERS_PORT: { value: "" },
+        CUSTOMERS_PORT: { value: 80 },
         CUSTOMERS_CONTEXT: { value: "" },
         RATINGS_HOST: { value: "" },
-        RATINGS_PORT: { value: "" },
+        RATINGS_PORT: { value: 80 },
         DATABASE_HOST: { value: "" },
         DATABASE_PORT: { value: "" },
         DATABASE_USERNAME: { value: "root" },
         DATABASE_PASSWORD: { value: "root" },
         DATABASE_NAME: { value: "reviews_db" }
+    },
+    dependencies: {
+        customerProduct: <cellery:ImageName>{ org: "wso2", name: "products", ver: "1.0.0" }
     }
 };
 
@@ -90,5 +93,31 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+    cellery:Reference customerProductRef = check cellery:getReference(instances.customerProduct);
+    ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers-1_api_url"]);
+    reviewsComponent.envVars.CUSTOMERS_HOST.value = customerComp.url;
+    reviewsComponent.envVars.CUSTOMERS_CONTEXT.value = customerComp.path;
+
+    ComponentApi productComp = parseApiUrl(<string>customerProductRef["products-1_api_url"]);
+    reviewsComponent.envVars.PRODUCTS_HOST.value = productComp.url;
+    reviewsComponent.envVars.PRODUCTS_CONTEXT.value = productComp.path;
+
+    reviewsComponent.envVars.RATINGS_HOST.value = cellery:getHost(untaint iName.instanceName,
+        ratingComponent);
+
     return cellery:createInstance(reviewCell, iName);
+}
+
+type ComponentApi record {
+    string url;
+    string port;
+    string path?;
+};
+
+function parseApiUrl (string apiUrl) returns ComponentApi {
+    string[] array = apiUrl.split (":");
+    string url = array[1].replaceAll("/", "");
+    string port = array[2].split("/")[0];
+    string path = array[2].split("/")[1];
+    return {url: url, port: port , path: path};
 }

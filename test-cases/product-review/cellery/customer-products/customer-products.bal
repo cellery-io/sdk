@@ -34,8 +34,7 @@ cellery:Component customersComponent = {
         }
     },
     envVars: {
-        CATEGORIES_HOST: { value: "" },
-        CATEGORIES_PORT: { value: 8000 }
+        PORT: { value: 8080 }
     }
 };
 
@@ -58,6 +57,11 @@ cellery:Component productsComponent = {
             },
             expose: "local"
         }
+    },
+    envVars: {
+        PORT: { value: 8080 },
+        CATEGORIES_HOST: { value: "" },
+        CATEGORIES_PORT: { value: 8000 }
     }
 };
 
@@ -71,6 +75,9 @@ cellery:Component categoriesComponent = {
             backendPort: 8000,
             gatewayPort: 8000
         }
+    },
+    envVars: {
+        PORT: { value: 8000 }
     }
 };
 
@@ -87,7 +94,7 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-    categoriesComponent.envVars.CATEGORIES_HOST.value = cellery:getHost(untaint iName.instanceName,
+    productsComponent.envVars.CATEGORIES_HOST.value = cellery:getHost(untaint iName.instanceName,
         categoriesComponent);
     return cellery:createInstance(productCell, iName);
 }
