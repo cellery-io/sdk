@@ -17,10 +17,15 @@
  */
 
 package org.cellery.components.test.utils;
+
+import java.io.File;
+
 /**
  * Constants used in Cellery Lang Testing.
  */
 public class CelleryTestConstants {
+    public static final String CELLERY_REPO_PATH =
+            System.getProperty("user.home") + File.separator + ".cellery" + File.separator + "repo";
     public static final String CELLERY = "cellery";
     public static final String TARGET = "target";
     public static final String ARTIFACTS = "artifacts";

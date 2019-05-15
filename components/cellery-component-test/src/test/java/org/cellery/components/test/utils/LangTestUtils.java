@@ -25,6 +25,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.cellery.components.test.models.CellImageInfo;
+import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,6 +43,7 @@ import java.util.Properties;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.ARTIFACTS;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
+import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_REPO_PATH;
 import static org.cellery.components.test.utils.CelleryTestConstants.DEPENDENCIES_PROPERTIES;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.TMP;
@@ -73,6 +75,7 @@ public class LangTestUtils {
             br.lines().forEach(log::info);
         }
     }
+
     /**
      * Compile and Executes the Build function of the Cell file with env variables.
      *
@@ -185,6 +188,10 @@ public class LangTestUtils {
             log.error(FileUtils.readFileToString(ballerinaInternalLog.toFile()));
         }
 
+        if (action.equals(BUILD) && exitCode == 0) {
+            moveRefJsonToCelleryHome(sourceDirectory, cellImageInfo);
+        }
+
         return exitCode;
     }
 
@@ -253,5 +260,16 @@ public class LangTestUtils {
         } else {
             throw new IOException();
         }
+    }
+
+    private static void moveRefJsonToCelleryHome(Path sourceDirectory, CellImageInfo cellImageInfo) throws IOException {
+        Path targetPath = sourceDirectory.resolve("target");
+        File destDir =
+                new File(CELLERY_REPO_PATH + File.separator + cellImageInfo.getOrg() + File.separator +
+                        cellImageInfo.getName() + File.separator + cellImageInfo.getVer());
+        destDir.mkdirs();
+        ZipUtil.pack(new File(targetPath.toString()),
+                new File(destDir.toPath() + File.separator + cellImageInfo.getName() + ".zip"),
+                name -> "artifacts/" + name);
     }
 }
