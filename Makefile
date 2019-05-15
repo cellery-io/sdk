@@ -49,6 +49,10 @@ GO_LDFLAGS := -X $(PROJECT_PKG)/components/cli/pkg/version.buildVersion=$(VERSIO
 GO_LDFLAGS += -X $(PROJECT_PKG)/components/cli/pkg/version.buildGitRevision=$(GIT_REVISION)
 GO_LDFLAGS += -X $(PROJECT_PKG)/components/cli/pkg/version.buildTime=$(shell date +%Y-%m-%dT%H:%M:%S%z)
 
+# Docker info
+DOCKER_REPO ?= wso2cellery
+DOCKER_IMAGE_TAG ?= $(VERSION)
+
 all: code.format build-lang build-docs-view build-cli
 
 .PHONY: install
@@ -97,7 +101,6 @@ copy-ballerina-runtime:
 	curl --retry 5 https://product-dist.ballerina.io/downloads/$(BALLERINA_VERSION)/ballerina-$(BALLERINA_VERSION).zip \
 	--output $(BALLERINA_DIST_LOCATION)
 
-
 .PHONY: build-ubuntu-installer
 build-ubuntu-installer: copy-k8s-artefacts copy-ballerina-runtime
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
@@ -119,6 +122,16 @@ build-mac-installer: copy-k8s-artefacts copy-ballerina-runtime
 	cp -r $(JRE_PATH) files/$(BALLERINA_JRE_LOCATION); \
 	cp darwin/Resources/ballerina files/$(BALLERINA_BIN_LOCATION); \
 	bash build-macos-x64.sh $(VERSION)
+
+.PHONY: docker
+docker:
+	cd ${PROJECT_ROOT}/installers/docker; \
+	bash init.sh; \
+	docker build -t $(DOCKER_REPO)/ballerina-runtime:$(DOCKER_IMAGE_TAG) .
+
+.PHONY: docker-push
+docker-push: docker
+	docker push $(DOCKER_REPO)/ballerina-runtime:$(DOCKER_IMAGE_TAG)
 
 .PHONY: install-docs-view
 install-docs-view:
