@@ -79,7 +79,7 @@ public class GetReference extends BlockingNativeCallableUnit {
         BMap<String, BValue> refMap = BLangConnectorSPIUtil.createBStruct(ctx, CelleryConstants.CELLERY_PACKAGE,
                 CelleryConstants.REFERENCE_DEFINITION);
         jsonObject.keys().forEachRemaining(key -> refMap.put(key,
-                new BString(jsonObject.getString(key).replace(INSTANCE_NAME_PLACEHOLDER, instanceName))));
+                new BString(jsonObject.get(key).toString().replace(INSTANCE_NAME_PLACEHOLDER, instanceName))));
         ctx.setReturnValues(refMap);
     }
 
