@@ -26,10 +26,12 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 
@@ -794,7 +796,12 @@ func extractImage(cellImage *util.CellImage, spinner *util.Spinner) (string, err
 	}
 
 	// Unzipping image to a temporary location
-	tempPath, err := ioutil.TempDir("", "cellery-cell-image")
+	celleryHomeTmp := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp")
+	if _, err := os.Stat(celleryHomeTmp); os.IsNotExist(err) {
+		os.Mkdir(celleryHomeTmp, 0755)
+	}
+
+	tempPath, err := ioutil.TempDir(celleryHomeTmp, "cellery-cell-image")
 	if err != nil {
 		return "", err
 	}
@@ -874,7 +881,57 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to get executable path", err)
 		}
-		cmd := exec.Command(exePath+"ballerina", cmdArgs...)
+
+		cmd := &exec.Cmd{}
+
+		if exePath != "" {
+			cmd = exec.Command(exePath+"ballerina", cmdArgs...)
+		} else {
+			currentDir, err := os.Getwd()
+			if err != nil {
+				//spinner.Stop(false)
+				util.ExitWithErrorMessage("Error in determining working directory", err)
+			}
+
+			//Retrieve the cellery cli docker instance status.
+			cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime=0.2.1", "--filter",
+				"label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
+
+			out, err := cmdDockerPs.Output()
+			if err != nil {
+				fmt.Printf("Docker Run Error %s\n", err)
+			}
+
+			if string(out) == "" {
+
+				cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime=0.2.1",
+					"--mount", "type=bind,source="+currentDir+",target=/home/cellery",
+					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
+					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
+					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
+					"wso2cellery/ballerina-runtime:0.2.1", "sleep", "600",
+				)
+
+				out, err = cmdDockerRun.Output()
+				if err != nil {
+					fmt.Printf("Docker Run Error %s\n", err)
+				}
+				time.Sleep(15 * time.Second)
+			}
+
+			cmdArgs = append(cmdArgs, "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
+
+			re := regexp.MustCompile(`^.*cellery-cell-image`)
+			balFilePath = re.ReplaceAllString(balFilePath, "/home/cellery/.cellery/tmp/cellery-cell-image")
+			dockerImageDir := re.ReplaceAllString(imageDir, "/home/cellery/.cellery/tmp/cellery-cell-image")
+
+			cmd = exec.Command("docker", "--debug", "exec", "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+dockerImageDir,
+				"-w", "/home/cellery", "-u", "1000",
+				strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH,
+				"run", constants.BALLERINA_PRINT_RETURN_FLAG, balFilePath+":run",
+				string(iName), string(dependenciesJson))
+		}
+		defer os.Remove(imageDir)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 		stdoutReader, _ := cmd.StdoutPipe()

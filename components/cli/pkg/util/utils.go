@@ -491,6 +491,18 @@ func CelleryInstallationDir() string {
 	return celleryHome
 }
 
+func BallerinaInstallationDir() string {
+	ballerinaHome := ""
+	if runtime.GOOS == "darwin" {
+		ballerinaHome = constants.BALLERINA_INSTALLATION_PATH_MAC
+	}
+	if runtime.GOOS == "linux" {
+		ballerinaHome = constants.BALLERINA_INSTALLATION_PATH_UBUNTU
+	}
+	return ballerinaHome
+
+}
+
 func CreateDir(dirPath string) error {
 	dirExist, _ := FileExists(dirPath)
 	if !dirExist {
