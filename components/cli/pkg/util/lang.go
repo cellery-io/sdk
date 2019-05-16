@@ -83,9 +83,14 @@ func (langMgr *BLangManager) Init() error {
 }
 
 func (langMgr *BLangManager) GetExecutablePath() (string, error) {
-	exePath := strings.TrimSuffix(CelleryInstallationDir(), "/") + constants.CELLERY_EXECUTABLE_PATH
+	exePath := BallerinaInstallationDir() + constants.BALLERINA_EXECUTABLE_PATH
 	if _, err := os.Stat(exePath); os.IsNotExist(err) {
-		return "", nil
+		exePath = strings.TrimSuffix(CelleryInstallationDir(), "/") + constants.CELLERY_EXECUTABLE_PATH
+		if _, err := os.Stat(exePath); os.IsNotExist(err) {
+			return "", nil
+		} else if err != nil {
+			return "", err
+		}
 	} else if err != nil {
 		return "", err
 	}
