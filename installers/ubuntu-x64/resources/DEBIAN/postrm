@@ -12,4 +12,10 @@ then
 fi
 sudo rm -rf /usr/share/cellery/
 
+BRE_LIB_PATH="/usr/lib/ballerina/ballerina-0.990.3/bre/lib"
+if [ -d $BRE_LIB_PATH ]
+then
+sudo rm -f ${BRE_LIB_PATH}/cellery-0.2.0-SNAPSHOT.jar
+fi
+
 

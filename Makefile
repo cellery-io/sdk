@@ -89,26 +89,18 @@ copy-k8s-artefacts:
 	mkdir -p k8s-artefacts/observability/node-server/config; \
 	unzip $(OBSERVABILITY_PORTAL_ARTIFACT) && cp config/* k8s-artefacts/observability/node-server/config/
 
-.PHONY: copy-ballerina-runtime
-copy-ballerina-runtime:
-	cd ${PROJECT_ROOT}/installers; \
-	curl --retry 5 https://product-dist.ballerina.io/downloads/$(BALLERINA_VERSION)/ballerina-$(BALLERINA_VERSION).zip \
-	--output ballerina-$(BALLERINA_VERSION).zip
-
 .PHONY: build-ubuntu-installer
-build-ubuntu-installer: copy-k8s-artefacts copy-ballerina-runtime
+build-ubuntu-installer: copy-k8s-artefacts
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
 	mkdir -p files; \
 	cp -r ../k8s-artefacts files/; \
-	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
 	bash build-ubuntu-x64.sh $(VERSION)
 
 .PHONY: build-mac-installer
-build-mac-installer: copy-k8s-artefacts copy-ballerina-runtime
+build-mac-installer: copy-k8s-artefacts
 	cd ${PROJECT_ROOT}/installers/macOS-x64; \
 	mkdir -p files; \
 	cp -r ../k8s-artefacts files/; \
-	unzip ../ballerina-$(BALLERINA_VERSION).zip -d files; \
 	bash build-macos-x64.sh $(VERSION)
 
 .PHONY: docker
