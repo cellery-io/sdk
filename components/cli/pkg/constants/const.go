@@ -154,3 +154,5 @@ const CELLERY_SQL_PASSWORD = "cellery-sql-user"
 
 const INGRESS_MODE_NODE_PORT = "Node port [kubeadm, minikube]"
 const INGRESS_MODE_LOAD_BALANCER = "Load balancer [gcp, docker for desktop]"
+
+const CELLERY_RELEASE_VERSION = "0.2.1"

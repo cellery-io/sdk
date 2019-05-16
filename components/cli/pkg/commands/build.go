@@ -96,8 +96,9 @@ func RunBuild(tag string, fileName string) {
 			util.ExitWithErrorMessage("Error in determining working directory", err)
 		}
 		//Retrieve the cellery cli docker instance status.
-		cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime=0.2.1", "--filter",
-			"label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
+		cmdDockerPs := exec.Command("docker", "ps", "--filter",
+			"label=ballerina-runtime="+constants.CELLERY_RELEASE_VERSION,
+			"--filter", "label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
 		out, err := cmdDockerPs.Output()
 		if err != nil {
 			spinner.Stop(false)
@@ -105,23 +106,26 @@ func RunBuild(tag string, fileName string) {
 		}
 
 		if string(out) == "" {
-			cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime=0.2.1", "-l", "current.dir="+currentDir,
+			cmdDockerRun := exec.Command("docker", "run", "-d",
+				"-l", "ballerina-runtime="+constants.CELLERY_RELEASE_VERSION,
+				"-l", "current.dir="+currentDir,
 				"--mount", "type=bind,source="+currentDir+",target=/home/cellery",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
-				"wso2cellery/ballerina-runtime:0.2.1", "sleep", "600",
+				"wso2cellery/ballerina-runtime:"+constants.CELLERY_RELEASE_VERSION, "sleep", "600",
 			)
 			util.UserHomeDir()
 			out, err = cmdDockerRun.Output()
 			if err != nil {
-				fmt.Printf("Docker Run Error %s\n", err)
+				spinner.Stop(false)
+				util.ExitWithErrorMessage("Docker Run Error %s\n", err)
 			}
-			time.Sleep(15 * time.Second)
+			time.Sleep(5 * time.Second)
 		}
-		cmd = exec.Command("docker", "--debug", "exec", "-w", "/home/cellery", "-u", "1000",
-			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", constants.BALLERINA_PRINT_RETURN_FLAG,
-			fileName+":build", string(iName))
+		cmd = exec.Command("docker", "exec", "-w", "/home/cellery", "-u", "1000",
+			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
+			constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
 	}
 	execError := ""
 	stderrReader, _ := cmd.StderrPipe()
