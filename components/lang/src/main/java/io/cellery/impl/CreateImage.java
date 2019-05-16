@@ -460,9 +460,16 @@ public class CreateImage extends BlockingNativeCallableUnit {
         JSONObject json = new JSONObject();
         cellImage.getComponentNameToComponentMap().forEach((componentName, component) -> {
             component.getApis().forEach(api -> {
-                String url = DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + "--gateway" +
-                        "-service:" + DEFAULT_GATEWAY_PORT + "/" + api.getContext();
-                json.put(api.getContext() + "_api_url", url.replaceAll("(?<!http:)//", "/"));
+                String context = api.getContext();
+                if (StringUtils.isNotEmpty(context)) {
+                    String url = DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + "--gateway" +
+                            "-service:" + DEFAULT_GATEWAY_PORT + "/" + context;
+                    if ("/".equals(context)) {
+                        json.put(componentName + "_api_url", url.replaceAll("(?<!http:)//", "/"));
+                    } else {
+                        json.put(context + "_api_url", url.replaceAll("(?<!http:)//", "/"));
+                    }
+                }
             });
             component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
             component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
