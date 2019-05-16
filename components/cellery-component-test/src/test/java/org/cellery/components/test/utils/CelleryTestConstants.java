@@ -37,6 +37,7 @@ public class CelleryTestConstants {
     public static final String PET_SERVICE = "pet-service";
     public static final String TLS_WEB = "tls-web";
     public static final String DOCKER_SOURCE = "docker-source";
+    public static final String PRODUCT_REVIEW = "product-review";
     public static final String CELLERY_IMAGE_ORG = "mesh.cellery.io/cell-image-org";
     public static final String CELLERY_IMAGE_NAME = "mesh.cellery.io/cell-image-name";
     public static final String CELLERY_IMAGE_VERSION = "mesh.cellery.io/cell-image-version";

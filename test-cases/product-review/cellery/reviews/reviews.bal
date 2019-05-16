@@ -43,14 +43,15 @@ cellery:Component reviewsComponent = {
         CUSTOMERS_CONTEXT: { value: "" },
         RATINGS_HOST: { value: "" },
         RATINGS_PORT: { value: 80 },
-        DATABASE_HOST: { value: "" },
-        DATABASE_PORT: { value: "" },
+        DATABASE_HOST: { value: "empty" },//TODO Remove host
+        DATABASE_PORT: { value: 31406 },
         DATABASE_USERNAME: { value: "root" },
         DATABASE_PASSWORD: { value: "root" },
         DATABASE_NAME: { value: "reviews_db" }
     },
     dependencies: {
-        customerProduct: <cellery:ImageName>{ org: "wso2", name: "products", ver: "1.0.0" }
+        customerProduct: <cellery:ImageName>{ org: "myorg", name: "products", ver: "1.0.0" },
+        database : <cellery:ImageName>{ org: "myorg", name: "database", ver: "1.0.0" }
     }
 };
 
@@ -96,14 +97,20 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
     cellery:Reference customerProductRef = check cellery:getReference(instances.customerProduct);
     ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers-1_api_url"]);
     reviewsComponent.envVars.CUSTOMERS_HOST.value = customerComp.url;
+    reviewsComponent.envVars.CUSTOMERS_PORT.value = customerComp.port;
     reviewsComponent.envVars.CUSTOMERS_CONTEXT.value = customerComp.path;
 
     ComponentApi productComp = parseApiUrl(<string>customerProductRef["products-1_api_url"]);
     reviewsComponent.envVars.PRODUCTS_HOST.value = productComp.url;
+    reviewsComponent.envVars.PRODUCTS_PORT.value = productComp.port;
     reviewsComponent.envVars.PRODUCTS_CONTEXT.value = productComp.path;
 
     reviewsComponent.envVars.RATINGS_HOST.value = cellery:getHost(untaint iName.instanceName,
         ratingComponent);
+
+    //TODO Add host
+    cellery:Reference databaseRef = check cellery:getReference(instances.database);
+    reviewsComponent.envVars.DATABASE_PORT.value = <string> databaseRef["mysql_tcp_port"];
 
     return cellery:createInstance(reviewCell, iName);
 }

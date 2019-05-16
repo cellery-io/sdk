@@ -262,7 +262,7 @@ public class LangTestUtils {
         }
     }
 
-    private static void moveRefJsonToCelleryHome(Path sourceDirectory, CellImageInfo cellImageInfo) throws IOException {
+    private static void moveRefJsonToCelleryHome(Path sourceDirectory, CellImageInfo cellImageInfo) {
         Path targetPath = sourceDirectory.resolve("target");
         File destDir =
                 new File(CELLERY_REPO_PATH + File.separator + cellImageInfo.getOrg() + File.separator +

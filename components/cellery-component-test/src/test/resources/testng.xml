@@ -25,12 +25,14 @@
             <class name="org.cellery.components.test.scenarios.employee.HRTest"/>
             <class name="org.cellery.components.test.scenarios.employee.MySQLTest"/>
             <class name="org.cellery.components.test.scenarios.web.HelloWebTest"/>
-            <class name="org.cellery.components.test.scenarios.petstore.PetStoreFeTest"/>
             <class name="org.cellery.components.test.scenarios.petstore.PetStoreBeTest"/>
+            <class name="org.cellery.components.test.scenarios.petstore.PetStoreFeTest"/>
             <class name="org.cellery.components.test.scenarios.petservice.PetServiceTest"/>
             <class name="org.cellery.components.test.scenarios.tlsweb.WebTlsTest"/>
             <class name="org.cellery.components.test.scenarios.dockersource.DockerSourceTest"/>
+            <class name="org.cellery.components.test.scenarios.reviews.DatabaseTest"/>
+            <class name="org.cellery.components.test.scenarios.reviews.CustomerProductTest"/>
+            <class name="org.cellery.components.test.scenarios.reviews.ReviewsTest"/>
         </classes>
     </test>
-
 </suite>

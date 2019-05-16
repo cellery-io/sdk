@@ -28,7 +28,6 @@ before_install:
   - mv ${TRAVIS_BUILD_DIR} $GOPATH/src/github.com/cellery-io/sdk
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/cellery-io/sdk
   - cd $HOME/gopath/src/github.com/cellery-io/sdk
-  - ballerina version
 script: make all
 after_success:
   - bash <(curl -s https://codecov.io/bash)
