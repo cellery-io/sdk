@@ -146,7 +146,6 @@ copyDebianDirectory() {
 }
 
 copyBuildDirectories() {
-    mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/runtime
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/repo
 
     cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
