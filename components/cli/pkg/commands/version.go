@@ -46,7 +46,7 @@ func RunVersion() {
 
 	// Printing Cellery version information
 	_, _ = boldWhite.Println("Cellery:")
-	fmt.Println(" CLI Version:\t\t0.2.0")
+	fmt.Println(" CLI Version:\t\t0.2.1")
 	fmt.Printf(" OS/Arch:\t\t%s/%s\n", runtime.GOOS, runtime.GOARCH)
 	//fmt.Println(" Experimental:\t\ttrue") // TODO
 
