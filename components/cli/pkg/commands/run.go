@@ -924,10 +924,23 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			balFilePath = re.ReplaceAllString(balFilePath, "/home/cellery/.cellery/tmp/cellery-cell-image")
 			dockerImageDir := re.ReplaceAllString(imageDir, "/home/cellery/.cellery/tmp/cellery-cell-image")
 
-			cmd = exec.Command("docker", "exec", "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+dockerImageDir,
-				"-w", "/home/cellery", "-u", "1000",
-				strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH,
-				"run", constants.BALLERINA_PRINT_RETURN_FLAG, balFilePath+":run",
+			cmd = exec.Command("docker", "exec", "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+dockerImageDir)
+			if len(envVars) != 0 {
+				for _, envVar := range envVars {
+					cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+				}
+			}
+			shellEnvs := os.Environ()
+			// check if any env var prepended with `CELLERY` exists. If so, set them to docker exec command.
+			if len(shellEnvs) != 0 {
+				for _, shellEnv := range shellEnvs {
+					if strings.HasPrefix(shellEnv, "CELLERY") {
+						cmd.Args = append(cmd.Args, "-e", shellEnv)
+					}
+				}
+			}
+			cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", "1000",
+				strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", constants.BALLERINA_PRINT_RETURN_FLAG, balFilePath+":run",
 				string(iName), string(dependenciesJson))
 		}
 		defer os.Remove(imageDir)
