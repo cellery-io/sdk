@@ -1,6 +1,6 @@
 Package: cellery
 Architecture: amd64
-Version: 0.2.0
+Version: 0.2.1
 Maintainer: WSO2 Inc. <admin@wso2.com>
 Installed-Size: __BINARY_SIZE__
 Description: Design, develop, build, run, manage your cells anywhere
