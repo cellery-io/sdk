@@ -44,9 +44,9 @@ func newSetupCreateOnExistingClusterCommand() *cobra.Command {
 		Short: "Create a Cellery runtime in existing cluster",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			hasNfsStorage := useNfsStorage(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
-			if isPersistentVolume && hasNfsStorage {
-				nfs = runtime.Nfs{nfsServerIp, fileShare}
+			hasNfsStorage = useNfsStorage(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
+			if hasNfsStorage {
+				nfs = runtime.Nfs{nfsServerIp, "/" + fileShare}
 				db = runtime.MysqlDb{dbHostName, dbUserName, dbPassword}
 			}
 			return validateUserInputForExistingCluster(hasNfsStorage, nfsServerIp, fileShare, dbHostName, dbUserName,

@@ -249,7 +249,7 @@ func createKubernentesClusterOnGcp(ctx context.Context, gcpSpinner *util.Spinner
 		fmt.Printf("Could not initialize gke client: %v", err)
 	}
 	// Create GCP cluster
-	gcpSpinner.SetNewAction("Creating GCP cluster "+constants.GCP_CLUSTER_NAME+uniqueNumber)
+	gcpSpinner.SetNewAction("Creating GCP cluster " + constants.GCP_CLUSTER_NAME + uniqueNumber)
 	errCreate := createGcpCluster(gcpService, constants.GCP_CLUSTER_NAME+uniqueNumber)
 	if errCreate != nil {
 		gcpSpinner.Stop(false)
