@@ -109,7 +109,7 @@ func RunBuild(tag string, fileName string) {
 			cmdDockerRun := exec.Command("docker", "run", "-d",
 				"-l", "ballerina-runtime="+constants.CELLERY_RELEASE_VERSION,
 				"-l", "current.dir="+currentDir,
-				"--mount", "type=bind,source="+currentDir+",target=/home/cellery",
+				"--mount", "type=bind,source="+currentDir+",target=/home/cellery/src",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
@@ -123,7 +123,7 @@ func RunBuild(tag string, fileName string) {
 			}
 			time.Sleep(5 * time.Second)
 		}
-		cmd = exec.Command("docker", "exec", "-w", "/home/cellery", "-u", "1000",
+		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", "1000",
 			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
 			constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
 	}

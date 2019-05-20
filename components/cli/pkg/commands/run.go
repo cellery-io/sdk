@@ -904,7 +904,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			if string(out) == "" {
 
 				cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+constants.CELLERY_RELEASE_VERSION,
-					"--mount", "type=bind,source="+currentDir+",target=/home/cellery",
+					"--mount", "type=bind,source="+currentDir+",target=/home/cellery/src",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
@@ -941,7 +941,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 					cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
 				}
 			}
-			cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", "1000",
+			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", "1000",
 				strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", constants.BALLERINA_PRINT_RETURN_FLAG, balFilePath+":run",
 				string(iName), string(dependenciesJson))
 		}
