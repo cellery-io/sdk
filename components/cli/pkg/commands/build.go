@@ -116,7 +116,49 @@ func RunBuild(tag string, fileName string) {
 				"wso2cellery/ballerina-runtime:"+constants.CELLERY_RELEASE_VERSION, "sleep", "600",
 			)
 			util.UserHomeDir()
-			out, err = cmdDockerRun.Output()
+
+			stderrReader, err := cmdDockerRun.StderrPipe()
+			if err != nil {
+				spinner.Stop(false)
+				util.ExitWithErrorMessage("Error while building stderr pipe ", err)
+			}
+			stdoutReader, _ := cmdDockerRun.StdoutPipe()
+			if err != nil {
+				spinner.Stop(false)
+				util.ExitWithErrorMessage("Error while building stdout pipe ", err)
+			}
+
+			stderrScanner := bufio.NewScanner(stderrReader)
+			stdoutScanner := bufio.NewScanner(stdoutReader)
+
+			err = cmdDockerRun.Start()
+			if err != nil {
+				spinner.Stop(false)
+				util.ExitWithErrorMessage("Error while starting docker process ", err)
+			}
+
+			go func() {
+				for {
+					if stderrScanner.Scan() && strings.HasPrefix(stderrScanner.Text(), "Unable to find image") {
+						spinner.Pause()
+						spinner.Stop(false)
+						util.StartNewSpinner(fmt.Sprintf("%s: Cannot find ballerina docker image. Pulling %s", "Building image "+util.Bold(tag), "wso2cellery/ballerina-runtime:"+constants.CELLERY_RELEASE_VERSION))
+						spinner.Resume()
+						break
+					}
+				}
+			}()
+
+			go func() {
+				for {
+					if stdoutScanner.Scan() {
+						out = []byte(stdoutScanner.Text())
+						break
+					}
+				}
+			}()
+
+			err = cmdDockerRun.Wait()
 			if err != nil {
 				spinner.Stop(false)
 				util.ExitWithErrorMessage("Docker Run Error %s\n", err)
