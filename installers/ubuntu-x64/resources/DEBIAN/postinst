@@ -25,7 +25,7 @@ else
     echo "Ballerina 0.990.3 is not installed"
     echo "Installing docker based Cellery CLI."
     docker_status=$(docker info 2>&1 1>/dev/null)
-    if [[ $? -eq 0 ]]; then
+    if [ $? -eq 0 ]; then
         echo "Pulling the docker based Cellery CLI image : wso2cellery/ballerina-runtime:${CELLERY_VERSION}"
         docker pull wso2cellery/ballerina-runtime:${CELLERY_VERSION}
     else
