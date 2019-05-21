@@ -1,6 +1,8 @@
 ## Cellery setup
 This command allows to configure and manage the cellery runtimes. This command can be executed both interactive mode and inline mode. 
 Mainly there are four operations performed in the cellery setup as below.  
+Note : Make sure that secure boot is turned off before installing the runtime.
+
 
 1. [Create](#create): This allows users to create the cellery runtime. The cellery runtime can be installed as Local, 
 GCP or any existing kubernetes cluster.  
