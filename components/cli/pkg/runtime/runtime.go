@@ -68,7 +68,9 @@ func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, ha
 		fmt.Printf("Error updating file: %v", err)
 	}
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
-	labelMasterNode(errorDeployingCelleryRuntime)
+	if isPersistentVolume {
+		labelMasterNode(errorDeployingCelleryRuntime)
+	}
 
 	// Setup Cellery namespace
 	spinner.SetNewAction("Setting up cellery name space")

@@ -20,6 +20,7 @@ package kubectl
 
 import (
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -54,5 +55,8 @@ func GetMasterNodeName() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return jsonOutput.Items[0].Metadata.Name, nil
+	if len(jsonOutput.Items) > 0 {
+		return jsonOutput.Items[0].Metadata.Name, nil
+	}
+	return "", fmt.Errorf("node with master role does not exist")
 }
