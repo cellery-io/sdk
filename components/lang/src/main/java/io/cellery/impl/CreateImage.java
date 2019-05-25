@@ -463,6 +463,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         jsonObject.put("ver", cellImage.getCellVersion());
         jsonObject.put("dockerImages", cellImage.getDockerImages());
 
+        JSONObject labelsJsonObject = new JSONObject();
         JSONObject dependenciesJsonObject = new JSONObject();
         components.forEach((componentKey, componentValue) -> {
             LinkedHashMap attributeMap = ((BMap) componentValue).getMap();
@@ -492,7 +493,12 @@ public class CreateImage extends BlockingNativeCallableUnit {
                     dependenciesJsonObject.put(alias.toString(), dependencyJsonObject);
                 });
             }
+            if (attributeMap.containsKey("labels")) {
+                ((BMap<?, ?>) attributeMap.get("labels")).getMap().forEach((labelKey, labelValue) ->
+                        labelsJsonObject.put(labelKey.toString(), labelValue.toString()));
+            }
         });
+        jsonObject.put("labels", labelsJsonObject);
         jsonObject.put("dependencies", dependenciesJsonObject);
 
         String targetFileNameWithPath =
