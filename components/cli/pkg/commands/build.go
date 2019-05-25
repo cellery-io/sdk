@@ -271,83 +271,75 @@ func RunBuild(tag string, fileName string) {
 // generateMetaData generates the metadata file for cellery
 func generateMetaData(cellImage *util.CellImage, targetDir string, spinner *util.Spinner) {
 	errorMessage := "Error occurred while generating metadata"
-	dependenciesFile := path.Join(targetDir, "tmp", "dependencies.properties")
-	dependenciesMap := map[string]*util.CellImageMetaData{}
 
-	// Generating the alias to dependency Cell Image map
-	dependenciesFileExists, err := util.FileExists(dependenciesFile)
+	metadataFile := filepath.Join(targetDir, "cellery", "metadata.json")
+	metadataJSON, err := ioutil.ReadFile(metadataFile)
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while reading metadata "+metadataFile, err)
+	}
+
+	metadata := &util.CellImageMetaData{
+		BuildTimestamp: time.Now().Unix(),
+	}
+	err = json.Unmarshal(metadataJSON, metadata)
 	if err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
-	if dependenciesFileExists {
-		dependenciesFileBytes, err := ioutil.ReadFile(dependenciesFile)
+
+	for alias, dependencyMetadata := range metadata.Dependencies {
+		cellImageZip := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
+			dependencyMetadata.Organization, dependencyMetadata.Name, dependencyMetadata.Version,
+			dependencyMetadata.Name+constants.CELL_IMAGE_EXT)
+
+		dependencyImage := dependencyMetadata.Organization + "/" + dependencyMetadata.Name +
+			":" + dependencyMetadata.Version
+		if cellImage.Registry != "" {
+			dependencyImage = cellImage.Registry + "/" + dependencyImage
+		}
+
+		// Pulling the dependency if not exist (This will not be executed most of the time)
+		dependencyExists, err := util.FileExists(cellImageZip)
+		if !dependencyExists {
+			spinner.Pause()
+			RunPull(dependencyImage, true, "", "")
+			fmt.Println()
+			spinner.Resume()
+		}
+
+		// Create temp directory
+		currentTime := time.Now()
+		timestamp := currentTime.Format("27065102350415")
+		tempPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", timestamp)
+		err = util.CreateDir(tempPath)
 		if err != nil {
 			util.ExitWithErrorMessage(errorMessage, err)
 		}
 
-		dependenciesFileLines := strings.Split(string(dependenciesFileBytes), "\n")
-		for _, line := range dependenciesFileLines {
-			if !strings.Contains(line, "=") { // Handling empty lines and other problematic conditions
-				continue
-			}
+		// Unzipping Cellery Image
+		err = util.Unzip(cellImageZip, tempPath)
+		if err != nil {
+			util.ExitWithErrorMessage(errorMessage, err)
+		}
 
-			lineSplit := strings.Split(line, "=")
-			alias := strings.TrimSpace(lineSplit[0])
-			dependency := strings.TrimSpace(lineSplit[1])
+		// Reading the dependency's metadata
+		metadataJsonContent, err := ioutil.ReadFile(
+			filepath.Join(tempPath, "artifacts", "cellery", "metadata.json"))
+		if err != nil {
+			util.ExitWithErrorMessage(errorMessage+". metadata.json file not found for dependency: "+dependencyImage,
+				err)
+		}
+		dependencyMetadata := &util.CellImageMetaData{}
+		err = json.Unmarshal(metadataJsonContent, dependencyMetadata)
+		if err != nil {
+			util.ExitWithErrorMessage(errorMessage, err)
+		}
 
-			dependencyCellImage, err := util.ParseImageTag(dependency)
-			if err != nil {
-				util.ExitWithErrorMessage(errorMessage, err)
-			}
-			cellImageZip := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
-				dependencyCellImage.Organization, dependencyCellImage.ImageName, dependencyCellImage.ImageVersion,
-				dependencyCellImage.ImageName+constants.CELL_IMAGE_EXT)
+		metadata.Dependencies[alias] = dependencyMetadata
 
-			// Pulling the dependency if not exist (This will not be executed most of the time)
-			dependencyExists, err := util.FileExists(cellImageZip)
-			if !dependencyExists {
-				spinner.Pause()
-				RunPull(dependency, true, "", "")
-				fmt.Println()
-				spinner.Resume()
-			}
-
-			// Create temp directory
-			currentTime := time.Now()
-			timestamp := currentTime.Format("27065102350415")
-			tempPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", timestamp)
-			err = util.CreateDir(tempPath)
-			if err != nil {
-				util.ExitWithErrorMessage(errorMessage, err)
-			}
-
-			// Unzipping Cellery Image
-			err = util.Unzip(cellImageZip, tempPath)
-			if err != nil {
-				util.ExitWithErrorMessage(errorMessage, err)
-			}
-
-			// Reading the dependency's metadata
-			metadataJsonContent, err := ioutil.ReadFile(
-				filepath.Join(tempPath, "artifacts", "cellery", "metadata.json"))
-			if err != nil {
-				fmt.Println(dependenciesFileExists)
-				util.ExitWithErrorMessage(errorMessage+". metadata.json file not found for dependency: "+dependency,
-					err)
-			}
-			dependencyMetadata := &util.CellImageMetaData{}
-			err = json.Unmarshal(metadataJsonContent, dependencyMetadata)
-			if err != nil {
-				util.ExitWithErrorMessage(errorMessage, err)
-			}
-
-			dependenciesMap[alias] = dependencyMetadata
-
-			// Cleaning up
-			err = os.RemoveAll(tempPath)
-			if err != nil {
-				util.ExitWithErrorMessage("Error occurred while cleaning up", err)
-			}
+		// Cleaning up
+		err = os.RemoveAll(tempPath)
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while cleaning up", err)
 		}
 	}
 
@@ -366,27 +358,9 @@ func generateMetaData(cellImage *util.CellImage, targetDir string, spinner *util
 	for _, component := range k8sCell.CellSpec.ComponentTemplates {
 		components = append(components, component.Metadata.Name)
 	}
+	metadata.Components = components
 
-	metadataFile := filepath.Join(targetDir, "cellery", "metadata.json")
-	metadataJSON, err := ioutil.ReadFile(metadataFile)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while reading metadata "+metadataFile, err)
-	}
-
-	metaInfo := util.MetaInfo{}
-	err = json.Unmarshal(metadataJSON, &metaInfo)
-	if err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
-	}
-
-	// Writing the metadata file
-	outputFileMetadata := &util.CellImageMetaData{
-		MetaInfo:       metaInfo,
-		BuildTimestamp: time.Now().Unix(),
-		Components:     components,
-		Dependencies:   dependenciesMap,
-	}
-	metadataFileContent, err := json.Marshal(outputFileMetadata)
+	metadataFileContent, err := json.Marshal(metadata)
 	if err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}

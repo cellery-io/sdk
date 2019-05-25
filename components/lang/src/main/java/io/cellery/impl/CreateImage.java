@@ -127,7 +127,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             processComponents(components);
             generateCell();
             generateCellReference();
-            generateMetadataFile();
+            generateMetadataFile(components);
         } catch (BallerinaException e) {
             ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
         }
@@ -152,9 +152,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
             }
             if (attributeMap.containsKey("autoscaling")) {
                 processAutoScalePolicy(((BMap<?, ?>) attributeMap.get("autoscaling")).getMap(), component);
-            }
-            if (attributeMap.containsKey("dependencies")) {
-                generateDependenciesFile(((BMap<?, ?>) attributeMap.get("dependencies")).getMap());
             }
             if (attributeMap.containsKey("envVars")) {
                 processEnvVars(((BMap<?, ?>) attributeMap.get("envVars")).getMap(), component);
@@ -310,37 +307,6 @@ public class CreateImage extends BlockingNativeCallableUnit {
         component.setAutoScaling(new AutoScaling(autoScalingPolicy, bOverridable));
     }
 
-
-    private void generateDependenciesFile(LinkedHashMap<?, ?> dependencies) {
-        StringBuffer buffer = new StringBuffer();
-        dependencies.forEach((key, value) -> {
-            String depText;
-            if ("string".equals(((BValue) value).getType().getName())) {
-                depText = ((BString) (value)).stringValue();
-                // Validate dependency text
-                if (!depText.matches("^([^/:]*)/([^/:]*):([^/:]*)$")) {
-                    throw new BallerinaException("expects <organization>/<cell-image>:<version> as the dependency, " +
-                            "received " + depText);
-                }
-            } else {
-                LinkedHashMap attributeMap = ((BMap) value).getMap();
-                depText = ((BString) attributeMap.get("org")).stringValue() + "/"
-                        + ((BString) attributeMap.get("name")).stringValue() + ":"
-                        + ((BString) attributeMap.get("ver")).stringValue();
-            }
-            buffer.append(key.toString()).append("=").append(depText).append("\n");
-        });
-        String targetFileNameWithPath =
-                OUTPUT_DIRECTORY + File.separator + "tmp" + File.separator + "dependencies.properties";
-        try {
-            writeToFile(buffer.toString(), targetFileNameWithPath);
-        } catch (IOException e) {
-            String errMsg = "Error occurred while generating dependencies.properties file " + targetFileNameWithPath;
-            log.error(errMsg, e);
-            throw new BallerinaException(errMsg);
-        }
-    }
-
     private void generateCell() {
         List<Component> components =
                 new ArrayList<>(cellImage.getComponentNameToComponentMap().values());
@@ -487,13 +453,48 @@ public class CreateImage extends BlockingNativeCallableUnit {
 
     /**
      * Generate the metadata json without dependencies.
+     *
+     * @param components Components from which data should be extracted for metadata
      */
-    private void generateMetadataFile() {
+    private void generateMetadataFile(LinkedHashMap<?, ?> components) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("org", cellImage.getOrgName());
         jsonObject.put("name", cellImage.getCellName());
         jsonObject.put("ver", cellImage.getCellVersion());
         jsonObject.put("dockerImages", cellImage.getDockerImages());
+
+        JSONObject dependenciesJsonObject = new JSONObject();
+        components.forEach((componentKey, componentValue) -> {
+            LinkedHashMap attributeMap = ((BMap) componentValue).getMap();
+            if (attributeMap.containsKey("dependencies")) {
+                LinkedHashMap<?, ?> dependencies = ((BMap<?, ?>) attributeMap.get("dependencies")).getMap();
+                dependencies.forEach((alias, dependencyValue) -> {
+                    JSONObject dependencyJsonObject = new JSONObject();
+                    if ("string".equals(((BValue) dependencyValue).getType().getName())) {
+                        String dependency = ((BString) (dependencyValue)).stringValue();
+                        // Validate dependency text
+                        if (dependency.matches("^([^/:]*)/([^/:]*):([^/:]*)$")) {
+                            String[] dependencyVersionSplit = dependency.split(":");
+                            String[] dependencySplit = dependencyVersionSplit[0].split("/");
+                            dependencyJsonObject.put("org", dependencySplit[0]);
+                            dependencyJsonObject.put("name", dependencySplit[1]);
+                            dependencyJsonObject.put("ver", dependencyVersionSplit[1]);
+                        } else {
+                            throw new BallerinaException("expects <organization>/<cell-image>:<version> " +
+                                    "as the dependency, received " + dependency);
+                        }
+                    } else {
+                        LinkedHashMap dependency = ((BMap) dependencyValue).getMap();
+                        dependencyJsonObject.put("org", ((BString) dependency.get("org")).stringValue());
+                        dependencyJsonObject.put("name", ((BString) dependency.get("name")).stringValue());
+                        dependencyJsonObject.put("ver", ((BString) dependency.get("ver")).stringValue());
+                    }
+                    dependenciesJsonObject.put(alias.toString(), dependencyJsonObject);
+                });
+            }
+        });
+        jsonObject.put("dependencies", dependenciesJsonObject);
+
         String targetFileNameWithPath =
                 OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + METADATA_FILE_NAME;
         try {
