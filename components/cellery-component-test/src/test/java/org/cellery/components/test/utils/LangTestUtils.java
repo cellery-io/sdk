@@ -20,6 +20,9 @@ package org.cellery.components.test.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
@@ -39,14 +42,12 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.ARTIFACTS;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_REPO_PATH;
-import static org.cellery.components.test.utils.CelleryTestConstants.DEPENDENCIES_PROPERTIES;
+import static org.cellery.components.test.utils.CelleryTestConstants.METADATA;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
-import static org.cellery.components.test.utils.CelleryTestConstants.TMP;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
 /**
@@ -218,27 +219,28 @@ public class LangTestUtils {
         return jacocoArgLine + " ";
     }
 
-    private static Map<String, CellImageInfo> getDependancyInfo(Path source) {
+    private static Map<String, CellImageInfo> getDependancyInfo(Path source) throws IOException {
 
-        String txtPath =
-                source.toAbsolutePath().toString() + File.separator + TARGET + File.separator + TMP +
-                        File.separator + DEPENDENCIES_PROPERTIES;
+        String metadataJsonPath =
+                source.toAbsolutePath().toString() + File.separator + TARGET + File.separator + CELLERY +
+                        File.separator + METADATA;
         Map<String, CellImageInfo> dependencyMap = new HashMap<>();
-        try (InputStream input =
-                     new FileInputStream(txtPath)) {
-            Properties dependencyProperties = new Properties();
-            dependencyProperties.load(input);
+        try (InputStream input = new FileInputStream(metadataJsonPath)) {
+            try (InputStreamReader inputStreamReader = new InputStreamReader(input)) {
+                JsonElement parsedJson = new JsonParser().parse(inputStreamReader);
 
-            for (Map.Entry<Object, Object> e : dependencyProperties.entrySet()) {
-                String key = e.getKey().toString();
-                String org = e.getValue().toString().split("/")[0];
-                String name = e.getValue().toString().split("/")[1].split(":")[0];
-                String ver = e.getValue().toString().split("/")[1].split(":")[1];
-                CellImageInfo cell = new CellImageInfo(org, name, ver);
-                dependencyMap.put(key, cell);
+                JsonObject dependenciesJsonObject = parsedJson.getAsJsonObject().getAsJsonObject("dependencies");
+
+                for (Map.Entry<String, JsonElement> e : dependenciesJsonObject.entrySet()) {
+                    JsonObject dependency = e.getValue().getAsJsonObject();
+                    String key = e.getKey();
+                    String org = dependency.getAsJsonPrimitive("org").getAsString();
+                    String name = dependency.getAsJsonPrimitive("name").getAsString();
+                    String ver = dependency.getAsJsonPrimitive("ver").getAsString();
+                    CellImageInfo cell = new CellImageInfo(org, name, ver);
+                    dependencyMap.put(key, cell);
+                }
             }
-        } catch (IOException ex) {
-            log.debug("No dependencies available for the cell file");
         }
         return dependencyMap;
     }
