@@ -428,8 +428,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
             component.getApis().forEach(api -> {
                 String context = api.getContext();
                 if (StringUtils.isNotEmpty(context)) {
-                    String url = DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + "--gateway" +
-                            "-service:" + DEFAULT_GATEWAY_PORT + "/" + context;
+                    String url =
+                            DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + "--gateway-service:"
+                                    + DEFAULT_GATEWAY_PORT + "/" + context;
                     if ("/".equals(context)) {
                         json.put(componentName + "_api_url", url.replaceAll("(?<!http:)//", "/"));
                     } else {
@@ -440,6 +441,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
             component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
         });
+        json.put("gateway_host", INSTANCE_NAME_PLACEHOLDER + "--gateway-service");
         String targetFileNameWithPath =
                 OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + REFERENCE_FILE_NAME;
         try {

@@ -134,7 +134,7 @@ public class ReviewsTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(3).
                 getName(), "DATABASE_HOST");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(3).
-                getValue(), "empty");
+                getValue(), "");
 
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(4).
                 getName(), "RATINGS_PORT");

@@ -43,7 +43,7 @@ cellery:Component reviewsComponent = {
         CUSTOMERS_CONTEXT: { value: "" },
         RATINGS_HOST: { value: "" },
         RATINGS_PORT: { value: 80 },
-        DATABASE_HOST: { value: "empty" },//TODO Remove host
+        DATABASE_HOST: { value: "" },
         DATABASE_PORT: { value: 31406 },
         DATABASE_USERNAME: { value: "root" },
         DATABASE_PASSWORD: { value: "root" },
@@ -111,7 +111,7 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
     //TODO Add host
     cellery:Reference databaseRef = check cellery:getReference(instances.database);
     reviewsComponent.envVars.DATABASE_PORT.value = <string> databaseRef["mysql_tcp_port"];
-
+    reviewsComponent.envVars.DATABASE_HOST.value = <string> databaseRef["gateway_host"];
     return cellery:createInstance(reviewCell, iName);
 }
 
