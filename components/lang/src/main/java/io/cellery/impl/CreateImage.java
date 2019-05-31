@@ -17,6 +17,7 @@
  */
 package io.cellery.impl;
 
+import com.google.gson.Gson;
 import io.cellery.CelleryConstants;
 import io.cellery.models.API;
 import io.cellery.models.APIDefinition;
@@ -28,6 +29,7 @@ import io.cellery.models.Cell;
 import io.cellery.models.CellImage;
 import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
+import io.cellery.models.Dependency;
 import io.cellery.models.GRPC;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.GatewayTemplate;
@@ -75,12 +77,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
+import static io.cellery.CelleryConstants.GATEWAY_SERVICE;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
@@ -125,9 +129,9 @@ public class CreateImage extends BlockingNativeCallableUnit {
         LinkedHashMap<?, ?> components = ((BMap) refArgument.getMap().get("components")).getMap();
         try {
             processComponents(components);
-            generateCell();
             generateCellReference();
             generateMetadataFile(components);
+            generateCell();
         } catch (BallerinaException e) {
             ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
         }
@@ -385,6 +389,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, cellImage.getOrgName())
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, cellImage.getCellName())
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, cellImage.getCellVersion())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_DEPENDENCIES, new Gson().toJson(cellImage.getDependencies()))
                 .build();
         Cell cell = new Cell(objectMeta, cellSpec);
         String targetPath =
@@ -428,9 +433,8 @@ public class CreateImage extends BlockingNativeCallableUnit {
             component.getApis().forEach(api -> {
                 String context = api.getContext();
                 if (StringUtils.isNotEmpty(context)) {
-                    String url =
-                            DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + "--gateway-service:"
-                                    + DEFAULT_GATEWAY_PORT + "/" + context;
+                    String url = DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + GATEWAY_SERVICE + ":"
+                            + DEFAULT_GATEWAY_PORT + "/" + context;
                     if ("/".equals(context)) {
                         json.put(componentName + "_api_url", url.replaceAll("(?<!http:)//", "/"));
                     } else {
@@ -441,7 +445,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
             component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
             component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
         });
-        json.put("gateway_host", INSTANCE_NAME_PLACEHOLDER + "--gateway-service");
+        json.put("gateway_host", INSTANCE_NAME_PLACEHOLDER + GATEWAY_SERVICE);
         String targetFileNameWithPath =
                 OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + REFERENCE_FILE_NAME;
         try {
@@ -473,25 +477,30 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 LinkedHashMap<?, ?> dependencies = ((BMap<?, ?>) attributeMap.get("dependencies")).getMap();
                 dependencies.forEach((alias, dependencyValue) -> {
                     JSONObject dependencyJsonObject = new JSONObject();
+                    String org, name, version;
                     if ("string".equals(((BValue) dependencyValue).getType().getName())) {
                         String dependency = ((BString) (dependencyValue)).stringValue();
                         // Validate dependency text
                         if (dependency.matches("^([^/:]*)/([^/:]*):([^/:]*)$")) {
                             String[] dependencyVersionSplit = dependency.split(":");
                             String[] dependencySplit = dependencyVersionSplit[0].split("/");
-                            dependencyJsonObject.put("org", dependencySplit[0]);
-                            dependencyJsonObject.put("name", dependencySplit[1]);
-                            dependencyJsonObject.put("ver", dependencyVersionSplit[1]);
+                            org = dependencySplit[0];
+                            name = dependencySplit[1];
+                            version = dependencyVersionSplit[1];
                         } else {
                             throw new BallerinaException("expects <organization>/<cell-image>:<version> " +
                                     "as the dependency, received " + dependency);
                         }
                     } else {
                         LinkedHashMap dependency = ((BMap) dependencyValue).getMap();
-                        dependencyJsonObject.put("org", ((BString) dependency.get("org")).stringValue());
-                        dependencyJsonObject.put("name", ((BString) dependency.get("name")).stringValue());
-                        dependencyJsonObject.put("ver", ((BString) dependency.get("ver")).stringValue());
+                        org = ((BString) dependency.get("org")).stringValue();
+                        name = ((BString) dependency.get("name")).stringValue();
+                        version = ((BString) dependency.get("ver")).stringValue();
                     }
+                    dependencyJsonObject.put("org", org);
+                    dependencyJsonObject.put("name", name);
+                    dependencyJsonObject.put("ver", version);
+                    cellImage.addDependency(new Dependency(org, name, version));
                     dependenciesJsonObject.put(alias.toString(), dependencyJsonObject);
                 });
             }
