@@ -60,3 +60,23 @@ func GetMasterNodeName() (string, error) {
 	}
 	return "", fmt.Errorf("node with master role does not exist")
 }
+
+func GetNodes() (Node, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"get",
+		"nodes",
+		"-o",
+		"json",
+	)
+	out, err := cmd.Output()
+	jsonOutput := Node{}
+	if err != nil {
+		return jsonOutput, err
+	}
+	errJson := json.Unmarshal([]byte(out), &jsonOutput)
+	if errJson != nil {
+		fmt.Println(errJson)
+	}
+	return jsonOutput, nil
+}

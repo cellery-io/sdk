@@ -21,6 +21,7 @@ package runtime
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -68,7 +69,7 @@ func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, ha
 		fmt.Printf("Error updating file: %v", err)
 	}
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
-	if isPersistentVolume {
+	if isPersistentVolume && !isGcpRuntime() {
 		labelMasterNode(errorDeployingCelleryRuntime)
 	}
 
@@ -243,4 +244,18 @@ func buildArtifactsPath(component SystemComponent, artifactsPath string) string 
 	default:
 		return filepath.Join(artifactsPath)
 	}
+}
+
+func isGcpRuntime() bool {
+	nodes, err := kubectl.GetNodes()
+	if err != nil {
+		util.ExitWithErrorMessage("failed to check if runtime is gcp", err)
+	}
+	for _, node := range nodes.Items {
+		version := node.Status.NodeInfo.KubeletVersion
+		if strings.Contains(version, "gke") {
+			return true
+		}
+	}
+	return false
 }

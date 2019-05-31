@@ -24,8 +24,17 @@ type Node struct {
 
 type NodeItem struct {
 	Metadata NodeMetaData `json:"metadata"`
+	Status   NodeStatus   `json:"status"`
 }
 
 type NodeMetaData struct {
 	Name string `json:"name"`
+}
+
+type NodeStatus struct {
+	NodeInfo NodeInfo `json:"nodeInfo"`
+}
+
+type NodeInfo struct {
+	KubeletVersion string `json:"kubeletVersion"`
 }

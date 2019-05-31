@@ -23,10 +23,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 
 	"github.com/fatih/color"
 
