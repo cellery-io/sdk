@@ -205,8 +205,8 @@ public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefin
 # + return - Reference record
 public extern function getReference(ImageName iName) returns (Reference|error);
 
-public function getHost(string cellImageName, Component component) returns (string) {
-    return cellImageName + "--" + getValidName(component.name) + "-service";
+public function getHost(string cellInstanceName, Component component) returns (string) {
+    return cellInstanceName + "--" + getValidName(component.name) + "-service";
 }
 
 function getValidName(string name) returns string {
