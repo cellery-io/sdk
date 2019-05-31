@@ -21,6 +21,7 @@ package kubectl
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -69,6 +70,7 @@ func GetNodes() (Node, error) {
 		"-o",
 		"json",
 	)
+	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	jsonOutput := Node{}
 	if err != nil {
@@ -76,7 +78,7 @@ func GetNodes() (Node, error) {
 	}
 	errJson := json.Unmarshal([]byte(out), &jsonOutput)
 	if errJson != nil {
-		fmt.Println(errJson)
+		return jsonOutput, errJson
 	}
 	return jsonOutput, nil
 }
