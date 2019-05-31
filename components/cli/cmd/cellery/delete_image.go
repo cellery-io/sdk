@@ -38,7 +38,10 @@ func newDeleteImageCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunDeleteImage(args[0])
 		},
-		Example: "  cellery delete cellery-samples/employee:1.0.0",
+		Example: "  cellery delete cellery-samples/employee:1.0.0\n" +
+			"  cellery delete 'cellery-samples/.*:1.0.0'\n" +
+			"  cellery delete '.*/employee:.*',cellery delete cellery-samples/employee:1.0.0\n" +
+			"  cellery delete '.*'",
 	}
 	return cmd
 }
