@@ -51,7 +51,7 @@ cellery:Component reviewsComponent = {
     },
     dependencies: {
         customerProduct: <cellery:ImageName>{ org: "myorg", name: "products", ver: "1.0.0" },
-        database : <cellery:ImageName>{ org: "myorg", name: "database", ver: "1.0.0" }
+        database: <cellery:ImageName>{ org: "myorg", name: "database", ver: "1.0.0" }
     }
 };
 
@@ -105,13 +105,10 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
     reviewsComponent.envVars.PRODUCTS_PORT.value = productComp.port;
     reviewsComponent.envVars.PRODUCTS_CONTEXT.value = productComp.path;
 
-    reviewsComponent.envVars.RATINGS_HOST.value = cellery:getHost(untaint iName.instanceName,
-        ratingComponent);
-
-    //TODO Add host
+    reviewsComponent.envVars.RATINGS_HOST.value = cellery:getHost(untaint iName.instanceName, ratingComponent);
     cellery:Reference databaseRef = check cellery:getReference(instances.database);
-    reviewsComponent.envVars.DATABASE_PORT.value = <string> databaseRef["mysql_tcp_port"];
-    reviewsComponent.envVars.DATABASE_HOST.value = <string> databaseRef["gateway_host"];
+    reviewsComponent.envVars.DATABASE_PORT.value = <string>databaseRef["mysql_tcp_port"];
+    reviewsComponent.envVars.DATABASE_HOST.value = <string>databaseRef["gateway_host"];
     return cellery:createInstance(reviewCell, iName);
 }
 
@@ -121,10 +118,10 @@ type ComponentApi record {
     string path?;
 };
 
-function parseApiUrl (string apiUrl) returns ComponentApi {
-    string[] array = apiUrl.split (":");
+function parseApiUrl(string apiUrl) returns ComponentApi {
+    string[] array = apiUrl.split(":");
     string url = array[1].replaceAll("/", "");
     string port = array[2].split("/")[0];
     string path = array[2].split("/")[1];
-    return {url: url, port: port , path: path};
+    return { url: url, port: port, path: path };
 }
