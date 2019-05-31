@@ -39,9 +39,18 @@ type Component struct {
 	ports               []int
 	deployment, service string
 }
+type ImageData struct {
+	name    string
+	size    string
+	created string
+}
 
 func RunImage() {
-	data := getImagesArray()
+	var data [][]string
+	images := getImagesArray()
+	for _, image := range images {
+		data = append(data, []string{image.name, image.size, image.created})
+	}
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"IMAGE", "SIZE", "CREATED"})
@@ -146,8 +155,8 @@ func intArrayToString(intArray []int) string {
 	return strings.Trim(strings.Replace(fmt.Sprint(intArray), " ", ", ", -1), "[]")
 }
 
-func getImagesArray() [][]string {
-	var images [][]string
+func getImagesArray() []ImageData {
+	var images []ImageData
 	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo"))
 	if err != nil {
 		log.Fatal(err)
@@ -164,20 +173,27 @@ func getImagesArray() [][]string {
 				log.Fatal(err)
 			}
 			for _, version := range versions {
-				size, err := util.GetFileSize(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
-					organization, project, version, project+".zip"))
+				zipFile := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", organization, project,
+					version, project+".zip")
+				zipFileExists, err := util.FileExists(zipFile)
 				if err != nil {
-					log.Fatal(err)
+					util.ExitWithErrorMessage("Error checking if zip file exists", err)
 				}
-				meta, err := image.ReadMetaData(organization, project, version)
-				if err != nil {
-					util.ExitWithErrorMessage("Error while listing images", err)
+				if zipFileExists {
+					size, err := util.GetFileSize(zipFile)
+					if err != nil {
+						log.Fatal(err)
+					}
+					meta, err := image.ReadMetaData(organization, project, version)
+					if err != nil {
+						util.ExitWithErrorMessage("Error while listing images", err)
+					}
+					images = append(images, ImageData{
+						fmt.Sprintf("%s/%s:%s", organization, project, version),
+						units.HumanSize(float64(size)),
+						fmt.Sprintf("%s ago", units.HumanDuration(time.Since(time.Unix(meta.BuildTimestamp, 0)))),
+					})
 				}
-				images = append(images, []string{
-					fmt.Sprintf("%s/%s:%s", organization, project, version),
-					units.HumanSize(float64(size)),
-					fmt.Sprintf("%s ago", units.HumanDuration(time.Since(time.Unix(meta.BuildTimestamp, 0)))),
-				})
 			}
 		}
 	}
