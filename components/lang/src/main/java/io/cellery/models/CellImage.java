@@ -18,10 +18,12 @@ public class CellImage {
     private String cellName;
     private String cellVersion;
     private List<String> dockerImages;
+    private List<Dependency> dependencies;
 
     public CellImage() {
         componentNameToComponentMap = new HashMap<>();
         dockerImages = new ArrayList<>();
+        dependencies = new ArrayList<>();
     }
 
     public Map<String, Component> getComponentNameToComponentMap() {
@@ -37,5 +39,9 @@ public class CellImage {
 
     public void addDockerImage(String imageName) {
         dockerImages.add(imageName);
+    }
+
+    public void addDependency(Dependency dependency) {
+        dependencies.add(dependency);
     }
 }
