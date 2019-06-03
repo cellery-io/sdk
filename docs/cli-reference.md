@@ -5,6 +5,7 @@
 * [build](#cellery-build) - build a cell image.
 * [run](#cellery-run) - create cell instance(s). 
 * [list](#cellery-list) - list running instances/cell images.
+* [delete](#cellery-delete) - Delete cell images.
 * [login](#cellery-login) - login to cell image repository.
 * [push](#cellery-push) - push a built image to cell image repository.
 * [pull](#cellery-pull) - pull an image from cell image repository.
@@ -135,6 +136,24 @@ Ex:
  ```
 
 [Back to Command List](#cellery-cli-commands)
+
+#### Cellery delete
+
+Delete cell images. This command will delete one or more cell images from cellery local repository.
+
+##### Parameters:
+
+* _cell image names: This is a comma separated list of existing cell images and regular expressions of cell images._
+
+Ex:
+ ```
+   cellery delete cellery-samples/employee:1.0.0
+   cellery delete 'cellery-samples/.*:1.0.0'
+   cellery delete '.*/employee:.*',cellery delete cellery-samples/employee:1.0.0
+   cellery delete '.*'
+ ```
+
+ [Back to Command List](#cellery-cli-commands)
 
 #### Cellery login
 
