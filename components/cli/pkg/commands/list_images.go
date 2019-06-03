@@ -39,7 +39,7 @@ type Component struct {
 	ports               []int
 	deployment, service string
 }
-type ImageData struct {
+type imageData struct {
 	name    string
 	size    string
 	created string
@@ -155,8 +155,8 @@ func intArrayToString(intArray []int) string {
 	return strings.Trim(strings.Replace(fmt.Sprint(intArray), " ", ", ", -1), "[]")
 }
 
-func getImagesArray() []ImageData {
-	var images []ImageData
+func getImagesArray() []imageData {
+	var images []imageData
 	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo"))
 	if err != nil {
 		log.Fatal(err)
@@ -188,7 +188,7 @@ func getImagesArray() []ImageData {
 					if err != nil {
 						util.ExitWithErrorMessage("Error while listing images", err)
 					}
-					images = append(images, ImageData{
+					images = append(images, imageData{
 						fmt.Sprintf("%s/%s:%s", organization, project, version),
 						units.HumanSize(float64(size)),
 						fmt.Sprintf("%s ago", units.HumanDuration(time.Since(time.Unix(meta.BuildTimestamp, 0)))),
