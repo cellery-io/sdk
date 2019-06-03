@@ -19,7 +19,6 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"regexp"
@@ -37,7 +36,7 @@ func RunDeleteImage(images string) {
 		imageExists := false
 		for _, existingImage := range existingImages {
 			var err error
-			imageExists, err = regexp.MatchString(fmt.Sprintf("^%s$", imageToBeDeleted), existingImage.name)
+			imageExists, err = regexp.MatchString(imageToBeDeleted, existingImage.name)
 			if err != nil {
 				util.ExitWithErrorMessage("Error checking if image exists", err)
 			}
