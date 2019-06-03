@@ -20,7 +20,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -29,54 +28,42 @@ import (
 )
 
 const configFile = "config.json"
-const callBackDefaultPort = 8888
-const callBackContextPath = "/auth"
-const callBackHost = "localhost"
-const callBackParameter = "code"
-const redirectSuccessUrl = "https://cloud.google.com/sdk/auth_success"
-const idpHost = "localhost"
-const idpPort = 9443
-const spClientId = "htl0MoApITB1j0a7HkqDjc_1REIa"
+
+const defaultHubUrl = "https://hub.cellery.io:9000"
+const defaultIdpUrl = "https://idp.hub.cellery.io:9443"
+const defaultClientId = "cellerycliapplication"
 
 type Conf struct {
-	AuthConf AuthConf `json:"auth"`
+	Hub *HubConf `json:"hub"`
+	Idp *IdpConf `json:"idp"`
 }
 
-type AuthConf struct {
-	CallBackDefaultPort int    `json:"callBackDefaultPort"`
-	CallBackContextPath string `json:"callBackContextPath"`
-	CallBackHost        string `json:"callBackHost"`
-	CallBackParameter   string `json:"callBackParameter"`
-	RedirectSuccessUrl  string `json:"redirectSuccessUrl"`
-	IdpHost             string `json:"idpHost"`
-	IdpPort             int    `json:"idpPort"`
-	SpClientId          string `json:"spClientId"`
+type HubConf struct {
+	Url string `json:"url"`
+}
+
+type IdpConf struct {
+	Url      string `json:"url"`
+	ClientId string `json:"clientId"`
 }
 
 // LoadConfig reads the config file from the Cellery home and returns the Config struct
 func LoadConfig() *Conf {
-	var conf = Conf{}
-	configFilePath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, configFile)
-	configFile, err := ioutil.ReadFile(configFilePath)
-	if err != nil {
-		fmt.Printf("Could not read from the file %s. Reading from default values\n", configFilePath)
-		loadFromConstants(&conf)
-		return &conf
+	// Default config
+	var conf = &Conf{
+		Hub: &HubConf{
+			Url: defaultHubUrl,
+		},
+		Idp: &IdpConf{
+			Url:      defaultIdpUrl,
+			ClientId: defaultClientId,
+		},
 	}
-	err = json.Unmarshal(configFile, &conf)
-	if err != nil {
-		util.ExitWithErrorMessage("Error while unmarshal the json", err)
-	}
-	return &conf
-}
 
-func loadFromConstants(conf *Conf) {
-	conf.AuthConf.CallBackDefaultPort = callBackDefaultPort
-	conf.AuthConf.CallBackContextPath = callBackContextPath
-	conf.AuthConf.CallBackHost = callBackHost
-	conf.AuthConf.CallBackParameter = callBackParameter
-	conf.AuthConf.RedirectSuccessUrl = redirectSuccessUrl
-	conf.AuthConf.IdpHost = idpHost
-	conf.AuthConf.IdpPort = idpPort
-	conf.AuthConf.SpClientId = spClientId
+	configFilePath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, configFile)
+	configFileBytes, err := ioutil.ReadFile(configFilePath)
+	if err == nil {
+		err = json.Unmarshal(configFileBytes, conf)
+	}
+	return conf
 }
