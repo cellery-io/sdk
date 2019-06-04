@@ -57,8 +57,6 @@ public class CustomerProductTest {
     public void compileSample() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "customer-products" + BAL
                 , cellImageInfo), 0);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "customer-products" + BAL
-                , cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -160,7 +158,7 @@ public class CustomerProductTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(2).getSpec().getContainer().getEnv().get(2).
                 getName(), "CATEGORIES_HOST");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(2).getSpec().getContainer().getEnv().get(2).
-                getValue(), "");
+                getValue(), "{{instance_name}}--categories-service");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(2).getSpec().getContainer().getImage(),
                 "celleryio/samples-productreview-products");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(2).getSpec().getContainer().getPorts().get(0).

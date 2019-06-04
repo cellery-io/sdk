@@ -1,74 +1,74 @@
+import ballerina/config;
 import ballerina/io;
+import ballerina/log;
 import celleryio/cellery;
 
-int salaryContainerPort = 8080;
-
-// Employee Component
-cellery:Component employeeComponent = {
-    name: "employee",
-    source: {
-        image: "docker.io/celleryio/sampleapp-employee"
-    },
-    ingresses: {
-        employee: <cellery:HttpApiIngress>{
-            port: 8080,
-            context: "employee",
-            expose: "local"
-        }
-    },
-    envVars: {
-        SALARY_HOST: { value: "" },
-        PORT: { value: salaryContainerPort }
-    },
-    labels: {
-        team: "HR"
-    }
-};
-
-// Salary Component
-cellery:Component salaryComponent = {
-    name: "salary",
-    source: {
-        image: "docker.io/celleryio/sampleapp-salary"
-    },
-    ingresses: {
-        SalaryAPI: <cellery:HttpApiIngress>{
-            port:salaryContainerPort,
-            context: "payroll",
-            definition: {
-                resources: [
-                    {
-                        path: "salary",
-                        method: "GET"
-                    }
-                ]
-            },
-            expose: "local"
-        }
-    },
-    labels: {
-        team: "Finance",
-        owner: "Alice"
-    }
-};
-
-cellery:CellImage employeeCell = {
-    components: {
-        empComp: employeeComponent,
-        salaryComp: salaryComponent
-    }
-};
 
 public function build(cellery:ImageName iName) returns error? {
-    cellery:ApiDefinition employeeAPIdefn = (<cellery:ApiDefinition>cellery:readSwaggerFile(
-                                                                        "./resources/employee.swagger.json"));
-    cellery:HttpApiIngress httpAPI = <cellery:HttpApiIngress>(employeeComponent.ingresses.employee);
-    httpAPI.definition = employeeAPIdefn;
-    return cellery:createImage(employeeCell, iName);
+    int salaryContainerPort = 8080;
+
+    // Salary Component
+    cellery:Component salaryComponent = {
+        name: "salary",
+        source: {
+            image: "docker.io/celleryio/sampleapp-salary"
+        },
+        ingresses: {
+            SalaryAPI: <cellery:HttpApiIngress>{
+                port:salaryContainerPort,
+                context: "payroll",
+                definition: {
+                    resources: [
+                        {
+                            path: "salary",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "local"
+            }
+        },
+        labels: {
+            team: "Finance",
+            owner: "Alice"
+        }
+    };
+
+    // Employee Component
+    cellery:Component employeeComponent = {
+        name: "employee",
+        source: {
+            image: "docker.io/celleryio/sampleapp-employee"
+        },
+        ingresses: {
+            employee: <cellery:HttpApiIngress>{
+                port: 8080,
+                context: "employee",
+                expose: "local",
+                definition: <cellery:ApiDefinition>cellery:readSwaggerFile("./resources/employee.swagger.json")
+            }
+        },
+        envVars: {
+            SALARY_HOST: { value: cellery:getHost(salaryComponent) },
+            PORT: { value: salaryContainerPort }
+        },
+        labels: {
+            team: "HR"
+        }
+    };
+
+    cellery:CellImage employeeCell = {
+        components: {
+            empComp: employeeComponent,
+            salaryComp: salaryComponent
+        }
+    };
+
+    return cellery:createImage(employeeCell, untaint iName);
 }
 
+
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-    employeeCell.components.empComp.envVars.SALARY_HOST.value = cellery:getHost(untaint iName.instanceName,
-        salaryComponent);
-    return cellery:createInstance(employeeCell, iName);
+    cellery:CellImage employeeCell = check cellery:constructCellImage(untaint iName);
+    return cellery:createInstance(employeeCell, iName, instances);
 }

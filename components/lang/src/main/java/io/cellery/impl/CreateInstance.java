@@ -50,6 +50,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
+import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
@@ -65,7 +66,9 @@ import static org.apache.commons.lang3.StringUtils.removePattern;
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "createInstance",
         args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
-                @Argument(name = "iName", type = TypeKind.RECORD)},
+                @Argument(name = "iName", type = TypeKind.RECORD),
+                @Argument(name = "instances", type = TypeKind.MAP)
+        },
         returnType = {@ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
@@ -97,6 +100,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     if (envVar.getValue().isEmpty()) {
                         printWarning("Value is empty for environment variable \"" + envVar.getName() + "\"");
                     }
+                    envVar.setValue(envVar.getValue().replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
                 });
 
                 // Update Gateway Config
