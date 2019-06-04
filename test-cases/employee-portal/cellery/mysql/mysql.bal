@@ -26,5 +26,5 @@ cellery:CellImage mysqlCell = {
 
 public function build(cellery:ImageName iName) returns error? {
     //Build MySQL Cell
-    return cellery:createImage(mysqlCell, iName);
+    return cellery:createImage(mysqlCell, untaint iName);
 }

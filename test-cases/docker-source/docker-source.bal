@@ -17,67 +17,66 @@
 import ballerina/io;
 import celleryio/cellery;
 
-
-// Hello Component
-cellery:Component helloComponent = {
-    name: "hello",
-    source: {
-        dockerDir: "./docker",
-        tag: "sampleapp-hello"
-    },
-    ingresses: {
-        helloAPI: <cellery:HttpApiIngress>{
-            port: 9090,
-            context: "/hello",
-            definition: {
-                resources: [
-                    {
-                        path: "/sayHello",
-                        method: "GET"
-                    }
-                ]
-            },
-            expose: "global"
-        }
-    }
-};
-
-// Hello Component
-cellery:Component helloComponentx = {
-    name: "hellox",
-    source: {
-        dockerDir: "./docker",
-        tag: "sampleapp-hellox"
-    },
-    ingresses: {
-        helloAPI: <cellery:HttpApiIngress>{
-            port: 9090,
-            context: "/hellox",
-            definition: {
-                resources: [
-                    {
-                        path: "/sayHellox",
-                        method: "GET"
-                    }
-                ]
-            },
-            expose: "global"
-        }
-    }
-};
-
-cellery:CellImage helloCell = {
-    components: {
-        hello: helloComponent,
-        hellox: helloComponentx
-    }
-};
-
 public function build(cellery:ImageName iName) returns error? {
-    return cellery:createImage(helloCell, iName);
+    // Hello Component
+    cellery:Component helloComponent = {
+        name: "hello",
+        source: {
+            dockerDir: "./docker",
+            tag: "sampleapp-hello"
+        },
+        ingresses: {
+            helloAPI: <cellery:HttpApiIngress>{
+                port: 9090,
+                context: "/hello",
+                definition: {
+                    resources: [
+                        {
+                            path: "/sayHello",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        }
+    };
+
+    // Hello Component
+    cellery:Component helloComponentx = {
+        name: "hellox",
+        source: {
+            dockerDir: "./docker",
+            tag: "sampleapp-hellox"
+        },
+        ingresses: {
+            helloAPI: <cellery:HttpApiIngress>{
+                port: 9090,
+                context: "/hellox",
+                definition: {
+                    resources: [
+                        {
+                            path: "/sayHellox",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        }
+    };
+
+    cellery:CellImage helloCell = {
+        components: {
+            hello: helloComponent,
+            hellox: helloComponentx
+        }
+    };
+    return cellery:createImage(helloCell, untaint iName);
 }
 
 
-public function run(cellery:ImageName iName, map<string> instances) returns error? {
-    return cellery:createInstance(helloCell, iName);
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);
+    return cellery:createInstance(helloCell, iName, instances);
 }

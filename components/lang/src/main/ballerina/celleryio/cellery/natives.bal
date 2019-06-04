@@ -13,6 +13,9 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+import ballerina/log;
+import ballerina/io;
+import ballerina/config;
 
 public type ImageName record{
     string org;
@@ -179,19 +182,55 @@ public type CellImage record {
 # Open record to hold cell Reference fields.
 public type Reference record{};
 
-# Build the cell aritifacts
+# Build the cell aritifacts and persist metadata
 #
 # + cellImage - The cell image definition
 # + iName - The cell image org, name & version
 # + return - error
-public extern function createImage(CellImage cellImage, ImageName iName) returns (error?);
+public function createImage(CellImage cellImage, ImageName iName) returns (error?) {
+    //Persist the Ballerina cell image record as a json
+    json jsonValue = check json.stamp(cellImage.clone());
+    string filePath = "./target/cellery/" + iName.name + "_meta.json";
+    var wResult = write(jsonValue, filePath);
+    if (wResult is error) {
+        log:printError("Error occurred while persisiting cell: " + iName.name, err = wResult);
+        return wResult;
+    }
+    //Generate yaml file and other artifacts via extern function
+    return createCellImage(cellImage, iName);
+}
+
+# Build the cell yaml
+#
+# + cellImage - The cell image definition
+# + iName - The cell image org, name & version
+# + return - error
+public extern function createCellImage(CellImage cellImage, ImageName iName) returns (error?);
 
 # Update the cell aritifacts with runtime changes
 #
 # + cellImage - The cell image definition
 # + iName - The cell instance name
-# + return - true/false
-public extern function createInstance(CellImage cellImage, ImageName iName) returns (error?);
+# + instances - The cell instance dependencies
+# + return - error optinal
+public extern function createInstance(CellImage cellImage, ImageName iName, map<ImageName> instances) returns (error?);
+
+
+# Update the cell aritifacts with runtime changes
+#
+# + cellImage - The cell image definition
+# + iName - The cell instance name
+# + return - error or CellImage record
+public function constructCellImage(ImageName iName) returns (CellImage|error) {
+    string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
+    var rResult = read(filePath);
+    if (rResult is error) {
+        log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
+        return rResult;
+    }
+    CellImage|error cellImage = CellImage.stamp(rResult);
+    return cellImage;
+}
 
 # Parse the swagger file and returns API Defintions
 #
@@ -205,10 +244,60 @@ public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefin
 # + return - Reference record
 public extern function getReference(ImageName iName) returns (Reference|error);
 
-public function getHost(string cellInstanceName, Component component) returns (string) {
-    return cellInstanceName + "--" + getValidName(component.name) + "-service";
+# Returns the hostname of the target component with placeholder for instances name
+#
+# + component - Target component
+# + return - hostname
+public function getHost(Component component) returns (string) {
+    return "{{instance_name}}--" + getValidName(component.name) + "-service";
 }
 
 function getValidName(string name) returns string {
     return name.toLower().replace("_", "-").replace(".", "-");
+}
+
+function closeRc(io:ReadableCharacterChannel rc) {
+    var result = rc.close();
+    if (result is error) {
+        log:printError("Error occurred while closing character stream",
+            err = result);
+    }
+}
+
+function closeWc(io:WritableCharacterChannel wc) {
+    var result = wc.close();
+    if (result is error) {
+        log:printError("Error occurred while closing character stream",
+            err = result);
+    }
+}
+
+function write(json content, string path) returns error? {
+
+    io:WritableByteChannel wbc = io:openWritableFile(path);
+
+    io:WritableCharacterChannel wch = new(wbc, "UTF8");
+    var result = wch.writeJson(content);
+    if (result is error) {
+        closeWc(wch);
+        return result;
+    } else {
+        closeWc(wch);
+        return result;
+    }
+}
+
+function read(string path) returns json|error {
+
+    io:ReadableByteChannel rbc = io:openReadableFile(path);
+
+    io:ReadableCharacterChannel rch = new(rbc, "UTF8");
+    var result = rch.readJson();
+    if (result is error) {
+        closeRc(rch);
+        return result;
+    } else {
+        closeRc(rch);
+        return result;
+    }
 }
