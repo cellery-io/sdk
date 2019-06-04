@@ -108,15 +108,15 @@ import static io.cellery.CelleryUtils.writeToFile;
  */
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
-        functionName = "createImage",
+        functionName = "createCellImage",
         args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
                 @Argument(name = "iName", type = TypeKind.RECORD)},
         returnType = {@ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
-public class CreateImage extends BlockingNativeCallableUnit {
+public class CreateCellImage extends BlockingNativeCallableUnit {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
-    private static final Logger log = LoggerFactory.getLogger(CreateImage.class);
+    private static final Logger log = LoggerFactory.getLogger(CreateCellImage.class);
 
     private CellImage cellImage = new CellImage();
 
@@ -235,6 +235,7 @@ public class CreateImage extends BlockingNativeCallableUnit {
         tcp.setBackendPort((int) ((BInteger) attributeMap.get("backendPort")).intValue());
         component.setProtocol(PROTOCOL_TCP);
         component.setContainerPort(tcp.getBackendPort());
+        tcp.setBackendHost(component.getService());
         component.addTCP(tcp);
     }
 
@@ -340,10 +341,10 @@ public class CreateImage extends BlockingNativeCallableUnit {
                 // Therefore we only process the 0th element
                 gatewaySpec.setType(ENVOY_GATEWAY);
                 gatewaySpec.addTCP(component.getTcpList());
-                templateSpec.setServicePort(component.getTcpList().get(0).getPort());
+                templateSpec.setServicePort(component.getTcpList().get(0).getBackendPort());
             } else if (component.getGrpcList().size() > 0) {
                 gatewaySpec.setType(ENVOY_GATEWAY);
-                templateSpec.setServicePort(component.getGrpcList().get(0).getPort());
+                templateSpec.setServicePort(component.getGrpcList().get(0).getBackendPort());
                 gatewaySpec.addGRPC(component.getGrpcList());
             }
             unsecuredPaths.addAll(component.getUnsecuredPaths());

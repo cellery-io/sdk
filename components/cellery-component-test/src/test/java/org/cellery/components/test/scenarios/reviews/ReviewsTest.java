@@ -57,8 +57,6 @@ public class ReviewsTest {
     public void compileSample() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "reviews" + BAL , cellImageInfo)
                 , 0);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "reviews" + BAL, cellImageInfo)
-                , 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -174,7 +172,7 @@ public class ReviewsTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(11).
                 getName(), "RATINGS_HOST");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(11).
-                getValue(), "");
+                getValue(), "{{instance_name}}--ratings-service");
 
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(12).
                 getName(), "PRODUCTS_PORT");

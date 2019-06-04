@@ -58,7 +58,6 @@ public class PetStoreBeTest {
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-be" + BAL, cellImageInfo), 0);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "pet-be" + BAL, cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -125,7 +124,7 @@ public class PetStoreBeTest {
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(2).
                 getName(), "ORDER_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(2).
-                getValue(), "");
+                getValue(), "{{instance_name}}--orders-service");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(3).
                 getName(), "CUSTOMER_PORT");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(3).
@@ -133,11 +132,11 @@ public class PetStoreBeTest {
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(4).
                 getName(), "CATALOG_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(4).
-                getValue(), "");
+                getValue(), "{{instance_name}}--catalog-service");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(5).
                 getName(), "CUSTOMER_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(5).
-                getValue(), "");
+                getValue(), "{{instance_name}}--customers-service");
 
 
         Assert.assertEquals(servicesTemplates.get(1).getMetadata().getName(), "catalog");

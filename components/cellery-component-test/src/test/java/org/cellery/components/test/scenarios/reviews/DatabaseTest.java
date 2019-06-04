@@ -103,7 +103,7 @@ public class DatabaseTest {
                 getContainerPort().intValue(), 3306);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getProtocol(), "TCP");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 31406);
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 3306);
     }
 
     @AfterClass

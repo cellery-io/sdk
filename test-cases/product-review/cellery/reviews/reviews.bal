@@ -12,90 +12,91 @@
 import ballerina/io;
 import celleryio/cellery;
 
-////Reviews Component
-cellery:Component reviewsComponent = {
-    name: "reviews",
-    source: {
-        image: "celleryio/samples-productreview-reviews"
-    },
-    ingresses: {
-        controller: <cellery:HttpApiIngress>{
-            port: 8080,
-            context: "reviews-1",
-            definition: {
-                resources: [
-                    {
-                        path: "/*",
-                        method: "GET"
-                    }
-                ]
-            },
-            expose: "global"
-        }
-    },
-    envVars: {
-        PORT: { value: 8080 },
-        PRODUCTS_HOST: { value: "" },
-        PRODUCTS_PORT: { value: 80 },
-        PRODUCTS_CONTEXT: { value: "" },
-        CUSTOMERS_HOST: { value: "" },
-        CUSTOMERS_PORT: { value: 80 },
-        CUSTOMERS_CONTEXT: { value: "" },
-        RATINGS_HOST: { value: "" },
-        RATINGS_PORT: { value: 80 },
-        DATABASE_HOST: { value: "" },
-        DATABASE_PORT: { value: 31406 },
-        DATABASE_USERNAME: { value: "root" },
-        DATABASE_PASSWORD: { value: "root" },
-        DATABASE_NAME: { value: "reviews_db" }
-    },
-    dependencies: {
-        customerProduct: <cellery:ImageName>{ org: "myorg", name: "products", ver: "1.0.0" },
-        database: <cellery:ImageName>{ org: "myorg", name: "database", ver: "1.0.0" }
-    }
-};
-
-
-// Rating Component
-cellery:Component ratingComponent = {
-    name: "ratings",
-    source: {
-        image: "celleryio/samples-productreview-ratings"
-    },
-    ingresses: {
-        controller: <cellery:HttpApiIngress>{
-            port: 8080,
-            context: "ratings-1",
-            definition: {
-                resources: [
-                    {
-                        path: "/*",
-                        method: "GET"
-                    }
-                ]
-            },
-            expose: "local"
-        }
-    },
-    envVars: {
-        PORT: { value: 8080 }
-    }
-};
-
-cellery:CellImage reviewCell = {
-    components: {
-        reviews: reviewsComponent,
-        rating: ratingComponent
-    }
-};
-
 public function build(cellery:ImageName iName) returns error? {
-    return cellery:createImage(reviewCell, iName);
+
+    // Rating Component
+    cellery:Component ratingComponent = {
+        name: "ratings",
+        source: {
+            image: "celleryio/samples-productreview-ratings"
+        },
+        ingresses: {
+            controller: <cellery:HttpApiIngress>{
+                port: 8080,
+                context: "ratings-1",
+                definition: {
+                    resources: [
+                        {
+                            path: "/*",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "local"
+            }
+        },
+        envVars: {
+            PORT: { value: 8080 }
+        }
+    };
+
+    //Reviews Component
+    cellery:Component reviewsComponent = {
+        name: "reviews",
+        source: {
+            image: "celleryio/samples-productreview-reviews"
+        },
+        ingresses: {
+            controller: <cellery:HttpApiIngress>{
+                port: 8080,
+                context: "reviews-1",
+                definition: {
+                    resources: [
+                        {
+                            path: "/*",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        },
+        envVars: {
+            PORT: { value: 8080 },
+            PRODUCTS_HOST: { value: "" },
+            PRODUCTS_PORT: { value: 80 },
+            PRODUCTS_CONTEXT: { value: "" },
+            CUSTOMERS_HOST: { value: "" },
+            CUSTOMERS_PORT: { value: 80 },
+            CUSTOMERS_CONTEXT: { value: "" },
+            RATINGS_HOST: { value: cellery:getHost(ratingComponent) },
+            RATINGS_PORT: { value: 80 },
+            DATABASE_HOST: { value: "" },
+            DATABASE_PORT: { value: 31406 },
+            DATABASE_USERNAME: { value: "root" },
+            DATABASE_PASSWORD: { value: "root" },
+            DATABASE_NAME: { value: "reviews_db" }
+        },
+        dependencies: {
+            customerProduct: <cellery:ImageName>{ org: "myorg", name: "products", ver: "1.0.0" },
+            database: <cellery:ImageName>{ org: "myorg", name: "database", ver: "1.0.0" }
+        }
+    };
+
+    cellery:CellImage reviewCell = {
+        components: {
+            reviews: reviewsComponent,
+            rating: ratingComponent
+        }
+    };
+    return cellery:createImage(reviewCell, untaint iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+    cellery:CellImage reviewCell = check cellery:constructCellImage(untaint iName);
     cellery:Reference customerProductRef = check cellery:getReference(instances.customerProduct);
     ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers-1_api_url"]);
+    cellery:Component reviewsComponent = reviewCell.components.reviews;
     reviewsComponent.envVars.CUSTOMERS_HOST.value = customerComp.url;
     reviewsComponent.envVars.CUSTOMERS_PORT.value = customerComp.port;
     reviewsComponent.envVars.CUSTOMERS_CONTEXT.value = customerComp.path;
@@ -105,11 +106,10 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
     reviewsComponent.envVars.PRODUCTS_PORT.value = productComp.port;
     reviewsComponent.envVars.PRODUCTS_CONTEXT.value = productComp.path;
 
-    reviewsComponent.envVars.RATINGS_HOST.value = cellery:getHost(untaint iName.instanceName, ratingComponent);
     cellery:Reference databaseRef = check cellery:getReference(instances.database);
     reviewsComponent.envVars.DATABASE_PORT.value = <string>databaseRef["mysql_tcp_port"];
     reviewsComponent.envVars.DATABASE_HOST.value = <string>databaseRef["gateway_host"];
-    return cellery:createInstance(reviewCell, iName);
+    return cellery:createInstance(reviewCell, iName, instances);
 }
 
 type ComponentApi record {

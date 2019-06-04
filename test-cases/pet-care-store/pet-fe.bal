@@ -16,57 +16,56 @@
 
 import celleryio/cellery;
 
-// Portal Component
-// This is the Component which exposes the Pet Store portal
-cellery:Component portalComponent = {
-    name: "portal",
-    source: {
-        image: "wso2cellery/samples-pet-store-portal"
-    },
-    ingresses: {
-        portal: <cellery:WebIngress>{
-            port: 80,
-            gatewayConfig: {
-                vhost: "pet-store.com",
-                context: "/portal",
-                oidc: {
-                    nonSecurePaths: ["/portal"], // Default [], optional field
-                    providerUrl: "https://idp.cellery-system/oauth2/token",
-                    clientId: "petstoreapplicationcelleryizza",
-                    clientSecret: {
-                        dcrUser: "admin",
-                        dcrPassword: "admin"
-                    },
-                    redirectUrl: "http://pet-store.com/_auth/callback",
-                    baseUrl: "http://pet-store.com/items/",
-                    subjectClaim: "given_name"
-                }
-            }
-        }
-    },
-    envVars: {
-        PET_STORE_CELL_URL: { value: "" },
-        PORTAL_PORT: { value: 80 },
-        BASE_PATH: { value: "/portal" }
-    },
-    dependencies: {
-        petstorebackend: <cellery:ImageName>{ org: "myorg", name: "petbe", ver: "1.0.0" }
-    }
-};
-
-// Cell Initialization
-cellery:CellImage petStoreFrontendCell = {
-    components: {
-        portal: portalComponent
-    }
-};
-
 // The Cellery Lifecycle Build method which is invoked for building the Cell Image.
 //
 // iName - The Image name
 // return - The created Cell Image
 public function build(cellery:ImageName iName) returns error? {
-    return cellery:createImage(petStoreFrontendCell, iName);
+    // Portal Component
+    // This is the Component which exposes the Pet Store portal
+    cellery:Component portalComponent = {
+        name: "portal",
+        source: {
+            image: "wso2cellery/samples-pet-store-portal"
+        },
+        ingresses: {
+            portal: <cellery:WebIngress>{
+                port: 80,
+                gatewayConfig: {
+                    vhost: "pet-store.com",
+                    context: "/portal",
+                    oidc: {
+                        nonSecurePaths: ["/portal"], // Default [], optional field
+                        providerUrl: "https://idp.cellery-system/oauth2/token",
+                        clientId: "petstoreapplicationcelleryizza",
+                        clientSecret: {
+                            dcrUser: "admin",
+                            dcrPassword: "admin"
+                        },
+                        redirectUrl: "http://pet-store.com/_auth/callback",
+                        baseUrl: "http://pet-store.com/items/",
+                        subjectClaim: "given_name"
+                    }
+                }
+            }
+        },
+        envVars: {
+            PET_STORE_CELL_URL: { value: "" },
+            PORTAL_PORT: { value: 80 },
+            BASE_PATH: { value: "/portal" }
+        },
+        dependencies: {
+            petstorebackend: <cellery:ImageName>{ org: "myorg", name: "petbe", ver: "1.0.0" }
+        }
+    };
+
+    // Cell Initialization
+    cellery:CellImage petStoreFrontendCell = {
+        components: {
+            portal: portalComponent
+        }
+    };
+    return cellery:createImage(petStoreFrontendCell, untaint iName);
 }
 
 // The Cellery Lifecycle Run method which is invoked for creating a Cell Instance.
@@ -75,8 +74,9 @@ public function build(cellery:ImageName iName) returns error? {
 // instances - The map dependency instances of the Cell instance to be created
 // return - The Cell instance
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+    cellery:CellImage petStoreFrontendCell = check cellery:constructCellImage(untaint iName);
     cellery:Reference petStoreBackendRef = check cellery:getReference(instances.petstorebackend);
-    portalComponent.envVars.PET_STORE_CELL_URL.value = <string>petStoreBackendRef.controller_api_url;
-
-    return cellery:createInstance(petStoreFrontendCell, iName);
+    petStoreFrontendCell.components.portal.envVars.PET_STORE_CELL_URL.value = <string>petStoreBackendRef.
+    controller_api_url;
+    return cellery:createInstance(petStoreFrontendCell, iName, instances);
 }
