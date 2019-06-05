@@ -30,8 +30,10 @@ import (
 	"github.com/opencontainers/go-digest"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
 // RunPull connects to the Cellery Registry and pulls the cell image and saves it in the local repository.
@@ -200,6 +202,21 @@ func pullImage(parsedCellImage *util.CellImage, username string, password string
 		if err != nil {
 			spinner.Stop(false)
 			util.ExitWithErrorMessage("Error occurred while saving cell image to local repo", err)
+		}
+
+		// Validating image compatibility with Cellery installation
+		metadata, err := image.ReadMetaData(parsedCellImage.Organization, parsedCellImage.ImageName,
+			parsedCellImage.ImageVersion)
+		if err != nil {
+			spinner.Stop(false)
+			util.ExitWithErrorMessage("Invalid cell image", err)
+		}
+		// TODO : Add a proper validation based on major, minor, patch, version before stable release
+		if metadata.BuildCelleryVersion != "" && metadata.BuildCelleryVersion != version.BuildVersion() {
+			fmt.Printf("\r\x1b[2K%s Pulled image version (%s) and Cellery installation version (%s) "+
+				"do not match. The image %s/%s:%s may not work properly with this installation.\n",
+				util.YellowBold("\U000026A0"), util.Bold(metadata.BuildCelleryVersion), version.BuildVersion(),
+				parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 		}
 	} else {
 		spinner.Stop(false)
