@@ -25,23 +25,29 @@ import (
 )
 
 func newDeleteImageCommand() *cobra.Command {
+	var deleteAll = false
+	var regex = ""
 	cmd := &cobra.Command{
 		Use:   "delete <cell-image(s)>",
 		Short: "Delete cell image(s) from repo",
 		Args: func(cmd *cobra.Command, args []string) error {
-			err := cobra.ExactArgs(1)(cmd, args)
-			if err != nil {
-				return err
+			if !deleteAll && regex == "" {
+				err := cobra.MinimumNArgs(1)(cmd, args)
+				if err != nil {
+					return err
+				}
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunDeleteImage(args[0])
+			commands.RunDeleteImage(args, regex, deleteAll)
 		},
-		Example: "  cellery delete cellery-samples/employee:1.0.0\n" +
-			"  cellery delete 'cellery-samples/.*:1.0.0'\n" +
-			"  cellery delete '.*/employee:.*',cellery delete cellery-samples/employee:1.0.0\n" +
-			"  cellery delete '.*'",
+		Example: "  cellery delete cellery-samples/employee:1.0.0  my-org/hr:1.0.0\n" +
+			"  cellery delete cellery-samples/employee:1.0.0 --regex '.*/employee:.*'\n" +
+			"  cellery delete --all\n" +
+			"  cellery delete --regex .*/employee:.*\n",
 	}
+	cmd.Flags().BoolVar(&deleteAll, "all", false, "Delete all cell images")
+	cmd.Flags().StringVar(&regex, "regex", "", "Regular expression of cell images to be deleted")
 	return cmd
 }

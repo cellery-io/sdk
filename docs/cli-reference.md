@@ -139,18 +139,18 @@ Ex:
 
 #### Cellery delete
 
-Delete cell images. This command will delete one or more cell images from cellery local repository.
+Delete cell images. This command will delete one or more cell images from cellery local repository. Users can also delete all cell images by executing the command with "--all" flag.
 
 ##### Parameters:
 
-* _cell image names: This is a comma separated list of existing cell images and regular expressions of cell images._
+* _cell image names: This is a space separated list of existing cell images and/or regular expression of cell images._
 
 Ex:
  ```
-   cellery delete cellery-samples/employee:1.0.0
-   cellery delete 'cellery-samples/.*:1.0.0'
-   cellery delete '.*/employee:.*',cellery delete cellery-samples/employee:1.0.0
-   cellery delete '.*'
+   cellery delete cellery-samples/employee:1.0.0 cellery-samples/hr:1.0.0
+   cellery delete --regex 'cellery-samples/.*:1.0.0'
+   cellery delete cellery-samples/employee:1.0.0 --regex '.*/employee:.*'
+   cellery delete --all
  ```
 
  [Back to Command List](#cellery-cli-commands)

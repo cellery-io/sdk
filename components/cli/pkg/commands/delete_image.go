@@ -22,32 +22,41 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunDeleteImage(images string) {
-	imagesToBeDeleted := strings.Split(images, ",")
-	// Get the list of images in repo
-	existingImages := getImagesArray()
-	for _, imageToBeDeleted := range imagesToBeDeleted {
-		imageExists := false
-		for _, existingImage := range existingImages {
-			var err error
-			imageExists, err = regexp.MatchString(imageToBeDeleted, existingImage.name)
-			if err != nil {
-				util.ExitWithErrorMessage("Error checking if image exists", err)
-			}
-			if imageExists {
-				parsedCellImage, err := util.ParseImageTag(existingImage.name)
+func RunDeleteImage(images []string, regex string, deleteAll bool) {
+	imagesInRepo := getImagesArray()
+	for _, imageInRepo := range imagesInRepo {
+		parsedCellImage, err := util.ParseImageTag(imageInRepo.name)
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+		}
+		cellImagePath := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
+			parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+		if deleteAll {
+			_ = os.RemoveAll(cellImagePath)
+		} else {
+			if regex != "" {
+				// Check if image name matches regex pattern
+				regexMatches, err := regexp.MatchString(regex, imageInRepo.name)
 				if err != nil {
-					util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+					util.ExitWithErrorMessage("Error checking if pattern matches with image name", err)
 				}
-				cellImagePath := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
-					parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
-				_ = os.RemoveAll(cellImagePath)
+				if regexMatches {
+					_ = os.RemoveAll(cellImagePath)
+					continue
+				}
+			}
+			if len(images) > 0 {
+				for _, imageToBeDeleted := range images {
+					if imageInRepo.name == imageToBeDeleted {
+						_ = os.RemoveAll(cellImagePath)
+						break
+					}
+				}
 			}
 		}
 	}
