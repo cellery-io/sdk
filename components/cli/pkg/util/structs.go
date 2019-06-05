@@ -197,12 +197,13 @@ type CellImageName struct {
 
 type CellImageMetaData struct {
 	CellImageName
-	Labels         map[string]string             `json:"labels"`
-	DockerImages   []string                      `json:"dockerImages"`
-	BuildTimestamp int64                         `json:"buildTimestamp"`
-	Ingresses      []string                      `json:"ingresses"`
-	Components     []string                      `json:"components"`
-	Dependencies   map[string]*CellImageMetaData `json:"dependencies"`
+	Labels              map[string]string             `json:"labels"`
+	DockerImages        []string                      `json:"dockerImages"`
+	BuildTimestamp      int64                         `json:"buildTimestamp"`
+	BuildCelleryVersion string                        `json:"buildCelleryVersion"`
+	Ingresses           []string                      `json:"ingresses"`
+	Components          []string                      `json:"components"`
+	Dependencies        map[string]*CellImageMetaData `json:"dependencies"`
 }
 
 type progressWriter struct {
