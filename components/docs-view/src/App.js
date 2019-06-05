@@ -70,7 +70,9 @@ const App = ({data, classes}) => {
         if (cell.dependencies) {
             Object.keys(cell.dependencies).forEach((alias) => {
                 const dependency = cell.dependencies[alias];
-                diagramData.cells.push(dependency.name);
+                if (!diagramData.cells.includes(dependency.name)) {
+                    diagramData.cells.push(dependency.name);
+                }
                 diagramData.dependencyLinks.push({
                     alias: alias,
                     from: cell.name,
@@ -79,10 +81,14 @@ const App = ({data, classes}) => {
 
                 if (dependency.components) {
                     dependency.components.forEach((component) => {
-                        diagramData.components.push({
-                            cell: dependency.name,
-                            name: component
-                        });
+                        const matches = diagramData.components.find(
+                            (datum) => datum.cell === dependency.name && datum.name === component);
+                        if (!matches) {
+                            diagramData.components.push({
+                                cell: dependency.name,
+                                name: component
+                            });
+                        }
                     });
                 }
 
