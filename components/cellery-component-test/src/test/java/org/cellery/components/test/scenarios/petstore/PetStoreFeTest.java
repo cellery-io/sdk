@@ -33,6 +33,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
@@ -50,11 +52,17 @@ public class PetStoreFeTest {
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petfe", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petfe", "1.0.0", "petfe-inst");
+    private Map<String, CellImageInfo> dependencyCells = new HashMap<>();
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-fe" + BAL, cellImageInfo), 0);
+
+        CellImageInfo petbeDep = new CellImageInfo("myorg", "petbe", "1.0.0", "petbe-inst");
+        dependencyCells.put("petstorebackend", petbeDep);
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "pet-fe" + BAL, cellImageInfo,
+                dependencyCells), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -99,7 +107,7 @@ public class PetStoreFeTest {
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrPassword(), "admin");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrUser(), "admin");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().
-                        getNonSecurePaths().iterator().next(), "/portal");
+                getNonSecurePaths().iterator().next(), "/portal");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getProviderUrl(), "https://idp" +
                 ".cellery-system/oauth2/token");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getRedirectUrl(), "http://pet" +
@@ -119,17 +127,17 @@ public class PetStoreFeTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 80);
 
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0)
-                        .getName(), "PORTAL_PORT");
+                .getName(), "PORTAL_PORT");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0).
                 getValue(), "80");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
-                        getName(), "BASE_PATH");
+                getName(), "BASE_PATH");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
-                        getValue(), "/portal");
+                getValue(), "/portal");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(2).
-                        getName(), "PET_STORE_CELL_URL");
+                getName(), "PET_STORE_CELL_URL");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(2).
-                        getValue(), "");
+                getValue(), "");
 
     }
 

@@ -33,6 +33,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
@@ -50,12 +52,16 @@ public class DockerSourceTest {
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "docker-source", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "docker-source", "1.0.0", "docker-inst");
+    private Map<String, CellImageInfo> dependencyCells = new HashMap<>();
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "docker-source" + BAL,
                 cellImageInfo), 0);
+
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "docker-source" + BAL,
+                cellImageInfo, dependencyCells), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());

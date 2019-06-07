@@ -33,6 +33,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
@@ -44,18 +46,28 @@ import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
 public class ReviewsTest {
+
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
     private static final Path SOURCE_DIR_PATH =
             SAMPLE_DIR.resolve(PRODUCT_REVIEW + File.separator + CELLERY + File.separator +
-            "reviews");
+                    "reviews");
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "reviews", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "reviews", "1.0.0", "review-inst");
+    private Map<String, CellImageInfo> dependencyCells = new HashMap<>();
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "reviews" + BAL , cellImageInfo)
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "reviews" + BAL, cellImageInfo)
+                , 0);
+
+        CellImageInfo databaseDep = new CellImageInfo("myorg", "database", "1.0.0", "db-inst");
+        dependencyCells.put("database", databaseDep);
+        CellImageInfo customerProductDep = new CellImageInfo("myorg", "products", "1.0.0", "cust-inst");
+        dependencyCells.put("customerProduct", customerProductDep);
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "reviews" + BAL, cellImageInfo,
+                dependencyCells)
                 , 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
@@ -95,7 +107,6 @@ public class ReviewsTest {
                 getPath(), "/*");
         Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isAuthenticate());
         Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-
 
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getBackend(),
                 "ratings");
@@ -172,7 +183,7 @@ public class ReviewsTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(11).
                 getName(), "RATINGS_HOST");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(11).
-                getValue(), "{{instance_name}}--ratings-service");
+                getValue(), "");
 
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(12).
                 getName(), "PRODUCTS_PORT");
@@ -184,14 +195,12 @@ public class ReviewsTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(13).
                 getValue(), "root");
 
-
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
                 "celleryio/samples-productreview-reviews");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
                 getContainerPort().intValue(), 8080);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 80);
-
 
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "ratings");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getPorts().get(0).

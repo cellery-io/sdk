@@ -44,13 +44,14 @@ import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
 public class MySQLTest {
+
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
     private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + File.separator + CELLERY +
             File.separator + "mysql");
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "mysql-img", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "mysql-img", "1.0.0", "sql-inst");
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {

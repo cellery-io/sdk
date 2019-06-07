@@ -35,7 +35,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
@@ -53,11 +55,14 @@ public class PetStoreBeTest {
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petbe", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petbe", "1.0.0", "petbe-inst");
+    private Map<String, CellImageInfo> dependencyCells = new HashMap<>();
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-be" + BAL, cellImageInfo), 0);
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "pet-be" + BAL, cellImageInfo,
+                dependencyCells), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -124,7 +129,7 @@ public class PetStoreBeTest {
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(2).
                 getName(), "ORDER_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(2).
-                getValue(), "{{instance_name}}--orders-service");
+                getValue(), "");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(3).
                 getName(), "CUSTOMER_PORT");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(3).
@@ -132,12 +137,11 @@ public class PetStoreBeTest {
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(4).
                 getName(), "CATALOG_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(4).
-                getValue(), "{{instance_name}}--catalog-service");
+                getValue(), "");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(5).
                 getName(), "CUSTOMER_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(5).
-                getValue(), "{{instance_name}}--customers-service");
-
+                getValue(), "");
 
         Assert.assertEquals(servicesTemplates.get(1).getMetadata().getName(), "catalog");
         Assert.assertEquals(servicesTemplates.get(1).getSpec().getContainer().getImage(),

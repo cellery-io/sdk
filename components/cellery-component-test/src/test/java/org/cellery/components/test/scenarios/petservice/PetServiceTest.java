@@ -50,7 +50,7 @@ public class PetServiceTest {
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petservice", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petservice", "1.0.0", "petsvc-inst");
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {

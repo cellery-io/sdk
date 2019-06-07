@@ -19,14 +19,17 @@
 package org.cellery.components.test.models;
 
 public class CellImageInfo {
+
     private String org;
     private String name;
     private String ver;
+    private String instanceName;
 
-    public CellImageInfo(String org, String name, String ver) {
+    public CellImageInfo(String org, String name, String ver, String instanceName) {
         this.org = org;
         this.name = name;
         this.ver = ver;
+        this.instanceName = instanceName;
     }
 
     public String getOrg() {
@@ -51,5 +54,22 @@ public class CellImageInfo {
 
     public void setVer(String ver) {
         this.ver = ver;
+    }
+
+    public String getInstanceName() {
+        return instanceName;
+    }
+
+    public void setInstanceName(String instanceName) {
+        this.instanceName = instanceName;
+    }
+
+    @Override
+    public String toString() {
+        return "CellImageInfo{" +
+                "org='" + org + '\'' +
+                ", name='" + name + '\'' +
+                ", ver='" + ver + '\'' +
+                '}';
     }
 }

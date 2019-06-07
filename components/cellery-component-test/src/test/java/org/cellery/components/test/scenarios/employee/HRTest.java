@@ -33,6 +33,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
@@ -44,17 +46,25 @@ import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
 public class HRTest {
+
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
     private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + File.separator + CELLERY +
             File.separator + "hr");
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "hr-img", "1.0.0");
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "hr-img", "1.0.0", "hr-inst");
+    private Map<String, CellImageInfo> dependencyCells = new HashMap<>();
 
     @BeforeClass
     public void compileSample() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "hr" + BAL, cellImageInfo), 0);
+        CellImageInfo employeeDep = new CellImageInfo("myorg", "employee", "1.0.0", "emp-inst");
+        dependencyCells.put("employeeCellDep", employeeDep);
+        CellImageInfo stockDep = new CellImageInfo("myorg", "stock", "1.0.0", "stock-inst");
+        dependencyCells.put("stockCellDep", stockDep);
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "hr" + BAL, cellImageInfo,
+                dependencyCells), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
