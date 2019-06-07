@@ -87,14 +87,7 @@ public class CelleryUtils {
     public static void processWebIngress(Component component, LinkedHashMap attributeMap) {
         Web webIngress = new Web();
         LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
-        API httpAPI = new API();
-        int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
-        // Validate the container port is same for all the ingresses.
-        if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
-            throw new BallerinaException("Invalid container port" + containerPort + ". Multiple container ports are " +
-                    "not supported.");
-        }
-        component.setContainerPort(containerPort);
+        API httpAPI = getApi(component, attributeMap);
         httpAPI.setGlobal(true);
         httpAPI.setBackend(component.getService());
         httpAPI.setContext(((BString) gatewayConfig.get("context")).stringValue());
@@ -120,6 +113,25 @@ public class CelleryUtils {
     }
 
     /**
+     * Process API info and returns a API.
+     *
+     * @param component    component object
+     * @param attributeMap API attribute map
+     * @return API object
+     */
+    public static API getApi(Component component, LinkedHashMap attributeMap) {
+        API httpAPI = new API();
+        int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
+        // Validate the container port is same for all the ingresses.
+        if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
+            throw new BallerinaException("Invalid container port" + containerPort + ". Multiple container ports are " +
+                    "not supported.");
+        }
+        component.setContainerPort(containerPort);
+        return httpAPI;
+    }
+
+    /**
      * Process envVars and add to component.
      *
      * @param envVars   Map of EnvVars
@@ -141,7 +153,7 @@ public class CelleryUtils {
      *
      * @param oidcConfig OIDC configuration
      */
-    public static OIDC processOidc(LinkedHashMap oidcConfig) {
+    private static OIDC processOidc(LinkedHashMap oidcConfig) {
         OIDC oidc = new OIDC();
         oidc.setProviderUrl(((BString) oidcConfig.get("providerUrl")).stringValue());
         oidc.setRedirectUrl(((BString) oidcConfig.get("redirectUrl")).stringValue());

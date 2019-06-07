@@ -51,7 +51,8 @@ import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "getReference",
-        args = {@Argument(name = "cellImage", type = TypeKind.RECORD)},
+        args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
+                @Argument(name = "dependencyName", type = TypeKind.STRING)},
         returnType = {@ReturnType(type = TypeKind.OBJECT), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )

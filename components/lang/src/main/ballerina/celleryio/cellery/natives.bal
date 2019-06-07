@@ -80,6 +80,11 @@ public type CpuUtilizationPercentage record {
     !...;
 };
 
+public type Dependencies record {
+    map<ImageName|string> composites;
+
+};
+
 public type Component record {
     string name;
     ImageSource|DockerSource source;

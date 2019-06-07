@@ -17,21 +17,25 @@
  */
 package io.cellery.models;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
  * Dependency Model class.
  */
 @Data
+@AllArgsConstructor
 public class Dependency {
     String org;
     String name;
     String version;
     String instance;
+    String alias;
 
-    public Dependency(String org, String name, String version) {
+    public Dependency(String org, String name, String version, String alias) {
         this.org = org;
         this.name = name;
         this.version = version;
+        this.alias = alias;
     }
 }

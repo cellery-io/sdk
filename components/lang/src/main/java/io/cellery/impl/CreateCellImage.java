@@ -96,6 +96,7 @@ import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
+import static io.cellery.CelleryUtils.getApi;
 import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
@@ -240,14 +241,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
     }
 
     private void processHttpIngress(Component component, LinkedHashMap attributeMap) {
-        API httpAPI = new API();
-        int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
-        // Validate the container port is same for all the ingresses.
-        if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
-            throw new BallerinaException("Invalid container port" + containerPort + ". Multiple container ports are " +
-                    "not supported.");
-        }
-        component.setContainerPort(containerPort);
+        API httpAPI = getApi(component, attributeMap);
         // Process optional attributes
         if (attributeMap.containsKey("context")) {
             httpAPI.setContext(((BString) attributeMap.get("context")).stringValue());
@@ -501,7 +495,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                     dependencyJsonObject.put("org", org);
                     dependencyJsonObject.put("name", name);
                     dependencyJsonObject.put("ver", version);
-                    cellImage.addDependency(new Dependency(org, name, version));
+                    dependencyJsonObject.put("alias", alias.toString());
+                    cellImage.addDependency(new Dependency(org, name, version, alias.toString()));
                     dependenciesJsonObject.put(alias.toString(), dependencyJsonObject);
                 });
             }
