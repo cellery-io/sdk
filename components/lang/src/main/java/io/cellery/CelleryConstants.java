@@ -33,6 +33,8 @@ public class CelleryConstants {
     public static final String IMAGE_SOURCE = "source";
     public static final String AUTO_SCALING_METRIC_RESOURCE = "Resource";
     public static final String AUTO_SCALING_METRIC_RESOURCE_CPU = "cpu";
+    public static final String INSTANCE_NAME = "instanceName";
+
 
     // These should match the Ballerina object names of the Auto Scaling Metrics Objects
     public static final String ENVOY_GATEWAY = "Envoy";
