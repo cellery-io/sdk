@@ -17,7 +17,7 @@ import ballerina/log;
 import ballerina/io;
 import ballerina/config;
 
-public type ImageName record{
+public type ImageName record {
     string org;
     string name;
     string ver;
@@ -51,7 +51,7 @@ public type GitSource record {
     !...;
 };
 
-public type ResourceDefinition record{
+public type ResourceDefinition record {
     string path;
     string method;
     !...;
@@ -81,8 +81,9 @@ public type CpuUtilizationPercentage record {
 };
 
 public type Dependencies record {
-    map<ImageName|string> composites;
-
+    map<ImageName|string> components?;
+    map<ImageName|string> cells?;
+    !...;
 };
 
 public type Component record {
@@ -92,7 +93,7 @@ public type Component record {
     map<TCPIngress|HttpApiIngress|GRPCIngress|WebIngress> ingresses?;
     Label labels?;
     map<Env> envVars?;
-    map<ImageName|string> dependencies?;
+    Dependencies dependencies?;
     AutoScaling autoscaling?;
     !...;
 };
@@ -124,7 +125,7 @@ public type WebIngress record {
     !...;
 };
 
-public type GatewayConfig record{
+public type GatewayConfig record {
     string vhost;
     string context = "/";
     TLS tls?;
@@ -132,13 +133,13 @@ public type GatewayConfig record{
     !...;
 };
 
-public type URI record{
+public type URI record {
     string vhost;
     string context = "/";
     !...;
 };
 
-public type TLS record{
+public type TLS record {
     string key;
     string cert;
     !...;
@@ -185,7 +186,9 @@ public type CellImage record {
 };
 
 # Open record to hold cell Reference fields.
-public type Reference record{};
+public type Reference record {
+
+};
 
 # Build the cell aritifacts and persist metadata
 #
@@ -223,7 +226,6 @@ public extern function createInstance(CellImage cellImage, ImageName iName, map<
 
 # Update the cell aritifacts with runtime changes
 #
-# + cellImage - The cell image definition
 # + iName - The cell instance name
 # + return - error or CellImage record
 public function constructCellImage(ImageName iName) returns (CellImage|error) {
@@ -278,9 +280,7 @@ function closeWc(io:WritableCharacterChannel wc) {
 }
 
 function write(json content, string path) returns error? {
-
     io:WritableByteChannel wbc = io:openWritableFile(path);
-
     io:WritableCharacterChannel wch = new(wbc, "UTF8");
     var result = wch.writeJson(content);
     if (result is error) {
@@ -293,9 +293,7 @@ function write(json content, string path) returns error? {
 }
 
 function read(string path) returns json|error {
-
     io:ReadableByteChannel rbc = io:openReadableFile(path);
-
     io:ReadableCharacterChannel rch = new(rbc, "UTF8");
     var result = rch.readJson();
     if (result is error) {

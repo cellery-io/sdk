@@ -78,8 +78,10 @@ public function build(cellery:ImageName iName) returns error? {
             DATABASE_NAME: { value: "reviews_db" }
         },
         dependencies: {
-            customerProduct: <cellery:ImageName>{ org: "myorg", name: "products", ver: "1.0.0" },
-            database: <cellery:ImageName>{ org: "myorg", name: "database", ver: "1.0.0" }
+            cells: {
+                customerProduct: <cellery:ImageName>{ org: "myorg", name: "products", ver: "1.0.0" },
+                database: <cellery:ImageName>{ org: "myorg", name: "database", ver: "1.0.0" }
+            }
         }
     };
 

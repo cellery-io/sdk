@@ -28,8 +28,10 @@ public function build(cellery:ImageName iName) returns error? {
             stock_api_url: { value: "" }
         },
         dependencies: {
+        cells: {
             employeeCellDep: "myorg/employee:1.0.0", //  fully qualified dependency image name as a string
             stockCellDep: <cellery:ImageName>{ org: "myorg", name: "stock", ver: "1.0.0" } // dependency as a struct
+            }
         }
     };
 

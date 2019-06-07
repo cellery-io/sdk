@@ -55,7 +55,9 @@ public function build(cellery:ImageName iName) returns error? {
             BASE_PATH: { value: "/portal" }
         },
         dependencies: {
-            petstorebackend: <cellery:ImageName>{ org: "myorg", name: "petbe", ver: "1.0.0" }
+            cells: {
+                petstorebackend: <cellery:ImageName>{ org: "myorg", name: "petbe", ver: "1.0.0" }
+            }
         }
     };
 

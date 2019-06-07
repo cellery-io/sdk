@@ -470,7 +470,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             LinkedHashMap attributeMap = ((BMap) componentValue).getMap();
             if (attributeMap.containsKey("dependencies")) {
                 LinkedHashMap<?, ?> dependencies = ((BMap<?, ?>) attributeMap.get("dependencies")).getMap();
-                dependencies.forEach((alias, dependencyValue) -> {
+                LinkedHashMap<?, ?> cellDependencies = ((BMap) dependencies.get("cells")).getMap();
+                cellDependencies.forEach((alias, dependencyValue) -> {
                     JSONObject dependencyJsonObject = new JSONObject();
                     String org, name, version;
                     if ("string".equals(((BValue) dependencyValue).getType().getName())) {
