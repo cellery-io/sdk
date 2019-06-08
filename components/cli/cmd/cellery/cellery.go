@@ -55,6 +55,8 @@ func newCliCommand() *cobra.Command {
 		newInspectCommand(),
 		newViewCommand(),
 		newDeleteImageCommand(),
+		newExportPolicyCommand(),
+		newApplyPolicyCommand(),
 	)
 	return cmd
 }
