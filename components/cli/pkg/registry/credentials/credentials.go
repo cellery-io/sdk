@@ -164,7 +164,7 @@ func getTokenFromCode(code string, port int, conf *config.Conf) string {
 	tokenUrl := conf.Idp.Url + "/oauth2/token"
 	responseBody := "client_id=" + conf.Idp.ClientId +
 		"&grant_type=authorization_code&code=" + code +
-		"&redirect_uri=" + fmt.Sprint(callBackUrl, port)
+		"&redirect_uri=" + fmt.Sprintf(callBackUrl, port)
 	body := strings.NewReader(responseBody)
 	// Token request
 	req, err := http.NewRequest("POST", tokenUrl, body)
