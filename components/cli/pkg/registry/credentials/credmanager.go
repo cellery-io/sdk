@@ -18,7 +18,10 @@
 
 package credentials
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // RegistryCredentials holds the credentials of a registry
 type RegistryCredentials struct {
@@ -55,4 +58,9 @@ func NewCredManager() (CredManager, error) {
 		return credManager, nil
 	}
 	return nil, fmt.Errorf("failed to initialize a suitable credentials manager")
+}
+
+// Get a proper key for a registry
+func getCredManagerKeyForRegistry(registry string) string {
+	return strings.Split(registry, ":")[0]
 }

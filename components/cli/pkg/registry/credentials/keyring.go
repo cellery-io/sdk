@@ -59,12 +59,14 @@ func (credManager KeyringCredManager) StoreCredentials(credentials *RegistryCred
 	if credentials.Registry == "" {
 		return fmt.Errorf("registry to which the credentials belongs to is required for storing credentials")
 	}
+	registryKey := getCredManagerKeyForRegistry(credentials.Registry)
+
 	credentialsData, err := json.Marshal(credentials)
 	if err != nil {
 		return fmt.Errorf("failed to create credentials json due to: %v", err)
 	}
 	err = credManager.ring.Set(keyring.Item{
-		Key:  credentials.Registry,
+		Key:  registryKey,
 		Data: credentialsData,
 	})
 	if err != nil {
@@ -79,10 +81,12 @@ func (credManager KeyringCredManager) GetCredentials(registry string) (*Registry
 		return nil, fmt.Errorf(
 			"registry to which the credentials belongs to is required for retrieving credentials")
 	}
+	registryKey := getCredManagerKeyForRegistry(registry)
+
 	var registryCredentials = &RegistryCredentials{
 		Registry: registry,
 	}
-	ringItem, err := credManager.ring.Get(registry)
+	ringItem, err := credManager.ring.Get(registryKey)
 	if err != nil {
 		if strings.Contains(err.Error(), keyringDoesNotExistErrMsg) {
 			return registryCredentials, nil
@@ -105,7 +109,9 @@ func (credManager KeyringCredManager) RemoveCredentials(registry string) error {
 	if registry == "" {
 		return fmt.Errorf("registry to which the credentials belongs to is required for removing credentials")
 	}
-	err := credManager.ring.Remove(registry)
+	registryKey := getCredManagerKeyForRegistry(registry)
+
+	err := credManager.ring.Remove(registryKey)
 	if err != nil {
 		return fmt.Errorf("failed to remove credentials from the keyring due to: %v", err)
 	}
@@ -118,6 +124,8 @@ func (credManager KeyringCredManager) HasCredentials(registry string) (bool, err
 		return false, fmt.Errorf(
 			"registry to which the credentials belongs to is required for checking for credentials")
 	}
+	registryKey := getCredManagerKeyForRegistry(registry)
+
 	keyList, err := credManager.ring.Keys()
 	if err != nil {
 		if strings.Contains(err.Error(), keyringDoesNotExistErrMsg) {
@@ -129,7 +137,7 @@ func (credManager KeyringCredManager) HasCredentials(registry string) (bool, err
 	}
 	var isCredentialsPresent bool
 	for _, key := range keyList {
-		if key == registry {
+		if key == registryKey {
 			isCredentialsPresent = true
 			break
 		}

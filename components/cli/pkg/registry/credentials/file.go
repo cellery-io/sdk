@@ -57,11 +57,13 @@ func (credManager FileCredentialsManager) StoreCredentials(credentials *Registry
 	if credentials.Registry == "" {
 		return fmt.Errorf("registry to which the credentials belongs to is required for storing credentials")
 	}
+	registryKey := getCredManagerKeyForRegistry(credentials.Registry)
+
 	credentialsMap, err := credManager.readCredentials()
 	if err != nil {
 		return fmt.Errorf("failed to fetch credentials due to: %v", err)
 	}
-	credentialsMap[credentials.Registry] = credentials
+	credentialsMap[registryKey] = credentials
 	err = credManager.writeCredentials(credentialsMap)
 	if err != nil {
 		return fmt.Errorf("failed to save credentials due to: %v", err)
@@ -75,11 +77,13 @@ func (credManager FileCredentialsManager) GetCredentials(registry string) (*Regi
 		return nil, fmt.Errorf(
 			"registry to which the credentials belongs to is required for retrieving credentials")
 	}
+	registryKey := getCredManagerKeyForRegistry(registry)
+
 	credentialsMap, err := credManager.readCredentials()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch credentials due to: %v", err)
 	}
-	credentials := credentialsMap[registry]
+	credentials := credentialsMap[registryKey]
 	if credentials == nil {
 		credentials = &RegistryCredentials{}
 	}
@@ -92,11 +96,13 @@ func (credManager FileCredentialsManager) RemoveCredentials(registry string) err
 	if registry == "" {
 		return fmt.Errorf("registry to which the credentials belongs to is required for removing credentials")
 	}
+	registryKey := getCredManagerKeyForRegistry(registry)
+
 	credentialsMap, err := credManager.readCredentials()
 	if err != nil {
 		return fmt.Errorf("failed to fetch credentials due to: %v", err)
 	}
-	delete(credentialsMap, registry)
+	delete(credentialsMap, registryKey)
 	err = credManager.writeCredentials(credentialsMap)
 	if err != nil {
 		return fmt.Errorf("failed to update credentials file due to: %v", err)
@@ -110,11 +116,13 @@ func (credManager FileCredentialsManager) HasCredentials(registry string) (bool,
 		return false, fmt.Errorf(
 			"registry to which the credentials belongs to is required for checking for credentials")
 	}
+	registryKey := getCredManagerKeyForRegistry(registry)
+
 	credentialsMap, err := credManager.readCredentials()
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch credentials due to: %v", err)
 	}
-	_, hasKey := credentialsMap[registry]
+	_, hasKey := credentialsMap[registryKey]
 	return hasKey, nil
 }
 
