@@ -75,7 +75,7 @@ public function build(cellery:ImageName iName) returns error? {
             controller: <cellery:HttpApiIngress>{
                 port: 80,
                 context: "controller",
-                expose: "global",
+                expose: "local",
                 definition: check cellery:readSwaggerFile("./components/controller/resources/pet-store.swagger.json")
             }
         },

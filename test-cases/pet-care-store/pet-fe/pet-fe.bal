@@ -33,17 +33,17 @@ public function build(cellery:ImageName iName) returns error? {
                 port: 80,
                 gatewayConfig: {
                     vhost: "pet-store.com",
-                    context: "/portal",
+                    context: "/",
                     oidc: {
-                        nonSecurePaths: ["/portal"], // Default [], optional field
+                        nonSecurePaths: ["/", "/app/*"],
                         providerUrl: "https://idp.cellery-system/oauth2/token",
-                        clientId: "petstoreapplicationcelleryizza",
+                        clientId: "petstoreapplication",
                         clientSecret: {
                             dcrUser: "admin",
                             dcrPassword: "admin"
                         },
                         redirectUrl: "http://pet-store.com/_auth/callback",
-                        baseUrl: "http://pet-store.com/items/",
+                        baseUrl: "http://pet-store.com/",
                         subjectClaim: "given_name"
                     }
                 }
@@ -52,7 +52,7 @@ public function build(cellery:ImageName iName) returns error? {
         envVars: {
             PET_STORE_CELL_URL: { value: "" },
             PORTAL_PORT: { value: 80 },
-            BASE_PATH: { value: "/portal" }
+            BASE_PATH: { value: "." }
         },
         dependencies: {
             cells: {

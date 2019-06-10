@@ -28,7 +28,6 @@
             <class name="org.cellery.components.test.scenarios.employee.StockTest"/>
             <class name="org.cellery.components.test.scenarios.employee.EmployeeTest"/>
             <class name="org.cellery.components.test.scenarios.employee.HRTest"/>
-            <!--<class name="org.cellery.components.test.scenarios.employee.MySQLTest"/>-->
             <class name="org.cellery.components.test.scenarios.web.HelloWebTest"/>
             <class name="org.cellery.components.test.scenarios.petstore.PetStoreBeTest"/>
             <class name="org.cellery.components.test.scenarios.petstore.PetStoreFeTest"/>

@@ -125,7 +125,7 @@ public class EmployeeTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
                 getName(), "SALARY_HOST");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
-                getValue(), "");
+                getValue(), "{{instance_name}}--salary-service");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
                 "docker.io/celleryio/sampleapp-employee");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).

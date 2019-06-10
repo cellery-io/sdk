@@ -46,6 +46,7 @@ import java.util.Map;
 import static org.cellery.components.test.utils.CelleryTestConstants.ARTIFACTS;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_REPO_PATH;
+import static org.cellery.components.test.utils.CelleryTestConstants.JSON;
 import static org.cellery.components.test.utils.CelleryTestConstants.METADATA;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
@@ -61,7 +62,7 @@ public class LangTestUtils {
             System.getProperty("ballerina.pack")));
     private static final String COMMAND =
             System.getProperty("os.name").toLowerCase(Locale.getDefault()).contains("win")
-            ? "ballerina.bat" : "ballerina";
+                    ? "ballerina.bat" : "ballerina";
     private static final String BALLERINA_COMMAND = DISTRIBUTION_PATH.resolve(COMMAND).toString();
     private static final String BUILD = "build";
     private static final String RUN = "run";
@@ -259,6 +260,8 @@ public class LangTestUtils {
         tmpDirPath.toFile().deleteOnExit();
         File source = new File(sourceDir.toString() + File.separator + TARGET + File.separator + CELLERY +
                 File.separator + imageName + YAML);
+        File sourceMeta = new File(sourceDir.toString() + File.separator + TARGET + File.separator + CELLERY +
+                File.separator + imageName + "_meta" + JSON);
         File cellDir =
                 new File(tmpDirPath.toString() + File.separator + ARTIFACTS + File.separator + CELLERY);
         cellDir.deleteOnExit();
@@ -266,7 +269,10 @@ public class LangTestUtils {
         if (folderCreated) {
             File dest = new File(cellDir.toPath().toString() + File.separator + imageName + YAML);
             dest.deleteOnExit();
+            File destMeta = new File(cellDir.toPath().toString() + File.separator + imageName + "_meta" + JSON);
+            dest.deleteOnExit();
             Files.copy(source.toPath(), dest.toPath());
+            Files.copy(sourceMeta.toPath(), destMeta.toPath());
             return tmpDirPath.toString();
         } else {
             throw new IOException();

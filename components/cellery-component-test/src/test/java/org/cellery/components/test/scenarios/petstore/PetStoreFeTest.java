@@ -60,8 +60,7 @@ public class PetStoreFeTest {
     @Test(groups = "build")
     public void compileCellBuild() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-fe" + BAL,
-                cellImageInfo)
-                , 0);
+                cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -102,20 +101,18 @@ public class PetStoreFeTest {
                 "/");
         Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getBaseUrl(), "http" +
-                "://pet-store" +
-                ".com/");
+                "://pet-store.com/");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getClientId(),
-                "");
+                "petstoreapplication");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrPassword(),
-                "");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrUser(), "");
+                "admin");
+        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrUser(), "admin");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().
                 getNonSecurePaths().iterator().next(), "/app/*");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getProviderUrl(),
-                "");
+                "https://idp.cellery-system/oauth2/token");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getRedirectUrl(), "http" +
-                "://pet" +
-                "-store.com/_auth/callback");
+                "://pet-store.com/_auth/callback");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getSubjectClaim(),
                 "given_name");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "Envoy");
@@ -150,10 +147,9 @@ public class PetStoreFeTest {
         String tmpDir = LangTestUtils.createTempImageDir(SOURCE_DIR_PATH, cellImageInfo.getName());
         Path tempPath = Paths.get(tmpDir);
         CellImageInfo petbeDep = new CellImageInfo("myorg", "petbe", "1.0.0", "petbe-inst");
-        dependencyCells.put("petStoreBackend", petbeDep);
+        dependencyCells.put("petstorebackend", petbeDep);
         Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "pet-fe" + BAL,
-                cellImageInfo,
-                dependencyCells, tmpDir), 0);
+                cellImageInfo, dependencyCells, tmpDir), 0);
         File newYaml =
                 tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
         runtimeCell = CelleryUtils.getInstance(newYaml.getAbsolutePath());
@@ -162,7 +158,7 @@ public class PetStoreFeTest {
     @Test(groups = "run")
     public void validateMetadata() throws IOException {
         Map<String, CellImageInfo> dependencyInfo = LangTestUtils.getDependancyInfo(SOURCE_DIR_PATH);
-        CellImageInfo petbeImage = dependencyInfo.get("petStoreBackend");
+        CellImageInfo petbeImage = dependencyInfo.get("petstorebackend");
         Assert.assertEquals(petbeImage.getOrg(), "myorg");
         Assert.assertEquals(petbeImage.getName(), "petbe");
         Assert.assertEquals(petbeImage.getVer(), "1.0.0");

@@ -130,7 +130,7 @@ public class PetStoreBeTest {
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(2).
                 getName(), "ORDER_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(2).
-                getValue(), "");
+                getValue(), "{{instance_name}}--orders-service");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(3).
                 getName(), "CUSTOMER_PORT");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(3).
@@ -138,11 +138,11 @@ public class PetStoreBeTest {
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(4).
                 getName(), "CATALOG_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(4).
-                getValue(), "");
+                getValue(), "{{instance_name}}--catalog-service");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(5).
                 getName(), "CUSTOMER_HOST");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(5).
-                getValue(), "");
+                getValue(), "{{instance_name}}--customers-service");
 
         Assert.assertEquals(servicesTemplates.get(1).getMetadata().getName(), "catalog");
         Assert.assertEquals(servicesTemplates.get(1).getSpec().getContainer().getImage(),

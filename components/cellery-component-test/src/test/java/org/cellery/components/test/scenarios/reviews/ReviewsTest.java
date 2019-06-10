@@ -174,7 +174,7 @@ public class ReviewsTest {
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(11).getName(),
                 "RATINGS_HOST");
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(11).getValue(),
-                "");
+                "{{instance_name}}--ratings-service");
 
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(12).getName(),
                 "PRODUCTS_PORT");

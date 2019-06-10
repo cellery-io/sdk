@@ -3,33 +3,36 @@ import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
     // Web Component
-    cellery:Component webComponent = {
-        name: "web-ui",
+    cellery:Component helloComponent = {
+        name: "hello",
         source: {
-            image: "docker.io/celleryio/sampleapp-employee"
+            image: "wso2cellery/samples-hello-world-webapp"
         },
         ingresses: {
-            webUI: <cellery:WebIngress>{    //web ingress will be always exposed globally.
-                port: 8080,
+            webUI: <cellery:WebIngress> { // Web ingress will be always exposed globally.
+                port: 80,
                 gatewayConfig: {
-                    vhost: "abc.com",
-                    context: "/demo" //default to “/”
+                    vhost: "hello-world.com",
+                    context: "/"
                 }
             }
+        },
+        envVars: {
+            HELLO_NAME: {value: "Cellery"}
         }
     };
 
-    cellery:CellImage webCell = {
+    cellery:CellImage helloCell = {
         components: {
-            webComp: webComponent
+            helloComp: helloComponent
         }
     };
 
-    return cellery:createImage(webCell, untaint iName);
+    return cellery:createImage(helloCell, untaint iName);
 }
 
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-    cellery:CellImage webCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(webCell, iName, instances);
+    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);
+    return cellery:createInstance(helloCell, iName, instances);
 }

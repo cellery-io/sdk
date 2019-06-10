@@ -161,7 +161,7 @@ public class CustomerProductTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(2).getSpec().getContainer().getEnv().get(2).
                 getName(), "CATEGORIES_HOST");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(2).getSpec().getContainer().getEnv().get(2).
-                getValue(), "");
+                getValue(), "{{instance_name}}--categories-service");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(2).getSpec().getContainer().getImage(),
                 "celleryio/samples-productreview-products");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(2).getSpec().getContainer().getPorts().get(0).
