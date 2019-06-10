@@ -59,7 +59,8 @@ public class LangTestUtils {
     private static final String JAVA_OPTS = "JAVA_OPTS";
     private static final Path DISTRIBUTION_PATH = Paths.get(FilenameUtils.separatorsToSystem(
             System.getProperty("ballerina.pack")));
-    private static final String COMMAND = System.getProperty("os.name").toLowerCase(Locale.getDefault()).contains("win")
+    private static final String COMMAND =
+            System.getProperty("os.name").toLowerCase(Locale.getDefault()).contains("win")
             ? "ballerina.bat" : "ballerina";
     private static final String BALLERINA_COMMAND = DISTRIBUTION_PATH.resolve(COMMAND).toString();
     private static final String BUILD = "build";
@@ -88,10 +89,12 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo
+    public static int compileCellBuildFunction(Path sourceDirectory, String fileName,
+                                               CellImageInfo cellImageInfo
             , Map<String, String> envVar) throws InterruptedException, IOException {
 
-        return compileBallerinaFunction(BUILD, sourceDirectory, fileName, cellImageInfo, new HashMap<>(), envVar);
+        return compileBallerinaFunction(BUILD, sourceDirectory, fileName, cellImageInfo, new HashMap<>(),
+                envVar);
     }
 
     /**
@@ -104,7 +107,8 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo)
+    public static int compileCellBuildFunction(Path sourceDirectory, String fileName,
+                                               CellImageInfo cellImageInfo)
             throws InterruptedException, IOException {
 
         return compileCellBuildFunction(sourceDirectory, fileName, cellImageInfo, new HashMap<>());
@@ -121,13 +125,10 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellRunFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo
-            , Map<String, String> envVar, Map<String, CellImageInfo> instanceData) throws InterruptedException,
-            IOException {
-
-//        Map<String, CellImageInfo> instancesData = getDependancyInfo(sourceDirectory);
-//        log.info(instancesData);
-        String tmpDir = createTempImageDir(sourceDirectory, cellImageInfo.getName());
+    public static int compileCellRunFunction(Path sourceDirectory, String fileName,
+                                             CellImageInfo cellImageInfo
+            , Map<String, String> envVar, Map<String, CellImageInfo> instanceData, String tmpDir)
+            throws InterruptedException, IOException {
         envVar.put("CELLERY_IMAGE_DIR", tmpDir);
         return compileBallerinaFunction(RUN, sourceDirectory, fileName, cellImageInfo, instanceData, envVar);
     }
@@ -142,18 +143,21 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellRunFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
-                                             Map<String, CellImageInfo> instanceData)
+    public static int compileCellRunFunction(Path sourceDirectory, String fileName,
+                                             CellImageInfo cellImageInfo,
+                                             Map<String, CellImageInfo> instanceData, String tmpDir)
             throws InterruptedException, IOException {
 
-        return compileCellRunFunction(sourceDirectory, fileName, cellImageInfo, new HashMap<>(), instanceData);
+        return compileCellRunFunction(sourceDirectory, fileName, cellImageInfo, new HashMap<>(),
+                instanceData, tmpDir);
     }
 
     private static int compileBallerinaFunction(String action, Path sourceDirectory, String fileName
             , CellImageInfo cellImageInfo, Map<String, CellImageInfo> cellInstances
             , Map<String, String> envVar) throws IOException, InterruptedException {
 
-        Path ballerinaInternalLog = Paths.get(sourceDirectory.toAbsolutePath().toString(), "ballerina-internal.log");
+        Path ballerinaInternalLog = Paths.get(sourceDirectory.toAbsolutePath().toString(), "ballerina" +
+                "-internal.log");
         if (ballerinaInternalLog.toFile().exists()) {
             log.warn("Deleting already existing ballerina-internal.log file.");
             FileUtils.deleteQuietly(ballerinaInternalLog.toFile());
@@ -222,7 +226,7 @@ public class LangTestUtils {
         return jacocoArgLine + " ";
     }
 
-    private static Map<String, CellImageInfo> getDependancyInfo(Path source) throws IOException {
+    public static Map<String, CellImageInfo> getDependancyInfo(Path source) throws IOException {
 
         String metadataJsonPath =
                 source.toAbsolutePath().toString() + File.separator + TARGET + File.separator + CELLERY +
@@ -232,7 +236,8 @@ public class LangTestUtils {
             try (InputStreamReader inputStreamReader = new InputStreamReader(input)) {
                 JsonElement parsedJson = new JsonParser().parse(inputStreamReader);
 
-                JsonObject dependenciesJsonObject = parsedJson.getAsJsonObject().getAsJsonObject("dependencies");
+                JsonObject dependenciesJsonObject = parsedJson.getAsJsonObject().getAsJsonObject(
+                        "dependencies");
 
                 for (Map.Entry<String, JsonElement> e : dependenciesJsonObject.entrySet()) {
                     JsonObject dependency = e.getValue().getAsJsonObject();
@@ -248,20 +253,20 @@ public class LangTestUtils {
         return dependencyMap;
     }
 
-    private static String createTempImageDir(Path sourceDir, String imageName) throws IOException {
+    public static String createTempImageDir(Path sourceDir, String imageName) throws IOException {
 
         Path tmpDirPath = Files.createTempDirectory("cellery-sample");
-        //tmpDirPath.toFile().deleteOnExit();
+        tmpDirPath.toFile().deleteOnExit();
         File source = new File(sourceDir.toString() + File.separator + TARGET + File.separator + CELLERY +
                 File.separator + imageName + YAML);
-        File cellDir = new File(tmpDirPath.toString() + File.separator + ARTIFACTS + File.separator + CELLERY);
-        //cellDir.deleteOnExit();
+        File cellDir =
+                new File(tmpDirPath.toString() + File.separator + ARTIFACTS + File.separator + CELLERY);
+        cellDir.deleteOnExit();
         boolean folderCreated = cellDir.mkdirs();
         if (folderCreated) {
             File dest = new File(cellDir.toPath().toString() + File.separator + imageName + YAML);
-        //    dest.deleteOnExit();
+            dest.deleteOnExit();
             Files.copy(source.toPath(), dest.toPath());
-            log.info(tmpDirPath.toString());
             return tmpDirPath.toString();
         } else {
             throw new IOException();

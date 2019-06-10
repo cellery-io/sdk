@@ -1,0 +1,18 @@
+{
+  "name": "@pet-store-sample/customers",
+  "version": "0.1.0",
+  "description": "Pet Store Customers Service",
+  "author": "WSO2 Cellery Maintainers <dev@wso2.org>",
+  "license": "Apache-2.0",
+  "main": "serve.js",
+  "scripts": {
+    "lint": "eslint --color serve.js",
+    "lint:fix": "eslint --color --fix serve.js"
+  },
+  "dependencies": {
+    "express": "^4.16.4"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0"
+  }
+}

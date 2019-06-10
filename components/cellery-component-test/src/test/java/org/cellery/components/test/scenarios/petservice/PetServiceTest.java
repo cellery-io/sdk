@@ -26,7 +26,6 @@ import org.cellery.components.test.utils.CelleryUtils;
 import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -52,32 +51,33 @@ public class PetServiceTest {
     private Cell cell;
     private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "petservice", "1.0.0", "petsvc-inst");
 
-    @BeforeClass
-    public void compileSample() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-cell" + BAL, cellImageInfo)
+    @Test(groups = "build")
+    public void compileCellBuild() throws IOException, InterruptedException {
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-cell" + BAL,
+                cellImageInfo)
                 , 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
-    @Test
-    public void validateCellAvailability() {
+    @Test(groups = "build")
+    public void validateBuildTimeCellAvailability() {
         Assert.assertNotNull(cell);
     }
 
-    @Test
-    public void validateAPIVersion() {
+    @Test(groups = "build")
+    public void validateBuildTimeAPIVersion() {
         Assert.assertEquals(cell.getApiVersion(), "mesh.cellery.io/v1alpha1");
     }
 
-    @Test
-    public void validateKind() {
+    @Test(groups = "build")
+    public void validateBuildTimeKind() {
         Assert.assertEquals(cell.getKind(), "Cell");
     }
 
-    @Test
-    public void validateMetaData() {
+    @Test(groups = "build")
+    public void validateBuildTimeMetaData() {
         Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
                 cellImageInfo.getOrg());
@@ -87,14 +87,15 @@ public class PetServiceTest {
                 cellImageInfo.getVer());
     }
 
-    @Test
-    public void validateGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(), "petsvc");
+    @Test(groups = "build")
+    public void validateBuildTimeGatewayTemplate() {
+        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+                "petsvc");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
     }
 
-    @Test
-    public void validateServicesTemplates() {
+    @Test(groups = "build")
+    public void validateBuildTimeServiceTemplates() {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "debug");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
                 "docker.io/mirage20/k8s-debug-tools");
@@ -102,7 +103,8 @@ public class PetServiceTest {
                 getContainerPort().intValue(), 0);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
 
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "pet-service");
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "pet" +
+                "-service");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getImage(),
                 "docker.io/isurulucky/pet-service");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getPorts().get(0).

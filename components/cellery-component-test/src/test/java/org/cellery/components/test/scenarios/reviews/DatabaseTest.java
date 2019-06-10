@@ -26,7 +26,6 @@ import org.cellery.components.test.utils.CelleryUtils;
 import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -54,8 +53,8 @@ public class DatabaseTest {
     private Cell cell;
     private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "database", "1.0.0", "db-inst");
 
-    @BeforeClass
-    public void compileSample() throws IOException, InterruptedException {
+    @Test(groups = "build")
+    public void compileCellBuild() throws IOException, InterruptedException {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "database" + BAL
                 , cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
@@ -63,18 +62,18 @@ public class DatabaseTest {
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
-    @Test
-    public void validateCellAvailability() {
+    @Test(groups = "build")
+    public void validateBuildTimeCellAvailability() {
         Assert.assertNotNull(cell);
     }
 
-    @Test
-    public void validateAPIVersion() {
+    @Test(groups = "build")
+    public void validateBuildTimeAPIVersion() {
         Assert.assertEquals(cell.getApiVersion(), "mesh.cellery.io/v1alpha1");
     }
 
-    @Test
-    public void validateMetaData() {
+    @Test(groups = "build")
+    public void validateBuildTimeMetaData() {
         Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
         Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
                 cellImageInfo.getOrg());
@@ -84,15 +83,15 @@ public class DatabaseTest {
                 cellImageInfo.getVer());
     }
 
-    @Test
-    public void validateGatewayTemplate() {
+    @Test(groups = "build")
+    public void validateBuildTimeGatewayTemplate() {
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "Envoy");
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getTcp().get(0).getBackendPort(), 3306);
         Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getTcp().get(0).getPort(), 31406);
     }
 
-    @Test
-    public void validateServicesTemplates() {
+    @Test(groups = "build")
+    public void validateBuildTimeServiceTemplates() {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "mysql");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0).
                 getName(), "MYSQL_ROOT_PASSWORD");

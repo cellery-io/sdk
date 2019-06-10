@@ -1,0 +1,52 @@
+{
+  "name": "@pet-store-sample/portal",
+  "version": "0.2.0",
+  "description": "Pet Store Portal",
+  "author": "WSO2 Cellery Maintainers <dev@wso2.org>",
+  "license": "Apache-2.0",
+  "homepage": ".",
+  "scripts": {
+    "clean": "rimraf ./build/",
+    "gen:swagger": "node src/genSwagger.js",
+    "lint:app": "eslint --color --ext .jsx src/",
+    "lint:server": "eslint --color --ext .js src/",
+    "lint": "npm run lint:app && npm run lint:server",
+    "lint:fix": "npm run lint:app -- --fix && npm run lint:server -- --fix",
+    "build": "npm run clean && NODE_ENV=production webpack-cli --config webpack.config.js --progress --colors -p"
+  },
+  "dependencies": {
+    "@material-ui/core": "^3.9.3",
+    "@material-ui/icons": "^3.0.2",
+    "axios": "^0.18.0",
+    "classnames": "^2.2.6",
+    "express": "^4.16.4",
+    "express-http-proxy": "^1.5.1",
+    "jss": "^9.8.7",
+    "prop-types": "^15.7.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-jss": "^8.6.1",
+    "react-router-dom": "^5.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.0",
+    "@babel/preset-env": "^7.4.2",
+    "@babel/preset-react": "^7.0.0",
+    "babel-eslint": "^10.0.1",
+    "babel-loader": "^8.0.5",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-imports": "^1.5.1",
+    "copy-webpack-plugin": "^5.0.2",
+    "eslint": "^5.16.0",
+    "eslint-import-resolver-webpack": "^0.11.0",
+    "eslint-loader": "^2.1.2",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-react": "^7.12.4",
+    "rimraf": "^2.6.3",
+    "swagger-es6": "^1.0.1",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-node-externals": "^1.7.2"
+  }
+}

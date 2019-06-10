@@ -19,11 +19,16 @@
 
 <suite name="Ballerina-Kubernetes-Test-Suite">
     <test name="ballerina-kubernetes-sample-tests" parallel="false">
+        <groups>
+            <dependencies>
+                <group name="run" depends-on="build"/>
+            </dependencies>
+        </groups>
         <classes>
             <class name="org.cellery.components.test.scenarios.employee.StockTest"/>
             <class name="org.cellery.components.test.scenarios.employee.EmployeeTest"/>
             <class name="org.cellery.components.test.scenarios.employee.HRTest"/>
-            <class name="org.cellery.components.test.scenarios.employee.MySQLTest"/>
+            <!--<class name="org.cellery.components.test.scenarios.employee.MySQLTest"/>-->
             <class name="org.cellery.components.test.scenarios.web.HelloWebTest"/>
             <class name="org.cellery.components.test.scenarios.petstore.PetStoreBeTest"/>
             <class name="org.cellery.components.test.scenarios.petstore.PetStoreFeTest"/>
