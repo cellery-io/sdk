@@ -23,9 +23,10 @@ import (
 	"log"
 	"regexp"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -50,7 +51,12 @@ func newApplyAutoscalePolicyCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunApplyAutoscalePolicies(args[0], args[1], components)
+			var err error
+			if components == "" {
+				err = commands.RunApplyAutoscalePolicies(args[0], args[1])
+			} else {
+				err = commands.RunApplyAutoscalePoliciesToComponents(args[0], args[1], components)
+			}
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to instance %s", args[1]), err)
 			}
