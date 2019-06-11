@@ -80,7 +80,7 @@ func RunApplyAutoscalePolicies(file string, instance string) error {
 	return nil
 }
 
-func RunApplyAutoscalePoliciesToComponents(file string, instance string, components string) error {
+func RunApplyAutoscalePolicyToComponents(file string, instance string, components string) error {
 	spinner := util.StartNewSpinner("Applying autoscale policies")
 	// components can be separated with a comma, split
 	componentsArr := strings.Split(components, ",")
@@ -129,12 +129,59 @@ func RunApplyAutoscalePoliciesToComponents(file string, instance string, compone
 	}
 
 	spinner.Stop(true)
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully applied autoscale policies for instance %s", instance))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully applied autoscale policy for instance %s, components %s", instance, components))
+	return nil
+}
+
+func RunApplyAutoscalePolicyToCellGw(file string, instance string) error {
+	spinner := util.StartNewSpinner("Applying autoscale policies")
+	// check if the cell exists
+	_, err := cell.GetInstance(instance)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	// read the file
+	contents, err := ioutil.ReadFile(file)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	policy := policies.CellPolicy{}
+	err = yaml.Unmarshal(contents, &policy)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	k8sAutoscalePolicies, err := generataCellAutoscalePolicyForGw(&policy, instance)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	// write policies to file one by one, else kubectl apply issues can occur
+	policiesFile := filepath.Join("./", fmt.Sprintf("%s-autoscale-policies.yaml", instance))
+	err = writeCellAutoscalePoliciesToFile(policiesFile, &[]util.AutoscalePolicy{k8sAutoscalePolicies})
+	defer func() {
+		_ = os.Remove(policiesFile)
+	}()
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	// kubectl apply
+	err = kubectl.ApplyFile(policiesFile)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+
+	spinner.Stop(true)
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully applied autoscale policy for instance %s gateway", instance))
 	return nil
 }
 
 func generateCellAutoscalePolicies(policy *policies.CellPolicy, instance string) (*[]util.AutoscalePolicy, error) {
-	k8sAutoscalePolicies := []util.AutoscalePolicy{}
+	var k8sAutoscalePolicies []util.AutoscalePolicy
 	for _, rule := range policy.Rules {
 		var k8sAutoscalePolicy util.AutoscalePolicy
 		switch polTargetType := rule.Target.Type; polTargetType {
@@ -155,7 +202,7 @@ func generateCellAutoscalePolicies(policy *policies.CellPolicy, instance string)
 }
 
 func generataCellAutoscalePoliciesForComponents(policy *policies.CellPolicy, instance string, components []string) (*[]util.AutoscalePolicy, error) {
-	k8sAutoscalePolicies := []util.AutoscalePolicy{}
+	var k8sAutoscalePolicies []util.AutoscalePolicy
 	// pick the first rule. If there are more than one, rest will be ignored.
 	rule := policy.Rules[0]
 	for _, component := range components {
@@ -165,6 +212,12 @@ func generataCellAutoscalePoliciesForComponents(policy *policies.CellPolicy, ins
 		k8sAutoscalePolicies = append(k8sAutoscalePolicies, k8sAutoscalePolicy)
 	}
 	return &k8sAutoscalePolicies, nil
+}
+
+func generataCellAutoscalePolicyForGw(policy *policies.CellPolicy, instance string) (util.AutoscalePolicy, error) {
+	// pick the first rule. If there are more than one, rest will be ignored.
+	rule := policy.Rules[0]
+	return createK8sAutoscalePolicy(rule, policies.GetGatewayAutoscalePolicyName(instance), policies.GetTargetGatewayeploymentName(instance)), nil
 }
 
 func createK8sAutoscalePolicy(rule policies.Rule, name string, scaleTargetRefName string) util.AutoscalePolicy {

@@ -35,7 +35,10 @@ func GetInstance(instance string) (*util.Cell, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer outfile.Close()
+	defer func() {
+		_ = outfile.Close()
+		_ = os.Remove(outfile.Name())
+	}()
 	cmd.Stdout = outfile
 
 	stderrReader, _ := cmd.StderrPipe()

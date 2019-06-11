@@ -33,6 +33,7 @@ import (
 
 func newApplyAutoscalePolicyCommand() *cobra.Command {
 	var components string
+	var isGw bool
 	cmd := &cobra.Command{
 		Use:   "autoscale <file> <instance>",
 		Short: "apply autoscale policies for a cell instance",
@@ -53,9 +54,13 @@ func newApplyAutoscalePolicyCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			var err error
 			if components == "" {
-				err = commands.RunApplyAutoscalePolicies(args[0], args[1])
+				if isGw {
+					err = commands.RunApplyAutoscalePolicyToCellGw(args[0], args[1])
+				} else {
+					err = commands.RunApplyAutoscalePolicies(args[0], args[1])
+				}
 			} else {
-				err = commands.RunApplyAutoscalePoliciesToComponents(args[0], args[1], components)
+				err = commands.RunApplyAutoscalePolicyToComponents(args[0], args[1], components)
 			}
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to instance %s", args[1]), err)
@@ -64,5 +69,6 @@ func newApplyAutoscalePolicyCommand() *cobra.Command {
 		Example: "  cellery apply-policy autoscale myscalepolicy.yaml myinstance --components comp1,comp2",
 	}
 	cmd.Flags().StringVarP(&components, "components", "c", "", "comma separated components list")
+	cmd.Flags().BoolVarP(&isGw, "gateway", "g", false, "apply to cell gateway only")
 	return cmd
 }
