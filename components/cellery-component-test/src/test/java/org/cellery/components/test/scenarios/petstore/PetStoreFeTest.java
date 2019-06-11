@@ -139,7 +139,7 @@ public class PetStoreFeTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(2).
                 getName(), "PET_STORE_CELL_URL");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(2).
-                getValue(), "");
+                getValue(), "http://{{petstorebackend}}--gateway-service:80/controller");
     }
 
     @Test(groups = "run")

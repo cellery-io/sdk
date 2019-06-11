@@ -119,7 +119,7 @@ public class ReviewsTest {
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(0).getName(),
                 "PRODUCTS_HOST");
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(0).getValue(),
-                "");
+                "{{customerProduct}}--gateway-service");
 
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(1).getName(),
                 "DATABASE_NAME");
@@ -134,7 +134,7 @@ public class ReviewsTest {
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(3).getName(),
                 "DATABASE_HOST");
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(3).getValue(),
-                "");
+                "{{database}}--gateway-service");
 
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(4).getName(),
                 "RATINGS_PORT");
@@ -154,17 +154,17 @@ public class ReviewsTest {
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(7).getName(),
                 "CUSTOMERS_HOST");
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(7).getValue(),
-                "");
+                "{{customerProduct}}--gateway-service");
 
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(8).getName(),
                 "CUSTOMERS_CONTEXT");
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(8).getValue(),
-                "");
+                "customers-1");
 
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(9).getName(),
                 "PRODUCTS_CONTEXT");
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(9).getValue(),
-                "");
+                "products-1");
 
         Assert.assertEquals(cellServiceTemplate.get(0).getSpec().getContainer().getEnv().get(10).getName(),
                 "DATABASE_USERNAME");

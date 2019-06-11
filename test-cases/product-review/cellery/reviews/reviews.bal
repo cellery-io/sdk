@@ -100,7 +100,6 @@ public function build(cellery:ImageName iName) returns error? {
     reviewsComponent.envVars.DATABASE_PORT.value = <string>databaseRef["mysql_tcp_port"];
     reviewsComponent.envVars.DATABASE_HOST.value = <string>databaseRef["gateway_host"];
 
-
     cellery:CellImage reviewCell = {
         components: {
             reviews: reviewsComponent,

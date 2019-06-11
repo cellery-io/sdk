@@ -265,6 +265,7 @@ public function getReference(Component component, string dependencyAlias) return
         aliasImage = alias;
     } else {
         error e = error("Invalid reference error " + dependencyAlias);
+        log:printError("Invalid reference found ", err = e);
         panic e;
     }
     aliasImage.instanceName = dependencyAlias;
