@@ -101,7 +101,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 String componentName = serviceTemplate.getMetadata().getName();
                 Component updatedComponent = cellImage.getComponentNameToComponentMap().get(componentName);
                 //Replace env values defined in the YAML.
-                updateEnvVar(instanceName, serviceTemplate, updatedComponent);
+                updateEnvVar(instanceName, serviceTemplate, updatedComponent, dependencyInfo);
                 // Update Gateway Config
                 updateGatewayConfig(instanceName, destinationPath, cell, updatedComponent);
             });
@@ -156,18 +156,33 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      * @param serviceTemplate  service Template object
      * @param updatedComponent updated component to process env var
      */
-    private void updateEnvVar(String instanceName, ServiceTemplate serviceTemplate, Component updatedComponent) {
+    private void updateEnvVar(String instanceName, ServiceTemplate serviceTemplate, Component updatedComponent,
+                              Map<?, ?> dependencyInfo) {
         Map<String, String> updatedParams = updatedComponent.getEnvVars();
+        // Override values with updated values
         serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
             if (updatedParams.containsKey(envVar.getName()) && !updatedParams.get(envVar.getName()).isEmpty()) {
                 envVar.setValue(updatedParams.get(envVar.getName()));
             }
         });
+
+        // Validate and replace dependency instance names
         serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
-            if (envVar.getValue().isEmpty()) {
+            String value = envVar.getValue();
+            if (value.isEmpty()) {
                 printWarning("Value is empty for environment variable \"" + envVar.getName() + "\"");
+                return;
             }
-            envVar.setValue(envVar.getValue().replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+            envVar.setValue(value.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+            dependencyInfo.forEach((alias, info) -> {
+                String aliasPlaceHolder = "{{" + alias + "}}";
+                String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
+                if (value.contains(aliasPlaceHolder)) {
+                    envVar.setValue(value.replace(aliasPlaceHolder, depInstanceName));
+                }
+            });
+
+
         });
     }
 
