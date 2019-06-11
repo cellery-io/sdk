@@ -85,6 +85,22 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
 
+    cellery:Reference customerProductRef = cellery:getReference(reviewsComponent, "customerProduct");
+    ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers-1_api_url"]);
+    reviewsComponent.envVars.CUSTOMERS_HOST.value = customerComp.url;
+    reviewsComponent.envVars.CUSTOMERS_PORT.value = customerComp.port;
+    reviewsComponent.envVars.CUSTOMERS_CONTEXT.value = customerComp.path;
+
+    ComponentApi productComp = parseApiUrl(<string>customerProductRef["products-1_api_url"]);
+    reviewsComponent.envVars.PRODUCTS_HOST.value = productComp.url;
+    reviewsComponent.envVars.PRODUCTS_PORT.value = productComp.port;
+    reviewsComponent.envVars.PRODUCTS_CONTEXT.value = productComp.path;
+
+    cellery:Reference databaseRef = cellery:getReference(reviewsComponent, "database");
+    reviewsComponent.envVars.DATABASE_PORT.value = <string>databaseRef["mysql_tcp_port"];
+    reviewsComponent.envVars.DATABASE_HOST.value = <string>databaseRef["gateway_host"];
+
+
     cellery:CellImage reviewCell = {
         components: {
             reviews: reviewsComponent,
@@ -96,21 +112,6 @@ public function build(cellery:ImageName iName) returns error? {
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     cellery:CellImage reviewCell = check cellery:constructCellImage(untaint iName);
-    cellery:Reference customerProductRef = check cellery:getReference(instances.customerProduct);
-    ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers-1_api_url"]);
-    cellery:Component reviewsComponent = reviewCell.components.reviews;
-    reviewsComponent.envVars.CUSTOMERS_HOST.value = customerComp.url;
-    reviewsComponent.envVars.CUSTOMERS_PORT.value = customerComp.port;
-    reviewsComponent.envVars.CUSTOMERS_CONTEXT.value = customerComp.path;
-
-    ComponentApi productComp = parseApiUrl(<string>customerProductRef["products-1_api_url"]);
-    reviewsComponent.envVars.PRODUCTS_HOST.value = productComp.url;
-    reviewsComponent.envVars.PRODUCTS_PORT.value = productComp.port;
-    reviewsComponent.envVars.PRODUCTS_CONTEXT.value = productComp.path;
-
-    cellery:Reference databaseRef = check cellery:getReference(instances.database);
-    reviewsComponent.envVars.DATABASE_PORT.value = <string>databaseRef["mysql_tcp_port"];
-    reviewsComponent.envVars.DATABASE_HOST.value = <string>databaseRef["gateway_host"];
     return cellery:createInstance(reviewCell, iName, instances);
 }
 

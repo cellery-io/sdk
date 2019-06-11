@@ -46,17 +46,17 @@ import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
 
 /**
- * Native function cellery:getReference.
+ * Native function cellery:ReadReference.
  */
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
-        functionName = "getReference",
+        functionName = "readReference",
         args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
                 @Argument(name = "dependencyName", type = TypeKind.STRING)},
         returnType = {@ReturnType(type = TypeKind.OBJECT), @ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
-public class GetReference extends BlockingNativeCallableUnit {
+public class ReadReference extends BlockingNativeCallableUnit {
 
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(0)).getMap();
@@ -80,7 +80,8 @@ public class GetReference extends BlockingNativeCallableUnit {
         BMap<String, BValue> refMap = BLangConnectorSPIUtil.createBStruct(ctx, CelleryConstants.CELLERY_PACKAGE,
                 CelleryConstants.REFERENCE_DEFINITION);
         jsonObject.keys().forEachRemaining(key -> refMap.put(key,
-                new BString(jsonObject.get(key).toString().replace(INSTANCE_NAME_PLACEHOLDER, instanceName))));
+                new BString(jsonObject.get(key).toString().replace(INSTANCE_NAME_PLACEHOLDER,
+                        "{{" + instanceName + "}}"))));
         ctx.setReturnValues(refMap);
     }
 

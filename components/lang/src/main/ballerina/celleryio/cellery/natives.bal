@@ -249,7 +249,44 @@ public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefin
 #
 # + iName - Dependency Image Name
 # + return - Reference record
-public extern function getReference(ImageName iName) returns (Reference|error);
+public extern function readReference(ImageName iName) returns (Reference|error);
+
+# Returns a Reference record with url information
+#
+# + component - Component
+# + dependencyAlias - Dependency alias
+# + return - Reference record
+public function getReference(Component component, string dependencyAlias) returns (Reference) {
+    var alias = component.dependencies.cells[dependencyAlias];
+    ImageName aliasImage;
+    if (alias is string) {
+        aliasImage = parseCellDependency(alias);
+    } else if (alias is ImageName){
+        aliasImage = alias;
+    } else {
+        error e = error("Invalid reference error " + dependencyAlias);
+        panic e;
+    }
+    aliasImage.instanceName = dependencyAlias;
+    Reference|error ref = readReference(aliasImage);
+    if (ref is error) {
+        log:printError("Error occured while reading reference file", err = ref);
+        panic ref;
+    }
+    return <Reference>ref;
+}
+
+function parseCellDependency(string alias) returns ImageName {
+    string org = alias.substring(0, alias.indexOf("/"));
+    string name = alias.substring(alias.indexOf("/") + 1, alias.indexOf(":"));
+    string ver = alias.substring(alias.indexOf(":") + 1, alias.length());
+    ImageName imageName = {
+        name: name,
+        org: org,
+        ver: ver
+    };
+    return imageName;
+}
 
 # Returns the hostname of the target component with placeholder for instances name
 #

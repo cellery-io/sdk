@@ -61,6 +61,9 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
 
+    portalComponent.envVars.PET_STORE_CELL_URL.value = <string>cellery:getReference(portalComponent, "petstorebackend").
+    controller_api_url;
+
     // Cell Initialization
     cellery:CellImage petStoreFrontendCell = {
         components: {
@@ -77,8 +80,5 @@ public function build(cellery:ImageName iName) returns error? {
 // return - The Cell instance
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     cellery:CellImage petStoreFrontendCell = check cellery:constructCellImage(untaint iName);
-    cellery:Reference petStoreBackendRef = check cellery:getReference(instances.petstorebackend);
-    petStoreFrontendCell.components.portal.envVars.PET_STORE_CELL_URL.value = <string>petStoreBackendRef.
-    controller_api_url;
     return cellery:createInstance(petStoreFrontendCell, iName, instances);
 }
