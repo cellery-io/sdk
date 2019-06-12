@@ -562,6 +562,11 @@ func createController(errorMessage string) {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 
+	// Install knative serving
+	if err := runtime.InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+		util.ExitWithErrorMessage(errorMessage, err)
+	}
+
 	// Apply controller CRDs
 	if err := runtime.InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)

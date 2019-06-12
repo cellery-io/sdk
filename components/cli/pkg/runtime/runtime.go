@@ -100,6 +100,12 @@ func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, ha
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 
+	// Install knative
+	spinner.SetNewAction("Installing Knative serving")
+	if err := InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+	}
+
 	// Apply controller CRDs
 	spinner.SetNewAction("Creating controller")
 	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
