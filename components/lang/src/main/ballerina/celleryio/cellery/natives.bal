@@ -17,13 +17,12 @@ import ballerina/log;
 import ballerina/io;
 import ballerina/config;
 
-public type ImageName record {
+public type ImageName record {|
     string org;
     string name;
     string ver;
     string instanceName?;
-    !...;
-};
+|};
 
 public type Label record {
     string team?;
@@ -34,59 +33,50 @@ public type Label record {
 # Ingress Expose types
 public type Expose "global"|"local";
 
-public type DockerSource record {
+public type DockerSource record {|
     string dockerDir;
     string tag;
-    !...;
-};
+|};
 
-public type ImageSource record {
+public type ImageSource record {|
     string image;
-    !...;
-};
+|};
 
-public type GitSource record {
+public type GitSource record {|
     string gitRepo;
     string tag;
-    !...;
-};
+|};
 
-public type ResourceDefinition record {
+public type ResourceDefinition record {|
     string path;
     string method;
-    !...;
-};
+|};
 
-public type ApiDefinition record {
+public type ApiDefinition record {|
     ResourceDefinition[] resources;
-    !...;
-};
+|};
 
-public type AutoScaling record {
+public type AutoScaling record {|
     AutoScalingPolicy policy;
     boolean overridable = true;
-    !...;
-};
+|};
 
-public type AutoScalingPolicy record {
+public type AutoScalingPolicy record {|
     int minReplicas;
     int maxReplicas;
     CpuUtilizationPercentage cpuPercentage;
-    !...;
-};
+|};
 
-public type CpuUtilizationPercentage record {
+public type CpuUtilizationPercentage record {|
     int percentage;
-    !...;
-};
+|};
 
-public type Dependencies record {
+public type Dependencies record {|
     map<ImageName|string> components?;
     map<ImageName|string> cells?;
-    !...;
-};
+|};
 
-public type Component record {
+public type Component record {|
     string name;
     ImageSource|DockerSource source;
     int replicas = 1;
@@ -95,57 +85,49 @@ public type Component record {
     map<Env> envVars?;
     Dependencies dependencies?;
     AutoScaling autoscaling?;
-    !...;
-};
+|};
 
-public type TCPIngress record {
+public type TCPIngress record {|
     int backendPort;
     int gatewayPort;
-    !...;
-};
+|};
 
-public type GRPCIngress record {
+public type GRPCIngress record {|
     *TCPIngress;
     string protoFile?;
-    !...;
-};
+|};
 
-public type HttpApiIngress record {
+public type HttpApiIngress record {|
     int port;
     string context?;
     ApiDefinition definition?;
     Expose expose?;
     boolean authenticate = true;
-    !...;
-};
+|};
 
-public type WebIngress record {
+public type WebIngress record {|
     int port;
     GatewayConfig gatewayConfig;
-    !...;
-};
+|};
 
-public type GatewayConfig record {
+public type GatewayConfig record {|
     string vhost;
     string context = "/";
     TLS tls?;
     OIDC oidc?;
-    !...;
-};
+|};
 
-public type URI record {
+public type URI record {|
     string vhost;
     string context = "/";
-    !...;
-};
+|};
 
-public type TLS record {
+public type TLS record {|
     string key;
     string cert;
-    !...;
-};
+|};
 
-public type OIDC record {
+public type OIDC record {|
     string[] nonSecurePaths = [];
     string[] securePaths = [];
     string providerUrl;
@@ -154,36 +136,31 @@ public type OIDC record {
     string redirectUrl;
     string baseUrl;
     string subjectClaim?;
-    !...;
-};
+|};
 
-public type DCR record {
+public type DCR record {|
     string dcrUrl?;
     string dcrUser;
     string dcrPassword;
-    !...;
-};
+|};
 
 public type ParamValue record {
     string|int|boolean|float value?;
 };
 
-public type Env record {
+public type Env record {|
     *ParamValue;
-    !...;
-};
+|};
 
-public type Secret record {
+public type Secret record {|
     *ParamValue;
     string mountPath;
     boolean readOnly;
-    !...;
-};
+|};
 
-public type CellImage record {
+public type CellImage record {|
     map<Component> components;
-    !...;
-};
+|};
 
 # Open record to hold cell Reference fields.
 public type Reference record {
@@ -213,7 +190,7 @@ public function createImage(CellImage cellImage, ImageName iName) returns (error
 # + cellImage - The cell image definition
 # + iName - The cell image org, name & version
 # + return - error
-public extern function createCellImage(CellImage cellImage, ImageName iName) returns (error?);
+public function createCellImage(CellImage cellImage, ImageName iName) returns (error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
@@ -221,7 +198,7 @@ public extern function createCellImage(CellImage cellImage, ImageName iName) ret
 # + iName - The cell instance name
 # + instances - The cell instance dependencies
 # + return - error optinal
-public extern function createInstance(CellImage cellImage, ImageName iName, map<ImageName> instances) returns (error?);
+public function createInstance(CellImage cellImage, ImageName iName, map<ImageName> instances) returns (error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
@@ -242,13 +219,13 @@ public function constructCellImage(ImageName iName) returns (CellImage|error) {
 #
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
-public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition|error);
+public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition|error) = external;
 
 # Returns a Reference record with url information
 #
 # + iName - Dependency Image Name
 # + return - Reference record
-public extern function readReference(ImageName iName) returns (Reference|error|());
+public function readReference(ImageName iName) returns (Reference|error|()) = external;
 
 # Returns a Reference record with url information
 #

@@ -71,6 +71,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -531,9 +532,9 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         dockerModel.setName(dockerImageTag);
         try {
             DockerArtifactHandler dockerArtifactHandler = new DockerArtifactHandler(dockerModel);
-            dockerArtifactHandler.buildImage(dockerModel, dockerDir);
+            dockerArtifactHandler.buildImage(dockerModel, Paths.get(dockerDir));
             cellImage.addDockerImage(dockerImageTag);
-        } catch (DockerGenException | InterruptedException | IOException e) {
+        } catch (DockerGenException | InterruptedException e) {
             String errMsg = "Error occurred while building Docker image ";
             log.error(errMsg, e);
             throw new BallerinaException(errMsg + e.getMessage());

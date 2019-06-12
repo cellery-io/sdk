@@ -101,6 +101,20 @@
         </dependency>
 
         <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-utils</artifactId>
+            <version>${ballerina.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ballerinalang</groupId>
+            <artifactId>ballerina-utils</artifactId>
+            <version>${ballerina.version}</version>
+            <type>zip</type>
+            <classifier>ballerina-binary-repo</classifier>
+        </dependency>
+
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
@@ -368,7 +382,7 @@
     </repositories>
 
     <properties>
-        <ballerina.version>0.990.3</ballerina.version>
+        <ballerina.version>0.991.0</ballerina.version>
         <lombok.version>1.18.4</lombok.version>
         <fabric8.kubernetes.version>4.1.2</fabric8.kubernetes.version>
         <fabric8.kubernetes.client.version>4.2.0</fabric8.kubernetes.client.version>
