@@ -223,7 +223,6 @@ public extern function createCellImage(CellImage cellImage, ImageName iName) ret
 # + return - error optinal
 public extern function createInstance(CellImage cellImage, ImageName iName, map<ImageName> instances) returns (error?);
 
-
 # Update the cell aritifacts with runtime changes
 #
 # + iName - The cell instance name
@@ -249,7 +248,7 @@ public extern function readSwaggerFile(string swaggerFilePath) returns (ApiDefin
 #
 # + iName - Dependency Image Name
 # + return - Reference record
-public extern function readReference(ImageName iName) returns (Reference|error);
+public extern function readReference(ImageName iName) returns (Reference|error|());
 
 # Returns a Reference record with url information
 #
@@ -269,10 +268,15 @@ public function getReference(Component component, string dependencyAlias) return
         panic e;
     }
     aliasImage.instanceName = dependencyAlias;
-    Reference|error ref = readReference(aliasImage);
+    Reference|error? ref = readReference(aliasImage);
     if (ref is error) {
-        log:printError("Error occured while reading reference file", err = ref);
+        log:printError("Error occured while reading reference file ", err = ref);
         panic ref;
+    }
+    if (ref is ()) {
+        error err = error("Empty reference for dependency `" + dependencyAlias + "`.\n
+        Did you pull/build cell image denoted by alias `" + dependencyAlias + "`? ");
+        panic err;
     }
     return <Reference>ref;
 }
