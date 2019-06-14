@@ -260,7 +260,7 @@ public function getReference(Component component, string dependencyAlias) return
     ImageName aliasImage;
     if (alias is string) {
         aliasImage = parseCellDependency(alias);
-    } else if (alias is ImageName){
+    } else if (alias is ImageName) {
         aliasImage = alias;
     } else {
         error e = error("Invalid reference error " + dependencyAlias);
@@ -298,7 +298,11 @@ function parseCellDependency(string alias) returns ImageName {
 # + component - Target component
 # + return - hostname
 public function getHost(Component component) returns (string) {
-    return "{{instance_name}}--" + getValidName(component.name) + "-service";
+    string host = "{{instance_name}}--" + getValidName(component.name) + "-service";
+    if (!(component["autoscaling"] is ()) && component.autoscaling.policy.minReplicas == 0) {
+        host += "-rev";
+    }
+    return host;
 }
 
 function getValidName(string name) returns string {
