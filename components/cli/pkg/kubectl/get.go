@@ -19,8 +19,11 @@
 package kubectl
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/fatih/color"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -81,4 +84,46 @@ func GetNodes() (Node, error) {
 		return jsonOutput, errJson
 	}
 	return jsonOutput, nil
+}
+
+func GetCells(verboseMode bool) (Cells, error) {
+	var Red = color.New(color.FgWhite).Add(color.Bold).SprintFunc()
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"get",
+		"cells",
+		"-o",
+		"json",
+	)
+	// If running on verbose mode expose the kubectl commands.
+	if verboseMode {
+		fmt.Println(Red(getCommandString(cmd)))
+		fmt.Println()
+	}
+	jsonOutput := Cells{}
+	outfile, err := os.Create("./out.txt")
+	if err != nil {
+		return jsonOutput, fmt.Errorf("unable to create file: %v", err)
+	}
+	defer outfile.Close()
+	cmd.Stdout = outfile
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Println(stderrScanner.Text())
+		}
+	}()
+	err = cmd.Start()
+	if err != nil {
+		return jsonOutput, fmt.Errorf("error getting cell data: %v", err)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return jsonOutput, fmt.Errorf("error waiting to get cell data: %v", err)
+	}
+	out, err := ioutil.ReadFile("./out.txt")
+	os.Remove("./out.txt")
+	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput, err
 }

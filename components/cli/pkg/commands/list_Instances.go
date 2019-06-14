@@ -19,57 +19,22 @@
 package commands
 
 import (
-	"bufio"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"strconv"
-
-	"github.com/olekukonko/tablewriter"
-
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/olekukonko/tablewriter"
+	"os"
+	"strconv"
 )
 
-func RunListInstances() {
-	cmd := exec.Command("kubectl", "get", "cells", "-o", "json")
-	outfile, errPrint := os.Create("./out.txt")
-	if errPrint != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching cell status", errPrint)
-	}
-	defer outfile.Close()
-	cmd.Stdout = outfile
-
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
+func RunListInstances(verboseMode bool) {
+	instances, err := kubectl.GetCells(verboseMode)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching the running cell data", err)
+		util.ExitWithErrorMessage("Error running list instances", err)
 	}
-	err = cmd.Wait()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching the running cell data", err)
-	}
-
-	outputByteArray, err := ioutil.ReadFile("./out.txt")
-	os.Remove("./out.txt")
-	jsonOutput := util.CellList{}
-
-	errJson := json.Unmarshal(outputByteArray, &jsonOutput)
-	if errJson != nil {
-		fmt.Println(errJson)
-	}
-	displayCellTable(jsonOutput)
+	displayCellTable(instances)
 }
 
-func displayCellTable(cellData util.CellList) {
+func displayCellTable(cellData kubectl.Cells) {
 	var tableData [][]string
 
 	for i := 0; i < len(cellData.Items); i++ {

@@ -19,21 +19,22 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/spf13/cobra"
 )
 
 func newListInstancesCommand() *cobra.Command {
+	var verboseMode = false
 	cmd := &cobra.Command{
 		Use:     "instances",
 		Short:   "List all running cells",
 		Aliases: []string{"instance", "inst"},
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunListInstances()
+			commands.RunListInstances(verboseMode)
 		},
 		Example: "  cellery list instances",
 	}
+	cmd.Flags().BoolVarP(&verboseMode, "verbose", "v", false, "Run on verbose mode")
 	return cmd
 }

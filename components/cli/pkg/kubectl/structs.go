@@ -38,3 +38,30 @@ type NodeStatus struct {
 type NodeInfo struct {
 	KubeletVersion string `json:"kubeletVersion"`
 }
+
+type Cells struct {
+	Items []Cell `json:"items"`
+}
+
+type Cell struct {
+	CellMetaData CellMetaData `json:"metadata"`
+	CellStatus   CellStatus   `json:"status"`
+}
+
+type CellMetaData struct {
+	CreationTimestamp string          `json:"creationTimestamp"`
+	Annotations       CellAnnotations `json:"annotations"`
+	Name              string          `json:"name"`
+}
+
+type CellAnnotations struct {
+	Organization string `json:"mesh.cellery.io/cell-image-org"`
+	Name         string `json:"mesh.cellery.io/cell-image-name"`
+	Version      string `json:"mesh.cellery.io/cell-image-version"`
+}
+
+type CellStatus struct {
+	Status       string `json:"status"`
+	Gateway      string `json:"gatewayHostname"`
+	ServiceCount int    `json:"serviceCount"`
+}
