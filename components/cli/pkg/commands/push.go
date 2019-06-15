@@ -51,7 +51,7 @@ func RunPush(cellImage string, username string, password string) {
 	parsedCellImage, err := util.ParseImageTag(cellImage)
 	//Read docker images from metadata.json
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImage))
-	imageDir, err := extractImage(parsedCellImage, spinner)
+	imageDir, err := ExtractImage(parsedCellImage, spinner)
 	metadataFileContent, err := ioutil.ReadFile(filepath.Join(imageDir, constants.ZIP_ARTIFACTS, "cellery",
 		"metadata.json"))
 	if err != nil {

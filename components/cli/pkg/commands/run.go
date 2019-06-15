@@ -33,6 +33,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/viper"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -49,7 +53,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
-	imageDir, err := extractImage(parsedCellImage, spinner)
+	imageDir, err := ExtractImage(parsedCellImage, spinner)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while extracting image", err)
@@ -85,7 +89,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			util.ExitWithErrorMessage("Error occurred while preparing", err)
 		}
 	} else {
-		_, err := getCellInstance(instanceName)
+		_, err := kubectl.GetCell(instanceName, viper.GetBool(constants.VERBOSE))
 		if err == nil {
 			spinner.Stop(false)
 			util.ExitWithErrorMessage(fmt.Sprintf("Instance %s already exists", instanceName),
@@ -118,7 +122,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 					DependencyInstance: linkSplit[1],
 				}
 			}
-			cellInstance, err := getCellInstance(dependencyLink.DependencyInstance)
+			cellInstance, err := kubectl.GetCell(dependencyLink.DependencyInstance, viper.GetBool(constants.VERBOSE))
 			if err != nil && !strings.Contains(err.Error(), "NotFound") {
 				spinner.Stop(false)
 				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
@@ -568,7 +572,7 @@ func validateDependencyTree(treeRoot *dependencyTreeNode) error {
 	// Validating whether the instances running in the runtime match the linked image
 	for instance, node := range instanceToNodeMap {
 		if node.IsRunning {
-			cellInstance, err := getCellInstance(instance)
+			cellInstance, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
 			if err == nil && cellInstance.CellStatus.Status == "Ready" {
 				if cellInstance.CellMetaData.Annotations.Organization != node.MetaData.Organization ||
 					cellInstance.CellMetaData.Annotations.Name != node.MetaData.Name ||
@@ -744,7 +748,7 @@ func startDependencyTree(registry string, tree *dependencyTreeNode, spinner *uti
 						ImageName:    dependencyNode.MetaData.Name,
 						ImageVersion: dependencyNode.MetaData.Version,
 					}
-					imageDir, err := extractImage(cellImage, spinner)
+					imageDir, err := ExtractImage(cellImage, spinner)
 					if err != nil {
 						spinner.Stop(false)
 						util.ExitWithErrorMessage(errorMessage, fmt.Errorf("failed to extract "+
@@ -773,57 +777,6 @@ func startDependencyTree(registry string, tree *dependencyTreeNode, spinner *uti
 		}
 	}
 	wg.Wait()
-}
-
-// extractImage extracts the image into a temporary directory and returns the path.
-// Cleaning the path after finishing your work is your responsibility.
-func extractImage(cellImage *util.CellImage, spinner *util.Spinner) (string, error) {
-	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", cellImage.Organization,
-		cellImage.ImageName, cellImage.ImageVersion)
-	zipLocation := filepath.Join(repoLocation, cellImage.ImageName+constants.CELL_IMAGE_EXT)
-	cellImageTag := cellImage.Organization + "/" + cellImage.ImageName + ":" + cellImage.ImageVersion
-
-	// Pull image if not exist
-	imageExists, err := util.FileExists(zipLocation)
-	if err != nil {
-		return "", err
-	}
-	if !imageExists {
-		spinner.Pause()
-		RunPull(cellImageTag, true, "", "")
-		fmt.Println()
-		spinner.Resume()
-	}
-
-	// Unzipping image to a temporary location
-	celleryHomeTmp := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp")
-	if _, err := os.Stat(celleryHomeTmp); os.IsNotExist(err) {
-		os.Mkdir(celleryHomeTmp, 0755)
-	}
-
-	tempPath, err := ioutil.TempDir(celleryHomeTmp, "cellery-cell-image")
-	if err != nil {
-		return "", err
-	}
-	err = util.Unzip(zipLocation, tempPath)
-	if err != nil {
-		return "", nil
-	}
-	return tempPath, nil
-}
-
-// getCellInstance fetches the Cell instance data from the runtime
-func getCellInstance(instance string) (*util.Cell, error) {
-	output, err := util.ExecuteKubeCtlCmd("get", "cell", instance, "-o", "json")
-	if err != nil {
-		return nil, fmt.Errorf(output)
-	}
-	cell := &util.Cell{}
-	err = json.Unmarshal([]byte(output), cell)
-	if err != nil {
-		return nil, err
-	}
-	return cell, nil
 }
 
 func startCellInstance(imageDir string, instanceName string, runningNode *dependencyTreeNode,
@@ -1040,6 +993,47 @@ func getYamlFiles(path string) ([]string, error) {
 		return nil, err
 	}
 	return files, nil
+}
+
+// extractImage extracts the image into a temporary directory and returns the path.
+// Cleaning the path after finishing your work is your responsibility.
+func ExtractImage(cellImage *util.CellImage, spinner *util.Spinner) (string, error) {
+	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", cellImage.Organization,
+		cellImage.ImageName, cellImage.ImageVersion)
+	zipLocation := filepath.Join(repoLocation, cellImage.ImageName+constants.CELL_IMAGE_EXT)
+	cellImageTag := cellImage.Organization + "/" + cellImage.ImageName + ":" + cellImage.ImageVersion
+
+	// Pull image if not exist
+	imageExists, err := util.FileExists(zipLocation)
+	if err != nil {
+		return "", err
+	}
+	if !imageExists {
+		if spinner != nil {
+			spinner.Pause()
+		}
+		RunPull(cellImageTag, true, "", "")
+		fmt.Println()
+		if spinner != nil {
+			spinner.Resume()
+		}
+	}
+
+	// Unzipping image to a temporary location
+	celleryHomeTmp := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp")
+	if _, err := os.Stat(celleryHomeTmp); os.IsNotExist(err) {
+		os.Mkdir(celleryHomeTmp, 0755)
+	}
+
+	tempPath, err := ioutil.TempDir(celleryHomeTmp, "cellery-cell-image")
+	if err != nil {
+		return "", err
+	}
+	err = util.Unzip(zipLocation, tempPath)
+	if err != nil {
+		return "", nil
+	}
+	return tempPath, nil
 }
 
 // dependencyAliasLink is used to store the link information provided by the user

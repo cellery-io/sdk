@@ -25,9 +25,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/viper"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+
 	"github.com/ghodss/yaml"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/cell"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/policies"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -36,7 +39,7 @@ import (
 func RunApplyAutoscalePolicies(file string, instance string) error {
 	spinner := util.StartNewSpinner("Applying autoscale policies")
 	// check if the cell exists
-	_, err := cell.GetInstance(instance)
+	_, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -85,7 +88,7 @@ func RunApplyAutoscalePolicyToComponents(file string, instance string, component
 	// components can be separated with a comma, split
 	componentsArr := strings.Split(components, ",")
 	// check if the cell exists
-	cellInst, err := cell.GetInstance(instance)
+	cellInst, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -136,7 +139,7 @@ func RunApplyAutoscalePolicyToComponents(file string, instance string, component
 func RunApplyAutoscalePolicyToCellGw(file string, instance string) error {
 	spinner := util.StartNewSpinner("Applying autoscale policies")
 	// check if the cell exists
-	_, err := cell.GetInstance(instance)
+	_, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -258,7 +261,7 @@ func getK8sAutoscalePolicyMetrics(metrics []policies.Metric) []util.Metric {
 	return k8sMetrics
 }
 
-func checkIfComponentsExistInCellInstance(components []string, cell *util.Cell) bool {
+func checkIfComponentsExistInCellInstance(components []string, cell kubectl.Cell) bool {
 	// for each component provided by user, check if they are there in the cell
 	for _, component := range components {
 		matchFound := false

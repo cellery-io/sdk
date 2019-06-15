@@ -60,6 +60,7 @@ func newCliCommand() *cobra.Command {
 		newDeleteImageCommand(),
 		newExportPolicyCommand(),
 		newApplyPolicyCommand(),
+		newUpdateCellComponentsCommand(),
 	)
 	cmd.PersistentFlags().BoolVarP(&verboseMode, "verbose", "v", false, "Run on verbose mode")
 	viper.BindPFlag("verbose", cmd.PersistentFlags().Lookup("verbose"))
