@@ -65,3 +65,28 @@ type CellStatus struct {
 	Gateway      string `json:"gatewayHostname"`
 	ServiceCount int    `json:"serviceCount"`
 }
+
+type Pods struct {
+	Items []Pod `json:"items"`
+}
+
+type Pod struct {
+	MetaData  PodMetaData `json:"metadata"`
+	PodStatus PodStatus   `json:"status"`
+}
+
+type PodMetaData struct {
+	Name string `json:"name"`
+}
+
+type PodStatus struct {
+	Phase      string         `json:"phase"`
+	StartTime  string         `json:"startTime"`
+	Conditions []PodCondition `json:"conditions"`
+}
+
+type PodCondition struct {
+	Type               string `json:"type"`
+	Status             string `json:"status"`
+	LastTransitionTime string `json:"lastTransitionTime"`
+}

@@ -19,19 +19,21 @@
 package commands
 
 import (
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/olekukonko/tablewriter"
 	"os"
 	"strconv"
+
+	"github.com/olekukonko/tablewriter"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunListInstances(verboseMode bool) {
-	instances, err := kubectl.GetCells(verboseMode)
+	cells, err := kubectl.GetCells(verboseMode)
 	if err != nil {
-		util.ExitWithErrorMessage("Error running list instances", err)
+		util.ExitWithErrorMessage("Error getting information of cells", err)
 	}
-	displayCellTable(instances)
+	displayCellTable(cells)
 }
 
 func displayCellTable(cellData kubectl.Cells) {

@@ -24,7 +24,7 @@ import (
 )
 
 func getCommandString(cmd *exec.Cmd) string {
-	const verbose  = ">> "
+	const verbose = ">> "
 	var command = verbose
 	for _, v := range cmd.Args {
 		command += v + " "

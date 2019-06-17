@@ -19,8 +19,9 @@
 package main
 
 import (
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
 func newListInstancesCommand() *cobra.Command {
