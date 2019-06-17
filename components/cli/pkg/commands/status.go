@@ -23,6 +23,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/viper"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 
 	"github.com/olekukonko/tablewriter"
@@ -30,8 +34,8 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunStatus(cellName string, verboseMode bool) {
-	cellCreationTime, cellStatus, err := getCellSummary(cellName, verboseMode)
+func RunStatus(cellName string) {
+	cellCreationTime, cellStatus, err := getCellSummary(cellName, viper.GetBool(constants.VERBOSE))
 	if err != nil {
 		util.ExitWithErrorMessage("Error running cell status", fmt.Errorf("cannot find cell %v \n", cellName))
 	}
@@ -39,7 +43,7 @@ func RunStatus(cellName string, verboseMode bool) {
 	fmt.Println()
 	fmt.Println("  -COMPONENTS-")
 	fmt.Println()
-	pods, err := kubectl.GetPods(cellName, verboseMode)
+	pods, err := kubectl.GetPods(cellName, viper.GetBool(constants.VERBOSE))
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting pods information of cell "+cellName, err)
 	}

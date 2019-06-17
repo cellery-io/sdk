@@ -21,13 +21,13 @@ package kubectl
 
 import (
 	"os/exec"
+	"strings"
 )
 
 func getCommandString(cmd *exec.Cmd) string {
-	const verbose = ">> "
-	var command = verbose
-	for _, v := range cmd.Args {
-		command += v + " "
-	}
-	return command
+	const verbose = ">>"
+	var commandArgs []string
+	commandArgs = append(commandArgs, verbose)
+	commandArgs = append(commandArgs, cmd.Args...)
+	return strings.Join(commandArgs, " ")
 }

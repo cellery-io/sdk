@@ -29,7 +29,6 @@ import (
 )
 
 func newStatusCommand() *cobra.Command {
-	var verboseMode = false
 	cmd := &cobra.Command{
 		Use:   "status <instance-name>",
 		Short: "Performs a health check of a cell.",
@@ -45,10 +44,9 @@ func newStatusCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunStatus(args[0], verboseMode)
+			commands.RunStatus(args[0])
 		},
 		Example: "  cellery status employee",
 	}
-	cmd.Flags().BoolVarP(&verboseMode, "verbose", "v", false, "Run on verbose mode")
 	return cmd
 }

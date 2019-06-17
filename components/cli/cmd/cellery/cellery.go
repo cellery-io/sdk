@@ -23,6 +23,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/viper"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -30,6 +32,7 @@ import (
 )
 
 func newCliCommand() *cobra.Command {
+	var verboseMode = false
 	cmd := &cobra.Command{
 		Use:   "cellery <command>",
 		Short: "Manage immutable cell based applications",
@@ -58,6 +61,8 @@ func newCliCommand() *cobra.Command {
 		newExportPolicyCommand(),
 		newApplyPolicyCommand(),
 	)
+	cmd.PersistentFlags().BoolVarP(&verboseMode, "verbose", "v", false, "Run on verbose mode")
+	viper.BindPFlag("verbose", cmd.PersistentFlags().Lookup("verbose"))
 	return cmd
 }
 
