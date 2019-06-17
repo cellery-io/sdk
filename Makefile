@@ -19,7 +19,7 @@ PROJECT_PKG := github.com/cellery-io/sdk
 GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)
-BALLERINA_VERSION := 0.990.3
+BALLERINA_VERSION := 0.991.0
 
 OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/lastSuccessfulBuild
 OBSERVABILITY_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/components/global/*zip*

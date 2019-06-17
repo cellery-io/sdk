@@ -89,7 +89,7 @@ else
 fi
 
 #remove cellery jar from ballerina
-BRE_LIB_PATH="/Library/Ballerina/ballerina-0.990.3/bre/lib/"
+BRE_LIB_PATH="/Library/Ballerina/ballerina-0.991.0/bre/lib/"
 if [ -d $BRE_LIB_PATH ]
 then
     sudo rm -f $BRE_LIB_PATH/cellery-*.jar

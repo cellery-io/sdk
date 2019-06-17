@@ -20,7 +20,7 @@ processing, dependency model generation, observability portal, etc, and docker i
 
 #### Prerequisites 
 - JDK 1.8 
-- Ballerina 0.990.3 
+- Ballerina 0.991.0 
 - Go 1.11.2 or higher
 - Apache Maven 3.5.2 or higher
 - NPM 6.9.0+

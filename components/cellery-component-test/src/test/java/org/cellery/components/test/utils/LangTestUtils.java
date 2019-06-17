@@ -39,11 +39,13 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.ARTIFACTS;
+import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_REPO_PATH;
 import static org.cellery.components.test.utils.CelleryTestConstants.JSON;
@@ -170,13 +172,15 @@ public class LangTestUtils {
         Gson dependencyJSON = new GsonBuilder().create();
         String instanceData = dependencyJSON.toJson(cellInstances);
 
+        String balExecutable = createExecutableBalFiles(sourceDirectory, fileName, action);
+
         ProcessBuilder pb;
         if (action.equals(BUILD)) {
             pb = new ProcessBuilder(BALLERINA_COMMAND, RUN,
-                    fileName + ':' + action, imgData);
+                    balExecutable, action, imgData, "{}");
         } else {
             pb = new ProcessBuilder(BALLERINA_COMMAND, RUN,
-                    fileName + ':' + action, imgData, instanceData);
+                    balExecutable, action, imgData, instanceData);
         }
         log.info(COMPILING + sourceDirectory.resolve(fileName).normalize());
         log.debug(EXECUTING_COMMAND + pb.command());
@@ -190,6 +194,8 @@ public class LangTestUtils {
         log.info(EXIT_CODE + exitCode);
         logOutput(process.getInputStream());
         logOutput(process.getErrorStream());
+
+        Files.deleteIfExists(sourceDirectory.resolve(balExecutable));
 
         // log ballerina-internal.log content
         if (Files.exists(ballerinaInternalLog)) {
@@ -269,7 +275,8 @@ public class LangTestUtils {
         if (folderCreated) {
             File dest = new File(cellDir.toPath().toString() + File.separator + imageName + YAML);
             dest.deleteOnExit();
-            File destMeta = new File(cellDir.toPath().toString() + File.separator + imageName + "_meta" + JSON);
+            File destMeta =
+                    new File(cellDir.toPath().toString() + File.separator + imageName + "_meta" + JSON);
             dest.deleteOnExit();
             Files.copy(source.toPath(), dest.toPath());
             Files.copy(sourceMeta.toPath(), destMeta.toPath());
@@ -288,5 +295,36 @@ public class LangTestUtils {
         ZipUtil.pack(new File(targetPath.toString()),
                 new File(destDir.toPath() + File.separator + cellImageInfo.getName() + ".zip"),
                 name -> "artifacts/" + name);
+    }
+
+    private static String createExecutableBalFiles(Path sourcePath, String fileName, String action) throws IOException {
+        String executableBalName = fileName.replace(BAL, "") + "_" + action + BAL;
+        Path executableBalPath = sourcePath.resolve(executableBalName);
+        Files.copy(sourcePath.resolve(fileName), executableBalPath);
+        String balMain;
+        if (action.equals("build")) {
+            balMain = "\npublic function main(string action, cellery:ImageName iName, " +
+                    "map<cellery:ImageName> " +
+                    "instances) returns error? {\n" +
+                    "\tif (action == \"build\") {\n" +
+                    "\t\treturn build(iName);\n" +
+                    "\t} else {\n" +
+                    "\t\terror err = error(\"Action not supported\");\n" +
+                    "\t\treturn err;\n" +
+                    "\t}\n" +
+                    "}\n";
+        } else {
+            balMain = "public function main(string action, cellery:ImageName iName, map<cellery:ImageName> " +
+                    "instances) returns error? {\n" +
+                    "\tif (action == \"run\") {\n" +
+                    "\t\treturn run(iName, instances);\n" +
+                    "\t} else {\n" +
+                    "\t\terror err = error(\"Action not supported\");\n" +
+                    "\t\treturn err;\n" +
+                    "\t}\n" +
+                    "}\n";
+        }
+        Files.write(executableBalPath, balMain.getBytes(), StandardOpenOption.APPEND);
+        return executableBalName;
     }
 }

@@ -12,8 +12,8 @@ RUN groupadd --system -g ${USER_GROUP_ID} ${USER_GROUP} && \
     useradd --system --create-home --home-dir ${USER_HOME} --no-log-init -g ${USER_GROUP_ID} -u ${USER_ID} ${USER}
 
 COPY files/*.deb ${USER_HOME}/debdir/
-RUN dpkg -i ${USER_HOME}/debdir/ballerina-linux-installer-x64-0.990.3.deb
-COPY files/cellery-*.jar /usr/lib/ballerina/ballerina-0.990.3/bre/lib/
+RUN dpkg -i ${USER_HOME}/debdir/ballerina-linux-installer-x64-0.991.0.deb
+COPY files/cellery-*.jar /usr/lib/ballerina/ballerina-0.991.0/bre/lib/
 # install required packages
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \

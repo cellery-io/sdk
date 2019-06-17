@@ -177,6 +177,6 @@ public class WebTlsTest {
 
     @AfterClass
     public void cleanUp() throws KubernetesPluginException {
-        KubernetesUtils.deleteDirectory(String.valueOf(TARGET_PATH));
+        KubernetesUtils.deleteDirectory(TARGET_PATH);
     }
 }

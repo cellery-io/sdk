@@ -858,8 +858,12 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			return fmt.Errorf("failed to start the Cell Image %s due to %v", imageTag, err)
 		}
 
+		tempRunFileName, err := util.CreateTempExecutableBalFile(balFilePath, "run")
+		if err != nil {
+			util.ExitWithErrorMessage("Error executing ballerina file", err)
+		}
 		// Preparing the run command arguments
-		cmdArgs := []string{"run", constants.BALLERINA_PRINT_RETURN_FLAG}
+		cmdArgs := []string{"run"}
 		for _, envVar := range envVars {
 			cmdArgs = append(cmdArgs, "-e", envVar.Key+"="+envVar.Value)
 		}
@@ -873,7 +877,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		if err != nil {
 			util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
 		}
-		cmdArgs = append(cmdArgs, balFilePath+":run", string(iName), string(dependenciesJson))
+		cmdArgs = append(cmdArgs, tempRunFileName, "run", string(iName), string(dependenciesJson))
 
 		// Calling the run function
 		moduleMgr := &util.BLangManager{}
@@ -921,7 +925,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			cmdArgs = append(cmdArgs, "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 
 			re := regexp.MustCompile(`^.*cellery-cell-image`)
-			balFilePath = re.ReplaceAllString(balFilePath, "/home/cellery/.cellery/tmp/cellery-cell-image")
+			tempRunFileName = re.ReplaceAllString(tempRunFileName, "/home/cellery/.cellery/tmp/cellery-cell-image")
 			dockerImageDir := re.ReplaceAllString(imageDir, "/home/cellery/.cellery/tmp/cellery-cell-image")
 
 			cmd = exec.Command("docker", "exec", "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+dockerImageDir)
@@ -942,7 +946,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 				}
 			}
 			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", "1000",
-				strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", constants.BALLERINA_PRINT_RETURN_FLAG, balFilePath+":run",
+				strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", tempRunFileName, "run",
 				string(iName), string(dependenciesJson))
 		}
 		defer os.Remove(imageDir)
@@ -967,6 +971,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			return fmt.Errorf("failed to execute run method in Cell instance %s due to %v", instanceName, err)
 		}
 		err = cmd.Wait()
+		defer os.Remove(tempRunFileName)
 		if err != nil {
 			return fmt.Errorf("failed to execute run method in Cell instance %s due to %v", instanceName, err)
 		}

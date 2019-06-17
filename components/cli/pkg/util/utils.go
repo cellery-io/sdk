@@ -1238,3 +1238,43 @@ func IsCommandAvailable(name string) bool {
 	}
 	return true
 }
+
+func CreateTempExecutableBalFile(file string, action string) (string, error) {
+	if !(action == "build" || action == "run") {
+		return "", errors.New("invalid action");
+	}
+	input, err := ioutil.ReadFile(file)
+	if err != nil {
+		return "", err;
+	}
+	var ballerinaMain = ""
+	if action == "build" {
+		ballerinaMain = `
+public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+	if (action == "build") {
+		return build(iName);
+	} else {
+		error err = error("Action not supported");
+		return err;
+	}
+}`
+	} else {
+		ballerinaMain = `
+public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+	if (action == "run") {
+		return run(iName, instances);
+	} else {
+		error err = error("Action not supported");
+		return err;
+	}
+}`
+	}
+
+	var newFileContent = string(input) + ballerinaMain;
+	var newFileName = strings.Replace(file, ".bal", "", 1) + "_" + action + ".bal";
+	err = ioutil.WriteFile(newFileName, []byte(newFileContent), 0644)
+	if err != nil {
+		return "", err;
+	}
+	return newFileName, nil
+}

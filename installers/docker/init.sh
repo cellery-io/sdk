@@ -21,7 +21,7 @@
 # Generate required artifacts for ballerina-runtime docker image creation
 
 SOURCE_ROOT=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
-BALLERINA_VERSION=0.990.3
+BALLERINA_VERSION=0.991.0
 BALLERINA_DEB_LOCATION=$SOURCE_ROOT/../../ballerina-linux-installer-x64-$BALLERINA_VERSION.deb
 
 cd $SOURCE_ROOT

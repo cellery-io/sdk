@@ -35,8 +35,8 @@ public function build(cellery:ImageName iName) returns error? {
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     //Read TLS key file path from ENV and get the value
-    string tlsKey = readFile(config:getAsString("tls.key", default = "./certs/95749524_hello.com.key"));
-    string tlsCert = readFile(config:getAsString("tls.cert", default = "./certs/95749524_hello.com.cert"));
+    string tlsKey = readFile(config:getAsString("tls.key", defaultValue = "./certs/95749524_hello.com.key"));
+    string tlsCert = readFile(config:getAsString("tls.cert", defaultValue = "./certs/95749524_hello.com.cert"));
 
     //Assign values to cell
     cellery:CellImage webCell = check cellery:constructCellImage(untaint iName);

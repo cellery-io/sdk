@@ -49,7 +49,7 @@ BINARY_SIZE="0 MB"
 #k8s artifacts folder
 K8S_DIRECTORY="k8s-artefacts"
 RESOURCE_LOCATION=files
-BALLERINA_RUNTIME="ballerina-0.990.3"
+BALLERINA_RUNTIME="ballerina-0.991.0"
 
 #Functions
 go_to_dir() {
