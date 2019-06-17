@@ -302,27 +302,20 @@ public class LangTestUtils {
         Path executableBalPath = sourcePath.resolve(executableBalName);
         Files.copy(sourcePath.resolve(fileName), executableBalPath);
         String balMain;
-        if (action.equals("build")) {
+        if (action.equals(BUILD)) {
             balMain = "\npublic function main(string action, cellery:ImageName iName, " +
                     "map<cellery:ImageName> " +
                     "instances) returns error? {\n" +
-                    "\tif (action == \"build\") {\n" +
-                    "\t\treturn build(iName);\n" +
-                    "\t} else {\n" +
-                    "\t\terror err = error(\"Action not supported\");\n" +
-                    "\t\treturn err;\n" +
-                    "\t}\n" +
+                    "\treturn build(iName);\n" +
+                    "}\n";
+        } else if (action.equals(RUN)) {
+            balMain = "\npublic function main(string action, cellery:ImageName iName, " +
+                    "map<cellery:ImageName> " +
+                    "instances) returns error? {\n" +
+                    "\treturn run(iName, instances);\n" +
                     "}\n";
         } else {
-            balMain = "public function main(string action, cellery:ImageName iName, map<cellery:ImageName> " +
-                    "instances) returns error? {\n" +
-                    "\tif (action == \"run\") {\n" +
-                    "\t\treturn run(iName, instances);\n" +
-                    "\t} else {\n" +
-                    "\t\terror err = error(\"Action not supported\");\n" +
-                    "\t\treturn err;\n" +
-                    "\t}\n" +
-                    "}\n";
+            throw new IllegalArgumentException("Cell action is not supported");
         }
         Files.write(executableBalPath, balMain.getBytes(), StandardOpenOption.APPEND);
         return executableBalName;

@@ -1240,34 +1240,24 @@ func IsCommandAvailable(name string) bool {
 }
 
 func CreateTempExecutableBalFile(file string, action string) (string, error) {
-	if !(action == "build" || action == "run") {
-		return "", errors.New("invalid action");
-	}
-	input, err := ioutil.ReadFile(file)
-	if err != nil {
-		return "", err;
-	}
 	var ballerinaMain = ""
 	if action == "build" {
 		ballerinaMain = `
 public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-	if (action == "build") {
-		return build(iName);
-	} else {
-		error err = error("Action not supported");
-		return err;
-	}
+	return build(iName);
 }`
-	} else {
+	} else if action == "run" {
 		ballerinaMain = `
 public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-	if (action == "run") {
-		return run(iName, instances);
-	} else {
-		error err = error("Action not supported");
-		return err;
-	}
+	return run(iName, instances);
 }`
+	} else {
+		return "", errors.New("invalid action:" + action);
+	}
+
+	input, err := ioutil.ReadFile(file)
+	if err != nil {
+		return "", err;
 	}
 
 	var newFileContent = string(input) + ballerinaMain;

@@ -42,7 +42,6 @@ import (
 // RunBuild executes the cell's build life cycle method and saves the generated cell image to the local repo.
 // This also copies the relevant ballerina files to the ballerina repo directory.
 func RunBuild(tag string, fileName string) {
-	fmt.Println(fileName)
 	fileExist, err := util.FileExists(fileName)
 	if !fileExist {
 		util.ExitWithErrorMessage("Unable to build image",
