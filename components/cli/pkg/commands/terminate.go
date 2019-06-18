@@ -20,21 +20,19 @@ package commands
 
 import (
 	"fmt"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunTerminate(instanceName string) {
 	// Delete the Cell
-	output, err := util.ExecuteKubeCtlCmd(constants.DELETE, "cell", instanceName)
+	output, err := kubectl.DeleteCell(instanceName)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while stopping the cell instance: "+instanceName, fmt.Errorf(output))
 	}
-
 	// Delete the TLS Secret
 	secretName := instanceName + "--tls-secret"
-	output, err = util.ExecuteKubeCtlCmd(constants.DELETE, "secret", secretName, constants.IGNORE_NOT_FOUND)
+	output, err = kubectl.DeleteResource("secret", secretName)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while deleting the secret: "+secretName, fmt.Errorf(output))
 	}

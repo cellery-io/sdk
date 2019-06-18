@@ -20,6 +20,7 @@
 package kubectl
 
 import (
+	"bufio"
 	"os/exec"
 	"strings"
 )
@@ -30,4 +31,31 @@ func getCommandString(cmd *exec.Cmd) string {
 	commandArgs = append(commandArgs, verboseModePrefix)
 	commandArgs = append(commandArgs, cmd.Args...)
 	return strings.Join(commandArgs, " ")
+}
+
+func getCommandOutput(cmd *exec.Cmd) (string, error) {
+	var output string
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			output += stdoutScanner.Text()
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			output += stderrScanner.Text()
+		}
+	}()
+	err := cmd.Start()
+	if err != nil {
+		return output, err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return output, err
+	}
+	return output, nil
 }
