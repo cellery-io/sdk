@@ -20,10 +20,12 @@ package kubectl
 
 import (
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/spf13/viper"
 	"os"
 	"os/exec"
+
+	"github.com/spf13/viper"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 func DeleteFileWithNamespace(file, namespace string) error {

@@ -21,6 +21,7 @@ package kubectl
 
 import (
 	"bufio"
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -51,11 +52,11 @@ func getCommandOutput(cmd *exec.Cmd) (string, error) {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf(output)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf(output)
 	}
 	return output, nil
 }

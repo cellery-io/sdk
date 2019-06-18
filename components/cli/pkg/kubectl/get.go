@@ -140,17 +140,19 @@ func GetCell(cellName string) (Cell, error) {
 		fmt.Println(verboseColor(getCommandString(cmd)))
 		fmt.Println()
 	}
-	cmd.Stderr = os.Stderr
-	out, err := cmd.Output()
+	out, err := getCommandOutput(cmd)
 	jsonOutput := Cell{}
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return jsonOutput, fmt.Errorf("cell instance %s not found", cellName)
+		}
+		return jsonOutput, fmt.Errorf("unknown error: %v", err)
+	}
+	err = json.Unmarshal([]byte(out), &jsonOutput)
 	if err != nil {
 		return jsonOutput, err
 	}
-	errJson := json.Unmarshal([]byte(out), &jsonOutput)
-	if errJson != nil {
-		return jsonOutput, errJson
-	}
-	return jsonOutput, nil
+	return jsonOutput, err
 }
 
 func GetPods(cellName string) (Pods, error) {

@@ -52,10 +52,10 @@ func getCellSummary(cellName string) (cellCreationTime, cellStatus string, err e
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting information of cell "+cellName, err)
 	}
-
+	// Get the time since cell instance creation
 	duration := util.GetDuration(util.ConvertStringToTime(cell.CellMetaData.CreationTimestamp))
+	// Get the current status of the cell
 	cellStatus = cell.CellStatus.Status
-
 	return duration, cellStatus, err
 }
 
@@ -78,7 +78,6 @@ func displayStatusSummaryTable(cellCreationTime, cellStatus string) error {
 
 	table.Append(tableData)
 	table.Render()
-
 	return nil
 }
 
@@ -87,8 +86,8 @@ func displayStatusDetailedTable(pods kubectl.Pods, cellName string) error {
 	for _, pod := range pods.Items {
 		name := strings.Replace(strings.Split(pod.MetaData.Name, "-deployment-")[0], cellName+"--", "", -1)
 		state := pod.PodStatus.Phase
-
 		if strings.EqualFold(state, "Running") {
+			// Get the time since pod's last transition to running state
 			duration := util.GetDuration(util.ConvertStringToTime(pod.PodStatus.Conditions[1].LastTransitionTime))
 			state = "Up for " + duration
 		}

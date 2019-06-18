@@ -93,7 +93,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			util.ExitWithErrorMessage(fmt.Sprintf("Instance %s already exists", instanceName),
 				fmt.Errorf("instance to be created should not be present in the runtime, "+
 					"instance %s is already available in the runtime", instanceName))
-		} else if !strings.Contains(err.Error(), "NotFound") {
+		} else if !strings.Contains(err.Error(), "not found") {
 			util.ExitWithErrorMessage(fmt.Sprintf("Error occurred while checking whether instance %s "+
 				"exists in the runtime", instanceName), err)
 		}
@@ -121,7 +121,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 				}
 			}
 			cellInstance, err := kubectl.GetCell(dependencyLink.DependencyInstance)
-			if err != nil && !strings.Contains(err.Error(), "NotFound") {
+			if err != nil && !strings.Contains(err.Error(), "not found") {
 				spinner.Stop(false)
 				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
 			}
@@ -583,8 +583,8 @@ func validateDependencyTree(treeRoot *dependencyTreeNode) error {
 						cellInstance.CellMetaData.Annotations.Organization, cellInstance.CellMetaData.Annotations.Name,
 						cellInstance.CellMetaData.Annotations.Version)
 				}
-			} else if err != nil && !strings.Contains(err.Error(), "NotFound") {
-				// If an error occurred which does not include NotFound (eg:- connection refused, insufficient
+			} else if err != nil && !strings.Contains(err.Error(), "not found") {
+				// If an error occurred which does not include not found (eg:- connection refused, insufficient
 				// permissions), the run with dependencies task should fail
 				return fmt.Errorf("failed to check whether instance %s exists in the runtime due to %v",
 					instance, err)
