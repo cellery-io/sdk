@@ -91,7 +91,7 @@ func RunApplyAutoscalePolicyToComponents(file string, instance string, component
 	}
 	// check whether the specified components exist in the retrieved cell instance
 	if !checkIfComponentsExistInCellInstance(componentsArr, cellInst) {
-		return fmt.Errorf("componentes specified does not match with the given cell instance")
+		return fmt.Errorf("components specified does not match with the given cell instance")
 	}
 	// read the file
 	contents, err := ioutil.ReadFile(file)
