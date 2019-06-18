@@ -19,43 +19,25 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
-	"os/exec"
 	"regexp"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunDescribe(cellImage string) {
-	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), cellImage)
+func RunDescribe(name string) {
+	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
 	if instancePattern {
-		cmd := exec.Command("kubectl", "describe", "cells", cellImage)
-		stdoutReader, _ := cmd.StdoutPipe()
-		stdoutScanner := bufio.NewScanner(stdoutReader)
-		go func() {
-			for stdoutScanner.Scan() {
-				fmt.Println(stdoutScanner.Text())
-			}
-		}()
-		stderrReader, _ := cmd.StderrPipe()
-		stderrScanner := bufio.NewScanner(stderrReader)
-		go func() {
-			for stderrScanner.Scan() {
-				fmt.Println(stderrScanner.Text())
-			}
-		}()
-		err := cmd.Start()
+		// If the input of user is an instance describe running cell instance.
+		err := kubectl.Describe(name)
 		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while fetching cell details", err)
-		}
-		err = cmd.Wait()
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while fetching cell details", err)
+			util.ExitWithErrorMessage("Error describing cell instance", err)
 		}
 	} else {
-		fmt.Println(string(util.ReadCellImageYaml(cellImage)))
+		// If the input of user is a cell image print the cell yaml
+		fmt.Println(string(image.ReadCellImageYaml(name)))
 	}
 }
