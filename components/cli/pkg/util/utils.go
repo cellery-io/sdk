@@ -1252,19 +1252,19 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 	return run(iName, instances);
 }`
 	} else {
-		return "", errors.New("invalid action:" + action);
+		return "", errors.New("invalid action:" + action)
 	}
 
 	input, err := ioutil.ReadFile(file)
 	if err != nil {
-		return "", err;
+		return "", err
 	}
 
-	var newFileContent = string(input) + ballerinaMain;
-	var newFileName = strings.Replace(file, ".bal", "", 1) + "_" + action + ".bal";
+	var newFileContent = string(input) + ballerinaMain
+	var newFileName = strings.Replace(file, ".bal", "", 1) + "_" + action + ".bal"
 	err = ioutil.WriteFile(newFileName, []byte(newFileContent), 0644)
 	if err != nil {
-		return "", err;
+		return "", err
 	}
 	return newFileName, nil
 }

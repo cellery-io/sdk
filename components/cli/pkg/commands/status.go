@@ -23,19 +23,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spf13/viper"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunStatus(cellName string) {
-	cellCreationTime, cellStatus, err := getCellSummary(cellName, viper.GetBool(constants.VERBOSE))
+	cellCreationTime, cellStatus, err := getCellSummary(cellName)
 	if err != nil {
 		util.ExitWithErrorMessage("Error running cell status", fmt.Errorf("cannot find cell %v \n", cellName))
 	}
@@ -43,17 +38,17 @@ func RunStatus(cellName string) {
 	fmt.Println()
 	fmt.Println("  -COMPONENTS-")
 	fmt.Println()
-	pods, err := kubectl.GetPods(cellName, viper.GetBool(constants.VERBOSE))
+	pods, err := kubectl.GetPods(cellName)
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting pods information of cell "+cellName, err)
 	}
 	displayStatusDetailedTable(pods, cellName)
 }
 
-func getCellSummary(cellName string, verboseMode bool) (cellCreationTime, cellStatus string, err error) {
+func getCellSummary(cellName string) (cellCreationTime, cellStatus string, err error) {
 	cellCreationTime = ""
 	cellStatus = ""
-	cell, err := kubectl.GetCell(cellName, verboseMode)
+	cell, err := kubectl.GetCell(cellName)
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting information of cell "+cellName, err)
 	}

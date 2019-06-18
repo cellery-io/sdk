@@ -27,7 +27,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/spf13/viper"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
@@ -87,8 +87,7 @@ func GetNodes() (Node, error) {
 	return jsonOutput, nil
 }
 
-func GetCells(verboseMode bool) (Cells, error) {
-	var White = color.New(color.FgWhite).Add(color.Bold).SprintFunc()
+func GetCells() (Cells, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"get",
@@ -97,8 +96,8 @@ func GetCells(verboseMode bool) (Cells, error) {
 		"json",
 	)
 	// If running on verbose mode expose the kubectl commands.
-	if verboseMode {
-		fmt.Println(White(getCommandString(cmd)))
+	if viper.GetBool(VerboseMode) {
+		fmt.Println(verboseColor(getCommandString(cmd)))
 		fmt.Println()
 	}
 	jsonOutput := Cells{}
@@ -129,8 +128,7 @@ func GetCells(verboseMode bool) (Cells, error) {
 	return jsonOutput, err
 }
 
-func GetCell(cellName string, verboseMode bool) (Cell, error) {
-	var White = color.New(color.FgWhite).Add(color.Bold).SprintFunc()
+func GetCell(cellName string) (Cell, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
 		"cells",
@@ -138,8 +136,8 @@ func GetCell(cellName string, verboseMode bool) (Cell, error) {
 		"-o",
 		"json",
 	)
-	if verboseMode {
-		fmt.Println(White(getCommandString(cmd)))
+	if viper.GetBool(VerboseMode) {
+		fmt.Println(verboseColor(getCommandString(cmd)))
 		fmt.Println()
 	}
 	cmd.Stderr = os.Stderr
@@ -155,8 +153,7 @@ func GetCell(cellName string, verboseMode bool) (Cell, error) {
 	return jsonOutput, nil
 }
 
-func GetPods(cellName string, verboseMode bool) (Pods, error) {
-	var White = color.New(color.FgWhite).Add(color.Bold).SprintFunc()
+func GetPods(cellName string) (Pods, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
 		"pods",
@@ -166,8 +163,8 @@ func GetPods(cellName string, verboseMode bool) (Pods, error) {
 		"json",
 	)
 	// If running on verbose mode expose the kubectl commands.
-	if verboseMode {
-		fmt.Println(White(getCommandString(cmd)))
+	if viper.GetBool(VerboseMode) {
+		fmt.Println(verboseColor(getCommandString(cmd)))
 		fmt.Println()
 	}
 	jsonOutput := Pods{}

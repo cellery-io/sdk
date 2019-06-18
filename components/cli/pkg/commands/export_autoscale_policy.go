@@ -30,15 +30,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/spf13/viper"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
-	"github.com/ghodss/yaml"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/policies"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+
+	"github.com/ghodss/yaml"
 )
 
 func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error {
@@ -62,7 +58,7 @@ func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error 
 	gwSpinner.Stop(true)
 	// TODO: get autoscale policy for STS
 	// set autoscale policies for all components
-	aCell, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
+	aCell, err := kubectl.GetCell(instance)
 	if err != nil {
 		return err
 	}

@@ -33,8 +33,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 
 	"github.com/olekukonko/tablewriter"
@@ -89,7 +87,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			util.ExitWithErrorMessage("Error occurred while preparing", err)
 		}
 	} else {
-		_, err := kubectl.GetCell(instanceName, viper.GetBool(constants.VERBOSE))
+		_, err := kubectl.GetCell(instanceName)
 		if err == nil {
 			spinner.Stop(false)
 			util.ExitWithErrorMessage(fmt.Sprintf("Instance %s already exists", instanceName),
@@ -122,7 +120,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 					DependencyInstance: linkSplit[1],
 				}
 			}
-			cellInstance, err := kubectl.GetCell(dependencyLink.DependencyInstance, viper.GetBool(constants.VERBOSE))
+			cellInstance, err := kubectl.GetCell(dependencyLink.DependencyInstance)
 			if err != nil && !strings.Contains(err.Error(), "NotFound") {
 				spinner.Stop(false)
 				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
@@ -572,7 +570,7 @@ func validateDependencyTree(treeRoot *dependencyTreeNode) error {
 	// Validating whether the instances running in the runtime match the linked image
 	for instance, node := range instanceToNodeMap {
 		if node.IsRunning {
-			cellInstance, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
+			cellInstance, err := kubectl.GetCell(instance)
 			if err == nil && cellInstance.CellStatus.Status == "Ready" {
 				if cellInstance.CellMetaData.Annotations.Organization != node.MetaData.Organization ||
 					cellInstance.CellMetaData.Annotations.Name != node.MetaData.Name ||

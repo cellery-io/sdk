@@ -25,10 +25,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
 	"github.com/ghodss/yaml"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
@@ -39,7 +35,7 @@ import (
 func RunApplyAutoscalePolicies(file string, instance string) error {
 	spinner := util.StartNewSpinner("Applying autoscale policies")
 	// check if the cell exists
-	_, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
+	_, err := kubectl.GetCell(instance)
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -88,14 +84,14 @@ func RunApplyAutoscalePolicyToComponents(file string, instance string, component
 	// components can be separated with a comma, split
 	componentsArr := strings.Split(components, ",")
 	// check if the cell exists
-	cellInst, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
+	cellInst, err := kubectl.GetCell(instance)
 	if err != nil {
 		spinner.Stop(false)
 		return err
 	}
 	// check whether the specified components exist in the retrieved cell instance
 	if !checkIfComponentsExistInCellInstance(componentsArr, cellInst) {
-		return fmt.Errorf("Componentes specified does not match with the given cell instance")
+		return fmt.Errorf("componentes specified does not match with the given cell instance")
 	}
 	// read the file
 	contents, err := ioutil.ReadFile(file)
@@ -139,7 +135,7 @@ func RunApplyAutoscalePolicyToComponents(file string, instance string, component
 func RunApplyAutoscalePolicyToCellGw(file string, instance string) error {
 	spinner := util.StartNewSpinner("Applying autoscale policies")
 	// check if the cell exists
-	_, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
+	_, err := kubectl.GetCell(instance)
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -197,7 +193,7 @@ func generateCellAutoscalePolicies(policy *policies.CellPolicy, instance string)
 				policies.GetGatewayAutoscalePolicyName(instance),
 				policies.GetTargetGatewayeploymentName(instance))
 		default:
-			return nil, fmt.Errorf("Wrong target type %s in the Autoscale policy", polTargetType)
+			return nil, fmt.Errorf("wrong target type %s in the Autoscale policy", polTargetType)
 		}
 		k8sAutoscalePolicies = append(k8sAutoscalePolicies, k8sAutoscalePolicy)
 	}
@@ -247,7 +243,7 @@ func createK8sAutoscalePolicy(rule policies.Rule, name string, scaleTargetRefNam
 }
 
 func getK8sAutoscalePolicyMetrics(metrics []policies.Metric) []util.Metric {
-	k8sMetrics := []util.Metric{}
+	var k8sMetrics []util.Metric
 	for _, metric := range metrics {
 		k8sMetric := util.Metric{
 			Type: metric.Type,

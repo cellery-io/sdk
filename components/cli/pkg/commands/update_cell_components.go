@@ -25,8 +25,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/viper"
-
 	"github.com/ghodss/yaml"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -61,7 +59,7 @@ func RunUpdateCellComponents(instance string, image string) error {
 	imageName := cellImageMetadata.Name
 	if imageName == "" {
 		spinner.Stop(false)
-		return fmt.Errorf("Unable to extract image name from metadata file %s", metadataFile)
+		return fmt.Errorf("unable to extract image name from metadata file %s", metadataFile)
 	}
 	// now read the image and parse it
 	imageFile := filepath.Join(imageDir, constants.ZIP_ARTIFACTS, "cellery", imageName+".yaml")
@@ -77,7 +75,7 @@ func RunUpdateCellComponents(instance string, image string) error {
 		return err
 	}
 	// check if the cell instance to be updated exists
-	cellInst, err := kubectl.GetCell(instance, viper.GetBool(constants.VERBOSE))
+	cellInst, err := kubectl.GetCell(instance)
 	if err != nil {
 		spinner.Stop(false)
 		return err

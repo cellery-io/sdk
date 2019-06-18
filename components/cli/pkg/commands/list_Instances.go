@@ -22,10 +22,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/spf13/viper"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
@@ -33,7 +29,7 @@ import (
 )
 
 func RunListInstances() {
-	cells, err := kubectl.GetCells(viper.GetBool(constants.VERBOSE))
+	cells, err := kubectl.GetCells()
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting information of cells", err)
 	}

@@ -25,9 +25,9 @@ import (
 )
 
 func getCommandString(cmd *exec.Cmd) string {
-	const verbose = ">>"
+	var verboseModePrefix = ">>"
 	var commandArgs []string
-	commandArgs = append(commandArgs, verbose)
+	commandArgs = append(commandArgs, verboseModePrefix)
 	commandArgs = append(commandArgs, cmd.Args...)
 	return strings.Join(commandArgs, " ")
 }
