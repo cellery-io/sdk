@@ -43,10 +43,14 @@ import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
+import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
+import io.fabric8.kubernetes.api.model.HTTPHeader;
+import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
 import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerSpecBuilder;
 import io.fabric8.kubernetes.api.model.MetricSpecBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
+import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
@@ -73,6 +77,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -82,14 +87,20 @@ import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
+import static io.cellery.CelleryConstants.AUTO_SCALING;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
+import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.GATEWAY_SERVICE;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
+import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
+import static io.cellery.CelleryConstants.KIND;
+import static io.cellery.CelleryConstants.LABELS;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
+import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
 import static io.cellery.CelleryConstants.PROTO_FILE;
@@ -149,18 +160,21 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             component.setService(component.getName());
             processSource(component, attributeMap);
             //Process Optional fields
-            if (attributeMap.containsKey("ingresses")) {
-                processIngress(((BMap<?, ?>) attributeMap.get("ingresses")).getMap(), component);
+            if (attributeMap.containsKey(INGRESSES)) {
+                processIngress(((BMap<?, ?>) attributeMap.get(INGRESSES)).getMap(), component);
             }
-            if (attributeMap.containsKey("labels")) {
-                ((BMap<?, ?>) attributeMap.get("labels")).getMap().forEach((labelKey, labelValue) ->
+            if (attributeMap.containsKey(LABELS)) {
+                ((BMap<?, ?>) attributeMap.get(LABELS)).getMap().forEach((labelKey, labelValue) ->
                         component.addLabel(labelKey.toString(), labelValue.toString()));
             }
-            if (attributeMap.containsKey("autoscaling")) {
-                processAutoScalePolicy(((BMap<?, ?>) attributeMap.get("autoscaling")).getMap(), component);
+            if (attributeMap.containsKey(AUTO_SCALING)) {
+                processAutoScalePolicy(((BMap<?, ?>) attributeMap.get(AUTO_SCALING)).getMap(), component);
             }
-            if (attributeMap.containsKey("envVars")) {
-                processEnvVars(((BMap<?, ?>) attributeMap.get("envVars")).getMap(), component);
+            if (attributeMap.containsKey(ENV_VARS)) {
+                processEnvVars(((BMap<?, ?>) attributeMap.get(ENV_VARS)).getMap(), component);
+            }
+            if (attributeMap.containsKey(PROBES)) {
+                processProbes(((BMap<?, ?>) attributeMap.get(PROBES)).getMap(), component);
             }
             cellImage.addComponent(component);
         });
@@ -284,6 +298,68 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
     }
 
     /**
+     * Extract the Readiness Probe & Liveness Probe.
+     *
+     * @param probes    Scale policy to be processed
+     * @param component current component
+     */
+    private void processProbes(LinkedHashMap<?, ?> probes, Component component) {
+        if (probes.containsKey("liveness")) {
+            LinkedHashMap livenessConf = ((BMap) probes.get("liveness")).getMap();
+            ProbeBuilder probeBuilder = getProbeBuilder(livenessConf);
+            component.setLivenessProbe(probeBuilder.build());
+        }
+        if (probes.containsKey("readiness")) {
+            LinkedHashMap readinessConf = ((BMap) probes.get("readiness")).getMap();
+            ProbeBuilder probeBuilder = getProbeBuilder(readinessConf);
+            component.setReadinessProbe(probeBuilder.build());
+        }
+    }
+
+    /**
+     * Create ProbeBuilder with given Liveness/Readiness Probe config.
+     *
+     * @param probeConf probeConfig map
+     * @return ProbeBuilder
+     */
+    private ProbeBuilder getProbeBuilder(LinkedHashMap probeConf) {
+        ProbeBuilder probeBuilder = new ProbeBuilder();
+        final BMap probeKindMap = (BMap) probeConf.get(KIND);
+        LinkedHashMap probeKindConf = probeKindMap.getMap();
+        String probeKind = probeKindMap.getType().getName();
+        if ("TcpSocket".equals(probeKind)) {
+            probeBuilder.withNewTcpSocket()
+                    .withNewPort((int) ((BInteger) probeKindConf.get("port")).intValue())
+                    .endTcpSocket();
+        } else if ("HttpGet".equals(probeKind)) {
+            List<HTTPHeader> headers = new ArrayList<>();
+            ((BMap<?, ?>) probeKindConf.get("httpHeaders")).getMap().forEach((key, value) -> {
+                HTTPHeader header = new HTTPHeaderBuilder()
+                        .withName(key.toString())
+                        .withValue(value.stringValue())
+                        .build();
+                headers.add(header);
+            });
+            probeBuilder.withHttpGet(new HTTPGetActionBuilder()
+                    .withNewPort((int) ((BInteger) probeKindConf.get("port")).intValue())
+                    .withPath(((BString) probeKindConf.get("path")).value())
+                    .withHttpHeaders(headers)
+                    .build()
+            );
+        } else {
+            final BValueArray commandList = (BValueArray) probeKindConf.get("commands");
+            String[] commands = Arrays.copyOfRange(commandList.getStringArray(), 0, (int) commandList.size());
+            probeBuilder.withNewExec().addToCommand(commands).endExec();
+        }
+        return probeBuilder
+                .withInitialDelaySeconds((int) (((BInteger) probeConf.get("initialDelaySeconds")).intValue()))
+                .withPeriodSeconds((int) (((BInteger) probeConf.get("periodSeconds")).intValue()))
+                .withFailureThreshold((int) (((BInteger) probeConf.get("failureThreshold")).intValue()))
+                .withTimeoutSeconds((int) (((BInteger) probeConf.get("timeoutSeconds")).intValue()))
+                .withSuccessThreshold((int) (((BInteger) probeConf.get("successThreshold")).intValue()));
+    }
+
+    /**
      * Extract the scale policy.
      *
      * @param scalePolicy Scale policy to be processed
@@ -358,6 +434,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                             .withContainerPort(component.getContainerPort())
                             .build())
                     .withEnv(envVarList)
+                    .withReadinessProbe(component.getReadinessProbe())
+                    .withLivenessProbe(component.getLivenessProbe())
                     .build());
 
             AutoScaling autoScaling = component.getAutoScaling();
