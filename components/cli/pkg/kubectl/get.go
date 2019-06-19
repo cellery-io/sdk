@@ -143,3 +143,23 @@ func GetPods(cellName string) (Pods, error) {
 	err = json.Unmarshal(out, &jsonOutput)
 	return jsonOutput, err
 }
+
+func GetServices(cellName string) (Services, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"get",
+		"services",
+		"-l",
+		constants.GROUP_NAME+"/cell="+cellName,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := Services{}
+	out, err := getCommandOutputFromTextFile(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput, err
+}

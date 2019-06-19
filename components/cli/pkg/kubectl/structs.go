@@ -165,3 +165,24 @@ type PodCondition struct {
 	Status             string `json:"status"`
 	LastTransitionTime string `json:"lastTransitionTime"`
 }
+
+type Services struct {
+	Items []Service `json:"items"`
+}
+
+type Service struct {
+	Metadata ServiceMetaData `json:"metadata"`
+	Spec     ServiceSpec     `json:"spec"`
+}
+
+type ServiceMetaData struct {
+	Name string `json:"name"`
+}
+
+type ServiceSpec struct {
+	Ports []ServicePort `json:"ports"`
+}
+
+type ServicePort struct {
+	Port int `json:"port"`
+}
