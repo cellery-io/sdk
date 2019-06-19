@@ -43,14 +43,10 @@ import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
-import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
-import io.fabric8.kubernetes.api.model.HTTPHeader;
-import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
 import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerSpecBuilder;
 import io.fabric8.kubernetes.api.model.MetricSpecBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
-import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
@@ -77,7 +73,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -96,7 +91,6 @@ import static io.cellery.CelleryConstants.GATEWAY_SERVICE;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
-import static io.cellery.CelleryConstants.KIND;
 import static io.cellery.CelleryConstants.LABELS;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
@@ -112,6 +106,7 @@ import static io.cellery.CelleryUtils.getApi;
 import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
+import static io.cellery.CelleryUtils.processProbes;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
@@ -297,67 +292,6 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         component.addApi(httpAPI);
     }
 
-    /**
-     * Extract the Readiness Probe & Liveness Probe.
-     *
-     * @param probes    Scale policy to be processed
-     * @param component current component
-     */
-    private void processProbes(LinkedHashMap<?, ?> probes, Component component) {
-        if (probes.containsKey("liveness")) {
-            LinkedHashMap livenessConf = ((BMap) probes.get("liveness")).getMap();
-            ProbeBuilder probeBuilder = getProbeBuilder(livenessConf);
-            component.setLivenessProbe(probeBuilder.build());
-        }
-        if (probes.containsKey("readiness")) {
-            LinkedHashMap readinessConf = ((BMap) probes.get("readiness")).getMap();
-            ProbeBuilder probeBuilder = getProbeBuilder(readinessConf);
-            component.setReadinessProbe(probeBuilder.build());
-        }
-    }
-
-    /**
-     * Create ProbeBuilder with given Liveness/Readiness Probe config.
-     *
-     * @param probeConf probeConfig map
-     * @return ProbeBuilder
-     */
-    private ProbeBuilder getProbeBuilder(LinkedHashMap probeConf) {
-        ProbeBuilder probeBuilder = new ProbeBuilder();
-        final BMap probeKindMap = (BMap) probeConf.get(KIND);
-        LinkedHashMap probeKindConf = probeKindMap.getMap();
-        String probeKind = probeKindMap.getType().getName();
-        if ("TcpSocket".equals(probeKind)) {
-            probeBuilder.withNewTcpSocket()
-                    .withNewPort((int) ((BInteger) probeKindConf.get("port")).intValue())
-                    .endTcpSocket();
-        } else if ("HttpGet".equals(probeKind)) {
-            List<HTTPHeader> headers = new ArrayList<>();
-            ((BMap<?, ?>) probeKindConf.get("httpHeaders")).getMap().forEach((key, value) -> {
-                HTTPHeader header = new HTTPHeaderBuilder()
-                        .withName(key.toString())
-                        .withValue(value.stringValue())
-                        .build();
-                headers.add(header);
-            });
-            probeBuilder.withHttpGet(new HTTPGetActionBuilder()
-                    .withNewPort((int) ((BInteger) probeKindConf.get("port")).intValue())
-                    .withPath(((BString) probeKindConf.get("path")).value())
-                    .withHttpHeaders(headers)
-                    .build()
-            );
-        } else {
-            final BValueArray commandList = (BValueArray) probeKindConf.get("commands");
-            String[] commands = Arrays.copyOfRange(commandList.getStringArray(), 0, (int) commandList.size());
-            probeBuilder.withNewExec().addToCommand(commands).endExec();
-        }
-        return probeBuilder
-                .withInitialDelaySeconds((int) (((BInteger) probeConf.get("initialDelaySeconds")).intValue()))
-                .withPeriodSeconds((int) (((BInteger) probeConf.get("periodSeconds")).intValue()))
-                .withFailureThreshold((int) (((BInteger) probeConf.get("failureThreshold")).intValue()))
-                .withTimeoutSeconds((int) (((BInteger) probeConf.get("timeoutSeconds")).intValue()))
-                .withSuccessThreshold((int) (((BInteger) probeConf.get("successThreshold")).intValue()));
-    }
 
     /**
      * Extract the scale policy.

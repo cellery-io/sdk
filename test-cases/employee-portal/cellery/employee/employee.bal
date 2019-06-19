@@ -1,8 +1,5 @@
-import ballerina/config;
 import ballerina/io;
-import ballerina/log;
 import celleryio/cellery;
-
 
 public function build(cellery:ImageName iName) returns error? {
     int salaryContainerPort = 8080;
@@ -35,6 +32,7 @@ public function build(cellery:ImageName iName) returns error? {
     };
 
     // Employee Component
+    int empPort = 8080;
     cellery:Component employeeComponent = {
         name: "employee",
         source: {
@@ -42,19 +40,31 @@ public function build(cellery:ImageName iName) returns error? {
         },
         ingresses: {
             employee: <cellery:HttpApiIngress>{
-                port: 8080,
+                port:empPort,
                 context: "employee",
                 expose: "local",
                 definition: <cellery:ApiDefinition>cellery:readSwaggerFile("./resources/employee.swagger.json")
+            }
+        },
+        probes: {
+            liveness: {
+                initialDelaySeconds: 30,
+                kind: <cellery:TcpSocket>{
+                    port:empPort
+                }
+            },
+            readiness: {
+                initialDelaySeconds: 10,
+                timeoutSeconds: 50,
+                kind: <cellery:Exec>{
+                    commands: ["bin", "bash", "-c"]
+                }
             }
         },
         envVars: {
             SALARY_HOST: {
                 value: cellery:getHost(salaryComponent)
             }
-        },
-        labels: {
-            team: "HR"
         }
     };
 

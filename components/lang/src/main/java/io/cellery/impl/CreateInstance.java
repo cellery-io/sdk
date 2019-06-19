@@ -57,11 +57,15 @@ import java.util.Map;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
+import static io.cellery.CelleryConstants.ENV_VARS;
+import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
+import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
+import static io.cellery.CelleryUtils.processProbes;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
@@ -236,12 +240,15 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             // Set mandatory fields.
             component.setName(((BString) attributeMap.get("name")).stringValue());
 
-            //Process Optional fields
-            if (attributeMap.containsKey("ingresses")) {
-                processIngress(((BMap<?, ?>) attributeMap.get("ingresses")).getMap(), component);
+            //Process modifiable fields
+            if (attributeMap.containsKey(PROBES)) {
+                processProbes(((BMap<?, ?>) attributeMap.get(PROBES)).getMap(), component);
             }
-            if (attributeMap.containsKey("envVars")) {
-                processEnvVars(((BMap<?, ?>) attributeMap.get("envVars")).getMap(), component);
+            if (attributeMap.containsKey(INGRESSES)) {
+                processIngress(((BMap<?, ?>) attributeMap.get(INGRESSES)).getMap(), component);
+            }
+            if (attributeMap.containsKey(ENV_VARS)) {
+                processEnvVars(((BMap<?, ?>) attributeMap.get(ENV_VARS)).getMap(), component);
             }
             cellImage.addComponent(component);
         });
@@ -262,7 +269,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             }
         });
     }
-
 
     /**
      * Removes yaml tags.
