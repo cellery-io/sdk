@@ -20,6 +20,7 @@ package runtime
 
 import (
 	"path/filepath"
+	"time"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
@@ -28,7 +29,11 @@ func InstallKnativeServing(artifactsPath string) error {
 	for _, v := range buildKnativeYamlPaths(artifactsPath) {
 		err := kubectl.ApplyFile(v)
 		if err != nil {
-			return err
+			time.Sleep(10 * time.Second)
+			err = kubectl.ApplyFile(v)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
