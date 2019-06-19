@@ -28,7 +28,13 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
+
+var vmComplete = fmt.Sprintf("cellery-runtime-complete-%s.tar.gz", version.BuildVersion())
+var vmBasic = fmt.Sprintf("cellery-runtime-basic-%s.tar.gz", version.BuildVersion())
+var configComplete = fmt.Sprintf("config-cellery-runtime-complete-%s", version.BuildVersion())
+var configBasic = fmt.Sprintf("config-cellery-runtime-basic-%s", version.BuildVersion())
 
 func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 	var err error
@@ -49,8 +55,8 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 		if !confirmed {
 			confirmDownload, _, err = util.GetYesOrNoFromUser(fmt.Sprintf(
 				"Downloading %s will take %s from your machine. Do you want to continue",
-				constants.AWS_S3_ITEM_VM_COMPLETE,
-				util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_COMPLETE))),
+				vmComplete,
+				util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmComplete))),
 				false)
 			if err != nil {
 				util.ExitWithErrorMessage("Failed to select an option", err)
@@ -59,15 +65,15 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 		if !confirmDownload {
 			os.Exit(1)
 		}
-		fmt.Println("Downloading " + constants.AWS_S3_ITEM_VM_COMPLETE)
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_COMPLETE, vmLocation,
+		fmt.Println("Downloading " + vmComplete)
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, vmComplete, vmLocation,
 			true)
 		util.ExtractTarGzFile(vmLocation, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM,
-			constants.AWS_S3_ITEM_VM_COMPLETE))
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_CONFIG_COMPLETE, vmLocation,
+			vmComplete))
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, configComplete, vmLocation,
 			false)
 		err = util.MergeKubeConfig(filepath.Join(util.UserHomeDir(),
-			constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_COMPLETE))
+			constants.CELLERY_HOME, constants.VM, configComplete))
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to merge kube-config file", err)
 		}
@@ -75,8 +81,8 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 		if !confirmed {
 			confirmDownload, _, err = util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your "+
 				"machine. Do you want to continue",
-				constants.AWS_S3_ITEM_VM_MINIMAL,
-				util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_MINIMAL))),
+				vmBasic,
+				util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmBasic))),
 				false)
 			if err != nil {
 				util.ExitWithErrorMessage("Failed to select an option", err)
@@ -85,15 +91,15 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 		if !confirmDownload {
 			os.Exit(1)
 		}
-		fmt.Println("Downloading " + constants.AWS_S3_ITEM_VM_MINIMAL)
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_MINIMAL, vmLocation,
+		fmt.Println("Downloading " + vmBasic)
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, vmBasic, vmLocation,
 			true)
 		util.ExtractTarGzFile(vmLocation, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM,
-			constants.AWS_S3_ITEM_VM_MINIMAL))
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_CONFIG_MINIMAL, vmLocation,
+			vmBasic))
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, configBasic, vmLocation,
 			false)
 		err = util.MergeKubeConfig(filepath.Join(util.UserHomeDir(),
-			constants.CELLERY_HOME, constants.VM, constants.AWS_S3_ITEM_CONFIG_MINIMAL))
+			constants.CELLERY_HOME, constants.VM, configBasic))
 		if err != nil {
 			util.ExitWithErrorMessage("Failed to merge kube-config file", err)
 		}
@@ -110,9 +116,8 @@ func createLocal() error {
 		Inactive: "  {{ . | faint }}",
 		Help:     util.Faint("[Use arrow keys]"),
 	}
-
-	sizeMinimal := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_MINIMAL))
-	sizeComplete := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, constants.AWS_S3_ITEM_VM_COMPLETE))
+	sizeMinimal := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmBasic))
+	sizeComplete := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmComplete))
 
 	cellPrompt := promptui.Select{
 		Label: util.YellowBold("?") + " Select the type of runtime",
@@ -125,7 +130,7 @@ func createLocal() error {
 	}
 	index, _, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select an option: %v", err)
 	}
 	if index == 2 {
 		createEnvironment()
