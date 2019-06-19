@@ -19,11 +19,8 @@
 package kubectl
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
-
-	"github.com/spf13/viper"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
@@ -61,11 +58,7 @@ func DeleteResource(kind, instance string) (string, error) {
 		instance,
 		"--ignore-not-found",
 	)
-	// If running on verbose mode expose the kubectl commands.
-	if viper.GetBool(VerboseMode) {
-		fmt.Println(verboseColor(getCommandString(cmd)))
-		fmt.Println()
-	}
+	displayVerboseOutput(cmd)
 	return getCommandOutput(cmd)
 }
 
@@ -100,11 +93,7 @@ func DeleteCell(cellInstance string) (string, error) {
 		"cell",
 		cellInstance,
 	)
-	// If running on verbose mode expose the kubectl commands.
-	if viper.GetBool(VerboseMode) {
-		fmt.Println(verboseColor(getCommandString(cmd)))
-		fmt.Println()
-	}
+	displayVerboseOutput(cmd)
 	return getCommandOutput(cmd)
 }
 

@@ -19,15 +19,11 @@
 package kubectl
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/spf13/viper"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
@@ -95,35 +91,12 @@ func GetCells() (Cells, error) {
 		"-o",
 		"json",
 	)
-	// If running on verbose mode expose the kubectl commands.
-	if viper.GetBool(VerboseMode) {
-		fmt.Println(verboseColor(getCommandString(cmd)))
-		fmt.Println()
-	}
+	displayVerboseOutput(cmd)
 	jsonOutput := Cells{}
-	outfile, err := os.Create("./out.txt")
+	out, err := getCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
-	defer outfile.Close()
-	cmd.Stdout = outfile
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err = cmd.Start()
-	if err != nil {
-		return jsonOutput, err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return jsonOutput, err
-	}
-	out, err := ioutil.ReadFile("./out.txt")
-	os.Remove("./out.txt")
 	err = json.Unmarshal(out, &jsonOutput)
 	return jsonOutput, err
 }
@@ -136,10 +109,7 @@ func GetCell(cellName string) (Cell, error) {
 		"-o",
 		"json",
 	)
-	if viper.GetBool(VerboseMode) {
-		fmt.Println(verboseColor(getCommandString(cmd)))
-		fmt.Println()
-	}
+	displayVerboseOutput(cmd)
 	out, err := getCommandOutput(cmd)
 	jsonOutput := Cell{}
 	if err != nil {
@@ -164,35 +134,12 @@ func GetPods(cellName string) (Pods, error) {
 		"-o",
 		"json",
 	)
-	// If running on verbose mode expose the kubectl commands.
-	if viper.GetBool(VerboseMode) {
-		fmt.Println(verboseColor(getCommandString(cmd)))
-		fmt.Println()
-	}
+	displayVerboseOutput(cmd)
 	jsonOutput := Pods{}
-	outfile, err := os.Create("./out.txt")
+	out, err := getCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
-	defer outfile.Close()
-	cmd.Stdout = outfile
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err = cmd.Start()
-	if err != nil {
-		return jsonOutput, err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return jsonOutput, err
-	}
-	out, err := ioutil.ReadFile("./out.txt")
-	os.Remove("./out.txt")
 	err = json.Unmarshal(out, &jsonOutput)
 	return jsonOutput, err
 }

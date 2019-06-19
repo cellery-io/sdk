@@ -20,42 +20,29 @@
 package kubectl
 
 import (
-	"bufio"
 	"fmt"
 	"os/exec"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"strings"
 )
 
-func Describe(cellName string) error {
-	cmd := exec.Command(
-		constants.KUBECTL,
-		"describe",
-		"cells",
-		cellName,
-	)
-	displayVerboseOutput(cmd)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		return err
+var verboseMode = false
+
+func SetVerboseMode(enable bool) {
+	verboseMode = enable
+}
+
+func getCommandString(cmd *exec.Cmd) string {
+	var verboseModePrefix = ">>"
+	var commandArgs []string
+	commandArgs = append(commandArgs, verboseModePrefix)
+	commandArgs = append(commandArgs, cmd.Args...)
+	return strings.Join(commandArgs, " ")
+}
+
+func displayVerboseOutput(cmd *exec.Cmd)  {
+	// If running on verbose mode expose the kubectl commands.
+	if verboseMode {
+		fmt.Println(verboseColor(getCommandString(cmd)))
+		fmt.Println()
 	}
-	err = cmd.Wait()
-	if err != nil {
-		return err
-	}
-	return nil
 }

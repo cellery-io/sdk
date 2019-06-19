@@ -22,17 +22,10 @@ package kubectl
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
-	"strings"
 )
-
-func getCommandString(cmd *exec.Cmd) string {
-	var verboseModePrefix = ">>"
-	var commandArgs []string
-	commandArgs = append(commandArgs, verboseModePrefix)
-	commandArgs = append(commandArgs, cmd.Args...)
-	return strings.Join(commandArgs, " ")
-}
 
 func getCommandOutput(cmd *exec.Cmd) (string, error) {
 	var output string
@@ -59,4 +52,32 @@ func getCommandOutput(cmd *exec.Cmd) (string, error) {
 		return output, fmt.Errorf(output)
 	}
 	return output, nil
+}
+
+func getCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
+	var output string
+	outfile, err := os.Create("./out.txt")
+	if err != nil {
+		return nil, err
+	}
+	defer outfile.Close()
+	cmd.Stdout = outfile
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			output += stderrScanner.Text()
+		}
+	}()
+	err = cmd.Start()
+	if err != nil {
+		return nil, fmt.Errorf(output)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return nil, fmt.Errorf(output)
+	}
+	out, err := ioutil.ReadFile("./out.txt")
+	os.Remove("./out.txt")
+	return out, err
 }
