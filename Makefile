@@ -38,6 +38,7 @@ DISTRIBUTION_K8S_ARTIFACT := k8s-artefacts.tar.gz
 MAIN_PACKAGES := cli
 
 VERSION ?= $(GIT_REVISION)
+INSTALLER_VERSION ?= $(GIT_REVISION)
 
 # Go build time flags
 GO_LDFLAGS := -X $(PROJECT_PKG)/components/cli/pkg/version.buildVersion=$(VERSION)
@@ -94,14 +95,14 @@ build-ubuntu-installer: copy-k8s-artefacts
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
 	mkdir -p files; \
 	cp -r ../k8s-artefacts files/; \
-	bash build-ubuntu-x64.sh $(VERSION)
+	bash build-ubuntu-x64.sh $(INSTALLER_VERSION)
 
 .PHONY: build-mac-installer
 build-mac-installer: copy-k8s-artefacts
 	cd ${PROJECT_ROOT}/installers/macOS-x64; \
 	mkdir -p files; \
 	cp -r ../k8s-artefacts files/; \
-	bash build-macos-x64.sh $(VERSION)
+	bash build-macos-x64.sh $(INSTALLER_VERSION)
 
 .PHONY: docker
 docker:
