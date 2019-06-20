@@ -19,14 +19,11 @@
 package commands
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 func RunSetupListClusters() error {
@@ -37,39 +34,16 @@ func RunSetupListClusters() error {
 }
 
 func getContexts() []string {
-	contexts := []string{}
-	cmd := exec.Command(constants.KUBECTL, "config", "view", "-o", "json")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-
-	execError := ""
-	go func() {
-		for stderrScanner.Scan() {
-			execError += stderrScanner.Text()
-		}
-	}()
-	err := cmd.Start()
+	var contexts []string
+	jsonOutput := &kubectl.Config{}
+	output, err := kubectl.GetContexts()
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to select an option", err)
+		util.ExitWithErrorMessage("Error getting context list", err)
 	}
-	err = cmd.Wait()
+	err = json.Unmarshal(output, jsonOutput)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while configuring cellery", err)
+		util.ExitWithErrorMessage("Error trying to unmarshal contexts output", err)
 	}
-	jsonOutput := &Config{}
-	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson != nil {
-		fmt.Println(errJson)
-	}
-
 	for i := 0; i < len(jsonOutput.Contexts); i++ {
 		contexts = append(contexts, jsonOutput.Contexts[i].Name)
 	}

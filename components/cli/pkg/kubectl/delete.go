@@ -70,6 +70,7 @@ func DeleteNameSpace(nameSpace string) error {
 		nameSpace,
 		"--ignore-not-found",
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
@@ -82,6 +83,7 @@ func DeleteAllCells() error {
 		"--all",
 		"--ignore-not-found",
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
@@ -105,6 +107,7 @@ func DeletePersistedVolume(persistedVolume string) error {
 		persistedVolume,
 		"--ignore-not-found",
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }

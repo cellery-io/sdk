@@ -32,6 +32,7 @@ func newSetupListClustersCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunSetupListClusters()
 		},
+		Example: "  cellery setup list cluster",
 	}
 	return cmd
 }

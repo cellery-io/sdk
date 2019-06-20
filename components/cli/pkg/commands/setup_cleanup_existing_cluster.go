@@ -25,7 +25,6 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -80,20 +79,7 @@ func cleanupExistingCluster() error {
 			util.ExitWithErrorMessage("failed to select option", err)
 		}
 		spinner := util.StartNewSpinner("Cleaning up cluster")
-
-		kubectl.DeleteNameSpace("cellery-system")
-		if removeKnative {
-			kubectl.DeleteNameSpace("knative-serving")
-		}
-		if removeIstio {
-			kubectl.DeleteNameSpace("istio-system")
-		}
-		if removeIngress {
-			kubectl.DeleteNameSpace("ingress-nginx")
-		}
-		kubectl.DeleteAllCells()
-		kubectl.DeletePersistedVolume("wso2apim-local-pv")
-		kubectl.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
+		cleanupCluster(removeKnative, removeIstio, removeIngress)
 		spinner.Stop(true)
 	}
 	return nil
@@ -111,21 +97,27 @@ func RunCleanupExisting(removeKnative, removeIstio, removeIngress, confirmed boo
 	}
 	if confirmCleanup {
 		spinner := util.StartNewSpinner("Cleaning up cluster")
-
-		kubectl.DeleteNameSpace("cellery-system")
 		if removeKnative {
 			kubectl.DeleteNameSpace("knative-serving")
 		}
-		if removeIstio {
-			kubectl.DeleteNameSpace("istio-system")
-		}
-		if removeIngress {
-			kubectl.DeleteNameSpace("ingress-nginx")
-		}
-		kubectl.DeleteAllCells()
-		kubectl.DeletePersistedVolume("wso2apim-local-pv")
-		kubectl.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
+		cleanupCluster(removeKnative, removeIstio, removeIngress)
 		spinner.Stop(true)
 	}
 	return nil
+}
+
+func cleanupCluster(removeKnative, removeIstio, removeIngress bool) {
+	kubectl.DeleteNameSpace("cellery-system")
+	if removeKnative {
+		kubectl.DeleteNameSpace("knative-serving")
+	}
+	if removeIstio {
+		kubectl.DeleteNameSpace("istio-system")
+	}
+	if removeIngress {
+		kubectl.DeleteNameSpace("ingress-nginx")
+	}
+	kubectl.DeleteAllCells()
+	kubectl.DeletePersistedVolume("wso2apim-local-pv")
+	kubectl.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
 }
