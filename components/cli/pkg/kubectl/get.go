@@ -163,3 +163,21 @@ func GetServices(cellName string) (Services, error) {
 	err = json.Unmarshal(out, &jsonOutput)
 	return jsonOutput, err
 }
+
+func GetGateways(cellName string) (Gateway, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"gateways",
+		cellName+"--gateway",
+		"-o", ""+
+			"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := Gateway{}
+	out, err := getCommandOutput(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal([]byte(out), &jsonOutput)
+	return jsonOutput, err
+}
