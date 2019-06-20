@@ -27,6 +27,7 @@ public class CelleryConstants {
     public static final String RESOURCE_DEFINITION = "ResourceDefinition";
     public static final String API_DEFINITION = "ApiDefinition";
     public static final String REFERENCE_DEFINITION = "Reference";
+    public static final String IMAGE_NAME_DEFINITION = "ImageName";
     public static final String CELLERY_REPO_PATH =
             System.getProperty("user.home") + File.separator + ".cellery" + File.separator + "repo";
 
@@ -84,4 +85,6 @@ public class CelleryConstants {
     public static final String ANNOTATION_CELL_IMAGE_NAME = "mesh.cellery.io/cell-image-name";
     public static final String ANNOTATION_CELL_IMAGE_VERSION = "mesh.cellery.io/cell-image-version";
     public static final String ANNOTATION_CELL_IMAGE_DEPENDENCIES = "mesh.cellery.io/cell-dependencies";
+
+    public static final String SERVICE_TYPE_JOB = "Job";
 }

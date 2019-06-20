@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -17,24 +17,22 @@
  */
 package io.cellery.models;
 
-import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.ResourceRequirements;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Service Template Spec.
+ * TestSuite class.
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ServiceTemplateSpec {
-    private int replicas;
-    private int servicePort;
-    private Container container;
-    private AutoScaling autoscaling;
-    private ResourceRequirements resources;
-    private String protocol;
-    private String type;
+public class TestSuite {
+    private String name;
+    private List<Test> tests;
+    private List<Dependency> dependencies;
+
+    public TestSuite() {
+        this.tests = new ArrayList<>();
+        this.dependencies = new ArrayList<>();
+    }
 }

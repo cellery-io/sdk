@@ -940,6 +940,19 @@ func RunMethodExists(sourceFile string) (bool, error) {
 		string(sourceFileBytes))
 }
 
+// TestMethodExists checks if the test method exists in ballerina file
+func TestMethodExists(sourceFile string) (bool, error) {
+	sourceFileBytes, err := ioutil.ReadFile(sourceFile)
+	if err != nil {
+		return false, err
+	}
+
+	// Check whether test method exists
+	return regexp.MatchString(
+		`.*public(\s)+function(\s)+test(\s)*\((s)*cellery:ImageName(\s)+.+(\s)*,(\s)*map<cellery:ImageName>(\s)+.+(\s)*\)(\s)+returns(\s)+error\\?`,
+		string(sourceFileBytes))
+}
+
 func ReplaceInFile(srcFile, oldString, newString string, replaceCount int) error {
 	input, err := ioutil.ReadFile(srcFile)
 	if err != nil {
@@ -1234,6 +1247,11 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 		ballerinaMain = `
 public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
 	return run(iName, instances);
+}`
+	} else if action == "test" {
+		ballerinaMain = `
+public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+	return test(iName, instances);
 }`
 	} else {
 		return "", errors.New("invalid action:" + action)

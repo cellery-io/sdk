@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -17,24 +17,28 @@
  */
 package io.cellery.models;
 
-import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.ResourceRequirements;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Service Template Spec.
+ * Cell Test.
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ServiceTemplateSpec {
-    private int replicas;
-    private int servicePort;
-    private Container container;
-    private AutoScaling autoscaling;
-    private ResourceRequirements resources;
-    private String protocol;
-    private String type;
+public class Test {
+
+    private String name;
+    private String source;
+    private Map<String, String> labels;
+    private int containerPort;
+    private Map<String, String> envVars;
+
+    public Test() {
+        envVars = new HashMap<>();
+    }
+
+    public void addEnv(String key, String value) {
+        this.envVars.put(key, value);
+    }
 }

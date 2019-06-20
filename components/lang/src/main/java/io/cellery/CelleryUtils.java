@@ -21,6 +21,7 @@ import com.esotericsoftware.yamlbeans.YamlWriter;
 import io.cellery.models.API;
 import io.cellery.models.Component;
 import io.cellery.models.OIDC;
+import io.cellery.models.Test;
 import io.cellery.models.Web;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.HTTPHeader;
@@ -38,13 +39,17 @@ import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +59,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -246,6 +254,23 @@ public class CelleryUtils {
      * Process envVars and add to component.
      *
      * @param envVars   Map of EnvVars
+     * @param test targetComponent
+     */
+    public static void processEnvVars(LinkedHashMap<?, ?> envVars, Test test) {
+        envVars.forEach((k, v) -> {
+            if (((BMap) v).getMap().get("value").toString().isEmpty()) {
+                //value is empty for envVar
+                test.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);
+            } else {
+                test.addEnv(k.toString(), ((BMap) v).getMap().get("value").toString());
+            }
+        });
+    }
+
+    /**
+     * Process envVars and add to test.
+     *
+     * @param envVars   Map of EnvVars
      * @param component targetComponent
      */
     public static void processEnvVars(LinkedHashMap<?, ?> envVars, Component component) {
@@ -343,13 +368,35 @@ public class CelleryUtils {
     }
 
     /**
-     * Print a Warring message.
+     * Print a Warning message.
      *
      * @param message warning message
      */
     public static void printWarning(String message) {
         PrintStream out = System.out;
         out.println("Warning: " + message);
+    }
+
+    /**
+     * Print a Info message.
+     *
+     * @param message info message
+     */
+    public static void printInfo(String message) {
+        PrintStream out = System.out;
+        out.println("Info: " + message);
+    }
+
+    /**
+     * Print a Debug message.
+     *
+     * @param message debug message
+     */
+    public static void printDebug(String message) {
+        if ("true".equalsIgnoreCase(System.getenv("DEBUG_MODE"))) {
+            PrintStream out = System.out;
+            out.println("Debug: " + message);
+        }
     }
 
     /**
@@ -380,4 +427,97 @@ public class CelleryUtils {
                     ". " + e.getMessage());
         }
     }
+
+    /**
+     * Interface to print shell command output.
+     */
+    public interface Writer {
+
+        /**
+         * Called when a newline should be printed.
+         *
+         * @param msg message to write
+         */
+        void writeMessage(String msg);
+    }
+
+    /**
+     * Executes a shell command.
+     *
+     * @param command command to execute
+     * @param workingDirectory working directory
+     * @param stdout stdout of the command
+     * @param stderr stderr of the command
+     * @return stdout/stderr
+     */
+    public static String executeShellCommand(String command, Path workingDirectory, Writer stdout, Writer stderr) {
+        StringBuilder stdOut = new StringBuilder();
+        StringBuilder stdErr = new StringBuilder();
+        ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", "-c", command);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        int exitCode;
+        try {
+            if (workingDirectory != null) {
+                File workDirectory = workingDirectory.toFile();
+                if (workDirectory.exists()) {
+                    processBuilder.directory(workDirectory);
+                }
+            }
+            Process process = processBuilder.start();
+
+            StreamGobbler outputStreamGobbler = new StreamGobbler(process.getInputStream(), msg -> {
+                stdOut.append(msg);
+                stdout.writeMessage(msg);
+            });
+            StreamGobbler errorStreamGobbler = new StreamGobbler(process.getErrorStream(), msg -> {
+                stdErr.append(msg);
+                stderr.writeMessage(msg);
+            });
+
+            executor.execute(outputStreamGobbler);
+            executor.execute(errorStreamGobbler);
+
+            exitCode = process.waitFor();
+            if (exitCode > 0) {
+                throw new BallerinaException("Command " + command + " exited with exit code " + exitCode);
+            }
+
+        } catch (IOException e) {
+            throw new BallerinaException(
+                    "Error occurred while executing the command '" + command + "', " + "from directory '"
+                            + workingDirectory.toString(), e);
+        } catch (InterruptedException e) {
+            throw new BallerinaException(
+                    "InterruptedException occurred while executing the command '" + command + "', " + "from directory '"
+                            + workingDirectory.toString(), e);
+        } finally {
+            executor.shutdownNow();
+        }
+
+        if (stdOut.toString().isEmpty()) {
+            return stdErr.toString();
+        }
+        return stdOut.toString();
+    }
+
+    /**
+     * StreamGobbler to handle process builder output.
+     */
+    private static class StreamGobbler implements Runnable {
+        private InputStream inputStream;
+        private Consumer<String> consumer;
+
+        StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+            this.inputStream = inputStream;
+            this.consumer = consumer;
+        }
+
+        @Override
+        public void run() {
+            new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines()
+                    .forEach(consumer);
+        }
+    }
+
 }

@@ -19,6 +19,7 @@ public class CellImage {
     private String cellVersion;
     private List<String> dockerImages;
     private List<Dependency> dependencies;
+    private Test test;
 
     public CellImage() {
         componentNameToComponentMap = new HashMap<>();
