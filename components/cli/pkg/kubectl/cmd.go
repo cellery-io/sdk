@@ -81,3 +81,31 @@ func getCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
 	os.Remove("./out.txt")
 	return out, err
 }
+
+func printCommandOutput(cmd *exec.Cmd) (string, error) {
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	output := ""
+	go func() {
+		for stdoutScanner.Scan() {
+			output += stdoutScanner.Text()
+			fmt.Println(stdoutScanner.Text())
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			output += stdoutScanner.Text()
+		}
+	}()
+	err := cmd.Start()
+	if err != nil {
+		return output, fmt.Errorf(output)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return output, fmt.Errorf(output)
+	}
+	return output, nil
+}

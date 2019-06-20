@@ -19,54 +19,30 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
-	"os/exec"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunLogs(cellName, componentName string) {
 	if componentName == "" {
-		cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME+"/cell="+cellName, "--all-containers=true")
-		executeLogsCommand(cmd, cellName, componentName)
+		logs, err := kubectl.GetCellLogs(cellName)
+		if err != nil {
+			util.ExitWithErrorMessage(fmt.Sprintf("Error getting logs for instance %s", cellName), err)
+		}
+		if logs == "" {
+			util.ExitWithErrorMessage(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find cell " +
+				"instance %s", cellName))
+		}
 	} else {
-		cmd := exec.Command("kubectl", "logs", "-l", constants.GROUP_NAME+"/service="+cellName+"--"+componentName, "-c", componentName)
-		executeLogsCommand(cmd, cellName, componentName)
-	}
-}
-
-func executeLogsCommand(cmd *exec.Cmd, cellName, componentName string) {
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output += stdoutScanner.Text()
-			fmt.Println(stdoutScanner.Text())
+		logs, err := kubectl.GetComponentLogs(cellName, componentName)
+		if err != nil {
+			util.ExitWithErrorMessage(fmt.Sprintf("Error getting logs for component %s of instance %s",
+				componentName, cellName), err)
 		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching logs", err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching logs", err)
-	}
-	if output == "" {
-		if componentName == "" {
-			fmt.Printf("Cannot find cell: %v \n", cellName)
-		} else {
-			fmt.Printf("Cannot find component: %v of cell: %v \n", componentName, cellName)
+		if logs == "" {
+			util.ExitWithErrorMessage(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component " +
+				"%s of cell instance %s", componentName, cellName))
 		}
 	}
 }
