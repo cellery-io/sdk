@@ -1064,35 +1064,6 @@ func ReadCellImageYaml(cellImage string) []byte {
 	return cellYamlContent
 }
 
-// executeKubeCtlCmd executes a command using the kubectl
-func ExecuteKubeCtlCmd(arg ...string) (string, error) {
-	var output string
-	cmd := exec.Command(constants.KUBECTL, arg...)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			output += stdoutScanner.Text()
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			output += stderrScanner.Text()
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		return output, err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return output, err
-	}
-	return output, nil
-}
-
 func WaitForRuntime() {
 	spinner := StartNewSpinner("Checking cluster status...")
 	err := kubectl.WaitForCluster(time.Hour)

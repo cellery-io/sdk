@@ -33,10 +33,6 @@ type CellImage struct {
 	ImageVersion string
 }
 
-type CellList struct {
-	Items []Cell `json:"items"`
-}
-
 type Cell struct {
 	CellMetaData CellMetaData `json:"metadata"`
 	CellSpec     CellSpec     `json:"spec"`
@@ -72,52 +68,6 @@ type CellStatus struct {
 	Status       string `json:"status"`
 	Gateway      string `json:"gatewayHostname"`
 	ServiceCount int    `json:"serviceCount"`
-}
-
-type CellPods struct {
-	Items []Pod `json:"items"`
-}
-
-type Pod struct {
-	MetaData  PodMetaData `json:"metadata"`
-	PodStatus PodStatus   `json:"status"`
-}
-
-type PodMetaData struct {
-	Name string `json:"name"`
-}
-
-type PodStatus struct {
-	Phase      string         `json:"phase"`
-	StartTime  string         `json:"startTime"`
-	Conditions []PodCondition `json:"conditions"`
-}
-
-type PodCondition struct {
-	Type               string `json:"type"`
-	Status             string `json:"status"`
-	LastTransitionTime string `json:"lastTransitionTime"`
-}
-
-type Service struct {
-	Items []ServiceItem `json:"items"`
-}
-
-type ServiceItem struct {
-	Metadata ServiceMetaData `json:"metadata"`
-	Spec     ServiceSpec     `json:"spec"`
-}
-
-type ServiceMetaData struct {
-	Name string `json:"name"`
-}
-
-type ServiceSpec struct {
-	Ports []ServicePort `json:"ports"`
-}
-
-type ServicePort struct {
-	Port int `json:"port"`
 }
 
 type Gateway struct {
