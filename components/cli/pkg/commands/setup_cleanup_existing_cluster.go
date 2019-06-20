@@ -67,6 +67,10 @@ func cleanupExistingCluster() error {
 		util.ExitWithErrorMessage("failed to select option", err)
 	}
 	if confirmCleanup {
+		removeKnative, _, err := util.GetYesOrNoFromUser("Remove knative-serving", false)
+		if err != nil {
+			util.ExitWithErrorMessage("failed to select option", err)
+		}
 		removeIstio, _, err := util.GetYesOrNoFromUser("Remove istio", false)
 		if err != nil {
 			util.ExitWithErrorMessage("failed to select option", err)
@@ -78,6 +82,9 @@ func cleanupExistingCluster() error {
 		spinner := util.StartNewSpinner("Cleaning up cluster")
 
 		kubectl.DeleteNameSpace("cellery-system")
+		if removeKnative {
+			kubectl.DeleteNameSpace("knative-serving")
+		}
 		if removeIstio {
 			kubectl.DeleteNameSpace("istio-system")
 		}
@@ -92,7 +99,7 @@ func cleanupExistingCluster() error {
 	return nil
 }
 
-func RunCleanupExisting(removeIstio, removeIngress, confirmed bool) error {
+func RunCleanupExisting(removeKnative, removeIstio, removeIngress, confirmed bool) error {
 	var err error
 	var confirmCleanup = confirmed
 	if !confirmed {
@@ -106,6 +113,9 @@ func RunCleanupExisting(removeIstio, removeIngress, confirmed bool) error {
 		spinner := util.StartNewSpinner("Cleaning up cluster")
 
 		kubectl.DeleteNameSpace("cellery-system")
+		if removeKnative {
+			kubectl.DeleteNameSpace("knative-serving")
+		}
 		if removeIstio {
 			kubectl.DeleteNameSpace("istio-system")
 		}
