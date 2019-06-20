@@ -38,6 +38,7 @@ func GetDeploymentNames(namespace string) ([]string, error) {
 		"-n", namespace,
 	)
 	out, err := cmd.Output()
+	displayVerboseOutput(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +46,15 @@ func GetDeploymentNames(namespace string) ([]string, error) {
 }
 
 func GetMasterNodeName() (string, error) {
-	cmd := exec.Command(constants.KUBECTL, "get", "node", "--selector", "node-role.kubernetes.io/master",
-		"-o", "json")
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"node",
+		"--selector",
+		"node-role.kubernetes.io/master",
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -70,6 +78,7 @@ func GetNodes() (Node, error) {
 		"-o",
 		"json",
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	jsonOutput := Node{}

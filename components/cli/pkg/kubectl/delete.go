@@ -34,6 +34,7 @@ func DeleteFileWithNamespace(file, namespace string) error {
 		"--ignore-not-found",
 		"-n", namespace,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
@@ -46,6 +47,7 @@ func DeleteFile(file string) error {
 		file,
 		"--ignore-not-found",
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }

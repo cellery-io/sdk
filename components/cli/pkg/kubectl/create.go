@@ -44,6 +44,7 @@ func CreateFile(file string) error {
 		"-f",
 		file,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
@@ -58,6 +59,7 @@ func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
 		confFile,
 		"-n", namespace,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
@@ -86,6 +88,7 @@ func CreateClusterRoleBinding(clusterRole, user string) error {
 		"--user",
 		user,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
