@@ -40,7 +40,7 @@ func WaitForCondition(condition string, timeoutSeconds int, resourceName string,
 		resourceName,
 		"-n", namespace,
 	)
-	//cmd.Stderr = os.Stderr
+	displayVerboseOutput(cmd)
 	return cmd.Run()
 }
 

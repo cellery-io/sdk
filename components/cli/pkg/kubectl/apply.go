@@ -44,6 +44,7 @@ func ApplyFile(file string) error {
 		"-f",
 		file,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }

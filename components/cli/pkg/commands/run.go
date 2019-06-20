@@ -35,11 +35,11 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -946,25 +946,17 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		return fmt.Errorf("failed to find yaml files in directory %s due to %v", celleryDir, err)
 	}
 	for _, v := range cellYamls {
-		output, err := util.ExecuteKubeCtlCmd(constants.APPLY, "-f", v)
+		err := kubectl.ApplyFile(v)
 		if err != nil {
-			return fmt.Errorf("failed to create k8s artifacts %s from image %s due to %v", v, instanceName, fmt.Errorf(output))
+			return fmt.Errorf("failed to create k8s artifacts %s from image %s due to %v", v, instanceName, err)
 		}
 	}
 
 	// Waiting for the Cell to be Ready
-	for true {
-		output, err := util.ExecuteKubeCtlCmd("wait", "--for", "condition=Ready", "cells.mesh.cellery.io/"+instanceName,
-			"--timeout", "30m")
-		if err != nil {
-			if !strings.Contains(output, "timed out") {
-				return fmt.Errorf("failed to wait for Cell instance %s from image %s/%s:%s due to %v", instanceName,
-					runningNode.MetaData.Organization, runningNode.MetaData.Name, runningNode.MetaData.Version,
-					fmt.Errorf(output))
-			}
-		} else {
-			break
-		}
+	err = kubectl.WaitForCondition("Ready", 30*60, "cells.mesh.cellery.io/"+instanceName,
+		"default")
+	if err != nil {
+		return fmt.Errorf("error waiting for instance %s to be ready: %v", instanceName, err)
 	}
 	return nil
 }

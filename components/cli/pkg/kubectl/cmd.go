@@ -25,9 +25,11 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"syscall"
 )
 
 func getCommandOutput(cmd *exec.Cmd) (string, error) {
+	exitCode := 0
 	var output string
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
@@ -45,16 +47,25 @@ func getCommandOutput(cmd *exec.Cmd) (string, error) {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		return output, fmt.Errorf(output)
+		return output, err
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return output, fmt.Errorf(output)
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exit, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+				exitCode = exit.ExitStatus()
+			}
+			if exitCode == 1 {
+				return output, fmt.Errorf(output)
+			}
+		}
+		return output, err
 	}
 	return output, nil
 }
 
 func getCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
+	exitCode := 0
 	var output string
 	outfile, err := os.Create("./out.txt")
 	if err != nil {
@@ -71,11 +82,19 @@ func getCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
 	}()
 	err = cmd.Start()
 	if err != nil {
-		return nil, fmt.Errorf(output)
+		return nil, err
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return nil, fmt.Errorf(output)
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exit, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+				exitCode = exit.ExitStatus()
+			}
+			if exitCode == 1 {
+				return nil, fmt.Errorf(output)
+			}
+		}
+		return nil, err
 	}
 	out, err := ioutil.ReadFile("./out.txt")
 	os.Remove("./out.txt")
@@ -83,6 +102,7 @@ func getCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
 }
 
 func printCommandOutput(cmd *exec.Cmd) (string, error) {
+	exitCode := 0
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
 	output := ""
@@ -101,11 +121,19 @@ func printCommandOutput(cmd *exec.Cmd) (string, error) {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		return output, fmt.Errorf(output)
+		return output, err
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return output, fmt.Errorf(output)
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exit, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+				exitCode = exit.ExitStatus()
+			}
+			if exitCode == 1 {
+				return output, fmt.Errorf(output)
+			}
+		}
+		return output, err
 	}
 	return output, nil
 }

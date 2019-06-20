@@ -20,8 +20,9 @@
 package kubectl
 
 import (
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"os/exec"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 func GetCellLogs(cellName string) (string, error) {

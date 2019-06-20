@@ -20,6 +20,7 @@ package commands
 
 import (
 	"fmt"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -31,7 +32,7 @@ func RunLogs(cellName, componentName string) {
 			util.ExitWithErrorMessage(fmt.Sprintf("Error getting logs for instance %s", cellName), err)
 		}
 		if logs == "" {
-			util.ExitWithErrorMessage(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find cell " +
+			util.ExitWithErrorMessage(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find cell "+
 				"instance %s", cellName))
 		}
 	} else {
@@ -41,7 +42,7 @@ func RunLogs(cellName, componentName string) {
 				componentName, cellName), err)
 		}
 		if logs == "" {
-			util.ExitWithErrorMessage(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component " +
+			util.ExitWithErrorMessage(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component "+
 				"%s of cell instance %s", componentName, cellName))
 		}
 	}
