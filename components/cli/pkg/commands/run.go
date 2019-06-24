@@ -33,6 +33,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 
 	"github.com/olekukonko/tablewriter"
@@ -848,7 +850,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			}
 
 			//Retrieve the cellery cli docker instance status.
-			cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime="+constants.CELLERY_RELEASE_VERSION,
+			cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime="+version.BuildVersion(),
 				"--filter", "label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
 
 			out, err := cmdDockerPs.Output()
@@ -858,12 +860,12 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 
 			if string(out) == "" {
 
-				cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+constants.CELLERY_RELEASE_VERSION,
+				cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+version.BuildVersion(),
 					"--mount", "type=bind,source="+currentDir+",target=/home/cellery/src",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
-					"wso2cellery/ballerina-runtime:"+constants.CELLERY_RELEASE_VERSION, "sleep", "600",
+					"wso2cellery/ballerina-runtime:"+version.BuildVersion(), "sleep", "600",
 				)
 
 				out, err = cmdDockerRun.Output()
