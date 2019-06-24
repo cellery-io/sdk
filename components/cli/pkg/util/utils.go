@@ -1255,16 +1255,26 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 		return "", errors.New("invalid action:" + action)
 	}
 
-	input, err := ioutil.ReadFile(file)
+	originalFilePath, _ := filepath.Abs(file)
+	input, err := ioutil.ReadFile(originalFilePath)
+	if err != nil {
+		return "", err
+	}
+	var newFileContent = string(input) + ballerinaMain
+
+	balFileName := filepath.Base(originalFilePath)
+	var newFileName = strings.Replace(balFileName, ".bal", "", 1) + "_" + action + ".bal"
+	originalFileDir := filepath.Dir(originalFilePath)
+	targetAbs := filepath.Join(originalFileDir, "target")
+	err = os.Mkdir(targetAbs, 0777)
+	if err != nil {
+		return "", err
+	}
+	targetFilePath := filepath.Join(targetAbs, newFileName)
+	err = ioutil.WriteFile(targetFilePath, []byte(newFileContent), 0644)
 	if err != nil {
 		return "", err
 	}
 
-	var newFileContent = string(input) + ballerinaMain
-	var newFileName = strings.Replace(file, ".bal", "", 1) + "_" + action + ".bal"
-	err = ioutil.WriteFile(newFileName, []byte(newFileContent), 0644)
-	if err != nil {
-		return "", err
-	}
-	return newFileName, nil
+	return targetFilePath, nil
 }

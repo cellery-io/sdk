@@ -810,7 +810,6 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		if err != nil {
 			return fmt.Errorf("failed to start the Cell Image %s due to %v", imageTag, err)
 		}
-
 		tempRunFileName, err := util.CreateTempExecutableBalFile(balFilePath, "run")
 		if err != nil {
 			util.ExitWithErrorMessage("Error executing ballerina file", err)
@@ -924,10 +923,10 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			return fmt.Errorf("failed to execute run method in Cell instance %s due to %v", instanceName, err)
 		}
 		err = cmd.Wait()
-		defer os.Remove(tempRunFileName)
 		if err != nil {
 			return fmt.Errorf("failed to execute run method in Cell instance %s due to %v", instanceName, err)
 		}
+		_ = os.Remove(tempRunFileName)
 	}
 
 	// Update the Cell instance name
