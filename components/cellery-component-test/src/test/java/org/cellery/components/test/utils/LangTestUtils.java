@@ -299,7 +299,11 @@ public class LangTestUtils {
 
     private static String createExecutableBalFiles(Path sourcePath, String fileName, String action) throws IOException {
         String executableBalName = fileName.replace(BAL, "") + "_" + action + BAL;
-        Path executableBalPath = sourcePath.resolve(executableBalName);
+        Path targetDir = sourcePath.resolve("target");
+        if (!Files.exists(targetDir)) {
+            Files.createDirectory(targetDir);
+        }
+        Path executableBalPath = targetDir.resolve(executableBalName);
         Files.copy(sourcePath.resolve(fileName), executableBalPath);
         String balMain;
         if (action.equals(BUILD)) {
@@ -318,6 +322,6 @@ public class LangTestUtils {
             throw new IllegalArgumentException("Cell action is not supported");
         }
         Files.write(executableBalPath, balMain.getBytes(), StandardOpenOption.APPEND);
-        return executableBalName;
+        return executableBalPath.toAbsolutePath().toString();
     }
 }
