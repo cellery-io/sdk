@@ -26,6 +26,7 @@ import io.cellery.models.Dependency;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.OIDC;
 import io.cellery.models.ServiceTemplate;
+import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.internal.SerializationUtils;
@@ -108,6 +109,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 updateEnvVar(instanceName, serviceTemplate, updatedComponent, dependencyInfo);
                 // Update Gateway Config
                 updateGatewayConfig(instanceName, destinationPath, cell, updatedComponent);
+                // Update liveness and readiness probe
+                updateProbes(serviceTemplate, updatedComponent);
             });
             writeToFile(removeTags(toYaml(cell)), cellYAMLPath);
         } catch (IOException | BallerinaException e) {
@@ -151,6 +154,38 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             gatewaySpec.setHost(web.getVhost());
             gatewaySpec.addHttpAPI(Collections.singletonList(web.getHttpAPI()));
         });
+    }
+
+    /**
+     * Update Probe configurations.
+     *
+     * @param serviceTemplate  service Template object
+     * @param updatedComponent updated component to process env var
+     */
+    private void updateProbes(ServiceTemplate serviceTemplate, Component updatedComponent) {
+        Probe livenessProbe = updatedComponent.getLivenessProbe();
+        // Override values with updated values
+        if (livenessProbe != null) {
+            Probe probe = serviceTemplate.getSpec().getContainer().getLivenessProbe();
+            probe.setInitialDelaySeconds(livenessProbe.getInitialDelaySeconds());
+            probe.setFailureThreshold(livenessProbe.getFailureThreshold());
+            probe.setPeriodSeconds(livenessProbe.getPeriodSeconds());
+            probe.setSuccessThreshold(livenessProbe.getSuccessThreshold());
+            probe.setTimeoutSeconds(livenessProbe.getTimeoutSeconds());
+            serviceTemplate.getSpec().getContainer().setLivenessProbe(probe);
+        }
+
+        Probe readinessProbe = updatedComponent.getReadinessProbe();
+        // Override values with updated values
+        if (readinessProbe != null) {
+            Probe probe = serviceTemplate.getSpec().getContainer().getReadinessProbe();
+            probe.setInitialDelaySeconds(readinessProbe.getInitialDelaySeconds());
+            probe.setFailureThreshold(readinessProbe.getFailureThreshold());
+            probe.setPeriodSeconds(readinessProbe.getPeriodSeconds());
+            probe.setSuccessThreshold(readinessProbe.getSuccessThreshold());
+            probe.setTimeoutSeconds(readinessProbe.getTimeoutSeconds());
+            serviceTemplate.getSpec().getContainer().setLivenessProbe(probe);
+        }
     }
 
     /**
