@@ -43,6 +43,5 @@ func displayVerboseOutput(cmd *exec.Cmd) {
 	// If running on verbose mode expose the kubectl commands.
 	if verboseMode {
 		fmt.Println(verboseColor(getCommandString(cmd)))
-		fmt.Println()
 	}
 }

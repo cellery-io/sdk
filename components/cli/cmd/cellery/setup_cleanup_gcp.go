@@ -53,6 +53,7 @@ func newSetupCleanupGcpCommand() *cobra.Command {
 			}
 			commands.RunCleanupGcp(constants.GCP_CLUSTER_NAME + uniqueNumber)
 		},
+		Example: "  cellery setup cleanup gcp <cluster_name>",
 	}
 	return cmd
 }

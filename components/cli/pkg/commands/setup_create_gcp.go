@@ -265,15 +265,6 @@ func configureGCPCredentials() string {
 		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS_OLD))
 	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), filepath.Join(util.UserHomeDir(),
 		constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS))
-	validateGcpConfigFile([]string{filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP,
-		constants.ARTIFACTS, constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.CONF, constants.DATA_SOURCES,
-		constants.MASTER_DATA_SOURCES_XML),
-		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS,
-			constants.K8S_ARTIFACTS, constants.OBSERVABILITY, constants.SP, constants.CONF, constants.DEPLOYMENT_YAML),
-		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS,
-			constants.K8S_ARTIFACTS, constants.GLOBAL_APIM, constants.ARTIFACTS_PERSISTENT_VOLUME_YAML),
-		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS,
-			constants.K8S_ARTIFACTS, constants.MYSQL, constants.DB_SCRIPTS, constants.INIT_SQL)})
 	// Get the GCP cluster data
 	projectName, accountName, region, zone = getGcpData()
 	var gcpBucketName = constants.GCP_BUCKET_NAME + uniqueNumber
@@ -519,16 +510,6 @@ func updateInstance(service *sqladmin.Service, projectId string, instanceName st
 	_, err := service.Instances.Patch(projectId, instanceName, newDbInstance).Do()
 	if err != nil {
 		fmt.Printf("Error updating instance :%v", err)
-	}
-	return nil
-}
-
-func validateGcpConfigFile(configFiles []string) error {
-	for i := 0; i < len(configFiles); i++ {
-		fileExist, fileExistError := util.FileExists(configFiles[i])
-		if fileExistError != nil || !fileExist {
-			util.ExitWithErrorMessage("Failed validate config file", fmt.Errorf("Cannot find file : %v", configFiles[i]))
-		}
 	}
 	return nil
 }

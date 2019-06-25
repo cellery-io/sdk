@@ -33,14 +33,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
-
-
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)
