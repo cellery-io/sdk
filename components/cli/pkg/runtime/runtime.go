@@ -62,27 +62,33 @@ func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, ha
 	}
 	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, artifactsPath); err != nil {
 		spinner.Stop(false)
-		fmt.Printf("Error updating file: %v", err)
+		return fmt.Errorf("error updating mysql credentials: %v", err)
 	}
 	if err := updateInitSql(dbUserName, dbPassword, artifactsPath); err != nil {
 		spinner.Stop(false)
-		fmt.Printf("Error updating file: %v", err)
+		return fmt.Errorf("error updating mysql init script: %v", err)
 	}
-	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
+
 	if isPersistentVolume && !isGcpRuntime() {
-		labelMasterNode(errorDeployingCelleryRuntime)
+		nodeName, err := kubectl.GetMasterNodeName()
+		if err != nil {
+			return fmt.Errorf("error getting master node name: %v", err)
+		}
+		if err := kubectl.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
+			return fmt.Errorf("error applying master node lable: %v", err)
+		}
 	}
 
 	// Setup Cellery namespace
 	spinner.SetNewAction("Setting up cellery name space")
 	if err := CreateCelleryNameSpace(); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+		return fmt.Errorf("error creating cellery namespace: %v", err)
 	}
 
 	// Apply Istio CRDs
 	spinner.SetNewAction("Applying istio crds")
 	if err := ApplyIstioCrds(artifactsPath); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+		return fmt.Errorf("error creating istio crds: %v", err)
 	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
 	time.Sleep(20 * time.Second)
@@ -91,48 +97,69 @@ func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, ha
 	spinner.SetNewAction("Enabling istio injection")
 	if err := kubectl.ApplyLable("namespace", "default", "istio-injection=enabled",
 		true); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+		return fmt.Errorf("error enabling istio injection: %v", err)
 	}
 
 	// Install istio
 	spinner.SetNewAction("Installing istio")
 	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+		return fmt.Errorf("error installing istio: %v", err)
 	}
 
 	// Install knative
 	spinner.SetNewAction("Installing Knative serving")
 	if err := InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+		return fmt.Errorf("error installing knative: %v", err)
 	}
 
 	// Apply controller CRDs
 	spinner.SetNewAction("Creating controller")
 	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
+		return fmt.Errorf("error creating cellery controller: %v", err)
 	}
 
 	spinner.SetNewAction("Configuring mysql")
-	AddMysql(artifactsPath, isPersistentVolume)
-
-	CreateGlobalGatewayConfigMaps(artifactsPath)
-	if isPersistentVolume {
-		createPersistentVolume(artifactsPath, hasNfsStorage)
+	if err := AddMysql(artifactsPath, isPersistentVolume); err != nil {
+		return fmt.Errorf("error configuring mysql: %v", err)
 	}
-	CreateObservabilityConfigMaps(artifactsPath)
-	CreateIdpConfigMaps(artifactsPath)
+
+	spinner.SetNewAction("Creating ConfigMaps")
+	if err := CreateGlobalGatewayConfigMaps(artifactsPath); err != nil {
+		return fmt.Errorf("error creating gateway configmaps: %v", err)
+	}
+	if err := CreateObservabilityConfigMaps(artifactsPath); err != nil {
+		return fmt.Errorf("error creating observability configmaps: %v", err)
+	}
+	if err := CreateIdpConfigMaps(artifactsPath); err != nil {
+		return fmt.Errorf("error creating idp configmaps: %v", err)
+	}
+
+	if isPersistentVolume {
+		spinner.SetNewAction("Creating Persistent Volume")
+		if err := createPersistentVolume(artifactsPath, hasNfsStorage); err != nil {
+			return fmt.Errorf("error creating persistent volume: %v", err)
+		}
+	}
 
 	if isCompleteSetup {
 		spinner.SetNewAction("Adding apim")
-		addApim(artifactsPath, isPersistentVolume)
+		if err := addApim(artifactsPath, isPersistentVolume); err != nil {
+			return fmt.Errorf("error creating apim deployment: %v", err)
+		}
 		spinner.SetNewAction("Adding observability")
-		addObservability(artifactsPath)
+		if err := addObservability(artifactsPath); err != nil {
+			return fmt.Errorf("error creating observability deployment: %v", err)
+		}
 	} else {
 		spinner.SetNewAction("Adding idp")
-		addIdp(artifactsPath)
+		if err := addIdp(artifactsPath); err != nil {
+			return fmt.Errorf("error creating idp deployment: %v", err)
+		}
 	}
 	spinner.SetNewAction("Creating ingress-nginx")
-	installNginx(artifactsPath, isLoadBalancerIngressMode)
+	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
+		return fmt.Errorf("error installing ingress-nginx: %v", err)
+	}
 	spinner.Stop(true)
 
 	return nil
@@ -202,16 +229,6 @@ func DeleteComponent(component SystemComponent) error {
 		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
-	}
-}
-
-func labelMasterNode(errorDeployingCelleryRuntime string) {
-	nodeName, err := kubectl.GetMasterNodeName()
-	if err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
-	}
-	if err := kubectl.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 }
 

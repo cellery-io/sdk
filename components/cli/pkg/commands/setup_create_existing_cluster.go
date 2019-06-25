@@ -103,7 +103,7 @@ func RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfs
 	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), artifactsPath)
 	if err := runtime.CreateRuntime(artifactsPath, isCompleteSetup, isPersistentVolume, hasNfsStorage,
 		isLoadBalancerIngressMode, nfs, db); err != nil {
-		fmt.Printf("Error deploying cellery runtime: %v", err)
+		util.ExitWithErrorMessage("Failed to deploy cellery runtime", err)
 	}
 	util.WaitForRuntime()
 }
