@@ -9,7 +9,7 @@ public function build(cellery:ImageName iName) returns error? {
     cellery:Component stockComponent = {
         name: "stock",
         source: {
-            image: "docker.io/celleryio/sampleapp-stock"
+            image: "wso2cellery/sampleapp-stock:0.3.0"
         },
         ingresses: {
             stock: <cellery:HttpApiIngress>{ port: 8080,

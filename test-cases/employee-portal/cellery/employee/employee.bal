@@ -11,7 +11,7 @@ public function build(cellery:ImageName iName) returns error? {
     cellery:Component salaryComponent = {
         name: "salary",
         source: {
-            image: "docker.io/celleryio/sampleapp-salary"
+            image: "wso2cellery/sampleapp-salary:0.3.0"
         },
         ingresses: {
             SalaryAPI: <cellery:HttpApiIngress>{
@@ -38,7 +38,7 @@ public function build(cellery:ImageName iName) returns error? {
     cellery:Component employeeComponent = {
         name: "employee",
         source: {
-            image: "docker.io/celleryio/sampleapp-employee"
+            image: "wso2cellery/sampleapp-employee:0.3.0"
         },
         ingresses: {
             employee: <cellery:HttpApiIngress>{
@@ -51,9 +51,6 @@ public function build(cellery:ImageName iName) returns error? {
         envVars: {
             SALARY_HOST: {
                 value: cellery:getHost(salaryComponent)
-            },
-            PORT: {
-                value: salaryContainerPort
             }
         },
         labels: {

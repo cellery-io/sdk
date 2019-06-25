@@ -119,15 +119,11 @@ public class EmployeeTest {
                 "team"),
                 "HR");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0).
-                getName(), "PORT");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0).
-                getValue(), "8080");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
                 getName(), "SALARY_HOST");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0).
                 getValue(), "{{instance_name}}--salary-service");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "docker.io/celleryio/sampleapp-employee");
+                "wso2cellery/sampleapp-employee:0.3.0");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
                 getContainerPort().intValue(), 8080);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
@@ -210,18 +206,12 @@ public class EmployeeTest {
                 "HR");
         Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().
                 get(0).
-                getName(), "PORT");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().
-                get(0).
-                getValue(), "8080");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().
-                get(1).
                 getName(), "SALARY_HOST");
         Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().
-                get(1).
+                get(0).
                 getValue(), "emp-inst--salary-service");
         Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "docker.io/celleryio/sampleapp-employee");
+                "wso2cellery/sampleapp-employee:0.3.0");
         Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().
                 get(0).
                 getContainerPort().intValue(), 8080);

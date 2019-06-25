@@ -35,8 +35,7 @@ service<http:Service> employee bind { port: 8080 } {
             log:printInfo(empName);
             if (employeeIdMap.hasKey(empName)) {
                 json employeeIdJson = { id: employeeIdMap[empName], designation: employeeDesignationMap[empName] };
-
-                string salaryServiceName = system:getEnv("SALARY");
+                string salaryServiceName = system:getEnv("SALARY_HOST");
 
                 json salaryDetails = getSalaryDetails(empName, salaryServiceName, untaint req);
                 employeeIdJson.salary = salaryDetails.salary;

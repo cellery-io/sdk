@@ -110,7 +110,7 @@ public class HRTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
                 getName(), "employee_api_url");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "docker.io/celleryio/sampleapp-hr");
+                "wso2cellery/sampleapp-hr:0.3.0");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
                 getContainerPort().intValue(), 8080);
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
@@ -195,7 +195,7 @@ public class HRTest {
                 .get(1).
                         getName(), "employee_api_url");
         Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "docker.io/celleryio/sampleapp-hr");
+                "wso2cellery/sampleapp-hr:0.3.0");
         Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts()
                 .get(0).
                         getContainerPort().intValue(), 8080);
