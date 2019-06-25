@@ -22,7 +22,7 @@ public function build(cellery:ImageName iName) returns error? {
                         }
                     ]
                 },
-                expose: "local"
+                expose: "global"
             }
         },
         probes: {
@@ -46,7 +46,15 @@ public function build(cellery:ImageName iName) returns error? {
             employee: <cellery:HttpApiIngress>{
                 port:empPort,
                 context: "employee",
-                expose: "local"
+                definition: {
+                    resources: [
+                        {
+                            path: "/details",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
             }
         },
         probes: {
@@ -84,6 +92,7 @@ public function build(cellery:ImageName iName) returns error? {
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     cellery:CellImage employeeCell = check cellery:constructCellImage(untaint iName);
+    employeeCell.components.empComp.probes.liveness.failureThreshold = 5;
     return cellery:createInstance(employeeCell, iName, instances);
 }
 

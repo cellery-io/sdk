@@ -92,9 +92,8 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellBuildFunction(Path sourceDirectory, String fileName,
-                                               CellImageInfo cellImageInfo
-            , Map<String, String> envVar) throws InterruptedException, IOException {
+    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
+                                               Map<String, String> envVar) throws InterruptedException, IOException {
 
         return compileBallerinaFunction(BUILD, sourceDirectory, fileName, cellImageInfo, new HashMap<>(),
                 envVar);
@@ -110,8 +109,7 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellBuildFunction(Path sourceDirectory, String fileName,
-                                               CellImageInfo cellImageInfo)
+    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo)
             throws InterruptedException, IOException {
 
         return compileCellBuildFunction(sourceDirectory, fileName, cellImageInfo, new HashMap<>());
@@ -128,9 +126,9 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellRunFunction(Path sourceDirectory, String fileName,
-                                             CellImageInfo cellImageInfo
-            , Map<String, String> envVar, Map<String, CellImageInfo> instanceData, String tmpDir)
+    public static int compileCellRunFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
+                                             Map<String, String> envVar, Map<String, CellImageInfo> instanceData,
+                                             String tmpDir)
             throws InterruptedException, IOException {
         envVar.put("CELLERY_IMAGE_DIR", tmpDir);
         return compileBallerinaFunction(RUN, sourceDirectory, fileName, cellImageInfo, instanceData, envVar);
@@ -299,7 +297,7 @@ public class LangTestUtils {
 
     private static String createExecutableBalFiles(Path sourcePath, String fileName, String action) throws IOException {
         String executableBalName = fileName.replace(BAL, "") + "_" + action + BAL;
-        Path targetDir = sourcePath.resolve("target");
+        Path targetDir = sourcePath.resolve(TARGET);
         if (!Files.exists(targetDir)) {
             Files.createDirectory(targetDir);
         }

@@ -184,7 +184,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             probe.setPeriodSeconds(readinessProbe.getPeriodSeconds());
             probe.setSuccessThreshold(readinessProbe.getSuccessThreshold());
             probe.setTimeoutSeconds(readinessProbe.getTimeoutSeconds());
-            serviceTemplate.getSpec().getContainer().setLivenessProbe(probe);
+            serviceTemplate.getSpec().getContainer().setReadinessProbe(probe);
         }
     }
 

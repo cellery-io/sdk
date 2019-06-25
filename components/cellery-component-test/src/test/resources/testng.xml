@@ -37,6 +37,7 @@
             <class name="org.cellery.components.test.scenarios.reviews.DatabaseTest"/>
             <class name="org.cellery.components.test.scenarios.reviews.CustomerProductTest"/>
             <class name="org.cellery.components.test.scenarios.reviews.ReviewsTest"/>
+            <class name="org.cellery.components.test.scenarios.probes.ProbesTest"/>
         </classes>
     </test>
 </suite>
