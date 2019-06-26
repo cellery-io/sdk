@@ -194,7 +194,7 @@ func RunBuild(tag string, fileName string) {
 		}
 
 		balFileName := filepath.Base(tempBuildFileName)
-		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", "1000",
+		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", cliUser.Uid,
 			strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", "target/"+balFileName, "build", string(iName), "{}")
 	}
 	execError := ""
