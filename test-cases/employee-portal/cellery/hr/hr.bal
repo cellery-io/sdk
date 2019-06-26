@@ -29,8 +29,8 @@ public function build(cellery:ImageName iName) returns error? {
         },
         dependencies: {
             cells: {
-                employeeCellDep: "myorg/employee:1.0.0", //  fully qualified dependency image name as a string
-                stockCellDep: <cellery:ImageName>{ org: "myorg", name: "stock", ver: "1.0.0" } // dependency as a struct
+                employeeCellDep: "izza/employee:0.0.3", //  fully qualified dependency image name as a string
+                stockCellDep: <cellery:ImageName>{ org: "izza", name: "stock", ver: "0.0.3" } // dependency as a struct
             }
         }
     };

@@ -56,7 +56,7 @@ public function build(cellery:ImageName iName) returns error? {
         },
         dependencies: {
             cells: {
-                petstorebackend: <cellery:ImageName>{ org: "myorg", name: "petbe", ver: "1.0.0" }
+                petstorebackend: <cellery:ImageName>{ org: "izza", name: "petbe", ver: "0.0.3" }
             }
         }
     };
