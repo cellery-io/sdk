@@ -19,7 +19,6 @@
 package credentials
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,7 +42,7 @@ const callBackUrlContext = "/auth"
 const callBackUrl = "http://localhost:%d" + callBackUrlContext
 
 // FromBrowser requests the credentials from the user
-func FromBrowser(username string, isAutherized chan bool) (string, string, error) {
+func FromBrowser(username string, isAuthorized chan bool, done chan bool) (string, string, error) {
 	conf := config.LoadConfig()
 	timeout := make(chan bool)
 	ch := make(chan string)
@@ -79,7 +78,7 @@ func FromBrowser(username string, isAutherized chan bool) (string, string, error
 			}
 			if code != "" {
 				ch <- code
-				authorized := <- isAutherized
+				authorized := <-isAuthorized
 				if authorized {
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-success", http.StatusSeeOther)
 				} else {
@@ -91,10 +90,7 @@ func FromBrowser(username string, isAutherized chan bool) (string, string, error
 					util.ExitWithErrorMessage("Error in casting the flusher", err)
 				}
 				flusher.Flush()
-				err = server.Shutdown(context.Background())
-				if err != nil {
-					util.ExitWithErrorMessage("Error while shutting down the server\n", err)
-				}
+				done <- true
 			}
 		})
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
