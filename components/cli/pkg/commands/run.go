@@ -26,9 +26,11 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -850,12 +852,12 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime="+version.BuildVersion(),
 				"--filter", "label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
 
-			out, err := cmdDockerPs.Output()
+			containerId, err := cmdDockerPs.Output()
 			if err != nil {
 				util.ExitWithErrorMessage("Docker Run Error", err)
 			}
 
-			if string(out) == "" {
+			if string(containerId) == "" {
 
 				cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+version.BuildVersion(),
 					"--mount", "type=bind,source="+currentDir+",target=/home/cellery/src",
@@ -865,11 +867,34 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 					"wso2cellery/ballerina-runtime:"+version.BuildVersion(), "sleep", "600",
 				)
 
-				out, err = cmdDockerRun.Output()
+				containerId, err = cmdDockerRun.Output()
 				if err != nil {
-					util.ExitWithErrorMessage("Docker Run Error %s\n", err)
+					util.ExitWithErrorMessage("Docker Run Error", err)
 				}
 				time.Sleep(5 * time.Second)
+			}
+
+			cliUser, err := user.Current()
+			if err != nil {
+				util.ExitWithErrorMessage("Error while retrieving the current user", err)
+			}
+
+			exeUid := constants.CELLERY_DOCKER_CLI_USER_ID
+
+			if cliUser.Uid != constants.CELLERY_DOCKER_CLI_USER_ID && runtime.GOOS == "linux" {
+				cmdUserExist := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)),
+					"id", "-u", cliUser.Username)
+				_, errUserExist := cmdUserExist.Output()
+				if errUserExist != nil {
+					cmdUserAdd := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)), "useradd", "-m",
+						"-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username)
+
+					_, errUserAdd := cmdUserAdd.Output()
+					if errUserAdd != nil {
+						util.ExitWithErrorMessage("Error in adding Cellery execution user", errUserAdd)
+					}
+				}
+				exeUid = cliUser.Uid
 			}
 
 			cmdArgs = append(cmdArgs, "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
@@ -895,8 +920,8 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 					cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
 				}
 			}
-			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", "1000",
-				strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", tempRunFileName, "run",
+			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", exeUid,
+				strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", tempRunFileName, "run",
 				string(iName), string(dependenciesJson))
 		}
 		defer os.Remove(imageDir)
