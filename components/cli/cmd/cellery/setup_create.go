@@ -23,15 +23,16 @@ import (
 )
 
 func newSetupCreateCommand() *cobra.Command {
+	var isComplete = false
 	cmd := &cobra.Command{
 		Use:   "create <command>",
 		Short: "Create a Cellery runtime",
 	}
-
 	cmd.AddCommand(
-		newSetupCreateLocalCommand(),
-		newSetupCreateGcpCommand(),
-		newSetupCreateOnExistingClusterCommand(),
+		newSetupCreateLocalCommand(&isComplete),
+		newSetupCreateGcpCommand(&isComplete),
+		newSetupCreateOnExistingClusterCommand(&isComplete),
 	)
+	cmd.PersistentFlags().BoolVar(&isComplete, "complete", false, "Install complete setup")
 	return cmd
 }

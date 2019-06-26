@@ -23,18 +23,16 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/oxequa/interact"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func createOnExistingCluster() error {
-	var isCompleteSetup = false
 	var isPersistentVolume = false
 	var hasNfsStorage = false
 	var isLoadBalancerIngressMode = false
@@ -55,7 +53,7 @@ func createOnExistingCluster() error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select an option: %v", err)
 	}
 	if value == constants.CELLERY_SETUP_BACK {
 		createEnvironment()
@@ -63,7 +61,6 @@ func createOnExistingCluster() error {
 	}
 	if value == constants.PERSISTENT_VOLUME {
 		isPersistentVolume = true
-
 		hasNfsStorage, isBackSelected, err = util.GetYesOrNoFromUser(fmt.Sprintf("Use NFS server"),
 			true)
 		if err != nil {
@@ -77,7 +74,8 @@ func createOnExistingCluster() error {
 			return nil
 		}
 	}
-	isCompleteSetup, isBackSelected = util.IsCompleteSetupSelected()
+	isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
+	runtime.SetCompleteSetup(isCompleteSetup)
 	if isBackSelected {
 		createOnExistingCluster()
 		return nil
@@ -89,19 +87,19 @@ func createOnExistingCluster() error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("Failed to get user input: %v", err)
+		return fmt.Errorf("failed to get user input: %v", err)
 	}
-	RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db)
+	RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db)
 
 	return nil
 }
 
-func RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
+func RunSetupCreateOnExistingCluster(hasNfsStorage, isPersistentVolume, isLoadBalancerIngressMode bool,
 	nfs runtime.Nfs, db runtime.MysqlDb) {
 	artifactsPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.K8S_ARTIFACTS)
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), artifactsPath)
-	if err := runtime.CreateRuntime(artifactsPath, isCompleteSetup, isPersistentVolume, hasNfsStorage,
+	if err := runtime.CreateRuntime(artifactsPath, isPersistentVolume, hasNfsStorage,
 		isLoadBalancerIngressMode, nfs, db); err != nil {
 		util.ExitWithErrorMessage("Failed to deploy cellery runtime", err)
 	}
@@ -169,6 +167,6 @@ func getPersistentVolumeDataWithNfs() (runtime.Nfs, runtime.MysqlDb, error) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while getting user input", err)
 	}
-	return runtime.Nfs{nfsServerIp, fileShare},
-		runtime.MysqlDb{dbHostName, dbUserName, dbPassword}, nil
+	return runtime.Nfs{NfsServerIp: nfsServerIp, FileShare: fileShare},
+		runtime.MysqlDb{DbHostName: dbHostName, DbUserName: dbUserName, DbPassword: dbPassword}, nil
 }
