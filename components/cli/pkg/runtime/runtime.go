@@ -97,12 +97,13 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		return fmt.Errorf("error installing istio: %v", err)
 	}
 
-	// Install knative
-	spinner.SetNewAction("Installing Knative serving")
-	if err := InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-		return fmt.Errorf("error installing knative: %v", err)
+	if isCompleteSetup {
+		// Install knative
+		spinner.SetNewAction("Installing Knative serving")
+		if err := InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+			return fmt.Errorf("error installing knative: %v", err)
+		}
 	}
-
 	// Apply controller CRDs
 	spinner.SetNewAction("Creating controller")
 	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
@@ -156,7 +157,7 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	return nil
 }
 
-func UpdateRuntime(apiManagement, observability bool) error {
+func UpdateRuntime(apiManagement, observability, knative bool) error {
 	var err error
 	err = DeleteComponent(Observability)
 	if err != nil {
@@ -193,6 +194,17 @@ func UpdateRuntime(apiManagement, observability bool) error {
 			return err
 		}
 	}
+	if knative {
+		err = AddComponent(Knative)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = DeleteComponent(Knative)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -204,7 +216,8 @@ func AddComponent(component SystemComponent) error {
 		return addIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case Observability:
 		return addObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
-
+	case Knative:
+		return InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}
@@ -218,6 +231,8 @@ func DeleteComponent(component SystemComponent) error {
 		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case Observability:
 		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+	case Knative:
+		return kubectl.DeleteNameSpace("knative-serving")
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}

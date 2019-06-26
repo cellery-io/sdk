@@ -25,8 +25,8 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunSetupModify(addApimGlobalGateway, addObservability bool) {
-	err := runtime.UpdateRuntime(addApimGlobalGateway, addObservability)
+func RunSetupModify(addApimGlobalGateway, addObservability, knative bool) {
+	err := runtime.UpdateRuntime(addApimGlobalGateway, addObservability, knative)
 	if err != nil {
 		util.ExitWithErrorMessage("Fail to modify the cluster", err)
 	}
@@ -40,6 +40,7 @@ func modifyRuntime() {
 
 	enableApimgt := false
 	enableObservability := false
+	enableKnative := false
 
 	template := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -87,5 +88,25 @@ func modifyRuntime() {
 		RunSetup()
 		return
 	}
-	RunSetupModify(enableApimgt, enableObservability)
+
+	knativePrompt := promptui.Select{
+		Label:     util.YellowBold("?") + "Knative serving",
+		Items:     []string{enable, disable, back},
+		Templates: template,
+	}
+	_, knativeValue, err := knativePrompt.Run()
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to select an option", err)
+	}
+
+	switch knativeValue {
+	case enable:
+		enableKnative = true
+	case disable:
+		enableKnative = false
+	default:
+		RunSetup()
+		return
+	}
+	RunSetupModify(enableApimgt, enableObservability, enableKnative)
 }

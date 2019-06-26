@@ -24,6 +24,7 @@ const (
 	ApiManager       SystemComponent = "ApiManager"
 	IdentityProvider SystemComponent = "IdentityProvider"
 	Observability    SystemComponent = "Observability"
+	Knative		     SystemComponent = "Knative"
 	Controller       SystemComponent = "Controller"
 	System           SystemComponent = "System"
 	Mysql            SystemComponent = "Mysql"
