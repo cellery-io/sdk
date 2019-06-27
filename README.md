@@ -199,7 +199,7 @@ the all 'cellery' commands in any directory other than the home directory.
       192.168.56.10 hello-world.com
     ```
 
-4. Now browse [http://hello-world.com/](http://hello-world.com/) and you should see the web page.
+4. Now browse to [http://hello-world.com/](http://hello-world.com/) and you should see the web page.
 
     Congratulations! You have successfully got your first cell running!
     
