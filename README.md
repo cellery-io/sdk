@@ -76,65 +76,46 @@ and install it by following macOS package installation steps.
 ### Setup Cellery runtime
 Once Cellery has been installed, verify the installation is working by executing `cellery version`.
 
-In this quickstart guide, we will install a basic local Cellery runtime in interactive mode by 
-following these steps:
+In this quickstart guide, we will install a basic local Cellery runtime by running the following 
+command:
 
-1. Run `cellery setup` to configure the Cellery runtime.
-   Select the`create ` option to create a new runtime: 
-   
-   ```
-    $ cellery setup
-    [Use arrow keys]
-    ? Setup Cellery runtime
-        Manage
-      ➤ Create
-        Modify
-        Switch
-        EXIT
-   ```
-
-2. In the next prompt select `Local` to proceed with local installation. 
+1. Run the local setup command. 
 
     ```
-    $ ✔ Create
-    [Use arrow keys]
-    ? Select an environment to be installed
-      ➤ Local
-        GCP
-        Existing cluster
-        BACK
+    cellery setup create local
     ```
-
-3. Next, select 'Basic' 
-
+    
+2. Select 'Yes' when you are prompted to download the runtime. This may
+   take a few minutes:
+       
     ```
-    $ ✔ Create
-      ✔ Local
-    [Use arrow keys]
-    ? Select the type of runtime
-      ➤ Basic (size: 2.17 GB)
-        Complete (size: 3.74 GB)
-    ```
-
-4. Next, the CLI will prompt for confirmation to download and install the local setup. Select 'Yes'.
-This will download a basic Cellery runtime VM image and run it. This step could take a few minutes.
-
-    ```
-    ✔ Create
-    ✔ Local
-    ✔ Basic (size: 2.17 GB)
-    Use the arrow keys to navigate: ↓ ↑ → ← 
-    ? Downloading cellery-runtime-basic-0.2.0.tar.gz will take 2.17 GB from your machine. Do you want to continue: 
+    Use the arrow keys to navigate: ↓ ↑ → ←
+    ? Downloading cellery-runtime-basic-0.2.0.tar.gz will take 2.04 GB from your machine. Do you want to continue:
       ▸ Yes
         No
     ```
     
-5. Configure host entries
-   
-   Add the following line to the /etc/host file in order to access Cellery hosts.
+    If the setup was successful, you should see the following message:
+    
+    ```
+    ✔ Runtime status (Cellery)...OK
+    ```
+    
+3. Once the setup completes, run the following command to check the status:
+
+    ```
+    cellery list instances
+    ```  
+    
+    You should not see any errors. 
+    
+4. Next, configure host entries by add the following line to the /etc/host file in order to access Cellery hosts.
+
    ```
      192.168.56.10 wso2-apim cellery-dashboard wso2sp-observability-api wso2-apim-gateway cellery-k8s-metrics idp.cellery-system pet-store.com hello-world.com my-hello-world.com
    ```    
+
+Now that we have successfully installed Cellery, let's look at running a sample.
 
 ### Run a sample
 
