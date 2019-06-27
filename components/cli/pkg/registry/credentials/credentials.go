@@ -45,7 +45,7 @@ const callBackUrl = "http://localhost:%d" + callBackUrlContext
 func FromBrowser(username string, isAuthorized chan bool, done chan bool) (string, string, error) {
 	conf := config.LoadConfig()
 	timeout := make(chan bool)
-	ch := make(chan string)
+	authCode := make(chan string)
 	var code string
 	httpPortString := ":" + strconv.Itoa(callBackDefaultPort)
 	var codeReceiverPort = callBackDefaultPort
@@ -61,7 +61,6 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 	redirectUrl := url.QueryEscape(fmt.Sprintf(callBackUrl, codeReceiverPort))
 	var hubAuthUrl = conf.Hub.Url + "/sdk/fidp-select?redirectUrl=" + redirectUrl
 
-	fmt.Printf("\n%s\n\n", hubAuthUrl)
 	go func() {
 		mux := http.NewServeMux()
 		server := http.Server{Addr: httpPortString, Handler: mux}
@@ -69,7 +68,8 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 		mux.HandleFunc(callBackUrlContext, func(w http.ResponseWriter, r *http.Request) {
 			err := r.ParseForm()
 			if err != nil {
-				util.ExitWithErrorMessage("Error parsing the code", err)
+				w.WriteHeader(http.StatusBadRequest)
+				util.ExitWithErrorMessage("Error parsing received query parameters", err)
 			}
 			code = r.Form.Get("code")
 			ping := r.Form.Get("ping")
@@ -79,7 +79,7 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 				w.WriteHeader(http.StatusOK)
 			}
 			if code != "" {
-				ch <- code
+				authCode <- code
 				authorized := <-isAuthorized
 				if authorized {
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-success", http.StatusSeeOther)
@@ -100,11 +100,18 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 		}
 	}()
 
+	fmt.Printf("\nOpening %s\n\n", hubAuthUrl)
 	err := util.OpenBrowser(hubAuthUrl)
 	if err != nil {
-		fmt.Printf("Could not resolve the given url %s. Started to operate in the headless "+
-			"mode\n", hubAuthUrl)
-		return FromTerminal(username)
+		fmt.Printf("\r\x1b[2K%s Could not open browser. Operating in the headless mode.",
+			util.YellowBold("\U000026A0"))
+		username, token, err := FromTerminal(username)
+		go func() {
+			// Mocking the channels used by the server to avoid hanging
+			<-isAuthorized
+			done <- true
+		}()
+		return username, token, err
 	}
 	// Setting up a timeout
 	go func() {
@@ -113,13 +120,18 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 	}()
 	// Wait for a code, or timeout
 	select {
-	case <-ch:
+	case <-authCode:
 	case <-timeout:
-		util.ExitWithErrorMessage("Failed to authenticate", errors.
-			New("time out. Did not receive any code"))
+		return "", "", errors.New("time out waiting for authentication")
 	}
-	token := getTokenFromCode(code, codeReceiverPort, conf)
-	username, accessToken := getUsernameAndTokenFromJwt(token)
+	token, err := getTokenFromCode(code, codeReceiverPort, conf)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get token for the authorized user: %v", err)
+	}
+	username, accessToken, err := getUsernameAndTokenFromJwt(token)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to identify user from received token: %v", err)
+	}
 	return username, accessToken, nil
 }
 
@@ -130,13 +142,13 @@ func FromTerminal(username string) (string, string, error) {
 		fmt.Print("Enter username: ")
 		_, err := fmt.Scanln(&username)
 		if err != nil {
-			util.ExitWithErrorMessage("Error reading the input username", err)
+			return "", "", fmt.Errorf("failed to read the input username: %v", err)
 		}
 	}
 	fmt.Print("Enter password/token: ")
 	bytePassword, err := terminal.ReadPassword(0)
 	if err != nil {
-		util.ExitWithErrorMessage("Error reading the input token", err)
+		return "", "", fmt.Errorf("failed to read the input password/token: %v", err)
 	}
 	password = strings.TrimSpace(string(bytePassword))
 	username = strings.TrimSpace(username)
@@ -145,28 +157,28 @@ func FromTerminal(username string) (string, string, error) {
 }
 
 // getUsernameAndToken returns the extracted subject from the JWT
-func getUsernameAndTokenFromJwt(response string) (string, string) {
+func getUsernameAndTokenFromJwt(response string) (string, string, error) {
 	var result map[string]interface{}
 	err := json.Unmarshal([]byte(response), &result)
 	if err != nil {
-		util.ExitWithErrorMessage("Error while unmarshal the id_token", err)
+		return "", "", fmt.Errorf("failed to unmarshal the id_token: %v", err)
 	}
 	idToken, ok := (result["id_token"]).(string)
 	accessToken, ok := (result["access_token"]).(string)
 	if !ok {
-		util.ExitWithErrorMessage("Error while retrieving the access token", err)
+		return "", "", fmt.Errorf("failed to retrieve the access token: %v", err)
 	}
 	jwtToken, _ := jwt.Parse(idToken, nil)
 	claims := jwtToken.Claims.(jwt.MapClaims)
 	sub, ok := claims["sub"].(string)
 	if !ok {
-		util.ExitWithErrorMessage("Error in casting the subject", err)
+		return "", "", fmt.Errorf("failed to read the user ID: %v", err)
 	}
-	return sub, accessToken
+	return sub, accessToken, nil
 }
 
 // getTokenFromCode returns the JWT from the auth code provided
-func getTokenFromCode(code string, port int, conf *config.Conf) string {
+func getTokenFromCode(code string, port int, conf *config.Conf) (string, error) {
 	tokenUrl := conf.Idp.Url + "/oauth2/token"
 	responseBody := "client_id=" + conf.Idp.ClientId +
 		"&grant_type=authorization_code&code=" + code +
@@ -175,14 +187,13 @@ func getTokenFromCode(code string, port int, conf *config.Conf) string {
 	// Token request
 	req, err := http.NewRequest("POST", tokenUrl, body)
 	if err != nil {
-		util.ExitWithErrorMessage("Error while creating the code receiving request", err)
+		return "", fmt.Errorf("failed to create request to connect to Cellery Hub IdP: %v", err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("Could not connect to the client at %s", tokenUrl)
-		util.ExitWithErrorMessage("Error occurred while connecting to the client", err)
+		return "", fmt.Errorf("failed to connect to Cellery Hub IdP: %v", err)
 	}
 	defer func() {
 		_ = res.Body.Close()
@@ -190,7 +201,7 @@ func getTokenFromCode(code string, port int, conf *config.Conf) string {
 
 	respBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while reading the response body", err)
+		return "", fmt.Errorf("failed to read the response body: %v", err)
 	}
-	return string(respBody)
+	return string(respBody), nil
 }
