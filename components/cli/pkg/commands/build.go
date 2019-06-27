@@ -194,7 +194,6 @@ func RunBuild(tag string, fileName string) {
 			}
 		}
 
-		//balFileName := filepath.Base(tempBuildFileName)
 		re := regexp.MustCompile(`[0-9a-zA-Z_\-. ]+/target/[0-9a-zA-Z_\-. ]+$`)
 		balFilePath := re.FindString(tempBuildFileName)
 		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", cliUser.Uid,
