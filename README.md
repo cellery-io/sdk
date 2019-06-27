@@ -11,8 +11,8 @@
 Build, run, and manage code-first composites on Kubernetes.
 
 - For in-depth information about how to use Cellery, visit [https://wso2-cellery.github.io/](https://wso2-cellery.github.io/)                                   
-- To ask questions and get assistance from our community, visit [discuss.istio.io](https://discuss.istio.io)
-- To learn how to participate in our overall community, visit [our community page](https://istio.io/about/community)
+- To ask questions and get assistance from our community, visit [wso2-cellery.github.io/discuss](https://wso2-cellery.github.io/discuss)
+- To learn how to participate in our overall community, visit [our community page](https://wso2-cellery.github.io/about/community)
 
 In this README:
 
