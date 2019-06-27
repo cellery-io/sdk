@@ -190,7 +190,7 @@ the all 'cellery' commands in any directory other than the home directory.
     $ cellery list instances
              INSTANCE        CELL IMAGE                           STATUS        GATEWAY               COMPONENTS          AGE
      ---------------------- ------------------------------------ -------- -------------------------- ------------ -----------------------
-      hello                  wso2cellery/hello-world-cell:0.2.1   Ready    hello--gateway-service        1          30 minutes 48 seconds
+      hello-world            wso2cellery/hello-world-cell:0.2.1   Ready    hello--gateway-service        1          30 minutes 48 seconds
     ```
 
 3.  Add the following line to the /etc/hosts file
@@ -209,13 +209,13 @@ the all 'cellery' commands in any directory other than the home directory.
     $ cellery list instances
          INSTANCE                      CELL IMAGE          STATUS               GATEWAY               COMPONENTS            AGE
      ---------------- ----------------------------------- -------- --------------------------------- ------------ -----------------------
-      my-hello-world   <ORGNAME>/hello-world-cell:1.0.0      Ready    my-hello-world--gateway-service   1            27 minutes 42 seconds
+      hello-world   <ORGNAME>/hello-world-cell:1.0.0      Ready    my-hello-world--gateway-service   1            27 minutes 42 seconds
     ```
     
 6. Finally, terminate the cell instance that you started using the `cellery terminate` command.
 
     ```
-    $ cellery terminate my-hello-world
+    $ cellery terminate hello-world
     ```
 ---
     
