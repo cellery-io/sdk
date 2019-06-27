@@ -79,6 +79,9 @@ Once Cellery has been installed, verify the installation is working by executing
 In this quickstart guide, we will install a basic local Cellery runtime by running the following 
 command:
 
+**IMPORTANT:** Due to the [known issue](https://github.com/wso2-cellery/sdk/issues/381), please execute 
+the all 'cellery' commands in any directory other than the home directory.
+
 1. Run the local setup command. 
 
     ```
@@ -109,15 +112,9 @@ command:
     
     You should not see any errors. 
     
-4. Next, configure host entries by add the following line to the /etc/host file in order to access Cellery hosts.
-
-   ```
-     192.168.56.10 wso2-apim cellery-dashboard wso2sp-observability-api wso2-apim-gateway cellery-k8s-metrics idp.cellery-system pet-store.com hello-world.com my-hello-world.com
-   ```    
-
 Now that we have successfully installed Cellery, let's look at running a sample.
 
-### Run a sample
+### Hello world with Cellery
 
 Let's quickly run a sample hello world cell as shown in the diagram below.  
 
@@ -127,15 +124,21 @@ The `hello-world-cell` contains, one component `hello` and it's a web app. The `
 exposed globally via a global and cell gateway. In the quick start we'll be deploying this 
 `hello-world-cell` and browsing the `hello` component's web page.
 
-Please follow below instructions to run the hello-world-cell. 
+Now we will look at the steps required to run this cell. 
 
-**Note:** Due to the [known issue](https://github.com/wso2-cellery/sdk/issues/381), please execute 
-the below commands in any directory other than home directory.
+**IMPORTANT:** Due to the [known issue](https://github.com/wso2-cellery/sdk/issues/381), please execute 
+the all 'cellery' commands in any directory other than the home directory.
 
-1. Execute below command that will download the hello world web cell from `wso2cellery` organization
- in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
+1. Execute the `cellery run` command that will download the hello world web cell from the `wso2cellery` 
+    organization in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
+    
     ```
     $ cellery run wso2cellery/hello-world-cell:0.2.1 -n hello-world-cell
+    ```
+    
+    You should see the following output:
+    
+    ```
     ✔ Connecting to registry-1.docker.io
     ✔ Fetching metadata
     ✔ Pulling image wso2cellery/hello-world-cell:0.2.1
@@ -159,12 +162,14 @@ the below commands in any directory other than home directory.
     Dependency Tree to be Used:
     
      No Dependencies
+    ```
     
+    Type 'Y' at the following prompt:
+     
+    ```
     ? Do you wish to continue with starting above Cell instances (Y/n)?
     
     ✔ Starting main instance hello-world-cell
-    
-    
     ✔ Successfully deployed cell image: wso2cellery/hello-world-cell:0.2.1
     
     What's next?
@@ -173,41 +178,24 @@ the below commands in any directory other than home directory.
       $ cellery list instances
     --------------------------------------------------------
     ```
-2. Optionally you can run `kubectl` or `cellery` commands to check whether all pods are up and running. 
-    ```
-    $ kubectl get pods
-    NAME                                         READY     STATUS        RESTARTS   AGE
-    hello--gateway-deployment-65fd8668cb-k7dqp   1/1       Running       0          2m
-    hello--hello-deployment-6df6fcbd8c-2s65r     2/2       Running       0          2m
-    hello--sts-deployment-6dc7958bbb-sg992       2/2       Running       0          2m
-    ```
-    OR
-    
+2. Execute `cellery list instances` to check the status of your cell 
+
     ```
     $ cellery list instances
-                      INSTANCE                                   CELL IMAGE          STATUS                            GATEWAY                            COMPONENTS            AGE
-     ------------------------------------------ ----------------------------------- -------- ----------------------------------------------------------- ------------ -----------------------
-      hello                                      wso2cellery/hello-world-cell:0.2.1   Ready    hello--gateway-service                                      1            30 minutes 48 seconds
+             INSTANCE        CELL IMAGE                           STATUS        GATEWAY               COMPONENTS          AGE
+     ---------------------- ------------------------------------ -------- -------------------------- ------------ -----------------------
+      hello                  wso2cellery/hello-world-cell:0.2.1   Ready    hello--gateway-service        1          30 minutes 48 seconds
     ```
 
-3. You would have added an entry into your `/etc/hosts` file during the setting up your runtime 
-[local setup](docs/setup/local-setup.md#configure-host-entries), 
-[Existing Cluster](docs/setup/existing-cluster.md#configure-host-entries), 
-and [GCP setup](docs/setup/gcp-setup.md)     , 
-so that your browser will use the right IP address for `hello-world.com`. Use the `kubectl` tool to make sure the IP your service is running on:
+3.  Add the following line to the /etc/hosts file
+    
     ```
-    $ kubectl get ingress
-    NAME                     HOSTS             ADDRESS        PORTS   AGE
-    hello--gateway-ingress   hello-world.com   192.168.56.10   80      3m
-    ```
-    Check it's correctly configured in `/etc/hosts` to resolve `hello-world.com` to one of those IPs. 
-    ```
-    192.168.56.10  hello-world.com
+      192.168.56.10 hello-world.com
     ```
 
-4. Now browse [http://hello-world.com/](http://hello-world.com/) and you will should see the cell web page running.
+4. Now browse [http://hello-world.com/](http://hello-world.com/) and you should see the web page.
 
-    Congratulations! You have successfully got running the first web cell running!
+    Congratulations! You have successfully got the first web cell running!
     
 5. List the cells that are running in the current setup by `cellery list instances`.
 
@@ -218,13 +206,18 @@ so that your browser will use the right IP address for `hello-world.com`. Use th
       my-hello-world   <ORGNAME>/hello-world-cell:1.0.0      Ready    my-hello-world--gateway-service   1            27 minutes 42 seconds
     ```
     
-6. Terminate the cell instance that you started using the `cellery terminate` command.
+6. Finally, terminate the cell instance that you started using the `cellery terminate` command.
 
     ```
     $ cellery terminate my-hello-world
     ```
     
-    
+## What's next?    
+1. [Setting up Cellery on an existing K8s cluster](docs/setup/existing-cluster.md) - 
+    explains how Cellery can be setup on an existing K8s cluster
+2. [Setting up Cellery on an GCP](docs/setup/gcp-cluster.md) -
+    explains how Cellery can be setup on Google GCP
+2. [Full installation]() - explains how to install the full Cellery stack
 
 
 
