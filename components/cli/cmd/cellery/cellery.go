@@ -34,11 +34,15 @@ import (
 
 func newCliCommand() *cobra.Command {
 	var verboseMode = false
+	var insecureMode = false
 	cmd := &cobra.Command{
 		Use:   "cellery <command>",
 		Short: "Manage immutable cell based applications",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			kubectl.SetVerboseMode(verboseMode)
+			if insecureMode {
+				http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			}
 		},
 	}
 
@@ -68,12 +72,12 @@ func newCliCommand() *cobra.Command {
 		newRouteTrafficCommand(),
 	)
 	cmd.PersistentFlags().BoolVarP(&verboseMode, "verbose", "v", false, "Run on verbose mode")
+	cmd.PersistentFlags().BoolVarP(&insecureMode, "insecure", "k", false,
+		"Allow insecure server connections when using SSL")
 	return cmd
 }
 
 func main() {
-
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")
 
