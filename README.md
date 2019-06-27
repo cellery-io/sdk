@@ -201,7 +201,7 @@ the all 'cellery' commands in any directory other than the home directory.
 
 4. Now browse [http://hello-world.com/](http://hello-world.com/) and you should see the web page.
 
-    Congratulations! You have successfully got the first web cell running!
+    Congratulations! You have successfully got your first cell running!
     
 5. List the cells that are running in the current setup by `cellery list instances`.
 
