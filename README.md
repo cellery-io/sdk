@@ -110,7 +110,7 @@ the all 'cellery' commands in any directory other than the home directory.
     cellery list instances
     ```  
     
-    You should not see any errors. 
+    You shouldn't see any errors. 
     
 Now that we have successfully installed Cellery, let's look at running a sample.
 
@@ -178,6 +178,9 @@ the all 'cellery' commands in any directory other than the home directory.
       $ cellery list instances
     --------------------------------------------------------
     ```
+    
+    Please allow a few minutes for completion.
+    
 2. Execute `cellery list instances` to check the status of your cell 
 
     ```
@@ -213,6 +216,7 @@ the all 'cellery' commands in any directory other than the home directory.
     ```
     
 ## What's next?    
+1. [Developing a Cell](docs/writing-a-cell.md) - step by step explanation on how you could define your own cells
 1. [Setting up Cellery on an existing K8s cluster](docs/setup/existing-cluster.md) - 
     explains how Cellery can be setup on an existing K8s cluster
 2. [Setting up Cellery on an GCP](docs/setup/gcp-cluster.md) -
