@@ -30,6 +30,7 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -193,9 +194,11 @@ func RunBuild(tag string, fileName string) {
 			}
 		}
 
-		balFileName := filepath.Base(tempBuildFileName)
+		//balFileName := filepath.Base(tempBuildFileName)
+		re := regexp.MustCompile(`[0-9a-zA-Z_\-. ]+/target/[0-9a-zA-Z_\-. ]+$`)
+		balFilePath := re.FindString(tempBuildFileName)
 		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", cliUser.Uid,
-			strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", "target/"+balFileName, "build", string(iName), "{}")
+			strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", balFilePath, "build", string(iName), "{}")
 	}
 	execError := ""
 	stderrReader, _ := cmd.StderrPipe()
