@@ -17,8 +17,9 @@ Build, run, and manage code-first composites on Kubernetes.
 In this README:
 
 - [Introduction](#introduction)
-- [Repositories](#repositories)
-- [Issue management](#issue-management)
+- [Why Cellery?](#why-cellery)
+- [Quickstart guide](#quickstart-guide)
+- [What's next?](#whats-next)
 
 In addition, here are some other documents you may wish to read:
 - [Cell Based Architecture](docs/cba.md) - explains the concepts of Cell based Architecture
@@ -36,6 +37,7 @@ Cellery is a code-first approach to building, integrating, running and managing 
 microservice applications on Kubernetes. Build, push/pull, run, scale and observe composites. 
 Create secure APIs by default, code components in any language.
 
+---
 ## Why Cellery?
 
 The use of microservices and/or serverless functions is exploding as organisations aim to get better
@@ -52,8 +54,9 @@ Cellery is composed of these components:
 
 - **CLI** - TODO:
 - **Mesh** - TODO:
-
 - **Observability** - TODO:
+
+---
 
 ## Quickstart Guide
 
@@ -214,6 +217,7 @@ the all 'cellery' commands in any directory other than the home directory.
     ```
     $ cellery terminate my-hello-world
     ```
+---
     
 ## What's next?    
 1. [Developing a Cell](docs/writing-a-cell.md) - step by step explanation on how you could define your own cells
