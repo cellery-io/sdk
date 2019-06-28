@@ -129,7 +129,7 @@ the all 'cellery' commands in any directory other than the home directory.
     organization in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
     
     ```
-    $ cellery run wso2cellery/hello-world-cell:0.2.1 -n hello-world-cell
+    $ cellery run wso2cellery/hello-world-cell:0.2.1 -n hello-world-cell -y
     ```
     
     You should see the following output:
@@ -158,12 +158,6 @@ the all 'cellery' commands in any directory other than the home directory.
     Dependency Tree to be Used:
     
      No Dependencies
-    ```
-    
-    Type 'Y' at the following prompt:
-     
-    ```
-    ? Do you wish to continue with starting above Cell instances (Y/n)?
     
     ✔ Starting main instance hello-world-cell
     ✔ Successfully deployed cell image: wso2cellery/hello-world-cell:0.2.1
