@@ -108,7 +108,7 @@ the all 'cellery' commands in any directory other than the home directory.
     
     You shouldn't see any errors. 
     
-Now that we have successfully installed Cellery, let's look at running a sample.
+Now that we have installed Cellery let's validate that it is running using a simple cell.
 
 ### Hello world with Cellery
 
@@ -116,16 +116,14 @@ Let's quickly run a sample hello world cell as shown in the diagram below.
 
 ![Hello world cell](docs/images/hello-world-architecture.jpg) 
 
-The `hello-world-cell` contains, one component `hello` and it's a web app. The `hello` component is 
-exposed globally via a global and cell gateway. In the quick start we'll be deploying this 
-`hello-world-cell` and browsing the `hello` component's web page.
+The `hello-world-cell` contains one component `hello`. The `hello` component is defined by a container image which is written in Node.js and it is a simple webapp. In the quick start we will be deploying the `hello-world-cell`.
 
-Now we will look at the steps required to run this cell. 
+Now let's look at the steps required to run this cell. 
 
 **IMPORTANT:** Due to the [known issue](https://github.com/wso2-cellery/sdk/issues/381), please execute 
 the all 'cellery' commands in any directory other than the home directory.
 
-1. Execute the `cellery run` command that will download the hello world web cell from the `wso2cellery` 
+1. Execute the `cellery run` command that will download the hello-world cell from the `wso2cellery` 
     organization in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
     
     ```
