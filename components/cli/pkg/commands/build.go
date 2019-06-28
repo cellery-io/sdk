@@ -194,8 +194,8 @@ func RunBuild(tag string, fileName string) {
 			}
 		}
 
-		re := regexp.MustCompile("^"+currentDir+"/")
-		balFilePath := re.ReplaceAllString(tempBuildFileName,"")
+		re := regexp.MustCompile("^" + currentDir + "/")
+		balFilePath := re.ReplaceAllString(tempBuildFileName, "")
 		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", cliUser.Uid,
 			strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", balFilePath, "build", string(iName), "{}")
 	}

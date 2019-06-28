@@ -34,9 +34,9 @@ type changedComponent struct {
 }
 
 var apim = "API Manager"
-var autoscaling = "Auto scaling"
-var knative = "Knative serving"
-var hpa = "Horizontal pod auto scalar"
+var autoscaling = "Autoscaling"
+var knative = "Scale-to-Zero"
+var hpa = "Horizontal Pod Autoscalar"
 var observability = "Observability"
 var apimEnabled = false
 var observabilityEnabled = false
