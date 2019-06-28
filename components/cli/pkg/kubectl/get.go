@@ -190,3 +190,21 @@ func GetGateways(cellName string) (Gateway, error) {
 	err = json.Unmarshal([]byte(out), &jsonOutput)
 	return jsonOutput, err
 }
+
+func GetVirtualService(vs string) (VirtualService, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"virtualservice",
+		vs,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := VirtualService{}
+	out, err := getCommandOutput(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal([]byte(out), &jsonOutput)
+	return jsonOutput, err
+}

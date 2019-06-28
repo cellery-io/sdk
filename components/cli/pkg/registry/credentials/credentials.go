@@ -74,6 +74,8 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 			code = r.Form.Get("code")
 			ping := r.Form.Get("ping")
 			if ping == "true" {
+				w.Header().Set("Access-Control-Allow-Origin", conf.Hub.Url)
+				w.Header().Set("Access-Control-Allow-Methods", http.MethodGet)
 				w.WriteHeader(http.StatusOK)
 			}
 			if code != "" {
@@ -82,7 +84,7 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 				if authorized {
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-success", http.StatusSeeOther)
 				} else {
-					// todo add authentication fail url
+					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-failure", http.StatusSeeOther)
 					fmt.Println("\n\U0000274C Failed to authenticate")
 				}
 				flusher, ok := w.(http.Flusher)

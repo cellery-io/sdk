@@ -65,6 +65,7 @@ func newCliCommand() *cobra.Command {
 		newExportPolicyCommand(),
 		newApplyPolicyCommand(),
 		newUpdateCellComponentsCommand(),
+		newRouteTrafficCommand(),
 	)
 	cmd.PersistentFlags().BoolVarP(&verboseMode, "verbose", "v", false, "Run on verbose mode")
 	return cmd
