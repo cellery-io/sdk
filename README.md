@@ -22,14 +22,13 @@ In this README:
 - [What's next?](#whats-next)
 
 In addition, here are some other documents you may wish to read:
-- [Cell Based Architecture](docs/cba.md) - explains the concepts of Cell based Architecture
+- [Cell Based Architecture](https://github.com/wso2/reference-architecture/blob/master/reference-architecture-cell-based.md) - explains the concepts of Cell based Architecture
 - [Cellery Architecture](docs/cellery-architecture.md) - explains the high-level architecture of Cellery
 - [How to code cells?](docs/cell-reference.md) - explains how Cellery cells are written
 - [CLI commands](docs/cli-reference.md) - reference for CLI commands
-- [Samples](https://github.com/wso2-cellery/samples) - a collection os useful samples
-- [Cellery Community](docs/community.md) - describes how to get involved and contribute to the Cellery project
-
-You'll find many other useful documents on our [Wiki](https://wso2-cellery.github.io/wiki).
+- [Samples](https://github.com/wso2-cellery/samples) - a collection of useful samples
+- [Cellery community](docs/community.md) - describes how to get involved and contribute to the Cellery project
+- [Cellery roadmap](https://github.com/wso2-cellery/sdk/wiki) - provides the roadmap of the Cellery project
 
 ## Introduction
 
@@ -50,6 +49,8 @@ You can read more about this approach [here](https://wso2-cellery.github.io/phil
 
 ![Cellery intro](docs/images/cellery-intro.png)
 
+TODO: Need to explain the diagram
+
 Cellery is composed of these components:
 
 - **CLI** - TODO:
@@ -59,6 +60,8 @@ Cellery is composed of these components:
 ---
 
 ## Quickstart Guide
+
+The easiest way to setup Cellery is using the 'local' mode which installs a VirtualBox image. For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
 
 ### Prerequisites 
 1. kubectl v1.11.x (Execute `kubectl version` command and make sure kubectl client is v1.11. 
