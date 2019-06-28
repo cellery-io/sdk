@@ -61,7 +61,7 @@ func RunSetupCreateGcp(isCompleteSetup bool) {
 	} else {
 		createMinimalGcpRuntime()
 	}
-	util.WaitForRuntime()
+	util.WaitForRuntime(true)
 }
 
 func createGcp() error {
