@@ -20,6 +20,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/manifoldco/promptui"
@@ -117,6 +118,7 @@ func modifyRuntime() {
 			if confirmModify {
 				if runtimeUpdated {
 					RunSetupModify(apimChange, observabilityChange, knativeChange, hpaChange)
+					os.Exit(0)
 				}
 			} else {
 				modifyRuntime()
@@ -135,6 +137,7 @@ func modifyRuntime() {
 			return
 		}
 	}
+	modifyRuntime()
 }
 
 func modifyAutoScalingPolicy() {
