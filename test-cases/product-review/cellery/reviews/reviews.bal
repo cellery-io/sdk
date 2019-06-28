@@ -58,7 +58,7 @@ public function build(cellery:ImageName iName) returns error? {
                         }
                     ]
                 },
-                expose: "local"
+                expose: "global"
             }
         },
         envVars: {
@@ -79,8 +79,8 @@ public function build(cellery:ImageName iName) returns error? {
         },
         dependencies: {
             cells: {
-                customerProduct: <cellery:ImageName>{ org: "izza", name: "customer", ver: "1.0.0" },
-                database: <cellery:ImageName>{ org: "izza", name: "database", ver: "1.0.0" }
+                customerProduct: <cellery:ImageName>{ org: "myorg", name: "products", ver: "1.0.0" },
+                database: <cellery:ImageName>{ org: "myorg", name: "database", ver: "1.0.0" }
             }
         }
     };
