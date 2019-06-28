@@ -19,7 +19,9 @@
 package runtime
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
@@ -42,6 +44,18 @@ func deleteObservability(artifactsPath string) error {
 		}
 	}
 	return nil
+}
+func IsObservabilityEnabled() (bool, error) {
+	enabled := true
+	_, err := kubectl.GetDeployment("cellery-system", "wso2sp-worker")
+	if err != nil {
+		if strings.Contains(err.Error(), "No resources found") {
+			enabled = false
+		} else {
+			return enabled, fmt.Errorf("error checking if observability is enabled")
+		}
+	}
+	return enabled, nil
 }
 
 func CreateObservabilityConfigMaps(artifactsPath string) error {

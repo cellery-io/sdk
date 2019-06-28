@@ -56,7 +56,7 @@ func RunSetup() {
 
 	cellPrompt := promptui.Select{
 		Label: util.YellowBold("?") + " Setup Cellery runtime",
-		Items: []string{constants.CELLERY_SETUP_MANAGE, constants.CELLERY_SETUP_CREATE,
+		Items: []string{constants.CELLERY_SETUP_CREATE, constants.CELLERY_SETUP_MANAGE,
 			constants.CELLERY_SETUP_MODIFY, constants.CELLERY_SETUP_SWITCH, constants.CELLERY_SETUP_EXIT},
 		Templates: selectTemplate,
 	}

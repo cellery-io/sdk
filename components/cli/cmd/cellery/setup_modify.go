@@ -28,16 +28,18 @@ func newSetupModifyCommand() *cobra.Command {
 	var apimgt = false
 	var observability = false
 	var knative = false
+	var hpa = false
 	cmd := &cobra.Command{
 		Use:   "modify <command>",
 		Short: "Modify Cellery runtime",
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupModify(apimgt, observability, knative)
+			commands.RunSetupModify(commands.ConvertToSelection(apimgt), commands.ConvertToSelection(observability),
+				commands.ConvertToSelection(knative), commands.ConvertToSelection(hpa))
 		},
 	}
-
 	cmd.Flags().BoolVar(&apimgt, "apimgt", false, "enable API Management in the runtime")
 	cmd.Flags().BoolVar(&observability, "observability", false, "enable Observability in the runtime")
 	cmd.Flags().BoolVar(&knative, "knative", false, "enable Knative serving in the runtime")
+	cmd.Flags().BoolVar(&hpa, "hpa", false, "enable horizontal pod auto scalar in the runtime")
 	return cmd
 }

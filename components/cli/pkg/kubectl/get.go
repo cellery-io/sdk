@@ -208,3 +208,16 @@ func GetVirtualService(vs string) (VirtualService, error) {
 	err = json.Unmarshal([]byte(out), &jsonOutput)
 	return jsonOutput, err
 }
+
+func GetDeployment(namespace, deployment string) (string, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"get",
+		"deployments",
+		deployment,
+		"-n", namespace,
+	)
+	displayVerboseOutput(cmd)
+	out, err := getCommandOutput(cmd)
+	return out, err
+}

@@ -29,6 +29,14 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
+type Selection int
+
+const (
+	NoChange Selection = iota
+	Enable
+	Disable
+)
+
 var isCompleteSetup = false
 
 func SetCompleteSetup(completeSetup bool) {
@@ -60,7 +68,7 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		return fmt.Errorf("error updating mysql init script: %v", err)
 	}
 
-	if isPersistentVolume && !isGcpRuntime() {
+	if isPersistentVolume && !IsGcpRuntime() {
 		nodeName, err := kubectl.GetMasterNodeName()
 		if err != nil {
 			return fmt.Errorf("error getting master node name: %v", err)
@@ -153,58 +161,88 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		return fmt.Errorf("error installing ingress-nginx: %v", err)
 	}
 	spinner.Stop(true)
-
 	return nil
 }
 
-func UpdateRuntime(apiManagement, observability, knative bool) error {
+func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
+	spinner := util.StartNewSpinner("Updating cellery runtime")
 	var err error
-	err = DeleteComponent(Observability)
-	if err != nil {
-		return err
-	}
-	if apiManagement {
-		err = DeleteComponent(IdentityProvider)
-		if err != nil {
-			return err
-		}
-		err = AddComponent(ApiManager)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = DeleteComponent(ApiManager)
-		if err != nil {
-			return err
-		}
-		err = AddComponent(IdentityProvider)
-		if err != nil {
-			return err
-		}
-	}
-
-	if observability {
-		err = AddComponent(Observability)
-		if err != nil {
-			return err
-		}
-	} else {
+	if apiManagement != NoChange {
 		err = DeleteComponent(Observability)
 		if err != nil {
+			spinner.Stop(false)
 			return err
+		}
+		if apiManagement == Enable {
+			err = DeleteComponent(IdentityProvider)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+			err = AddComponent(ApiManager)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+		} else {
+			err = DeleteComponent(ApiManager)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+			err = AddComponent(IdentityProvider)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
 		}
 	}
-	if knative {
-		err = AddComponent(Knative)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = DeleteComponent(Knative)
-		if err != nil {
-			return err
+	if observability != NoChange {
+		if observability == Enable {
+			err = AddComponent(Observability)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+		} else {
+			err = DeleteComponent(Observability)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
 		}
 	}
+	if knative != NoChange {
+		if knative == Enable {
+			err = AddComponent(Knative)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+		} else {
+			err = DeleteComponent(Knative)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+		}
+	}
+	if hpa != NoChange {
+		if hpa == Enable {
+			err = AddComponent(HPA)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+		} else {
+			err = DeleteComponent(HPA)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+		}
+	}
+	spinner.Stop(true)
 	return nil
 }
 
@@ -218,6 +256,8 @@ func AddComponent(component SystemComponent) error {
 		return addObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case Knative:
 		return InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+	case HPA:
+		return InstallHPA(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}
@@ -232,7 +272,9 @@ func DeleteComponent(component SystemComponent) error {
 	case Observability:
 		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case Knative:
-		return kubectl.DeleteNameSpace("knative-serving")
+		return deleteKnative()
+	case HPA:
+		return deleteHpa(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}
@@ -270,12 +312,14 @@ func buildArtifactsPath(component SystemComponent, artifactsPath string) string 
 		return filepath.Join(artifactsPath, "system")
 	case Mysql:
 		return filepath.Join(artifactsPath, "mysql")
+	case HPA:
+		return filepath.Join(artifactsPath, "metrics-server/")
 	default:
 		return filepath.Join(artifactsPath)
 	}
 }
 
-func isGcpRuntime() bool {
+func IsGcpRuntime() bool {
 	nodes, err := kubectl.GetNodes()
 	if err != nil {
 		util.ExitWithErrorMessage("failed to check if runtime is gcp", err)

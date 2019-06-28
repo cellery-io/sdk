@@ -14,53 +14,54 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
  */
 
 package runtime
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
-func InstallKnativeServing(artifactsPath string) error {
-	for _, v := range buildKnativeYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFile(v)
+func InstallHPA(artifactsPath string) error {
+	for _, v := range buildHPAYamlPaths(artifactsPath) {
+		err := kubectl.CreateFile(v)
 		if err != nil {
-			time.Sleep(10 * time.Second)
-			err = kubectl.ApplyFile(v)
-			if err != nil {
-				return err
-			}
+			return err
 		}
 	}
 	return nil
 }
 
-func deleteKnative() error {
-	return kubectl.DeleteNameSpace("knative-serving")
+func deleteHpa(artifactsPath string) error {
+	for _, v := range buildHPAYamlPaths(artifactsPath) {
+		err := kubectl.DeleteFile(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func IsKnativeEnabled() (bool, error) {
+func IsHpaEnabled() (bool, error) {
 	enabled := true
-	_, err := kubectl.GetDeployment("knative-serving", "activator")
+	_, err := kubectl.GetDeployment("kube-system", "metrics-server")
 	if err != nil {
 		if strings.Contains(err.Error(), "No resources found") {
 			enabled = false
 		} else {
-			return enabled, fmt.Errorf("error checking if knative serving is enabled")
+			return enabled, fmt.Errorf("error checking if hpa is enabled")
 		}
 	}
 	return enabled, nil
 }
 
-func buildKnativeYamlPaths(artifactsPath string) []string {
-	base := buildArtifactsPath(System, artifactsPath)
+func buildHPAYamlPaths(artifactsPath string) []string {
+	base := buildArtifactsPath(HPA, artifactsPath)
 	return []string{
-		filepath.Join(base, "knative-serving.yaml"),
+		base,
 	}
 }

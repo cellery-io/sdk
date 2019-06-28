@@ -19,7 +19,9 @@
 package runtime
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
@@ -42,6 +44,19 @@ func deleteApim(artifactsPath string) error {
 		}
 	}
 	return nil
+}
+
+func IsApimEnabled() (bool, error) {
+	enabled := true
+	_, err := kubectl.GetDeployment("cellery-system", "gateway")
+	if err != nil {
+		if strings.Contains(err.Error(), "No resources found") {
+			enabled = false
+		} else {
+			return enabled, fmt.Errorf("error checking if apim is enabled")
+		}
+	}
+	return enabled, nil
 }
 
 func CreateGlobalGatewayConfigMaps(artifactsPath string) error {
