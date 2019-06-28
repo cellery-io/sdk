@@ -61,7 +61,8 @@ Cellery is composed of these components:
 
 ## Quickstart Guide
 
-The easiest way to setup Cellery is using the 'local' mode which installs a VirtualBox image. For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
+The easiest way to setup Cellery is using the 'local' mode which installs a VirtualBox image. 
+For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
 
 ### Prerequisites 
 1. kubectl v1.11.x (Execute `kubectl version` command and make sure kubectl client is v1.11. 
@@ -116,7 +117,8 @@ Let's quickly run a sample hello world cell as shown in the diagram below.
 
 ![Hello world cell](docs/images/hello-world-architecture.jpg) 
 
-The `hello-world-cell` contains one component `hello`. The `hello` component is defined by a container image which is written in Node.js and it is a simple webapp. In the quick start we will be deploying the `hello-world-cell`.
+The `hello-world-cell` contains one component `hello`. The `hello` component is defined by a container image which 
+is written in Node.js and it is a simple webapp. In the quick start we will be deploying the `hello-world-cell`.
 
 Now let's look at the steps required to run this cell. 
 
