@@ -88,26 +88,16 @@ the all 'cellery' commands in any directory other than the home directory.
 1. Run the local setup command. 
 
     ```
-    cellery setup create local
+    cellery setup create local -y
     ```
     
-2. Select 'Yes' when you are prompted to download the runtime. This may
-   take a few minutes:
-       
-    ```
-    Use the arrow keys to navigate: ↓ ↑ → ←
-    ? Downloading cellery-runtime-basic-0.2.0.tar.gz will take 2.04 GB from your machine. Do you want to continue:
-      ▸ Yes
-        No
-    ```
-    
-    If the setup was successful, you should see the following message:
+    This may take a few minutes. If the setup was successful, you should see the following message:
     
     ```
     ✔ Runtime status (Cellery)...OK
     ```
     
-3. Once the setup completes, run the following command to check the status:
+2. Once the setup completes, run the following command to check the status:
 
     ```
     cellery list instances
