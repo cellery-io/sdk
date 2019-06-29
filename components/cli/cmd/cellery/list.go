@@ -33,6 +33,7 @@ func newListCommand() *cobra.Command {
 		newListImagesCommand(),
 		newListIngressesCommand(),
 		newListComponentsCommand(),
+		newListDependenciesCommand(),
 	)
 	return cmd
 }
