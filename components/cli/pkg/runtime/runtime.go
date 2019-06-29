@@ -167,11 +167,19 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 	spinner := util.StartNewSpinner("Updating cellery runtime")
 	var err error
+	observabilityEnabled, err := IsObservabilityEnabled()
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
 	if apiManagement != NoChange {
-		err = DeleteComponent(Observability)
-		if err != nil {
-			spinner.Stop(false)
-			return err
+		// Remove observability if there was a change to apim
+		if observabilityEnabled {
+			err = DeleteComponent(Observability)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
 		}
 		if apiManagement == Enable {
 			err = DeleteComponent(IdentityProvider)
@@ -191,6 +199,14 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 				return err
 			}
 			err = AddComponent(IdentityProvider)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+		}
+		// Add observability if there was a change to apim and there was already observability running before that
+		if observabilityEnabled {
+			err = AddComponent(Observability)
 			if err != nil {
 				spinner.Stop(false)
 				return err
