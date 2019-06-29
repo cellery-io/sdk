@@ -384,8 +384,8 @@
     <properties>
         <ballerina.version>0.991.0</ballerina.version>
         <lombok.version>1.18.4</lombok.version>
-        <fabric8.kubernetes.version>4.1.2</fabric8.kubernetes.version>
-        <fabric8.kubernetes.client.version>4.2.0</fabric8.kubernetes.client.version>
+        <fabric8.kubernetes.version>4.3.0</fabric8.kubernetes.version>
+        <fabric8.kubernetes.client.version>4.3.0</fabric8.kubernetes.client.version>
         <yaml.beans.version>1.13</yaml.beans.version>
         <org.json.version>20180813</org.json.version>
         <swagger.parser.version>2.0.8</swagger.parser.version>
