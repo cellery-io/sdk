@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -33,9 +34,9 @@ import (
 )
 
 func RunApplyAutoscalePolicies(file string, instance string) error {
-	spinner := util.StartNewSpinner("Applying autoscale policies")
+	spinner := util.StartNewSpinner("Preparing to apply autoscale policies")
 	// check if the cell exists
-	_, err := kubectl.GetCell(instance)
+	cellInst, err := kubectl.GetCell(instance)
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -52,10 +53,26 @@ func RunApplyAutoscalePolicies(file string, instance string) error {
 		spinner.Stop(false)
 		return err
 	}
-	k8sAutoscalePolicies, err := generateCellAutoscalePolicies(&policy, instance)
+	// get the list of overridable components (which has spec.overridable = `true`) and whether the gateway
+	// policy is overridable. If a particular component does not have a autoscale policy, its considered as overridable.
+	overridableComponents, err := getOverridableComponents(&cellInst, instance)
 	if err != nil {
 		spinner.Stop(false)
 		return err
+	}
+	isGatewayOverridable, err := isGatewayPolicyOverridable(instance)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	k8sAutoscalePolicies, err := generateCellAutoscalePolicies(policy, instance, overridableComponents, isGatewayOverridable)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	if len(k8sAutoscalePolicies) == 0 {
+		spinner.Stop(false)
+		return fmt.Errorf(fmt.Sprintf("No autoscale policies can be updated in cell instance %s", instance))
 	}
 	// write policies to file one by one, else kubectl apply issues can occur
 	policiesFile := filepath.Join("./", fmt.Sprintf("%s-autoscale-policies.yaml", instance))
@@ -80,7 +97,7 @@ func RunApplyAutoscalePolicies(file string, instance string) error {
 }
 
 func RunApplyAutoscalePolicyToComponents(file string, instance string, components string) error {
-	spinner := util.StartNewSpinner("Applying autoscale policies")
+	spinner := util.StartNewSpinner("Preparing to apply autoscale policies")
 	// components can be separated with a comma, split
 	componentsArr := strings.Split(components, ",")
 	// check if the cell exists
@@ -91,6 +108,7 @@ func RunApplyAutoscalePolicyToComponents(file string, instance string, component
 	}
 	// check whether the specified components exist in the retrieved cell instance
 	if !checkIfComponentsExistInCellInstance(componentsArr, cellInst) {
+		spinner.Stop(false)
 		return fmt.Errorf("components specified does not match with the given cell instance")
 	}
 	// read the file
@@ -105,10 +123,21 @@ func RunApplyAutoscalePolicyToComponents(file string, instance string, component
 		spinner.Stop(false)
 		return err
 	}
-	k8sAutoscalePolicies, err := generataCellAutoscalePoliciesForComponents(&policy, instance, componentsArr)
+	// get the list of overridable components (which has spec.overridable = `true`) and whether the gateway
+	// policy is overridable. If a particular component does not have a autoscale policy, its considered as overridable.
+	overridableComponents, err := getOverridableComponents(&cellInst, instance)
 	if err != nil {
 		spinner.Stop(false)
 		return err
+	}
+	k8sAutoscalePolicies, err := generataCellAutoscalePoliciesForComponents(&policy, instance, componentsArr, overridableComponents)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	if len(k8sAutoscalePolicies) == 0 {
+		spinner.Stop(false)
+		return fmt.Errorf(fmt.Sprintf("No autoscale policies can be updated in cell instance %s", instance))
 	}
 	// write policies to file one by one, else kubectl apply issues can occur
 	policiesFile := filepath.Join("./", fmt.Sprintf("%s-autoscale-policies.yaml", instance))
@@ -133,7 +162,7 @@ func RunApplyAutoscalePolicyToComponents(file string, instance string, component
 }
 
 func RunApplyAutoscalePolicyToCellGw(file string, instance string) error {
-	spinner := util.StartNewSpinner("Applying autoscale policies")
+	spinner := util.StartNewSpinner("Preparing to apply autoscale policies")
 	// check if the cell exists
 	_, err := kubectl.GetCell(instance)
 	if err != nil {
@@ -152,6 +181,16 @@ func RunApplyAutoscalePolicyToCellGw(file string, instance string) error {
 		spinner.Stop(false)
 		return err
 	}
+	isGatewayOverridable, err := isGatewayPolicyOverridable(instance)
+	if err != nil {
+		spinner.Stop(false)
+		return err
+	}
+	if !isGatewayOverridable {
+		// can't update the gateway!
+		spinner.Stop(false)
+		return fmt.Errorf(fmt.Sprintf("Gateway of cell instance %s is not overridable", instance))
+	}
 	k8sAutoscalePolicies, err := generataCellAutoscalePolicyForGw(&policy, instance)
 	if err != nil {
 		spinner.Stop(false)
@@ -159,7 +198,7 @@ func RunApplyAutoscalePolicyToCellGw(file string, instance string) error {
 	}
 	// write policies to file one by one, else kubectl apply issues can occur
 	policiesFile := filepath.Join("./", fmt.Sprintf("%s-autoscale-policies.yaml", instance))
-	err = writeCellAutoscalePoliciesToFile(policiesFile, &[]util.AutoscalePolicy{k8sAutoscalePolicies})
+	err = writeCellAutoscalePoliciesToFile(policiesFile, []*kubectl.AutoscalePolicy{&k8sAutoscalePolicies})
 	defer func() {
 		_ = os.Remove(policiesFile)
 	}()
@@ -179,59 +218,75 @@ func RunApplyAutoscalePolicyToCellGw(file string, instance string) error {
 	return nil
 }
 
-func generateCellAutoscalePolicies(policy *policies.CellPolicy, instance string) (*[]util.AutoscalePolicy, error) {
-	var k8sAutoscalePolicies []util.AutoscalePolicy
+func generateCellAutoscalePolicies(policy policies.CellPolicy, instance string, overridableComponents []string, gatewayOverridable bool) ([]*kubectl.AutoscalePolicy, error) {
+	var k8sAutoscalePolicies []*kubectl.AutoscalePolicy
 	for _, rule := range policy.Rules {
-		var k8sAutoscalePolicy util.AutoscalePolicy
+		var k8sAutoscalePolicy kubectl.AutoscalePolicy
 		switch polTargetType := rule.Target.Type; polTargetType {
 		case policies.CellComponentTargetType:
-			k8sAutoscalePolicy = createK8sAutoscalePolicy(rule,
-				policies.GetComponentAutoscalePolicyName(instance, rule.Target.Name),
-				policies.GetTargetComponentDeploymentName(instance, rule.Target.Name))
+			if isComponentPolicyOverridable(overridableComponents, rule.Target.Name) {
+				k8sAutoscalePolicy = createK8sAutoscalePolicy(rule,
+					policies.GetComponentAutoscalePolicyName(instance, rule.Target.Name),
+					policies.GetTargetComponentDeploymentName(instance, rule.Target.Name))
+				k8sAutoscalePolicies = append(k8sAutoscalePolicies, &k8sAutoscalePolicy)
+			}
 		case policies.CellGatewayTargetType:
-			k8sAutoscalePolicy = createK8sAutoscalePolicy(rule,
-				policies.GetGatewayAutoscalePolicyName(instance),
-				policies.GetTargetGatewayeploymentName(instance))
+			if gatewayOverridable {
+				k8sAutoscalePolicy = createK8sAutoscalePolicy(rule,
+					policies.GetGatewayAutoscalePolicyName(instance),
+					policies.GetTargetGatewayeploymentName(instance))
+				k8sAutoscalePolicies = append(k8sAutoscalePolicies, &k8sAutoscalePolicy)
+			}
 		default:
 			return nil, fmt.Errorf("wrong target type %s in the Autoscale policy", polTargetType)
 		}
-		k8sAutoscalePolicies = append(k8sAutoscalePolicies, k8sAutoscalePolicy)
 	}
-	return &k8sAutoscalePolicies, nil
+	return k8sAutoscalePolicies, nil
 }
 
-func generataCellAutoscalePoliciesForComponents(policy *policies.CellPolicy, instance string, components []string) (*[]util.AutoscalePolicy, error) {
-	var k8sAutoscalePolicies []util.AutoscalePolicy
+func isComponentPolicyOverridable(overridableComponents []string, targetComponent string) bool {
+	for _, component := range overridableComponents {
+		if targetComponent == component {
+			return true
+		}
+	}
+	return false
+}
+
+func generataCellAutoscalePoliciesForComponents(policy *policies.CellPolicy, instance string, components []string, overridableComponents []string) ([]*kubectl.AutoscalePolicy, error) {
+	var k8sAutoscalePolicies []*kubectl.AutoscalePolicy
 	// pick the first rule. If there are more than one, rest will be ignored.
 	rule := policy.Rules[0]
 	for _, component := range components {
-		k8sAutoscalePolicy := createK8sAutoscalePolicy(rule,
-			policies.GetComponentAutoscalePolicyName(instance, component),
-			policies.GetTargetComponentDeploymentName(instance, component))
-		k8sAutoscalePolicies = append(k8sAutoscalePolicies, k8sAutoscalePolicy)
+		if isComponentPolicyOverridable(overridableComponents, component) {
+			k8sAutoscalePolicy := createK8sAutoscalePolicy(rule,
+				policies.GetComponentAutoscalePolicyName(instance, component),
+				policies.GetTargetComponentDeploymentName(instance, component))
+			k8sAutoscalePolicies = append(k8sAutoscalePolicies, &k8sAutoscalePolicy)
+		}
 	}
-	return &k8sAutoscalePolicies, nil
+	return k8sAutoscalePolicies, nil
 }
 
-func generataCellAutoscalePolicyForGw(policy *policies.CellPolicy, instance string) (util.AutoscalePolicy, error) {
+func generataCellAutoscalePolicyForGw(policy *policies.CellPolicy, instance string) (kubectl.AutoscalePolicy, error) {
 	// pick the first rule. If there are more than one, rest will be ignored.
 	rule := policy.Rules[0]
 	return createK8sAutoscalePolicy(rule, policies.GetGatewayAutoscalePolicyName(instance), policies.GetTargetGatewayeploymentName(instance)), nil
 }
 
-func createK8sAutoscalePolicy(rule policies.Rule, name string, scaleTargetRefName string) util.AutoscalePolicy {
-	return util.AutoscalePolicy{
+func createK8sAutoscalePolicy(rule policies.Rule, name string, scaleTargetRefName string) kubectl.AutoscalePolicy {
+	return kubectl.AutoscalePolicy{
 		Kind:       policies.CelleryAutoscalePolicyKind,
 		APIVersion: policies.CelleryApiVersion,
-		Metadata: util.AutoscalePolicyMetadata{
+		Metadata: kubectl.AutoscalePolicyMetadata{
 			Name: name,
 		},
-		Spec: util.AutoscalePolicySpec{
+		Spec: kubectl.AutoscalePolicySpec{
 			Overridable: rule.Overridable,
-			Policy: util.Policy{
+			Policy: kubectl.Policy{
 				MinReplicas: rule.Policy.MinReplicas,
 				MaxReplicas: rule.Policy.MaxReplicas,
-				ScaleTargetRef: util.ScaleTargetRef{
+				ScaleTargetRef: kubectl.ScaleTargetRef{
 					ApiVersion: policies.K8sScaleTargetApiVersion,
 					Kind:       policies.K8sScaleTargetKind,
 					Name:       scaleTargetRefName,
@@ -242,12 +297,12 @@ func createK8sAutoscalePolicy(rule policies.Rule, name string, scaleTargetRefNam
 	}
 }
 
-func getK8sAutoscalePolicyMetrics(metrics []policies.Metric) []util.Metric {
-	var k8sMetrics []util.Metric
+func getK8sAutoscalePolicyMetrics(metrics []policies.Metric) []kubectl.Metric {
+	var k8sMetrics []kubectl.Metric
 	for _, metric := range metrics {
-		k8sMetric := util.Metric{
+		k8sMetric := kubectl.Metric{
 			Type: metric.Type,
-			Resource: util.Resource{
+			Resource: kubectl.Resource{
 				Name:                     metric.Resource.Name,
 				TargetAverageUtilization: metric.Resource.TargetAverageUtilization,
 			},
@@ -274,7 +329,47 @@ func checkIfComponentsExistInCellInstance(components []string, cell kubectl.Cell
 	return true
 }
 
-func writeCellAutoscalePoliciesToFile(policiesFile string, k8sAutoscalePolicies *[]util.AutoscalePolicy) error {
+func getOverridableComponents(cell *kubectl.Cell, instance string) ([]string, error) {
+	var applicableComponents []string
+	for _, component := range cell.CellSpec.ComponentTemplates {
+		ap, err := kubectl.GetAutoscalePolicy(policies.GetComponentAutoscalePolicyName(instance, component.Metadata.Name))
+		if err != nil {
+			matches, err := regexp.MatchString(policies.BuildAutoscalePolicyNonExistErrorMatcher(policies.GetComponentAutoscalePolicyName(instance, component.Metadata.Name)), err.Error())
+			if err != nil {
+				return nil, err
+			}
+			if matches {
+				// no autoscaling policy for this component, hence can be considered applicable
+				applicableComponents = append(applicableComponents, component.Metadata.Name)
+			} else {
+				return nil, err
+			}
+		} else {
+			if ap.Spec.Overridable {
+				applicableComponents = append(applicableComponents, component.Metadata.Name)
+			}
+		}
+	}
+	return applicableComponents, nil
+}
+
+func isGatewayPolicyOverridable(instance string) (bool, error) {
+	ap, err := kubectl.GetAutoscalePolicy(policies.GetGatewayAutoscalePolicyName(instance))
+	if err != nil {
+		if matches, matchErr := regexp.MatchString(policies.BuildAutoscalePolicyNonExistErrorMatcher(policies.GetGatewayAutoscalePolicyName(instance)), err.Error()); matchErr == nil {
+			if matches {
+				return true, nil
+			} else {
+				return false, err
+			}
+		} else {
+			return false, matchErr
+		}
+	}
+	return ap.Spec.Overridable, nil
+}
+
+func writeCellAutoscalePoliciesToFile(policiesFile string, k8sAutoscalePolicies []*kubectl.AutoscalePolicy) error {
 	f, err := os.OpenFile(policiesFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
@@ -282,7 +377,7 @@ func writeCellAutoscalePoliciesToFile(policiesFile string, k8sAutoscalePolicies 
 	defer func() {
 		_ = f.Close()
 	}()
-	for _, k8sPolicy := range *k8sAutoscalePolicies {
+	for _, k8sPolicy := range k8sAutoscalePolicies {
 		yamlContent, err := yaml.Marshal(k8sPolicy)
 		if err != nil {
 			return err

@@ -209,6 +209,24 @@ func GetVirtualService(vs string) (VirtualService, error) {
 	return jsonOutput, err
 }
 
+func GetAutoscalePolicy(autoscalepolicy string) (*AutoscalePolicy, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"ap",
+		autoscalepolicy,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := &AutoscalePolicy{}
+	out, err := getCommandOutput(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal([]byte(out), &jsonOutput)
+	return jsonOutput, err
+}
+
 func GetDeployment(namespace, deployment string) (string, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,

@@ -42,3 +42,7 @@ func GetTargetComponentDeploymentName(instance string, component string) string 
 func GetTargetGatewayeploymentName(instance string) string {
 	return fmt.Sprintf("%s--gateway-deployment", instance)
 }
+
+func BuildAutoscalePolicyNonExistErrorMatcher(name string) string {
+	return fmt.Sprintf("autoscalepolicies.mesh.cellery.io(\\s)?\"%s\"(\\s)?not found", name)
+}

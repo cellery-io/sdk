@@ -26,7 +26,7 @@ type CellPolicy struct {
 }
 
 type Rule struct {
-	Overridable bool   `json:"overridable,omitempty"`
+	Overridable bool   `json:"overridable"`
 	Target      Target `json:"target,omitempty"`
 	Policy      Policy `json:"policy,omitempty"`
 }

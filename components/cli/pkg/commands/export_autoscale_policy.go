@@ -19,22 +19,18 @@
 package commands
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strings"
+
+	"github.com/ghodss/yaml"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/policies"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
-	"github.com/ghodss/yaml"
 )
 
 func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error {
@@ -49,7 +45,7 @@ func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error 
 		if err, ok := err.(policies.PolicyNotFoundError); ok {
 			// since this is a not found error, continue and see if components included in the cell has autoscale policies.
 			gwSpinner.Stop(false)
-			log.Printf("Gateway autoscaling policy for instance %s not found \n", instance)
+			// log.Printf("Gateway autoscaling policy for instance %s not found \n", instance)
 		} else {
 			gwSpinner.Stop(false)
 			return err
@@ -62,21 +58,21 @@ func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error 
 	if err != nil {
 		return err
 	}
-	compSpinner := util.StartNewSpinner("Retrieving Component autoscale policies")
 	for _, csvc := range aCell.CellSpec.ComponentTemplates {
+		currentCompSpinner := util.StartNewSpinner(fmt.Sprintf("Retrieving autoscale policy for component %s", csvc.Metadata.Name))
 		err := populateComponentPolicy(instance, csvc.Metadata.Name, &aPolicy)
 		if err != nil {
 			if err, ok := err.(policies.PolicyNotFoundError); ok {
 				// since this is a not found error, continue and see if other components included in the cell has autoscale policies.
-				compSpinner.Stop(false)
-				log.Printf("Autoscaling policy for instance %s, component %s not found \n", instance, csvc.Metadata.Name)
+				currentCompSpinner.Stop(false)
+				// log.Printf("Autoscaling policy for instance %s, component %s not found \n", instance, csvc.Metadata.Name)
 			} else {
-				compSpinner.Stop(false)
+				currentCompSpinner.Stop(false)
 				return err
 			}
 		}
+		currentCompSpinner.Stop(true)
 	}
-	compSpinner.Stop(true)
 	// check if any autoscaling policies are returned, else return
 	if len(aPolicy.Rules) == 0 {
 		return fmt.Errorf("No autoscale policies found for instance %s ", instance)
@@ -98,7 +94,10 @@ func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error 
 	if file == "" {
 		file = filepath.Join("./", instance+"-autoscalepolicy.yaml")
 	} else {
-		ensureDir(file)
+		err := ensureDir(file)
+		if err != nil {
+			return err
+		}
 	}
 	err = writeToFile(yamlBytes, file)
 	if err != nil {
@@ -110,55 +109,21 @@ func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error 
 	return nil
 }
 
-func getScalePolicySpec(name string) (*util.AutoscalePolicySpec, error) {
-	cmd := exec.Command("kubectl", "get", "autoscalepolicy", name, "-o", "json")
-	outfile, err := os.Create("./" + name + ".txt")
+func getScalePolicySpec(name string) (*kubectl.AutoscalePolicySpec, error) {
+	autoscalePolicy, err := kubectl.GetAutoscalePolicy(name)
 	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = outfile.Close()
-		_ = os.Remove(outfile.Name())
-	}()
-	cmd.Stdout = outfile
-
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	var errBuilder strings.Builder
-
-	err = cmd.Start()
-	if err != nil {
-		return nil, err
-	}
-	go func() {
-		for stderrScanner.Scan() {
-			errBuilder.WriteString(stderrScanner.Text())
-		}
-	}()
-	err = cmd.Wait()
-	if match, err := regexp.MatchString("autoscalepolicies.mesh.cellery.io(\\s)?\""+name+"\"(\\s)?not found", errBuilder.String()); err == nil {
-		if match {
-			// return a specific not found error
-			return nil, policies.PolicyNotFoundError{}
+		if match, matchErr := regexp.MatchString(policies.BuildAutoscalePolicyNonExistErrorMatcher(name), err.Error()); matchErr == nil {
+			if match {
+				// return a specific not found error
+				return nil, policies.PolicyNotFoundError{}
+			} else {
+				return nil, err
+			}
 		} else {
-			fmt.Print(errBuilder.String())
+			return nil, matchErr
 		}
-	} else {
-		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	outputByteArray, err := ioutil.ReadFile(outfile.Name())
-	policySpec := util.AutoscalePolicy{}
-
-	err = json.Unmarshal(outputByteArray, &policySpec)
-	if err != nil {
-		return nil, err
-	}
-
-	return &policySpec.Spec, nil
+	return &autoscalePolicy.Spec, nil
 }
 
 func populateGatewayPolicy(instance string, policy *policies.CellPolicy) error {
@@ -202,7 +167,7 @@ func populateComponentPolicy(instance string, component string, policy *policies
 	return nil
 }
 
-func getMetricsFromPolicySpec(policySpec *util.AutoscalePolicySpec) []policies.Metric {
+func getMetricsFromPolicySpec(policySpec *kubectl.AutoscalePolicySpec) []policies.Metric {
 	var specMetrics []policies.Metric
 	for _, metric := range policySpec.Policy.Metrics {
 		specMetric := policies.Metric{

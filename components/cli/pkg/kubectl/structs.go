@@ -226,3 +226,42 @@ type Route struct {
 type Destination struct {
 	Host string `json:"host"`
 }
+
+type AutoscalePolicy struct {
+	Kind       string                  `json:"kind"`
+	APIVersion string                  `json:"apiVersion"`
+	Metadata   AutoscalePolicyMetadata `json:"metadata"`
+	Spec       AutoscalePolicySpec     `json:"spec"`
+}
+
+type AutoscalePolicyMetadata struct {
+	Name string `json:"name"`
+}
+
+type AutoscalePolicySpec struct {
+	Overridable bool   `json:"overridable"`
+	Policy      Policy `json:"policy"`
+}
+
+type Policy struct {
+	MinReplicas    int            `json:"minReplicas"`
+	MaxReplicas    int            `json:"maxReplicas"`
+	ScaleTargetRef ScaleTargetRef `json:"scaleTargetRef"`
+	Metrics        []Metric       `json:"metrics"`
+}
+
+type Metric struct {
+	Type     string   `json:"type"`
+	Resource Resource `json:"resource"`
+}
+
+type ScaleTargetRef struct {
+	ApiVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+}
+
+type Resource struct {
+	Name                     string `json:"name"`
+	TargetAverageUtilization int    `json:"targetAverageUtilization"`
+}
