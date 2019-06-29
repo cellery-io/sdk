@@ -116,7 +116,7 @@ func printCommandOutput(cmd *exec.Cmd) (string, error) {
 	stderrScanner := bufio.NewScanner(stderrReader)
 	go func() {
 		for stderrScanner.Scan() {
-			output += stdoutScanner.Text()
+			output += stderrScanner.Text()
 		}
 	}()
 	err := cmd.Start()
