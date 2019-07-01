@@ -37,36 +37,9 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
 
-    cellery:Component stockComponent2 = {
-        name: "stock2",
-        source: {
-            image: "wso2cellery/sampleapp-stock:0.3.0"
-        },
-        ingresses: {
-            stock: <cellery:HttpApiIngress>{ port: 8080,
-                context: "stock2",
-                definition: {
-                    resources: [
-                        {
-                            path: "/options",
-                            method: "GET"
-                        }
-                    ]
-                },
-                expose: "local"
-            }
-        },
-        resources: {
-            limits: {
-                cpu: "250m"
-            }
-        }
-    };
-
     cellery:CellImage stockCell = {
         components: {
-            stockComp: stockComponent,
-            stockComp2: stockComponent2
+            stockComp: stockComponent
         }
     };
     return cellery:createImage(stockCell, untaint iName);
@@ -74,9 +47,9 @@ public function build(cellery:ImageName iName) returns error? {
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     cellery:CellImage stockCell = check cellery:constructCellImage(untaint iName);
-    stockCell.components.stockComp2.resources.requests= {
-            memory: "64Mi",
-            cpu: "250m"
+    stockCell.components.stockComp.resources.requests= {
+            memory: "256Mi",
+            cpu: "256m"
         };
     return cellery:createInstance(stockCell, iName, instances);
 }
