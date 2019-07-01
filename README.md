@@ -11,8 +11,8 @@
 Build, run, and manage code-first composites on Kubernetes.
 
 - For in-depth information about how to use Cellery, visit [https://wso2-cellery.github.io/](https://wso2-cellery.github.io/)                                   
-- To ask questions and get assistance from our community, visit [wso2-cellery.github.io/discuss](https://wso2-cellery.github.io/discuss)
-- To learn how to participate in our overall community, visit [our community page](https://wso2-cellery.github.io/about/community)
+- To ask questions and get assistance from our community, visit [our community page](docs/community.md)
+- To learn how to participate in our overall community, visit [our community page](docs/community.md)
 
 In this README:
 
@@ -49,19 +49,36 @@ You can read more about this approach [here](https://wso2-cellery.github.io/phil
 
 ![Cellery intro](docs/images/cellery-intro.png)
 
-TODO: Need to explain the diagram
+Cellery provides a developer tooling, runtime and a management plane. This allows you to develop,
+run and manage your composite microservice applications on Kubernetes. 
 
-Cellery is composed of these components:
+- Cellery SDK
+    
+    The SDK allows developers to write cells, build them, run them & manage them. 
+    A cell description file is written using the [Ballerina](https://ballerina.io) programming language. 
+    In a nutshell, this file declares the microservice components that have to be included in the cell,
+    the relationship between those components, dependencies to other cells, and it also declares the API 
+    that need to be exposed.
+    
+    A CLI is also part of this SDK, which allows you to build, run, test and manage your cells. 
+    
+- Cellery Mesh
 
-- **CLI** - TODO:
-- **Mesh** - TODO:
-- **Observability** - TODO:
+    The mesh provides the wiring & communications medium between cells. Components in a cell cannot invoke
+    components in other cells directly. Only APIs exposed by the cells are invokable. These interactions are 
+    strictly governed by security policies.
+
+- Cellery Management 
+
+    This consists of a management plane, which allows you to observe your cells in the runtime, as well 
+    as other runtime aspects, and it also allows you to manage security and other policies.
 
 ---
 
 ## Quickstart Guide
 
-The easiest way to setup Cellery is using the 'local' mode which installs a VirtualBox image. For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
+The easiest way to setup Cellery is using the 'local' mode which installs a VirtualBox image. 
+For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
 
 ### Prerequisites 
 1. kubectl v1.11.x (Execute `kubectl version` command and make sure kubectl client is v1.11. 
@@ -116,7 +133,8 @@ Let's quickly run a sample hello world cell as shown in the diagram below.
 
 ![Hello world cell](docs/images/hello-world-architecture.jpg) 
 
-The `hello-world-cell` contains one component `hello`. The `hello` component is defined by a container image which is written in Node.js and it is a simple webapp. In the quick start we will be deploying the `hello-world-cell`.
+The `hello-world-cell` contains one component `hello`. The `hello` component is defined by a container image which 
+is written in Node.js and it is a simple webapp. In the quick start we will be deploying the `hello-world-cell`.
 
 Now let's look at the steps required to run this cell. 
 
@@ -127,7 +145,7 @@ the all 'cellery' commands in any directory other than the home directory.
     organization in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
     
     ```
-    $ cellery run wso2cellery/hello-world-cell:0.2.1 -n hello-world-cell
+    $ cellery run wso2cellery/hello-world-cell:0.2.1 -n hello-world-cell -y
     ```
     
     You should see the following output:
@@ -156,12 +174,6 @@ the all 'cellery' commands in any directory other than the home directory.
     Dependency Tree to be Used:
     
      No Dependencies
-    ```
-    
-    Type 'Y' at the following prompt:
-     
-    ```
-    ? Do you wish to continue with starting above Cell instances (Y/n)?
     
     ✔ Starting main instance hello-world-cell
     ✔ Successfully deployed cell image: wso2cellery/hello-world-cell:0.2.1
@@ -175,7 +187,7 @@ the all 'cellery' commands in any directory other than the home directory.
     
     Please allow a few minutes for completion.
     
-2. Execute `cellery list instances` to check the status of your cell 
+2. Execute `cellery list instances` to check the status of your cell. 
 
     ```
     $ cellery list instances
@@ -184,7 +196,7 @@ the all 'cellery' commands in any directory other than the home directory.
       hello-world            wso2cellery/hello-world-cell:0.2.1   Ready    hello--gateway-service        1          30 minutes 48 seconds
     ```
 
-3.  Add the following line to the /etc/hosts file
+3.  Add the following line to the /etc/hosts file.
     
     ```
       192.168.56.10 hello-world.com
