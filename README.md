@@ -49,13 +49,29 @@ You can read more about this approach [here](https://wso2-cellery.github.io/phil
 
 ![Cellery intro](docs/images/cellery-intro.png)
 
-TODO: Need to explain the diagram
+Cellery provides a developer tooling, runtime and a management plane. This allows you to develop,
+run and manage your composite microservice applications on Kubernetes. 
 
-Cellery is composed of these components:
+- Cellery SDK
+    
+    The SDK allows developers to write cells, build them, run them & manage them. 
+    A cell description file is written using the [Ballerina](https://ballerina.io) programming language. 
+    In a nutshell, this file declares the microservice components that have to be included in the cell,
+    the relationship between those components, dependencies to other cells, and it also declares the API 
+    that need to be exposed.
+    
+    A CLI is also part of this SDK, which allows you to build, run, test and manage your cells. 
+    
+- Cellery Mesh
 
-- **CLI** - TODO:
-- **Mesh** - TODO:
-- **Observability** - TODO:
+    The mesh provides the wiring & communications medium between cells. Components in a cell cannot invoke
+    components in other cells directly. Only APIs exposed by the cells are invokable. These interactions are 
+    strictly governed by security policies.
+
+- Cellery Management 
+
+    This consists of a management plane, which allows you to observe your cells in the runtime, as well 
+    as other runtime aspects, and it also allows you to manage security and other policies.
 
 ---
 
