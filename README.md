@@ -7,93 +7,150 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/wso2-cellery/sdk.svg)](https://github.com/wso2-cellery/sdk/commits/master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Cellery is a code-first approach to building, integrating, running and managing composite microservice applications on Kubernetes. 
-Build, push/pull, run, scale and observe composites. Create secure APIs by default, code components in any language.
 
-----
+Build, run, and manage code-first composites on Kubernetes.
 
-## Getting Started
-### Pre requisites 
-1. kubectl v1.11.x (Execute `kubectl version` command and make sure kubectl client is v1.11. Please follow [instructions](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to install kubectl v1.11.x)
-2. [Existing Kubernetes cluster](https://kubernetes.io/docs/setup/) OR  
-   [VirtualBox](https://www.virtualbox.org/wiki/Downloads) (for a local installation including a Kubernetes cluster) OR  
-   [Google Cloud SDK](https://cloud.google.com/sdk/) (to install cellery runtime in GCP)
+- For in-depth information about how to use Cellery, visit [https://wso2-cellery.github.io/](https://wso2-cellery.github.io/)                                   
+- To ask questions and get assistance from our community, visit [our community page](docs/community.md)
+- To learn how to participate in our overall community, visit [our community page](docs/community.md)
 
-### Setup Cellery CLI
+In this README:
 
+- [Introduction](#introduction)
+- [Why Cellery?](#why-cellery)
+- [Quickstart guide](#quickstart-guide)
+- [What's next?](#whats-next)
+
+In addition, here are some other documents you may wish to read:
+- [Cell Based Architecture](https://github.com/wso2/reference-architecture/blob/master/reference-architecture-cell-based.md) - explains the concepts of Cell based Architecture
+- [Cellery Architecture](docs/cellery-architecture.md) - explains the high-level architecture of Cellery
+- [How to code cells?](docs/cell-reference.md) - explains how Cellery cells are written
+- [CLI commands](docs/cli-reference.md) - reference for CLI commands
+- [Samples](https://github.com/wso2-cellery/samples) - a collection of useful samples
+- [Cellery community](docs/community.md) - describes how to get involved and contribute to the Cellery project
+- [Cellery roadmap](https://github.com/wso2-cellery/sdk/wiki) - provides the roadmap of the Cellery project
+
+## Introduction
+
+Cellery is a code-first approach to building, integrating, running and managing composite 
+microservice applications on Kubernetes. Build, push/pull, run, scale and observe composites. 
+Create secure APIs by default, code components in any language.
+
+---
+## Why Cellery?
+
+The use of microservices and/or serverless functions is exploding as organisations aim to get better
+agility and speed of development. This quickly gets out of control, resulting in tens or hundreds 
+of microservices in a highly connected network. There is a strong need for an approach that helps 
+create higher-level constructs from multiple microservices and serverless functions. 
+Cellery aims to create composites with well-defined boundaries that fit with CI/CD pipelines and 
+modern development and DevOps practices. 
+You can read more about this approach [here](https://wso2-cellery.github.io/philosophy)
+
+![Cellery intro](docs/images/cellery-intro.png)
+
+Cellery provides a developer tooling, runtime and a management plane. This allows you to develop,
+run and manage your composite microservice applications on Kubernetes. 
+
+- Cellery SDK
+    
+    The SDK allows developers to write cells, build them, run them & manage them. 
+    A cell description file is written using the [Ballerina](https://ballerina.io) programming language. 
+    In a nutshell, this file declares the microservice components that have to be included in the cell,
+    the relationship between those components, dependencies to other cells, and it also declares the API 
+    that need to be exposed.
+    
+    A CLI is also part of this SDK, which allows you to build, run, test and manage your cells. 
+    
+- Cellery Mesh
+
+    The mesh provides the wiring & communications medium between cells. Components in a cell cannot invoke
+    components in other cells directly. Only APIs exposed by the cells are invokable. These interactions are 
+    strictly governed by security policies.
+
+- Cellery Management 
+
+    This consists of a management plane, which allows you to observe your cells in the runtime, as well 
+    as other runtime aspects, and it also allows you to manage security and other policies.
+
+---
+
+## Quickstart Guide
+
+The easiest way to setup Cellery is using the 'local' mode which installs a VirtualBox image. 
+For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
+
+### Prerequisites 
+1. kubectl v1.11.x (Execute `kubectl version` command and make sure kubectl client is v1.11. 
+Please follow [instructions](https://kubernetes.io/docs/tasks/tools/install-kubectl/) to install kubectl v1.11.x)
+2. [VirtualBox](https://www.virtualbox.org/wiki/Downloads) 
+
+### Download Cellery
 #### Linux
-Download the [cellery-ubuntu-x64-0.2.1.deb](https://wso2-cellery.github.io/downloads) and install it using dpkg command as shown below.
+Download the [cellery-ubuntu-x64-0.2.1.deb](https://wso2-cellery.github.io/downloads) 
+and install it using dpkg command as shown below.
 ```
 dpkg -i cellery-ubuntu-x64-0.2.1.deb
 ```
 #### Mac OS
-Download [cellery-0.2.1.pkg](https://wso2-cellery.github.io/downloads) and install it by following macOS package installation steps.
+Download [cellery-0.2.1.pkg](https://wso2-cellery.github.io/downloads) 
+and install it by following macOS package installation steps.
 
 ### Setup Cellery runtime
-Once Cellery is installed, verify the installation is working by executing `cellery version` command.
+Once Cellery has been installed, verify the installation is working by executing `cellery version`.
 
-You can install the cellery runtime locally as a virtual machine (`Local`), in Google Cloud Platform (`GCP`)
-or in any Kubernetes cluster (`Existing cluster`). The installation options can be selected interactively or by passing inline command options.
-More can go to [cellery setup](docs/cli-setup-command.md) for more details.
+In this quickstart guide, we will install a basic local Cellery runtime by running the following 
+command:
 
-#### Which option to choose to install cellery runtime?
+**IMPORTANT:** Due to the [known issue](https://github.com/wso2-cellery/sdk/issues/381), please execute 
+the all 'cellery' commands in any directory other than the home directory.
 
-* if you want to deploy in google cloud and have a Google cloud account -> select `GCP` option
-* if you want to deploy in an existing K8s cluster -> select`Existing cluster` option
-* if you want to deploy locally via a pre-built VM -> select `Local` option 
+1. Run the local setup command. 
 
-#### Cellery runtime packages
-Cellery can be installed in two packages; Basic or Complete. The following is a comparison between two options:
+    ```
+    cellery setup create local -y
+    ```
+    
+    This may take a few minutes. If the setup was successful, you should see the following message:
+    
+    ```
+    ✔ Runtime status (Cellery)...OK
+    ```
+    
+2. Once the setup completes, run the following command to check the status:
 
-| Packages | Components | Supported Functionality | 
-|----------|------------|-------------------------|
-| Basic | <ul><li>Cell controller</li><li>Light weight Identity Provider</li></ul>| <ul><li>HTTP(S) cells with local APIs</li><li>Full support for web cells</li><li>Inbuilt security for inter cell and intra cell communication</li></ul> |
-| Complete | <ul><li>Cell controller</li><li>Global API manager</li><li>Observability portal and components</li></ul> | <ul><li>Full HTTP(S) cells with local/global APIs</li><li>Full support for web cells</li><li>Inbuilt security for inter cell and intra cell communication</li><li>API management functionality</li><li>observability of cells with rich UIs</li></ul> |
+    ```
+    cellery list instances
+    ```  
+    
+    You shouldn't see any errors. 
+    
+Now that we have installed Cellery let's validate that it is running using a simple cell.
 
-Please follow the relevant link below for the chosen setup.
+### Hello world with Cellery
 
-#### [1. Local setup](docs/setup/local-setup.md)
-#### [2. Existing Cluster](docs/setup/existing-cluster.md)
-#### [3. GCP setup](docs/setup/gcp-setup.md)     
-
-### Setup Cellery Tooling(Optional)
-<details>
-<summary>Click here to view the steps</summary>
-
-1. Download and install [Ballerina 0.991.0](https://ballerina.io/downloads/archived/)
-2. Download and install [VS Code](https://code.visualstudio.com/Download).
-3. Install the [Ballerina vscode plugin 0.991.0](https://product-dist.ballerina.io/downloads/0.991.0/ballerina-vscode-plugin-0.991.0.vsix). 
-4. Open VS Code and navigate to `File|Code->preferences->settings->Extensions->Ballerina` and set the home value to following. 
-
-##### Linux
-```bash
-/usr/lib/ballerina/ballerina-0.991.0
-```
-
-##### Mac OS
-```bash
-/Library/Ballerina/ballerina-0.991.0
-```
-![VSCode Settings](docs/images/vscode-settings.png)                               
-
-</details>
-
-### Quick start with cellery
 Let's quickly run a sample hello world cell as shown in the diagram below.  
 
 ![Hello world cell](docs/images/hello-world-architecture.jpg) 
 
-The `hello-world-cell` contains, one component `hello` and it's a web app. The `hello` component is exposed globally via a global and cell gateway.
-In the quick start we'll be deploying this `hello-world-cell` and browsing the `hello` component's web page.  
+The `hello-world-cell` contains one component `hello`. The `hello` component is defined by a container image which 
+is written in Node.js and it is a simple webapp. In the quick start we will be deploying the `hello-world-cell`.
 
----
-Please follow below instructions to run the hello-world-cell. 
+Now let's look at the steps required to run this cell. 
 
-**Note:** Due to the [known issue](https://github.com/wso2-cellery/sdk/issues/381), please execute the below commands in any directory other than home directory.
+**IMPORTANT:** Due to the [known issue](https://github.com/wso2-cellery/sdk/issues/381), please execute 
+the all 'cellery' commands in any directory other than the home directory.
 
-1) Execute below command that will download the hello world web cell from `wso2cellery` organization in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
+1. Execute the `cellery run` command that will download the hello-world cell from the `wso2cellery` 
+    organization in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
+    
     ```
-    $ cellery run wso2cellery/hello-world-cell:0.2.1 -n hello-world-cell
+    $ cellery run wso2cellery/hello-world-cell:0.2.1 -n hello-world-cell -y
+    ```
+    
+    You should see the following output:
+    
+    ```
     ✔ Connecting to registry-1.docker.io
     ✔ Fetching metadata
     ✔ Pulling image wso2cellery/hello-world-cell:0.2.1
@@ -118,11 +175,7 @@ Please follow below instructions to run the hello-world-cell.
     
      No Dependencies
     
-    ? Do you wish to continue with starting above Cell instances (Y/n)?
-    
     ✔ Starting main instance hello-world-cell
-    
-    
     ✔ Successfully deployed cell image: wso2cellery/hello-world-cell:0.2.1
     
     What's next?
@@ -131,231 +184,43 @@ Please follow below instructions to run the hello-world-cell.
       $ cellery list instances
     --------------------------------------------------------
     ```
-2) Optionally you can run `kubectl` or `cellery` commands to check whether all pods are up and running. 
-    ```
-    $ kubectl get pods
-    NAME                                         READY     STATUS        RESTARTS   AGE
-    hello--gateway-deployment-65fd8668cb-k7dqp   1/1       Running       0          2m
-    hello--hello-deployment-6df6fcbd8c-2s65r     2/2       Running       0          2m
-    hello--sts-deployment-6dc7958bbb-sg992       2/2       Running       0          2m
-    ```
-    OR
     
+    Please allow a few minutes for completion.
+    
+2. Execute `cellery list instances` to check the status of your cell. 
+
     ```
     $ cellery list instances
-                      INSTANCE                                   CELL IMAGE          STATUS                            GATEWAY                            COMPONENTS            AGE
-     ------------------------------------------ ----------------------------------- -------- ----------------------------------------------------------- ------------ -----------------------
-      hello                                      wso2cellery/hello-world-cell:0.2.1   Ready    hello--gateway-service                                      1            30 minutes 48 seconds
+             INSTANCE        CELL IMAGE                           STATUS        GATEWAY               COMPONENTS          AGE
+     ---------------------- ------------------------------------ -------- -------------------------- ------------ -----------------------
+      hello-world            wso2cellery/hello-world-cell:0.2.1   Ready    hello--gateway-service        1          30 minutes 48 seconds
     ```
 
-3) You would have added an entry into your `/etc/hosts` file during the setting up your runtime [local setup](docs/setup/local-setup.md#configure-host-entries), [Existing Cluster](docs/setup/existing-cluster.md#configure-host-entries), 
-and [GCP setup](docs/setup/gcp-setup.md)     , 
-so that your browser will use the right IP address for `hello-world.com`. Use the `kubectl` tool to make sure the IP your service is running on:
+3.  Add the following line to the /etc/hosts file.
+    
     ```
-    $ kubectl get ingress
-    NAME                     HOSTS             ADDRESS        PORTS   AGE
-    hello--gateway-ingress   hello-world.com   192.168.56.10   80      3m
-    ```
-    Check it's correctly configured in `/etc/hosts` to resolve `hello-world.com` to one of those IPs. 
-    ```
-    192.168.56.10  hello-world.com
+      192.168.56.10 hello-world.com
     ```
 
-4) Now browse [http://hello-world.com/](http://hello-world.com/) and you will should see the cell web page running.
+4. Now browse to [http://hello-world.com/](http://hello-world.com/) and you should see the web page.
 
-Congratulations! You have successfully got running the first web cell running!  
+    Congratulations! You have successfully got your first cell running!
+    
+5. Finally, terminate the cell instance that you started using the `cellery terminate` command.
+
+    ```
+    $ cellery terminate hello-world-cell
+    ```
+---
+    
+## What's next?    
+1. [Developing a Cell](docs/writing-a-cell.md) - step by step explanation on how you could define your own cells
+1. [Setting up Cellery on an existing K8s cluster](docs/setup/existing-cluster.md) - 
+    explains how Cellery can be setup on an existing K8s cluster
+2. [Setting up Cellery on an GCP](docs/setup/gcp-cluster.md) -
+    explains how Cellery can be setup on Google GCP
+2. [Full installation]() - explains how to install the full Cellery stack
 
 
-### Build and deploy your first cell 
-In this section let's focus on initialize, build, run and push the same hello world cell explained above. Follow the instructions listed below to create your first cell.
 
-1. Execute cellery init command from the command prompt, and provide the project name as ‘hello-world-cell’. 
-    ```
-    $ cellery init
-    ? Project name:  [my-project] hello-world-cell
-    
-    
-    ✔ Initialized project in directory: /Users/cellery/hello-world-cell
-    
-    What's next?
-    --------------------------------------------------------
-    Execute the following command to build the image:
-      $ cellery build helloworld/helloworld.bal [repo/]organization/image_name:version
-    --------------------------------------------------------
-    ```
-2. The above step will auto generate a cellery file in the location: hello-world-cell/hello-world-cell.bal with below content. This file is implemented in [Ballerina](https://ballerina.io/) - A Cloud Native Programming Language. 
-The cell `helloCell` consists of one component defined as `helloComponent` and it has one web ingress with default vhost `hello-world.com`.
-An environment variable `HELLO_NAME`with default value `Cellery` is used by `helloComponent` to render the webpage. By passing the  parameters in the runtime, the vhost entry and
-env variable HELLO_NAME can be modified. 
 
-    ```ballerina
-    import ballerina/config;
-    import celleryio/cellery;
-    
-    // Hello Component
-    // This Components exposes the HTML hello world page
-    cellery:Component helloComponent = {
-        name: "hello",
-        source: {
-            image: "wso2cellery/samples-hello-world-webapp"
-        },
-        ingresses: {
-            webUI: <cellery:WebIngress> { // Web ingress will be always exposed globally.
-                port: 80,
-                gatewayConfig: {
-                    vhost: "hello-world.com",
-                    context: "/"
-                }
-            }
-        },
-        envVars: {
-            HELLO_NAME: {value: "Cellery"}
-        }
-    };
-    
-    // Cell Initialization
-    cellery:CellImage helloCell = {
-        components: {
-            helloComp: helloComponent
-        }
-    };
-    
-    public function build(cellery:ImageName iName) returns error? {
-        return cellery:createImage(helloCell, iName);
-    }
-    
-    public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-        string vhostName = config:getAsString("VHOST_NAME");
-        if (vhostName !== ""){
-            cellery:WebIngress web = <cellery:WebIngress> helloComponent.ingresses.webUI;
-            web.gatewayConfig.vhost = vhostName;
-        }
-    
-        string helloName = config:getAsString("HELLO_NAME");
-        if (helloName !== ""){
-            helloComponent.envVars.HELLO_NAME.value = helloName;
-        }
-        return cellery:createInstance(helloCell, iName);
-    }
-    ```
-
-3. Build the cellery image for hello world project by executing the cellery build command as shown below. Note `DOCKER_HUB_ORG` is your organization name in docker hub.
-    ```
-    $ cd hellow-world-cell
-    $ cellery build hello-world-cell.bal <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-    Hello World Cell Built successfully.
-    
-    ✔ Building image <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-    ✔ Saving new Image to the Local Repository
-    
-    
-    ✔ Successfully built cell image: <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-    
-    What's next?
-    --------------------------------------------------------
-    Execute the following command to run the image:
-      $ cellery run <DOCKER_HUB_ORG>/helloworld:1.0.0
-    --------------------------------------------------------
-    ```
-
-4. Note that in the cell file's run method at step-2, it's looking for runtime parameters `VHOST_NAME` and `HELLO_NAME`, 
-and if it's available then it'll will be using those as vhost and greeting name. Therefore run the built cellery image with ‘cellery run’ command, 
-and pass `my-hello-world.com` for `VHOST_NAME`, and your name for `HELLO_NAME` as shown below. Environment variables can be passed into the cellery file as explained [here](https://github.com/wso2-cellery/spec).
-    ```
-    $ cellery run <DOCKER_HUB_ORG>/hello-world-cell:1.0.0 -e VHOST_NAME=my-hello-world.com -e HELLO_NAME=WSO2 -n my-hello-world
-       ✔ Extracting Cell Image  <DOCKER_HUB_ORG/hello-world-cell:1.0.0
-       
-       Main Instance: my-hello-world
-       
-       ✔ Reading Cell Image  <DOCKER_HUB_ORG/hello-world-cell:1.0.0
-       ✔ Validating environment variables
-       ✔ Validating dependencies
-       
-       Instances to be Used:
-       
-         INSTANCE NAME              CELL IMAGE                      USED INSTANCE   SHARED
-        ---------------- ----------------------------------------- --------------- --------
-         my-hello-world    <DOCKER_HUB_ORG>/hello-world-cell:1.0.0   To be Created    -
-       
-       Dependency Tree to be Used:
-       
-        No Dependencies
-       
-       ? Do you wish to continue with starting above Cell instances (Y/n)?
-       
-       ✔ Starting main instance my-hello-world
-       
-       
-       ✔ Successfully deployed cell image:  <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-       
-       What's next?
-       --------------------------------------------------------
-       Execute the following command to list running cells:
-         $ cellery list instances
-       --------------------------------------------------------
-    ```
-    
-5. Now your hello world cell is deployed, you can run the cellery list instances command to see the status of the deployed cell.
-    ```
-    $ cellery list instances
-                        INSTANCE                                   CELL IMAGE                   STATUS                            GATEWAY                            COMPONENTS           AGE
-       ------------------------------------------ -------------------------------------------- -------- ----------------------------------------------------------- ------------ ----------------------
-        hello-world-cell-1-0-0-676b2131   sinthuja/hello-world-cell:1.0.0              Ready    sinthuja-hello-world-cell-1-0-0-676b2131--gateway-service   1            10 minutes 1 seconds
-    ```
-6. Execute `cellery view` to see the components of your cell. This will open a HTML page in a browser and you can visualize the components and dependent cells of the cell image.
-    ```
-    $ cellery view <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-    ```
-    ![hello world cell view](docs/images/hello-web-cell.png)
-    
-7. Access url [http://my-hello-world.com/](http://my-hello-world.com/) from browser. You will see updated web page with greeting param you passed for HELLO_NAME in step-4.
-
-8. As a final step, let's push your first cell project to your docker hub account. Tp perform this execute `cellery push` as shown below.
-    ```
-    $ cellery push <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-    ✔ Connecting to registry-1.docker.io
-    ✔ Reading image <DOCKER_HUB_ORG>/hello-world-cell:1.0.0 from the Local Repository
-    ✔ Checking if the image <DOCKER_HUB_ORG>/hello-world-cell:1.0.0 already exists in the Registry
-    ✔ Pushing image <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-    
-    Image Digest : sha256:8935b3495a6c1cbc466ac28f4120c3836894e8ea1563fb5da7ecbd17e4b80df5
-    
-    ✔ Successfully pushed cell image: <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-    
-    What's next?
-    --------------------------------------------------------
-    Execute the following command to pull the image:
-      $ cellery pull <DOCKER_HUB_ORG>/hello-world-cell:1.0.0
-    --------------------------------------------------------
-    ```
- Congratulations! You have successfully created your own cell, and completed getting started!
- 
-### Clean up
-You can terminate the cells that are started during this guide.
-
-1) List the cells that are running in the current setup by `cellery list instances`.
-    ```
-    $ cellery list instances
-         INSTANCE                      CELL IMAGE          STATUS               GATEWAY               COMPONENTS            AGE
-     ---------------- ----------------------------------- -------- --------------------------------- ------------ -----------------------
-      hello            wso2cellery/hello-world-cell:0.2.1    Ready    hello--gateway-service            1            1 hours 2 minutes
-      my-hello-world   <ORGNAME>/hello-world-cell:1.0.0      Ready    my-hello-world--gateway-service   1            27 minutes 42 seconds
-    ```
-2) Execute terminate command for each cell instances that you want to clean up as shown below.
-    ```
-    $ cellery terminate hello
-    $ cellery terminate my-hello-world
-    ```
-
-## What is next?
-- [Try Petstore application](https://github.com/wso2-cellery/samples/tree/master/pet-store) 
-
-## Useful links
-- [Samples](https://github.com/wso2-cellery/samples)
-- [How to code cells?](docs/cell-reference.md)
-- [CLI commands](docs/cli-reference.md)
-- [Architecture](docs/cellery-architecture.md)
-
-## Community 
-- [Cellery mailing list](https://groups.google.com/forum/#!forum/wso2-cellery-dev)
-- [How to contribute?](CONTRIBUTING.md)

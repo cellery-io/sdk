@@ -36,6 +36,7 @@ func newSetupCleanupExistingCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunCleanupExisting(knative, istio, ingress, confirmed)
 		},
+		Example: "  cellery setup cleanup existing",
 	}
 	cmd.Flags().BoolVar(&istio, "istio", false, "Remove istio")
 	cmd.Flags().BoolVar(&knative, "knative", false, "Remove knative-serving")

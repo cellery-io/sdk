@@ -20,8 +20,6 @@
 package kubectl
 
 import (
-	"bufio"
-	"fmt"
 	"os/exec"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -35,27 +33,6 @@ func Describe(cellName string) error {
 		cellName,
 	)
 	displayVerboseOutput(cmd)
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Println(stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err := printCommandOutput(cmd)
+	return err
 }

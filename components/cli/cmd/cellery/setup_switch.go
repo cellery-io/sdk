@@ -38,7 +38,7 @@ func newSetupSwitchCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunSwitchCommand(args[0])
 		},
+		Example: "  cellery setup switch cellery-admin@cellery",
 	}
-
 	return cmd
 }

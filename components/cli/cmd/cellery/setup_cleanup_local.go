@@ -40,6 +40,7 @@ func newSetupCleanupLocalCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunCleanupLocal()
 		},
+		Example: "  cellery setup cleanup local",
 	}
 	return cmd
 }

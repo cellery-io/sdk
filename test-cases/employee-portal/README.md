@@ -43,7 +43,7 @@ Execute the following command to run the image:
   $ cellery run myorg/stock:1.0.0
 --------------------------------------------------------
 
-$ cellery run myorg/stock:1.0.0
+$ cellery run myorg/stock:1.0.0 -n stock
 Running cell image: myorg/stock:1.0.0
 cell.mesh.cellery.io/stock created
 
@@ -76,7 +76,7 @@ Execute the following command to run the image:
   $ cellery run myorg/employee:1.0.0
 --------------------------------------------------------
 
-$ cellery run myorg/employee:1.0.0
+$ cellery run myorg/employee:1.0.0 -n employee
 Running cell image: myorg/employee:1.0.0
 cell.mesh.cellery.io/employee created
 
@@ -108,7 +108,7 @@ Execute the following command to run the image:
   $ cellery run myorg/hr:1.0.0
 --------------------------------------------------------
      2. Execute the following command deploy hr cell. 
-$ cellery run myorg/hr:1.0.0  -l employee -l stock
+$ cellery run myorg/hr:1.0.0 -n hr  -l employeeCellDep:employee -l stockCellDep:stock
 Above commands will deploy the above three cells in the default namespace. To check the cell status run the following command
 
 	$ cellery list instances

@@ -40,14 +40,19 @@ func WaitForCondition(condition string, timeoutSeconds int, resourceName string,
 		resourceName,
 		"-n", namespace,
 	)
-	//cmd.Stderr = os.Stderr
+	displayVerboseOutput(cmd)
 	return cmd.Run()
 }
 
 func WaitForCluster(timeout time.Duration) error {
 	exitCode := 0
 	for start := time.Now(); time.Since(start) < timeout; {
-		cmd := exec.Command(constants.KUBECTL, "get", "nodes", "--request-timeout=10s")
+		cmd := exec.Command(constants.KUBECTL,
+			"get",
+			"nodes",
+			"--request-timeout=10s",
+		)
+		displayVerboseOutput(cmd)
 		err := cmd.Run()
 		if err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {

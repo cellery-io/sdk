@@ -22,6 +22,11 @@ import io.cellery.models.API;
 import io.cellery.models.Component;
 import io.cellery.models.OIDC;
 import io.cellery.models.Web;
+import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
+import io.fabric8.kubernetes.api.model.HTTPHeader;
+import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.model.values.BInteger;
@@ -39,13 +44,19 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.IntStream;
 
 import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
+import static io.cellery.CelleryConstants.KIND;
+import static io.cellery.CelleryConstants.LIVENESS;
+import static io.cellery.CelleryConstants.READINESS;
 import static io.cellery.CelleryConstants.RESOURCES;
 import static io.cellery.CelleryConstants.TARGET;
 
@@ -130,6 +141,67 @@ public class CelleryUtils {
         component.setContainerPort(containerPort);
         return httpAPI;
     }
+
+    /**
+     * Extract the Readiness Probe & Liveness Probe.
+     *
+     * @param probes    Scale policy to be processed
+     * @param component current component
+     */
+    public static void processProbes(LinkedHashMap<?, ?> probes, Component component) {
+        if (probes.containsKey(LIVENESS)) {
+            LinkedHashMap livenessConf = ((BMap) probes.get(LIVENESS)).getMap();
+            component.setLivenessProbe(getProbe(livenessConf));
+        }
+        if (probes.containsKey(READINESS)) {
+            LinkedHashMap readinessConf = ((BMap) probes.get(READINESS)).getMap();
+            component.setReadinessProbe(getProbe(readinessConf));
+        }
+    }
+
+    /**
+     * Create ProbeBuilder with given Liveness/Readiness Probe config.
+     *
+     * @param probeConf probeConfig map
+     * @return ProbeBuilder
+     */
+    public static Probe getProbe(LinkedHashMap probeConf) {
+        ProbeBuilder probeBuilder = new ProbeBuilder();
+        final BMap probeKindMap = (BMap) probeConf.get(KIND);
+        LinkedHashMap probeKindConf = probeKindMap.getMap();
+        String probeKind = probeKindMap.getType().getName();
+        if ("TcpSocket".equals(probeKind)) {
+            probeBuilder.withNewTcpSocket()
+                    .withNewPort((int) ((BInteger) probeKindConf.get("port")).intValue())
+                    .endTcpSocket();
+        } else if ("HttpGet".equals(probeKind)) {
+            List<HTTPHeader> headers = new ArrayList<>();
+            ((BMap<?, ?>) probeKindConf.get("httpHeaders")).getMap().forEach((key, value) -> {
+                HTTPHeader header = new HTTPHeaderBuilder()
+                        .withName(key.toString())
+                        .withValue(value.stringValue())
+                        .build();
+                headers.add(header);
+            });
+            probeBuilder.withHttpGet(new HTTPGetActionBuilder()
+                    .withNewPort((int) ((BInteger) probeKindConf.get("port")).intValue())
+                    .withPath(((BString) probeKindConf.get("path")).stringValue())
+                    .withHttpHeaders(headers)
+                    .build()
+            );
+        } else {
+            final BValueArray commandList = (BValueArray) probeKindConf.get("commands");
+            String[] commands = Arrays.copyOfRange(commandList.getStringArray(), 0, (int) commandList.size());
+            probeBuilder.withNewExec().addToCommand(commands).endExec();
+        }
+        return probeBuilder
+                .withInitialDelaySeconds((int) (((BInteger) probeConf.get("initialDelaySeconds")).intValue()))
+                .withPeriodSeconds((int) (((BInteger) probeConf.get("periodSeconds")).intValue()))
+                .withFailureThreshold((int) (((BInteger) probeConf.get("failureThreshold")).intValue()))
+                .withTimeoutSeconds((int) (((BInteger) probeConf.get("timeoutSeconds")).intValue()))
+                .withSuccessThreshold((int) (((BInteger) probeConf.get("successThreshold")).intValue())).build();
+    }
+
 
     /**
      * Process envVars and add to component.

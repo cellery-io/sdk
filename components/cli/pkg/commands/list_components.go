@@ -19,12 +19,8 @@
 package commands
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 
@@ -33,6 +29,7 @@ import (
 	"github.com/ghodss/yaml"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -61,43 +58,16 @@ func getCellImageCompoents(cellImage string) []string {
 
 func getCellInstanceComponents(cellName string) []string {
 	var components []string
-	cmd := exec.Command("kubectl", "get", "services", "-l", constants.GROUP_NAME+"/cell="+cellName, "-o", "json")
-	outfile, errPrint := os.Create("./out.txt")
-	if errPrint != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching cell status", errPrint)
-	}
-	defer outfile.Close()
-	cmd.Stdout = outfile
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
+	services, err := kubectl.GetServices(cellName)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching components", err)
+		util.ExitWithErrorMessage("Error getting list of components", err)
 	}
-	err = cmd.Wait()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching components", err)
-	}
-
-	outputByteArray, err := ioutil.ReadFile("./out.txt")
-	os.Remove("./out.txt")
-	jsonOutput := &util.Service{}
-
-	errJson := json.Unmarshal(outputByteArray, jsonOutput)
-	if errJson != nil {
-		fmt.Println(errJson)
-	}
-	if len(jsonOutput.Items) == 0 {
-		util.ExitWithErrorMessage("Error listing components", fmt.Errorf("Cannot find cell: %v \n", cellName))
+	if len(services.Items) == 0 {
+		util.ExitWithErrorMessage("Error listing components", fmt.Errorf("cannot find cell: %v \n", cellName))
 	} else {
-		for i := 0; i < len(jsonOutput.Items); i++ {
+		for i := 0; i < len(services.Items); i++ {
 			var name string
-			name = strings.Replace(jsonOutput.Items[i].Metadata.Name, cellName+"--", "", -1)
+			name = strings.Replace(services.Items[i].Metadata.Name, cellName+"--", "", -1)
 			name = strings.Replace(name, "-service", "", -1)
 			components = append(components, name)
 		}

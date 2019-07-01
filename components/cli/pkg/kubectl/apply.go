@@ -33,6 +33,7 @@ func ApplyFileWithNamespace(file, namespace string) error {
 		file,
 		"-n", namespace,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
@@ -44,6 +45,7 @@ func ApplyFile(file string) error {
 		"-f",
 		file,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }

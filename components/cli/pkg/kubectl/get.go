@@ -38,6 +38,7 @@ func GetDeploymentNames(namespace string) ([]string, error) {
 		"-n", namespace,
 	)
 	out, err := cmd.Output()
+	displayVerboseOutput(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +46,15 @@ func GetDeploymentNames(namespace string) ([]string, error) {
 }
 
 func GetMasterNodeName() (string, error) {
-	cmd := exec.Command(constants.KUBECTL, "get", "node", "--selector", "node-role.kubernetes.io/master",
-		"-o", "json")
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"node",
+		"--selector",
+		"node-role.kubernetes.io/master",
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -70,6 +78,7 @@ func GetNodes() (Node, error) {
 		"-o",
 		"json",
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	jsonOutput := Node{}
@@ -141,5 +150,61 @@ func GetPods(cellName string) (Pods, error) {
 		return jsonOutput, err
 	}
 	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput, err
+}
+
+func GetServices(cellName string) (Services, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"get",
+		"services",
+		"-l",
+		constants.GROUP_NAME+"/cell="+cellName,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := Services{}
+	out, err := getCommandOutputFromTextFile(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput, err
+}
+
+func GetGateways(cellName string) (Gateway, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"gateways",
+		cellName+"--gateway",
+		"-o", ""+
+			"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := Gateway{}
+	out, err := getCommandOutput(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal([]byte(out), &jsonOutput)
+	return jsonOutput, err
+}
+
+func GetVirtualService(vs string) (VirtualService, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"virtualservice",
+		vs,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := VirtualService{}
+	out, err := getCommandOutput(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal([]byte(out), &jsonOutput)
 	return jsonOutput, err
 }

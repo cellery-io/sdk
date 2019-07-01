@@ -157,7 +157,7 @@ public class PetStoreFeTest {
 
     @Test(groups = "run")
     public void validateMetadata() throws IOException {
-        Map<String, CellImageInfo> dependencyInfo = LangTestUtils.getDependancyInfo(SOURCE_DIR_PATH);
+        Map<String, CellImageInfo> dependencyInfo = LangTestUtils.getDependencyInfo(SOURCE_DIR_PATH);
         CellImageInfo petbeImage = dependencyInfo.get("petstorebackend");
         Assert.assertEquals(petbeImage.getOrg(), "myorg");
         Assert.assertEquals(petbeImage.getName(), "petbe");

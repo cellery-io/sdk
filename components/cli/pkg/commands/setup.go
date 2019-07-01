@@ -35,14 +35,6 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-type Config struct {
-	Contexts []Context `json:"contexts"`
-}
-
-type Context struct {
-	Name string `json:"name"`
-}
-
 var uniqueNumber string
 var projectName string
 var accountName string

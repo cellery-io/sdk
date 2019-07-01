@@ -19,21 +19,18 @@
 package commands
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/ghodss/yaml"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -47,56 +44,23 @@ func RunListIngresses(name string) {
 }
 
 func displayCellInstanceApisTable(cellInstanceName string) {
-	cmd := exec.Command("kubectl", "get", "gateways", cellInstanceName+"--gateway", "-o", "json")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
-
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
+	gateways, err := kubectl.GetGateways(cellInstanceName)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching APIs", err)
+		util.ExitWithErrorMessage("Error getting list of components", err)
 	}
-	err = cmd.Wait()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while fetching APIs", err)
-	}
-
-	jsonOutput := &util.Gateway{}
-
-	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson != nil {
-		fmt.Println(errJson)
-	}
-	apiArray := jsonOutput.GatewaySpec.HttpApis
-
+	apiArray := gateways.GatewaySpec.HttpApis
 	var tableData [][]string
-
 	for i := 0; i < len(apiArray); i++ {
 		for j := 0; j < len(apiArray[i].Definitions); j++ {
 			url := cellInstanceName + "--gateway-service"
 			path := apiArray[i].Definitions[j].Path
 			context := apiArray[i].Context
 			method := apiArray[i].Definitions[j].Method
-
 			// Add the context of the Cell
 			if !strings.HasPrefix(context, "/") {
 				url += "/"
 			}
 			url += context
-
 			// Add the path of the API definition
 			if path != "/" {
 				if !strings.HasSuffix(url, "/") {
@@ -110,7 +74,6 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 				}
 				url += path
 			}
-
 			// Add the global api url if globally exposed
 			globalUrl := ""
 			if apiArray[i].Global {
@@ -120,12 +83,10 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context
 				}
 			}
-
 			tableRecord := []string{context, method, url, globalUrl}
 			tableData = append(tableData, tableRecord)
 		}
 	}
-
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"CONTEXT", "METHOD", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
@@ -143,7 +104,6 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{})
-
 	table.AppendBulk(tableData)
 	table.Render()
 }
@@ -155,9 +115,7 @@ func displayCellImageApisTable(cellImageName string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)
 	}
-
 	var tableData [][]string
-
 	for i := 0; i < len(cellImageContent.CellSpec.ComponentTemplates); i++ {
 		componentName := cellImageContent.CellSpec.ComponentTemplates[i].Metadata.Name
 		// Iterate HTTP and Web ingresses
@@ -212,7 +170,6 @@ func displayCellImageApisTable(cellImageName string) {
 			}
 		}
 	}
-
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS CONTEXT", "INGRESS PORT", "GLOBALLY EXPOSED"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
@@ -232,7 +189,6 @@ func displayCellImageApisTable(cellImageName string) {
 		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{})
-
 	table.AppendBulk(tableData)
 	table.Render()
 }

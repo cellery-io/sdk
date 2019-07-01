@@ -132,7 +132,20 @@ func UseContext(context string) error {
 		"use-context",
 		context,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 	return nil
+}
+
+func GetContexts() ([]byte, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"config",
+		"view",
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	return getCommandOutputFromTextFile(cmd)
 }

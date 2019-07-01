@@ -1,5 +1,6 @@
 package io.cellery.models;
 
+import io.fabric8.kubernetes.api.model.Probe;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ public class Component {
     private int containerPort;
     private AutoScaling autoScaling;
     private List<String> unsecuredPaths;
+    private Probe readinessProbe;
+    private Probe livenessProbe;
 
     public Component() {
         envVars = new HashMap<>();

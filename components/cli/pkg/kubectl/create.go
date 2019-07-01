@@ -25,18 +25,6 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func CreateFileWithNamespace(file, namespace string) error {
-	cmd := exec.Command(
-		constants.KUBECTL,
-		"create",
-		"-f",
-		file,
-		"-n", namespace,
-	)
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
 func CreateFile(file string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
@@ -44,6 +32,7 @@ func CreateFile(file string) error {
 		"-f",
 		file,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
@@ -58,19 +47,7 @@ func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
 		confFile,
 		"-n", namespace,
 	)
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func CreateConfigMap(name, confFile string) error {
-	cmd := exec.Command(
-		constants.KUBECTL,
-		"create",
-		"configmap",
-		name,
-		"--from-file",
-		confFile,
-	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
@@ -86,6 +63,7 @@ func CreateClusterRoleBinding(clusterRole, user string) error {
 		"--user",
 		user,
 	)
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }

@@ -45,7 +45,7 @@ func ApplyLable(itemType, itemName, labelName string, overWrite bool) error {
 			labelName,
 		)
 	}
-
+	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }

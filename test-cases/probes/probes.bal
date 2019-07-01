@@ -1,6 +1,4 @@
-import ballerina/config;
 import ballerina/io;
-import ballerina/log;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
@@ -10,7 +8,7 @@ public function build(cellery:ImageName iName) returns error? {
     cellery:Component salaryComponent = {
         name: "salary",
         source: {
-            image: "wso2cellery/sampleapp-salary:0.3.0"
+            image: "docker.io/celleryio/sampleapp-salary"
         },
         ingresses: {
             SalaryAPI: <cellery:HttpApiIngress>{
@@ -24,39 +22,60 @@ public function build(cellery:ImageName iName) returns error? {
                         }
                     ]
                 },
-                expose: "local"
+                expose: "global"
             }
         },
-        labels: {
-            team: "Finance",
-            owner: "Alice"
+        probes: {
+            liveness: {
+                initialDelaySeconds: 30,
+                kind: <cellery:TcpSocket>{
+                    port:salaryContainerPort
+                }
+            }
         }
     };
 
     // Employee Component
+    int empPort = 8080;
     cellery:Component employeeComponent = {
         name: "employee",
         source: {
-            image: "wso2cellery/sampleapp-employee:0.3.0"
+            image: "docker.io/celleryio/sampleapp-employee"
         },
         ingresses: {
             employee: <cellery:HttpApiIngress>{
-                port: 8080,
+                port:empPort,
                 context: "employee",
-                expose: "local",
-                definition: <cellery:ApiDefinition>cellery:readSwaggerFile("./resources/employee.swagger.json")
+                definition: {
+                    resources: [
+                        {
+                            path: "/details",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        },
+        probes: {
+            liveness: {
+                initialDelaySeconds: 30,
+                kind: <cellery:TcpSocket>{
+                    port:empPort
+                }
+            },
+            readiness: {
+                initialDelaySeconds: 10,
+                timeoutSeconds: 50,
+                kind: <cellery:Exec>{
+                    commands: ["bin", "bash", "-version"]
+                }
             }
         },
         envVars: {
             SALARY_HOST: {
                 value: cellery:getHost(salaryComponent)
             }
-        },
-        labels: {
-            team: "HR"
-        },
-        dependencies:{
-            components:[salaryComponent]
         }
     };
 
@@ -73,5 +92,7 @@ public function build(cellery:ImageName iName) returns error? {
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     cellery:CellImage employeeCell = check cellery:constructCellImage(untaint iName);
+    employeeCell.components.empComp.probes.liveness.failureThreshold = 5;
     return cellery:createInstance(employeeCell, iName, instances);
 }
+

@@ -221,7 +221,7 @@ public class ReviewsTest {
 
     @Test(groups = "run")
     public void validateMetadata() throws IOException {
-        Map<String, CellImageInfo> dependencyInfo = LangTestUtils.getDependancyInfo(SOURCE_DIR_PATH);
+        Map<String, CellImageInfo> dependencyInfo = LangTestUtils.getDependencyInfo(SOURCE_DIR_PATH);
         CellImageInfo databaseImage = dependencyInfo.get("database");
         Assert.assertEquals(databaseImage.getOrg(), "myorg");
         Assert.assertEquals(databaseImage.getName(), "database");

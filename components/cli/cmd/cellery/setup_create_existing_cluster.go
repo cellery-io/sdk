@@ -27,8 +27,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 )
 
-func newSetupCreateOnExistingClusterCommand() *cobra.Command {
-	var isCompleteSetup = false
+func newSetupCreateOnExistingClusterCommand(isComplete *bool) *cobra.Command {
 	var isPersistentVolume = false
 	var hasNfsStorage = false
 	var isLoadBalancerIngressMode = false
@@ -44,21 +43,21 @@ func newSetupCreateOnExistingClusterCommand() *cobra.Command {
 		Short: "Create a Cellery runtime in existing cluster",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			runtime.SetCompleteSetup(*isComplete)
 			hasNfsStorage = useNfsStorage(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
 			if hasNfsStorage {
-				nfs = runtime.Nfs{nfsServerIp, "/" + fileShare}
-				db = runtime.MysqlDb{dbHostName, dbUserName, dbPassword}
+				nfs = runtime.Nfs{NfsServerIp: nfsServerIp, FileShare: "/" + fileShare}
+				db = runtime.MysqlDb{DbHostName: dbHostName, DbUserName: dbUserName, DbPassword: dbPassword}
 			}
 			return validateUserInputForExistingCluster(hasNfsStorage, nfsServerIp, fileShare, dbHostName, dbUserName,
 				dbPassword)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateOnExistingCluster(isCompleteSetup, isPersistentVolume, hasNfsStorage,
-				isLoadBalancerIngressMode, nfs, db)
+			commands.RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode,
+				nfs, db)
 		},
 		Example: "  cellery setup create existing",
 	}
-	cmd.Flags().BoolVar(&isCompleteSetup, "complete", false, "Create complete setup")
 	cmd.Flags().BoolVar(&isPersistentVolume, "persistent", false, "Persistent volume")
 	cmd.Flags().BoolVar(&isLoadBalancerIngressMode, "loadbalancer", false,
 		"Ingress mode is load balancer")

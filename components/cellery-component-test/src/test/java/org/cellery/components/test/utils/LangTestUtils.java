@@ -92,12 +92,10 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellBuildFunction(Path sourceDirectory, String fileName,
-                                               CellImageInfo cellImageInfo
-            , Map<String, String> envVar) throws InterruptedException, IOException {
+    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
+                                               Map<String, String> envVar) throws InterruptedException, IOException {
 
-        return compileBallerinaFunction(BUILD, sourceDirectory, fileName, cellImageInfo, new HashMap<>(),
-                envVar);
+        return compileBallerinaFunction(BUILD, sourceDirectory, fileName, cellImageInfo, new HashMap<>(), envVar);
     }
 
     /**
@@ -110,8 +108,7 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellBuildFunction(Path sourceDirectory, String fileName,
-                                               CellImageInfo cellImageInfo)
+    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo)
             throws InterruptedException, IOException {
 
         return compileCellBuildFunction(sourceDirectory, fileName, cellImageInfo, new HashMap<>());
@@ -128,9 +125,9 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellRunFunction(Path sourceDirectory, String fileName,
-                                             CellImageInfo cellImageInfo
-            , Map<String, String> envVar, Map<String, CellImageInfo> instanceData, String tmpDir)
+    public static int compileCellRunFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
+                                             Map<String, String> envVar, Map<String, CellImageInfo> instanceData,
+                                             String tmpDir)
             throws InterruptedException, IOException {
         envVar.put("CELLERY_IMAGE_DIR", tmpDir);
         return compileBallerinaFunction(RUN, sourceDirectory, fileName, cellImageInfo, instanceData, envVar);
@@ -146,8 +143,7 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellRunFunction(Path sourceDirectory, String fileName,
-                                             CellImageInfo cellImageInfo,
+    public static int compileCellRunFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
                                              Map<String, CellImageInfo> instanceData, String tmpDir)
             throws InterruptedException, IOException {
 
@@ -155,8 +151,8 @@ public class LangTestUtils {
                 instanceData, tmpDir);
     }
 
-    private static int compileBallerinaFunction(String action, Path sourceDirectory, String fileName
-            , CellImageInfo cellImageInfo, Map<String, CellImageInfo> cellInstances
+    private static int compileBallerinaFunction(String action, Path sourceDirectory, String fileName,
+                                                CellImageInfo cellImageInfo, Map<String, CellImageInfo> cellInstances
             , Map<String, String> envVar) throws IOException, InterruptedException {
 
         Path ballerinaInternalLog = Paths.get(sourceDirectory.toAbsolutePath().toString(), "ballerina" +
@@ -233,19 +229,15 @@ public class LangTestUtils {
         return jacocoArgLine + " ";
     }
 
-    public static Map<String, CellImageInfo> getDependancyInfo(Path source) throws IOException {
+    public static Map<String, CellImageInfo> getDependencyInfo(Path source) throws IOException {
 
-        String metadataJsonPath =
-                source.toAbsolutePath().toString() + File.separator + TARGET + File.separator + CELLERY +
-                        File.separator + METADATA;
+        String metadataJsonPath = source.toAbsolutePath().toString() + File.separator + TARGET
+                + File.separator + CELLERY + File.separator + METADATA;
         Map<String, CellImageInfo> dependencyMap = new HashMap<>();
         try (InputStream input = new FileInputStream(metadataJsonPath)) {
             try (InputStreamReader inputStreamReader = new InputStreamReader(input)) {
                 JsonElement parsedJson = new JsonParser().parse(inputStreamReader);
-
-                JsonObject dependenciesJsonObject = parsedJson.getAsJsonObject().getAsJsonObject(
-                        "dependencies");
-
+                JsonObject dependenciesJsonObject = parsedJson.getAsJsonObject().getAsJsonObject("dependencies");
                 for (Map.Entry<String, JsonElement> e : dependenciesJsonObject.entrySet()) {
                     JsonObject dependency = e.getValue().getAsJsonObject();
                     String key = e.getKey();
@@ -299,7 +291,11 @@ public class LangTestUtils {
 
     private static String createExecutableBalFiles(Path sourcePath, String fileName, String action) throws IOException {
         String executableBalName = fileName.replace(BAL, "") + "_" + action + BAL;
-        Path executableBalPath = sourcePath.resolve(executableBalName);
+        Path targetDir = sourcePath.resolve(TARGET);
+        if (!Files.exists(targetDir)) {
+            Files.createDirectory(targetDir);
+        }
+        Path executableBalPath = targetDir.resolve(executableBalName);
         Files.copy(sourcePath.resolve(fileName), executableBalPath);
         String balMain;
         if (action.equals(BUILD)) {
@@ -318,6 +314,6 @@ public class LangTestUtils {
             throw new IllegalArgumentException("Cell action is not supported");
         }
         Files.write(executableBalPath, balMain.getBytes(), StandardOpenOption.APPEND);
-        return executableBalName;
+        return executableBalPath.toAbsolutePath().toString();
     }
 }

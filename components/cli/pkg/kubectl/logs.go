@@ -14,25 +14,38 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
  */
 
-package main
+package kubectl
 
 import (
-	"github.com/spf13/cobra"
+	"os/exec"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func newSetupCreateGcpCommand(isComplete *bool) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "gcp",
-		Short: "Create a Cellery runtime in gcp",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateGcp(*isComplete)
-		},
-		Example: "  cellery setup create gcp",
-	}
-	return cmd
+func GetCellLogs(cellName string) (string, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"logs",
+		"-l",
+		constants.GROUP_NAME+"/cell="+cellName,
+		"--all-containers=true",
+	)
+	displayVerboseOutput(cmd)
+	out, err := printCommandOutput(cmd)
+	return out, err
+}
+
+func GetComponentLogs(cellName, componentName string) (string, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"logs",
+		"-l",
+		constants.GROUP_NAME+"/service="+cellName+"--"+componentName,
+		"-c",
+		componentName,
+	)
+	displayVerboseOutput(cmd)
+	out, err := printCommandOutput(cmd)
+	return out, err
 }

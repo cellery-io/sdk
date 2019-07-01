@@ -21,16 +21,22 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newSetupCreateLocalCommand() *cobra.Command {
+func newSetupCreateLocalCommand(isComplete *bool) *cobra.Command {
 	var isCompleteSetup = false
 	var confirmed = false
 	cmd := &cobra.Command{
 		Use:   "local",
 		Short: "Create a local Cellery runtime",
 		Args:  cobra.NoArgs,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			runtime.SetCompleteSetup(*isComplete)
+			return nil
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunSetupCreateLocal(isCompleteSetup, confirmed)
 		},

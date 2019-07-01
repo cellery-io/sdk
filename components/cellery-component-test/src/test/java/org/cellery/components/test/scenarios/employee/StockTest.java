@@ -102,7 +102,7 @@ public class StockTest {
     public void validateBuildTimeServiceTemplates() {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "stock");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "docker.io/celleryio/sampleapp-stock");
+                "wso2cellery/sampleapp-stock:0.3.0");
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts()
                 .get(0).
                         getContainerPort().intValue(), 8080);

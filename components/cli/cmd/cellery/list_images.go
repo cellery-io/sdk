@@ -31,11 +31,7 @@ func newListImagesCommand() *cobra.Command {
 		Aliases: []string{"image", "img"},
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				commands.RunImage()
-			} else {
-				commands.RunImageInformation(args[0])
-			}
+			commands.RunImage()
 		},
 		Example: "  cellery list images",
 	}

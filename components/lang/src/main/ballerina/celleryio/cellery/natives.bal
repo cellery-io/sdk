@@ -72,8 +72,37 @@ public type CpuUtilizationPercentage record {|
 |};
 
 public type Dependencies record {|
-    map<ImageName|string> components?;
+    Component?[] components?;
     map<ImageName|string> cells?;
+|};
+
+public type Probe record {|
+    int initialDelaySeconds = 0;
+    int periodSeconds = 10;
+    int timeoutSeconds = 1;
+    int failureThreshold = 3;
+    int successThreshold = 1;
+    TcpSocket|Exec|HttpGet kind;
+|};
+
+public type TcpSocket record {|
+    int port;
+    string host?;
+|};
+
+public type HttpGet record {|
+    string path;
+    int port;
+    map<string> httpHeaders?;
+|};
+
+public type Exec record {|
+    string[] commands;
+|};
+
+public type Probes record {|
+    Probe readiness?;
+    Probe liveness?;
 |};
 
 public type Component record {|
@@ -85,11 +114,12 @@ public type Component record {|
     map<Env> envVars?;
     Dependencies dependencies?;
     AutoScaling autoscaling?;
+    Probes probes?;
 |};
 
 public type TCPIngress record {|
     int backendPort;
-    int gatewayPort;
+    int gatewayPort?;
 |};
 
 public type GRPCIngress record {|

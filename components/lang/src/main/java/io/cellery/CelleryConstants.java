@@ -35,13 +35,30 @@ public class CelleryConstants {
     public static final String AUTO_SCALING_METRIC_RESOURCE_CPU = "cpu";
     public static final String INSTANCE_NAME = "instanceName";
 
+    //Dependency Constants
+    public static final String DEPENDENCIES = "dependencies";
+    public static final String CELLS = "cells";
+    public static final String COMPONENTS = "components";
+
+    // Ballerina object name constants for probes
+    public static final String INGRESSES = "ingresses";
+    public static final String LABELS = "labels";
+    public static final String AUTO_SCALING = "autoscaling";
+    public static final String ENV_VARS = "envVars";
+    public static final String PROBES = "probes";
+    public static final String KIND = "kind";
+    public static final String LIVENESS = "liveness";
+    public static final String READINESS = "readiness";
 
     // These should match the Ballerina object names of the Auto Scaling Metrics Objects
     public static final String ENVOY_GATEWAY = "Envoy";
     public static final String MICRO_GATEWAY = "MicroGateway";
     public static final String PROTO_FILE = "protoFile";
     public static final String YAML = ".yaml";
+
+    //Ingress Constants
     public static final String PROTOCOL_TCP = "TCP";
+    public static final String GATEWAY_PORT = "gatewayPort";
     public static final String PROTOCOL_GRPC = "GRPC";
     public static final String TARGET = "target";
     public static final String RESOURCES = "resources";

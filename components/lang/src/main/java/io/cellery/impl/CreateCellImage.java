@@ -74,22 +74,33 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
+import static io.cellery.CelleryConstants.AUTO_SCALING;
+import static io.cellery.CelleryConstants.CELLS;
+import static io.cellery.CelleryConstants.COMPONENTS;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
+import static io.cellery.CelleryConstants.DEPENDENCIES;
 import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
+import static io.cellery.CelleryConstants.ENV_VARS;
+import static io.cellery.CelleryConstants.GATEWAY_PORT;
 import static io.cellery.CelleryConstants.GATEWAY_SERVICE;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
+import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
+import static io.cellery.CelleryConstants.LABELS;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
+import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
 import static io.cellery.CelleryConstants.PROTO_FILE;
@@ -101,6 +112,7 @@ import static io.cellery.CelleryUtils.getApi;
 import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
+import static io.cellery.CelleryUtils.processProbes;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
@@ -121,6 +133,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
     private static final Logger log = LoggerFactory.getLogger(CreateCellImage.class);
 
     private CellImage cellImage = new CellImage();
+    private Set<String> exposedComponents = new HashSet<>();
 
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
@@ -149,18 +162,21 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             component.setService(component.getName());
             processSource(component, attributeMap);
             //Process Optional fields
-            if (attributeMap.containsKey("ingresses")) {
-                processIngress(((BMap<?, ?>) attributeMap.get("ingresses")).getMap(), component);
+            if (attributeMap.containsKey(INGRESSES)) {
+                processIngress(((BMap<?, ?>) attributeMap.get(INGRESSES)).getMap(), component);
             }
-            if (attributeMap.containsKey("labels")) {
-                ((BMap<?, ?>) attributeMap.get("labels")).getMap().forEach((labelKey, labelValue) ->
+            if (attributeMap.containsKey(LABELS)) {
+                ((BMap<?, ?>) attributeMap.get(LABELS)).getMap().forEach((labelKey, labelValue) ->
                         component.addLabel(labelKey.toString(), labelValue.toString()));
             }
-            if (attributeMap.containsKey("autoscaling")) {
-                processAutoScalePolicy(((BMap<?, ?>) attributeMap.get("autoscaling")).getMap(), component);
+            if (attributeMap.containsKey(AUTO_SCALING)) {
+                processAutoScalePolicy(((BMap<?, ?>) attributeMap.get(AUTO_SCALING)).getMap(), component);
             }
-            if (attributeMap.containsKey("envVars")) {
-                processEnvVars(((BMap<?, ?>) attributeMap.get("envVars")).getMap(), component);
+            if (attributeMap.containsKey(ENV_VARS)) {
+                processEnvVars(((BMap<?, ?>) attributeMap.get(ENV_VARS)).getMap(), component);
+            }
+            if (attributeMap.containsKey(PROBES)) {
+                processProbes(((BMap<?, ?>) attributeMap.get(PROBES)).getMap(), component);
             }
             cellImage.addComponent(component);
         });
@@ -208,6 +224,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                     break;
                 case "WebIngress":
                     processWebIngress(component, attributeMap);
+                    exposedComponents.add(component.getName());
                     break;
                 default:
                     break;
@@ -217,7 +234,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
     private void processGRPCIngress(Component component, LinkedHashMap attributeMap) {
         GRPC grpc = new GRPC();
-        grpc.setPort((int) ((BInteger) attributeMap.get("gatewayPort")).intValue());
+        if (attributeMap.containsKey(GATEWAY_PORT)) {
+            grpc.setPort((int) ((BInteger) attributeMap.get(GATEWAY_PORT)).intValue());
+            // Component is exposed via ingress
+            exposedComponents.add(component.getName());
+        }
         grpc.setBackendPort((int) ((BInteger) attributeMap.get("backendPort")).intValue());
         if (attributeMap.containsKey(PROTO_FILE)) {
             String protoFile = ((BString) attributeMap.get(PROTO_FILE)).stringValue();
@@ -233,7 +254,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
     private void processTCPIngress(Component component, LinkedHashMap attributeMap) {
         TCP tcp = new TCP();
-        tcp.setPort((int) ((BInteger) attributeMap.get("gatewayPort")).intValue());
+        if (attributeMap.containsKey(GATEWAY_PORT)) {
+            tcp.setPort((int) ((BInteger) attributeMap.get(GATEWAY_PORT)).intValue());
+            // Component is exposed via ingress
+            exposedComponents.add(component.getName());
+        }
         tcp.setBackendPort((int) ((BInteger) attributeMap.get("backendPort")).intValue());
         component.setProtocol(PROTOCOL_TCP);
         component.setContainerPort(tcp.getBackendPort());
@@ -263,6 +288,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             } else if ("local".equals(((BString) attributeMap.get("expose")).stringValue())) {
                 httpAPI.setGlobal(false);
                 httpAPI.setBackend(component.getService());
+                // Component is exposed via ingress
+                exposedComponents.add(component.getName());
             }
             if (attributeMap.containsKey("definition")) {
                 List<APIDefinition> apiDefinitions = new ArrayList<>();
@@ -282,6 +309,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         }
         component.addApi(httpAPI);
     }
+
 
     /**
      * Extract the scale policy.
@@ -358,6 +386,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                             .withContainerPort(component.getContainerPort())
                             .build())
                     .withEnv(envVarList)
+                    .withReadinessProbe(component.getReadinessProbe())
+                    .withLivenessProbe(component.getLivenessProbe())
                     .build());
 
             AutoScaling autoScaling = component.getAutoScaling();
@@ -466,49 +496,36 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         jsonObject.put("dockerImages", cellImage.getDockerImages());
 
         JSONObject labelsJsonObject = new JSONObject();
-        JSONObject dependenciesJsonObject = new JSONObject();
+        JSONObject cellDependenciesJSON = new JSONObject();
+        JSONObject componentDependenciesJSON = new JSONObject();
         components.forEach((componentKey, componentValue) -> {
             LinkedHashMap attributeMap = ((BMap) componentValue).getMap();
-            if (attributeMap.containsKey("dependencies")) {
-                LinkedHashMap<?, ?> dependencies = ((BMap<?, ?>) attributeMap.get("dependencies")).getMap();
-                LinkedHashMap<?, ?> cellDependencies = ((BMap) dependencies.get("cells")).getMap();
-                cellDependencies.forEach((alias, dependencyValue) -> {
-                    JSONObject dependencyJsonObject = new JSONObject();
-                    String org, name, version;
-                    if ("string".equals(((BValue) dependencyValue).getType().getName())) {
-                        String dependency = ((BString) (dependencyValue)).stringValue();
-                        // Validate dependency text
-                        if (dependency.matches("^([^/:]*)/([^/:]*):([^/:]*)$")) {
-                            String[] dependencyVersionSplit = dependency.split(":");
-                            String[] dependencySplit = dependencyVersionSplit[0].split("/");
-                            org = dependencySplit[0];
-                            name = dependencySplit[1];
-                            version = dependencyVersionSplit[1];
-                        } else {
-                            throw new BallerinaException("expects <organization>/<cell-image>:<version> " +
-                                    "as the dependency, received " + dependency);
-                        }
-                    } else {
-                        LinkedHashMap dependency = ((BMap) dependencyValue).getMap();
-                        org = ((BString) dependency.get("org")).stringValue();
-                        name = ((BString) dependency.get("name")).stringValue();
-                        version = ((BString) dependency.get("ver")).stringValue();
-                    }
-                    dependencyJsonObject.put("org", org);
-                    dependencyJsonObject.put("name", name);
-                    dependencyJsonObject.put("ver", version);
-                    dependencyJsonObject.put("alias", alias.toString());
-                    cellImage.addDependency(new Dependency(org, name, version, alias.toString()));
-                    dependenciesJsonObject.put(alias.toString(), dependencyJsonObject);
-                });
-            }
-            if (attributeMap.containsKey("labels")) {
-                ((BMap<?, ?>) attributeMap.get("labels")).getMap().forEach((labelKey, labelValue) ->
+            if (attributeMap.containsKey(LABELS)) {
+                ((BMap<?, ?>) attributeMap.get(LABELS)).getMap().forEach((labelKey, labelValue) ->
                         labelsJsonObject.put(labelKey.toString(), labelValue.toString()));
+            }
+            if (attributeMap.containsKey(DEPENDENCIES)) {
+                LinkedHashMap<?, ?> dependencies = ((BMap<?, ?>) attributeMap.get(DEPENDENCIES)).getMap();
+                if (dependencies.containsKey(CELLS)) {
+                    LinkedHashMap<?, ?> cellDependencies = ((BMap) dependencies.get(CELLS)).getMap();
+                    extractCellDependencies(cellDependenciesJSON, cellDependencies);
+                }
+                if (dependencies.containsKey(COMPONENTS)) {
+                    BValueArray componentsArray = ((BValueArray) dependencies.get(COMPONENTS));
+                    List<String> dependentComponents = new ArrayList<>();
+                    IntStream.range(0, (int) componentsArray.size()).forEach(componentIndex -> {
+                        LinkedHashMap component = ((BMap) componentsArray.getBValue(componentIndex)).getMap();
+                        dependentComponents.add(((BString) component.get("name")).stringValue());
+                    });
+                    componentDependenciesJSON.put(((BString) attributeMap.get("name")).stringValue(),
+                            dependentComponents);
+                }
             }
         });
         jsonObject.put("labels", labelsJsonObject);
-        jsonObject.put("dependencies", dependenciesJsonObject);
+        jsonObject.put("dependencies", cellDependenciesJSON);
+        jsonObject.put("componentDep", componentDependenciesJSON);
+        jsonObject.put("exposed", exposedComponents);
 
         String targetFileNameWithPath =
                 OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + METADATA_FILE_NAME;
@@ -519,6 +536,38 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             log.error(errMsg, e);
             throw new BallerinaException(errMsg);
         }
+    }
+
+    private void extractCellDependencies(JSONObject dependenciesJsonObject, LinkedHashMap<?, ?> cellDependencies) {
+        cellDependencies.forEach((alias, dependencyValue) -> {
+            JSONObject dependencyJsonObject = new JSONObject();
+            String org, name, version;
+            if ("string".equals(((BValue) dependencyValue).getType().getName())) {
+                String dependency = ((BString) (dependencyValue)).stringValue();
+                // Validate dependency text
+                if (dependency.matches("^([^/:]*)/([^/:]*):([^/:]*)$")) {
+                    String[] dependencyVersionSplit = dependency.split(":");
+                    String[] dependencySplit = dependencyVersionSplit[0].split("/");
+                    org = dependencySplit[0];
+                    name = dependencySplit[1];
+                    version = dependencyVersionSplit[1];
+                } else {
+                    throw new BallerinaException("expects <organization>/<cell-image>:<version> " +
+                            "as the dependency, received " + dependency);
+                }
+            } else {
+                LinkedHashMap dependency = ((BMap) dependencyValue).getMap();
+                org = ((BString) dependency.get("org")).stringValue();
+                name = ((BString) dependency.get("name")).stringValue();
+                version = ((BString) dependency.get("ver")).stringValue();
+            }
+            dependencyJsonObject.put("org", org);
+            dependencyJsonObject.put("name", name);
+            dependencyJsonObject.put("ver", version);
+            dependencyJsonObject.put("alias", alias.toString());
+            cellImage.addDependency(new Dependency(org, name, version, alias.toString()));
+            dependenciesJsonObject.put(alias.toString(), dependencyJsonObject);
+        });
     }
 
     /**

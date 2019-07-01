@@ -26,21 +26,21 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)
@@ -852,12 +852,12 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime="+version.BuildVersion(),
 				"--filter", "label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
 
-			out, err := cmdDockerPs.Output()
+			containerId, err := cmdDockerPs.Output()
 			if err != nil {
 				util.ExitWithErrorMessage("Docker Run Error", err)
 			}
 
-			if string(out) == "" {
+			if string(containerId) == "" {
 
 				cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+version.BuildVersion(),
 					"--mount", "type=bind,source="+currentDir+",target=/home/cellery/src",
@@ -867,11 +867,34 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 					"wso2cellery/ballerina-runtime:"+version.BuildVersion(), "sleep", "600",
 				)
 
-				out, err = cmdDockerRun.Output()
+				containerId, err = cmdDockerRun.Output()
 				if err != nil {
-					util.ExitWithErrorMessage("Docker Run Error %s\n", err)
+					util.ExitWithErrorMessage("Docker Run Error", err)
 				}
 				time.Sleep(5 * time.Second)
+			}
+
+			cliUser, err := user.Current()
+			if err != nil {
+				util.ExitWithErrorMessage("Error while retrieving the current user", err)
+			}
+
+			exeUid := constants.CELLERY_DOCKER_CLI_USER_ID
+
+			if cliUser.Uid != constants.CELLERY_DOCKER_CLI_USER_ID && runtime.GOOS == "linux" {
+				cmdUserExist := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)),
+					"id", "-u", cliUser.Username)
+				_, errUserExist := cmdUserExist.Output()
+				if errUserExist != nil {
+					cmdUserAdd := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)), "useradd", "-m",
+						"-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username)
+
+					_, errUserAdd := cmdUserAdd.Output()
+					if errUserAdd != nil {
+						util.ExitWithErrorMessage("Error in adding Cellery execution user", errUserAdd)
+					}
+				}
+				exeUid = cliUser.Uid
 			}
 
 			cmdArgs = append(cmdArgs, "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
@@ -897,8 +920,8 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 					cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
 				}
 			}
-			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", "1000",
-				strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", tempRunFileName, "run",
+			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", exeUid,
+				strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", tempRunFileName, "run",
 				string(iName), string(dependenciesJson))
 		}
 		defer os.Remove(imageDir)
@@ -946,25 +969,17 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		return fmt.Errorf("failed to find yaml files in directory %s due to %v", celleryDir, err)
 	}
 	for _, v := range cellYamls {
-		output, err := util.ExecuteKubeCtlCmd(constants.APPLY, "-f", v)
+		err := kubectl.ApplyFile(v)
 		if err != nil {
-			return fmt.Errorf("failed to create k8s artifacts %s from image %s due to %v", v, instanceName, fmt.Errorf(output))
+			return fmt.Errorf("failed to create k8s artifacts %s from image %s due to %v", v, instanceName, err)
 		}
 	}
 
 	// Waiting for the Cell to be Ready
-	for true {
-		output, err := util.ExecuteKubeCtlCmd("wait", "--for", "condition=Ready", "cells.mesh.cellery.io/"+instanceName,
-			"--timeout", "30m")
-		if err != nil {
-			if !strings.Contains(output, "timed out") {
-				return fmt.Errorf("failed to wait for Cell instance %s from image %s/%s:%s due to %v", instanceName,
-					runningNode.MetaData.Organization, runningNode.MetaData.Name, runningNode.MetaData.Version,
-					fmt.Errorf(output))
-			}
-		} else {
-			break
-		}
+	err = kubectl.WaitForCondition("Ready", 30*60, "cells.mesh.cellery.io/"+instanceName,
+		"default")
+	if err != nil {
+		return fmt.Errorf("error waiting for instance %s to be ready: %v", instanceName, err)
 	}
 	return nil
 }
