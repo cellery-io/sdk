@@ -1,4 +1,4 @@
-Existing kubernetes setup
+Existing Kubernetes cluster
 ---
 Cellery runtime can be installed onto an existing k8s clusters. Cellery runtime requires MySQL server to store the control plane state, and MySQL server can be started within kubernetes with persistent volume mounted or not. 
 

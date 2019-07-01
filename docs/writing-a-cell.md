@@ -1,4 +1,4 @@
-### Developing & running your first cell
+## Developing & running your first cell
 
 In this section let's focus on initialize, build, run and push the same hello world cell explained above. 
 Follow the instructions listed below to create your first cell.
