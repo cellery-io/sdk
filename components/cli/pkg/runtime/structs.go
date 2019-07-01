@@ -14,25 +14,22 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
  */
 
-package main
+package runtime
 
-import (
-	"github.com/spf13/cobra"
+type ConfigMap struct {
+	Name string
+	Path string
+}
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
-)
-
-func newSetupCreateGcpCommand(isComplete *bool) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "gcp",
-		Short: "Create a Cellery runtime in gcp",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateGcp(*isComplete)
-		},
-		Example: "  cellery setup create gcp",
-	}
-	return cmd
+type Nfs struct {
+	NfsServerIp string
+	FileShare   string
+}
+type MysqlDb struct {
+	DbHostName string
+	DbUserName string
+	DbPassword string
 }

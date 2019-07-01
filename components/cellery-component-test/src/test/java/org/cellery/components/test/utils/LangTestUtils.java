@@ -95,8 +95,7 @@ public class LangTestUtils {
     public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
                                                Map<String, String> envVar) throws InterruptedException, IOException {
 
-        return compileBallerinaFunction(BUILD, sourceDirectory, fileName, cellImageInfo, new HashMap<>(),
-                envVar);
+        return compileBallerinaFunction(BUILD, sourceDirectory, fileName, cellImageInfo, new HashMap<>(), envVar);
     }
 
     /**
@@ -144,8 +143,7 @@ public class LangTestUtils {
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellRunFunction(Path sourceDirectory, String fileName,
-                                             CellImageInfo cellImageInfo,
+    public static int compileCellRunFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
                                              Map<String, CellImageInfo> instanceData, String tmpDir)
             throws InterruptedException, IOException {
 
@@ -153,8 +151,8 @@ public class LangTestUtils {
                 instanceData, tmpDir);
     }
 
-    private static int compileBallerinaFunction(String action, Path sourceDirectory, String fileName
-            , CellImageInfo cellImageInfo, Map<String, CellImageInfo> cellInstances
+    private static int compileBallerinaFunction(String action, Path sourceDirectory, String fileName,
+                                                CellImageInfo cellImageInfo, Map<String, CellImageInfo> cellInstances
             , Map<String, String> envVar) throws IOException, InterruptedException {
 
         Path ballerinaInternalLog = Paths.get(sourceDirectory.toAbsolutePath().toString(), "ballerina" +
@@ -239,10 +237,7 @@ public class LangTestUtils {
         try (InputStream input = new FileInputStream(metadataJsonPath)) {
             try (InputStreamReader inputStreamReader = new InputStreamReader(input)) {
                 JsonElement parsedJson = new JsonParser().parse(inputStreamReader);
-
-                JsonObject dependenciesJsonObject = parsedJson.getAsJsonObject().getAsJsonObject(
-                        "dependencies");
-
+                JsonObject dependenciesJsonObject = parsedJson.getAsJsonObject().getAsJsonObject("dependencies");
                 for (Map.Entry<String, JsonElement> e : dependenciesJsonObject.entrySet()) {
                     JsonObject dependency = e.getValue().getAsJsonObject();
                     String key = e.getKey();

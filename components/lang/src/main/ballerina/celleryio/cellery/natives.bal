@@ -119,7 +119,7 @@ public type Component record {|
 
 public type TCPIngress record {|
     int backendPort;
-    int gatewayPort;
+    int gatewayPort?;
 |};
 
 public type GRPCIngress record {|

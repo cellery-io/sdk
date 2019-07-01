@@ -25,18 +25,6 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func CreateFileWithNamespace(file, namespace string) error {
-	cmd := exec.Command(
-		constants.KUBECTL,
-		"create",
-		"-f",
-		file,
-		"-n", namespace,
-	)
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
 func CreateFile(file string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
@@ -60,19 +48,6 @@ func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
 		"-n", namespace,
 	)
 	displayVerboseOutput(cmd)
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func CreateConfigMap(name, confFile string) error {
-	cmd := exec.Command(
-		constants.KUBECTL,
-		"create",
-		"configmap",
-		name,
-		"--from-file",
-		confFile,
-	)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }

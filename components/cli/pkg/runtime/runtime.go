@@ -29,23 +29,14 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-type ConfigMap struct {
-	Name string
-	Path string
+var isCompleteSetup = false
+
+func SetCompleteSetup(completeSetup bool) {
+	isCompleteSetup = completeSetup
 }
 
-type Nfs struct {
-	NfsServerIp string
-	FileShare   string
-}
-type MysqlDb struct {
-	DbHostName string
-	DbUserName string
-	DbPassword string
-}
-
-func CreateRuntime(artifactsPath string, isCompleteSetup, isPersistentVolume, hasNfsStorage,
-	isLoadBalancerIngressMode bool, nfs Nfs, db MysqlDb) error {
+func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool, nfs Nfs,
+	db MysqlDb) error {
 	spinner := util.StartNewSpinner("Creating cellery runtime")
 	if isPersistentVolume && !hasNfsStorage {
 		createFoldersRequiredForMysqlPvc()

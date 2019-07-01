@@ -27,8 +27,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -106,24 +108,21 @@ func RunBuild(tag string, fileName string) {
 		cmdDockerPs := exec.Command("docker", "ps", "--filter",
 			"label=ballerina-runtime="+version.BuildVersion(),
 			"--filter", "label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
-		out, err := cmdDockerPs.Output()
+		containerId, err := cmdDockerPs.Output()
 		if err != nil {
 			spinner.Stop(false)
-			util.ExitWithErrorMessage("Error in retrieving cellery cli docker instance status ", err)
+			util.ExitWithErrorMessage("Error in retrieving cellery cli docker instance status", err)
 		}
 
-		if string(out) == "" {
+		if string(containerId) == "" {
 			cmdDockerRun := exec.Command("docker", "run", "-d",
 				"-l", "ballerina-runtime="+version.BuildVersion(),
 				"-l", "current.dir="+currentDir,
 				"--mount", "type=bind,source="+currentDir+",target=/home/cellery/src",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
-				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
 				"wso2cellery/ballerina-runtime:"+version.BuildVersion(), "sleep", "600",
 			)
-			util.UserHomeDir()
-
 			stderrReader, err := cmdDockerRun.StderrPipe()
 			if err != nil {
 				spinner.Stop(false)
@@ -159,7 +158,7 @@ func RunBuild(tag string, fileName string) {
 			go func() {
 				for {
 					if stdoutScanner.Scan() {
-						out = []byte(stdoutScanner.Text())
+						containerId = []byte(stdoutScanner.Text())
 						break
 					}
 				}
@@ -168,13 +167,37 @@ func RunBuild(tag string, fileName string) {
 			err = cmdDockerRun.Wait()
 			if err != nil {
 				spinner.Stop(false)
-				util.ExitWithErrorMessage("Docker Run Error %s\n", err)
+				util.ExitWithErrorMessage("Error while running ballerina-runtime docker image", err)
 			}
 			time.Sleep(5 * time.Second)
 		}
-		balFileName := filepath.Base(tempBuildFileName)
-		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", "1000",
-			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", "target/"+balFileName, "build", string(iName), "{}")
+
+		cliUser, err := user.Current()
+		if err != nil {
+			spinner.Stop(false)
+			util.ExitWithErrorMessage("Error while retrieving the current user", err)
+		}
+
+		if cliUser.Uid != constants.CELLERY_DOCKER_CLI_USER_ID {
+			cmdUserExist := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)),
+				"id", "-u", cliUser.Username)
+			_, errUserExist := cmdUserExist.Output()
+			if errUserExist != nil {
+				cmdUserAdd := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)), "useradd", "-m",
+					"-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username)
+
+				_, errUserAdd := cmdUserAdd.Output()
+				if errUserAdd != nil {
+					spinner.Stop(false)
+					util.ExitWithErrorMessage("Error in adding Cellery execution user", errUserAdd)
+				}
+			}
+		}
+
+		re := regexp.MustCompile(`[0-9a-zA-Z_\-. ]+/target/[0-9a-zA-Z_\-. ]+$`)
+		balFilePath := re.FindString(tempBuildFileName)
+		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", cliUser.Uid,
+			strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", balFilePath, "build", string(iName), "{}")
 	}
 	execError := ""
 	stderrReader, _ := cmd.StderrPipe()

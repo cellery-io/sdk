@@ -19,7 +19,6 @@
 package credentials
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,7 +42,7 @@ const callBackUrlContext = "/auth"
 const callBackUrl = "http://localhost:%d" + callBackUrlContext
 
 // FromBrowser requests the credentials from the user
-func FromBrowser(username string, isAutherized chan bool) (string, string, error) {
+func FromBrowser(username string, isAuthorized chan bool, done chan bool) (string, string, error) {
 	conf := config.LoadConfig()
 	timeout := make(chan bool)
 	ch := make(chan string)
@@ -75,15 +74,17 @@ func FromBrowser(username string, isAutherized chan bool) (string, string, error
 			code = r.Form.Get("code")
 			ping := r.Form.Get("ping")
 			if ping == "true" {
+				w.Header().Set("Access-Control-Allow-Origin", conf.Hub.Url)
+				w.Header().Set("Access-Control-Allow-Methods", http.MethodGet)
 				w.WriteHeader(http.StatusOK)
 			}
 			if code != "" {
 				ch <- code
-				authorized := <- isAutherized
+				authorized := <-isAuthorized
 				if authorized {
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-success", http.StatusSeeOther)
 				} else {
-					// todo add authentication fail url
+					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-failure", http.StatusSeeOther)
 					fmt.Println("\n\U0000274C Failed to authenticate")
 				}
 				flusher, ok := w.(http.Flusher)
@@ -91,10 +92,7 @@ func FromBrowser(username string, isAutherized chan bool) (string, string, error
 					util.ExitWithErrorMessage("Error in casting the flusher", err)
 				}
 				flusher.Flush()
-				err = server.Shutdown(context.Background())
-				if err != nil {
-					util.ExitWithErrorMessage("Error while shutting down the server\n", err)
-				}
+				done <- true
 			}
 		})
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -110,7 +108,7 @@ func FromBrowser(username string, isAutherized chan bool) (string, string, error
 	}
 	// Setting up a timeout
 	go func() {
-		time.Sleep(5 * time.Minute)
+		time.Sleep(15 * time.Minute)
 		timeout <- true
 	}()
 	// Wait for a code, or timeout

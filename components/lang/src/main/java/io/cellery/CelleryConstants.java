@@ -55,7 +55,10 @@ public class CelleryConstants {
     public static final String MICRO_GATEWAY = "MicroGateway";
     public static final String PROTO_FILE = "protoFile";
     public static final String YAML = ".yaml";
+
+    //Ingress Constants
     public static final String PROTOCOL_TCP = "TCP";
+    public static final String GATEWAY_PORT = "gatewayPort";
     public static final String PROTOCOL_GRPC = "GRPC";
     public static final String TARGET = "target";
     public static final String RESOURCES = "resources";

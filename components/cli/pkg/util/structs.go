@@ -155,6 +155,7 @@ type CellImageMetaData struct {
 	Components          []string                      `json:"components"`
 	Dependencies        map[string]*CellImageMetaData `json:"dependencies"`
 	ComponentDep        map[string][]string           `json:"componentDep"`
+	Exposed             []string                      `json:"exposed"`
 }
 
 type AutoscalePolicy struct {

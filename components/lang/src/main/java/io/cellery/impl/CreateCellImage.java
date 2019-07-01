@@ -74,8 +74,10 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
@@ -90,6 +92,7 @@ import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.DEPENDENCIES;
 import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
 import static io.cellery.CelleryConstants.ENV_VARS;
+import static io.cellery.CelleryConstants.GATEWAY_PORT;
 import static io.cellery.CelleryConstants.GATEWAY_SERVICE;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
 import static io.cellery.CelleryConstants.INGRESSES;
@@ -130,6 +133,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
     private static final Logger log = LoggerFactory.getLogger(CreateCellImage.class);
 
     private CellImage cellImage = new CellImage();
+    private Set<String> exposedComponents = new HashSet<>();
 
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
@@ -220,6 +224,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                     break;
                 case "WebIngress":
                     processWebIngress(component, attributeMap);
+                    exposedComponents.add(component.getName());
                     break;
                 default:
                     break;
@@ -229,7 +234,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
     private void processGRPCIngress(Component component, LinkedHashMap attributeMap) {
         GRPC grpc = new GRPC();
-        grpc.setPort((int) ((BInteger) attributeMap.get("gatewayPort")).intValue());
+        if (attributeMap.containsKey(GATEWAY_PORT)) {
+            grpc.setPort((int) ((BInteger) attributeMap.get(GATEWAY_PORT)).intValue());
+            // Component is exposed via ingress
+            exposedComponents.add(component.getName());
+        }
         grpc.setBackendPort((int) ((BInteger) attributeMap.get("backendPort")).intValue());
         if (attributeMap.containsKey(PROTO_FILE)) {
             String protoFile = ((BString) attributeMap.get(PROTO_FILE)).stringValue();
@@ -245,7 +254,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
     private void processTCPIngress(Component component, LinkedHashMap attributeMap) {
         TCP tcp = new TCP();
-        tcp.setPort((int) ((BInteger) attributeMap.get("gatewayPort")).intValue());
+        if (attributeMap.containsKey(GATEWAY_PORT)) {
+            tcp.setPort((int) ((BInteger) attributeMap.get(GATEWAY_PORT)).intValue());
+            // Component is exposed via ingress
+            exposedComponents.add(component.getName());
+        }
         tcp.setBackendPort((int) ((BInteger) attributeMap.get("backendPort")).intValue());
         component.setProtocol(PROTOCOL_TCP);
         component.setContainerPort(tcp.getBackendPort());
@@ -275,6 +288,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             } else if ("local".equals(((BString) attributeMap.get("expose")).stringValue())) {
                 httpAPI.setGlobal(false);
                 httpAPI.setBackend(component.getService());
+                // Component is exposed via ingress
+                exposedComponents.add(component.getName());
             }
             if (attributeMap.containsKey("definition")) {
                 List<APIDefinition> apiDefinitions = new ArrayList<>();
@@ -510,6 +525,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         jsonObject.put("labels", labelsJsonObject);
         jsonObject.put("dependencies", cellDependenciesJSON);
         jsonObject.put("componentDep", componentDependenciesJSON);
+        jsonObject.put("exposed", exposedComponents);
 
         String targetFileNameWithPath =
                 OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + METADATA_FILE_NAME;

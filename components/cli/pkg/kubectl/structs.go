@@ -133,6 +133,7 @@ type CellAnnotations struct {
 	Organization string `json:"mesh.cellery.io/cell-image-org"`
 	Name         string `json:"mesh.cellery.io/cell-image-name"`
 	Version      string `json:"mesh.cellery.io/cell-image-version"`
+	Dependencies string `json:"mesh.cellery.io/cell-dependencies"`
 }
 
 type CellStatus struct {
@@ -185,4 +186,43 @@ type ServiceSpec struct {
 
 type ServicePort struct {
 	Port int `json:"port"`
+}
+
+type VirtualService struct {
+	Kind       string     `json:"kind"`
+	APIVersion string     `json:"apiVersion"`
+	VsMetaData VsMetaData `json:"metadata"`
+	VsSpec     VsSpec     `json:"spec"`
+}
+
+type VsMetaData struct {
+	Name string `json:"name"`
+}
+
+type VsSpec struct {
+	Hosts []string `json:"hosts"`
+	HTTP  []HTTP   `json:"http,omitempty"`
+}
+
+type HTTP struct {
+	Match []Match `json:"match"`
+	Route []Route `json:"route"`
+}
+
+type Match struct {
+	Authority    Authority         `json:"authority"`
+	SourceLabels map[string]string `json:"sourceLabels"`
+}
+
+type Authority struct {
+	Regex string `json:"regex"`
+}
+
+type Route struct {
+	Destination Destination `json:"destination"`
+	Weight      int         `json:"weight,omitempty"`
+}
+
+type Destination struct {
+	Host string `json:"host"`
 }

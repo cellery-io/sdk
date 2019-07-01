@@ -17,6 +17,8 @@
  */
 package org.cellery.components.test.scenarios.employee;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.cellery.models.ServiceTemplate;
@@ -30,7 +32,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -45,6 +50,7 @@ import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMA
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_MESH_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.EMPLOYEE_PORTAL;
+import static org.cellery.components.test.utils.CelleryTestConstants.METADATA;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
@@ -189,6 +195,20 @@ public class EmployeeTest {
                 .getContainerPort().intValue(), 8080);
         Assert.assertEquals(servicesTemplates.get(1).getSpec().getReplicas(), 1);
         Assert.assertEquals(servicesTemplates.get(1).getSpec().getServicePort(), 80);
+    }
+
+    @Test(groups = "build")
+    public void validateMetadataJSON() throws IOException {
+        String metadataJsonPath =
+                TARGET_PATH.toAbsolutePath().toString() + File.separator + CELLERY + File.separator + METADATA;
+        try (InputStream input = new FileInputStream(metadataJsonPath)) {
+            try (InputStreamReader inputStreamReader = new InputStreamReader(input)) {
+                JsonElement parsedJson = new JsonParser().parse(inputStreamReader);
+                Assert.assertEquals(parsedJson.getAsJsonObject().getAsJsonArray("exposed").size(), 2);
+                Assert.assertFalse(parsedJson.getAsJsonObject().get("componentDep").getAsJsonObject()
+                        .get("employee").isJsonNull());
+            }
+        }
     }
 
     @AfterClass

@@ -16,23 +16,14 @@
  * under the License.
  */
 
-package main
+package routing
 
-import (
-	"github.com/spf13/cobra"
+import "fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
-)
+func GetCellGatewayHost(instance string) string {
+	return fmt.Sprintf("%s--gateway-service", instance)
+}
 
-func newSetupCreateGcpCommand(isComplete *bool) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "gcp",
-		Short: "Create a Cellery runtime in gcp",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateGcp(*isComplete)
-		},
-		Example: "  cellery setup create gcp",
-	}
-	return cmd
+func GetCellVsName(instance string) string {
+	return fmt.Sprintf("%s--vs", instance)
 }
