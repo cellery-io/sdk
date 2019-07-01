@@ -175,6 +175,7 @@ func getMetricsFromPolicySpec(policySpec *kubectl.AutoscalePolicySpec) []policie
 			Resource: policies.Resource{
 				Name:                     metric.Resource.Name,
 				TargetAverageUtilization: metric.Resource.TargetAverageUtilization,
+				TargetAverageValue:       metric.Resource.TargetAverageValue,
 			},
 		}
 		specMetrics = append(specMetrics, specMetric)

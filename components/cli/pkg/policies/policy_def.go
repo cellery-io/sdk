@@ -49,9 +49,6 @@ type Metric struct {
 
 type Resource struct {
 	Name                     string `json:"name"`
-	TargetAverageUtilization int    `json:"targetAverageUtilization"`
-}
-
-type Cpu struct {
-	TargetAverageUtilization int `json:"targetAverageUtilization"`
+	TargetAverageUtilization int    `json:"targetAverageUtilization,omitempty"`
+	TargetAverageValue       string `json:"targetAverageValue,omitempty"`
 }

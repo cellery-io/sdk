@@ -221,20 +221,25 @@ func RunApplyAutoscalePolicyToCellGw(file string, instance string) error {
 func generateCellAutoscalePolicies(policy policies.CellPolicy, instance string, overridableComponents []string, gatewayOverridable bool) ([]*kubectl.AutoscalePolicy, error) {
 	var k8sAutoscalePolicies []*kubectl.AutoscalePolicy
 	for _, rule := range policy.Rules {
-		var k8sAutoscalePolicy kubectl.AutoscalePolicy
 		switch polTargetType := rule.Target.Type; polTargetType {
 		case policies.CellComponentTargetType:
 			if isComponentPolicyOverridable(overridableComponents, rule.Target.Name) {
-				k8sAutoscalePolicy = createK8sAutoscalePolicy(rule,
+				k8sAutoscalePolicy, err := createK8sAutoscalePolicy(rule,
 					policies.GetComponentAutoscalePolicyName(instance, rule.Target.Name),
 					policies.GetTargetComponentDeploymentName(instance, rule.Target.Name))
+				if err != nil {
+					return k8sAutoscalePolicies, err
+				}
 				k8sAutoscalePolicies = append(k8sAutoscalePolicies, &k8sAutoscalePolicy)
 			}
 		case policies.CellGatewayTargetType:
 			if gatewayOverridable {
-				k8sAutoscalePolicy = createK8sAutoscalePolicy(rule,
+				k8sAutoscalePolicy, err := createK8sAutoscalePolicy(rule,
 					policies.GetGatewayAutoscalePolicyName(instance),
 					policies.GetTargetGatewayeploymentName(instance))
+				if err != nil {
+					return k8sAutoscalePolicies, err
+				}
 				k8sAutoscalePolicies = append(k8sAutoscalePolicies, &k8sAutoscalePolicy)
 			}
 		default:
@@ -259,9 +264,12 @@ func generataCellAutoscalePoliciesForComponents(policy *policies.CellPolicy, ins
 	rule := policy.Rules[0]
 	for _, component := range components {
 		if isComponentPolicyOverridable(overridableComponents, component) {
-			k8sAutoscalePolicy := createK8sAutoscalePolicy(rule,
+			k8sAutoscalePolicy, err := createK8sAutoscalePolicy(rule,
 				policies.GetComponentAutoscalePolicyName(instance, component),
 				policies.GetTargetComponentDeploymentName(instance, component))
+			if err != nil {
+				return k8sAutoscalePolicies, err
+			}
 			k8sAutoscalePolicies = append(k8sAutoscalePolicies, &k8sAutoscalePolicy)
 		}
 	}
@@ -271,10 +279,14 @@ func generataCellAutoscalePoliciesForComponents(policy *policies.CellPolicy, ins
 func generataCellAutoscalePolicyForGw(policy *policies.CellPolicy, instance string) (kubectl.AutoscalePolicy, error) {
 	// pick the first rule. If there are more than one, rest will be ignored.
 	rule := policy.Rules[0]
-	return createK8sAutoscalePolicy(rule, policies.GetGatewayAutoscalePolicyName(instance), policies.GetTargetGatewayeploymentName(instance)), nil
+	return createK8sAutoscalePolicy(rule, policies.GetGatewayAutoscalePolicyName(instance), policies.GetTargetGatewayeploymentName(instance))
 }
 
-func createK8sAutoscalePolicy(rule policies.Rule, name string, scaleTargetRefName string) kubectl.AutoscalePolicy {
+func createK8sAutoscalePolicy(rule policies.Rule, name string, scaleTargetRefName string) (kubectl.AutoscalePolicy, error) {
+	metrics, err := getK8sAutoscalePolicyMetrics(rule.Policy.Metrics)
+	if err != nil {
+		return kubectl.AutoscalePolicy{}, err
+	}
 	return kubectl.AutoscalePolicy{
 		Kind:       policies.CelleryAutoscalePolicyKind,
 		APIVersion: policies.CelleryApiVersion,
@@ -291,25 +303,46 @@ func createK8sAutoscalePolicy(rule policies.Rule, name string, scaleTargetRefNam
 					Kind:       policies.K8sScaleTargetKind,
 					Name:       scaleTargetRefName,
 				},
-				Metrics: getK8sAutoscalePolicyMetrics(rule.Policy.Metrics),
+				Metrics: metrics,
 			},
 		},
-	}
+	}, nil
 }
 
-func getK8sAutoscalePolicyMetrics(metrics []policies.Metric) []kubectl.Metric {
+func getK8sAutoscalePolicyMetrics(metrics []policies.Metric) ([]kubectl.Metric, error) {
 	var k8sMetrics []kubectl.Metric
 	for _, metric := range metrics {
+		res, err := getResourceFromMetric(&metric)
+		if err != nil {
+			return nil, err
+		}
 		k8sMetric := kubectl.Metric{
-			Type: metric.Type,
-			Resource: kubectl.Resource{
-				Name:                     metric.Resource.Name,
-				TargetAverageUtilization: metric.Resource.TargetAverageUtilization,
-			},
+			Type:     metric.Type,
+			Resource: *res,
 		}
 		k8sMetrics = append(k8sMetrics, k8sMetric)
 	}
-	return k8sMetrics
+	return k8sMetrics, nil
+}
+
+func getResourceFromMetric(metric *policies.Metric) (*kubectl.Resource, error) {
+	if metric.Resource.TargetAverageUtilization > 0 && metric.Resource.TargetAverageValue != "" {
+		// Cannot provide both
+		return nil, fmt.Errorf("TargetAverageUtilization and TargetAverageValue cannot be applied simultaneously in metric %s", metric.Resource.Name)
+	}
+	if metric.Resource.TargetAverageUtilization > 0 {
+		return &kubectl.Resource{
+			Name:                     metric.Resource.Name,
+			TargetAverageUtilization: metric.Resource.TargetAverageUtilization,
+		}, nil
+	} else if metric.Resource.TargetAverageValue != "" {
+		return &kubectl.Resource{
+			Name:               metric.Resource.Name,
+			TargetAverageValue: metric.Resource.TargetAverageValue,
+		}, nil
+	} else {
+		return nil, fmt.Errorf("Either TargetAverageUtilization or TargetAverageValue should be provided for metric %s", metric.Resource.Name)
+	}
 }
 
 func checkIfComponentsExistInCellInstance(components []string, cell kubectl.Cell) bool {
