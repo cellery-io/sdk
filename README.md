@@ -171,7 +171,7 @@ the all 'cellery' commands in any directory other than the home directory.
     
     Please allow a few minutes for completion.
     
-2. Execute `cellery list instances` to check the status of your cell 
+2. Execute `cellery list instances` to check the status of your cell. 
 
     ```
     $ cellery list instances
@@ -180,7 +180,7 @@ the all 'cellery' commands in any directory other than the home directory.
       hello-world            wso2cellery/hello-world-cell:0.2.1   Ready    hello--gateway-service        1          30 minutes 48 seconds
     ```
 
-3.  Add the following line to the /etc/hosts file
+3.  Add the following line to the /etc/hosts file.
     
     ```
       192.168.56.10 hello-world.com
