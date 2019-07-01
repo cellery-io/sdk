@@ -105,7 +105,7 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 		}
 	}
 	installVM()
-	util.WaitForRuntime(false)
+	util.WaitForRuntime(false, false)
 }
 
 func createLocal() error {

@@ -1064,7 +1064,7 @@ func ReadCellImageYaml(cellImage string) []byte {
 	return cellYamlContent
 }
 
-func WaitForRuntime(checkKnative bool) {
+func WaitForRuntime(checkKnative, hpaEnabled bool) {
 	spinner := StartNewSpinner("Checking cluster status...")
 	err := kubectl.WaitForCluster(time.Hour)
 	if err != nil {
@@ -1091,6 +1091,17 @@ func WaitForRuntime(checkKnative bool) {
 			ExitWithErrorMessage("Error while checking runtime status (Knative Serving)", err)
 		}
 		spinner.SetNewAction("Runtime status (Knative Serving)...OK")
+		spinner.Stop(true)
+	}
+
+	if hpaEnabled {
+		spinner = StartNewSpinner("Checking runtime status (Metrics server)...")
+		err = kubectl.WaitForDeployment("available", 900, "metrics-server", "kube-system")
+		if err != nil {
+			spinner.Stop(false)
+			ExitWithErrorMessage("Error while checking runtime status (Metrics server)", err)
+		}
+		spinner.SetNewAction("Runtime status (Metrics server)...OK")
 		spinner.Stop(true)
 	}
 

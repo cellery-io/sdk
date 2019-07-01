@@ -53,7 +53,15 @@ func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime
 	if err != nil {
 		util.ExitWithErrorMessage("Fail to modify the cluster", err)
 	}
-	util.WaitForRuntime(false)
+	knativeEnabled, err = runtime.IsKnativeEnabled()
+	if err != nil {
+		util.ExitWithErrorMessage("Error while checking knative status", err)
+	}
+	hpaEnabled, err = runtime.IsHpaEnabled()
+	if err != nil {
+		util.ExitWithErrorMessage("Error while checking hpa status", err)
+	}
+	util.WaitForRuntime(knativeEnabled, hpaEnabled)
 }
 
 func ConvertToSelection(enable bool) runtime.Selection {
