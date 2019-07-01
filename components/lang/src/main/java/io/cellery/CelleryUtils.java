@@ -27,6 +27,8 @@ import io.fabric8.kubernetes.api.model.HTTPHeader;
 import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
+import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.model.values.BInteger;
@@ -50,13 +52,17 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.KIND;
+import static io.cellery.CelleryConstants.LIMITS;
 import static io.cellery.CelleryConstants.LIVENESS;
 import static io.cellery.CelleryConstants.READINESS;
+import static io.cellery.CelleryConstants.REQUESTS;
 import static io.cellery.CelleryConstants.RESOURCES;
 import static io.cellery.CelleryConstants.TARGET;
 
@@ -160,12 +166,45 @@ public class CelleryUtils {
     }
 
     /**
+     * Extract the Resource limits and requests.
+     *
+     * @param resources Resource to be processed
+     * @param component current component
+     */
+    public static void processResources(LinkedHashMap<?, ?> resources, Component component) {
+        ResourceRequirements resourceRequirements = new ResourceRequirements();
+        if (resources.containsKey(LIMITS)) {
+            LinkedHashMap<String, BValue> limitsConf = ((BMap) resources.get(LIMITS)).getMap();
+            resourceRequirements.setLimits(getResourceQuantityMap(limitsConf));
+        }
+        if (resources.containsKey(REQUESTS)) {
+            LinkedHashMap<String, BValue> requestConf = ((BMap) resources.get(REQUESTS)).getMap();
+            resourceRequirements.setRequests(getResourceQuantityMap(requestConf));
+        }
+        component.setResources(resourceRequirements);
+    }
+
+    /**
+     * Get Resource Quantity Map.
+     *
+     * @param conf map of configurations
+     * @return ResourceQuantityMap
+     */
+    private static Map<String, Quantity> getResourceQuantityMap(LinkedHashMap<String, BValue> conf) {
+        return conf.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> new Quantity(e.getValue().stringValue()))
+                );
+    }
+
+    /**
      * Create ProbeBuilder with given Liveness/Readiness Probe config.
      *
      * @param probeConf probeConfig map
      * @return ProbeBuilder
      */
-    public static Probe getProbe(LinkedHashMap probeConf) {
+    private static Probe getProbe(LinkedHashMap probeConf) {
         ProbeBuilder probeBuilder = new ProbeBuilder();
         final BMap probeKindMap = (BMap) probeConf.get(KIND);
         LinkedHashMap probeKindConf = probeKindMap.getMap();

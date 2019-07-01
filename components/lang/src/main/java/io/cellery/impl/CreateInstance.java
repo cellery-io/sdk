@@ -27,6 +27,7 @@ import io.cellery.models.GatewaySpec;
 import io.cellery.models.OIDC;
 import io.cellery.models.ServiceTemplate;
 import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.internal.SerializationUtils;
@@ -62,11 +63,13 @@ import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
+import static io.cellery.CelleryConstants.POD_RESOURCES;
 import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.processProbes;
+import static io.cellery.CelleryUtils.processResources;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
@@ -107,10 +110,15 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 Component updatedComponent = cellImage.getComponentNameToComponentMap().get(componentName);
                 //Replace env values defined in the YAML.
                 updateEnvVar(instanceName, serviceTemplate, updatedComponent, dependencyInfo);
+
                 // Update Gateway Config
                 updateGatewayConfig(instanceName, destinationPath, cell, updatedComponent);
+
                 // Update liveness and readiness probe
                 updateProbes(serviceTemplate, updatedComponent);
+
+                // Update resource limit and requests
+                updateResources(serviceTemplate, updatedComponent);
             });
             writeToFile(removeTags(toYaml(cell)), cellYAMLPath);
         } catch (IOException | BallerinaException e) {
@@ -186,6 +194,17 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             probe.setTimeoutSeconds(readinessProbe.getTimeoutSeconds());
             serviceTemplate.getSpec().getContainer().setReadinessProbe(probe);
         }
+    }
+
+    /**
+     * Update Resource configurations.
+     *
+     * @param serviceTemplate  service Template object
+     * @param updatedComponent updated component to process env var
+     */
+    private void updateResources(ServiceTemplate serviceTemplate, Component updatedComponent) {
+        ResourceRequirements resourceRequirement = updatedComponent.getResources();
+        serviceTemplate.getSpec().getContainer().setResources(resourceRequirement);
     }
 
     /**
@@ -284,6 +303,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             }
             if (attributeMap.containsKey(ENV_VARS)) {
                 processEnvVars(((BMap<?, ?>) attributeMap.get(ENV_VARS)).getMap(), component);
+            }
+            if (attributeMap.containsKey(POD_RESOURCES)) {
+                processResources(((BMap<?, ?>) attributeMap.get(POD_RESOURCES)).getMap(), component);
             }
             cellImage.addComponent(component);
         });

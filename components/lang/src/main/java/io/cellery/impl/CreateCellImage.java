@@ -100,6 +100,7 @@ import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.LABELS;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
+import static io.cellery.CelleryConstants.POD_RESOURCES;
 import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
@@ -113,6 +114,7 @@ import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.processProbes;
+import static io.cellery.CelleryUtils.processResources;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
@@ -177,6 +179,9 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             }
             if (attributeMap.containsKey(PROBES)) {
                 processProbes(((BMap<?, ?>) attributeMap.get(PROBES)).getMap(), component);
+            }
+            if (attributeMap.containsKey(POD_RESOURCES)) {
+                processResources(((BMap<?, ?>) attributeMap.get(POD_RESOURCES)).getMap(), component);
             }
             cellImage.addComponent(component);
         });
@@ -344,42 +349,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         STSTemplate stsTemplate = new STSTemplate();
         STSTemplateSpec stsTemplateSpec = new STSTemplateSpec();
         for (Component component : components) {
-            ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
-            if (component.getWebList().size() > 0) {
-                templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
-                gatewaySpec.setType(ENVOY_GATEWAY);
-                // Only Single web ingress is supported for 0.2.0
-                // Therefore we only process the 0th element
-                Web webIngress = component.getWebList().get(0);
-                gatewaySpec.addHttpAPI(Collections.singletonList(webIngress.getHttpAPI()));
-                gatewaySpec.setHost(webIngress.getVhost());
-                gatewaySpec.setOidc(webIngress.getOidc());
-            } else if (component.getApis().size() > 0) {
-                // HTTP ingress
-                templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
-                gatewaySpec.setType(MICRO_GATEWAY);
-                gatewaySpec.addHttpAPI(component.getApis());
-            } else if (component.getTcpList().size() > 0) {
-                // Only Single TCP ingress is supported for 0.2.0
-                // Therefore we only process the 0th element
-                gatewaySpec.setType(ENVOY_GATEWAY);
-                gatewaySpec.addTCP(component.getTcpList());
-                templateSpec.setServicePort(component.getTcpList().get(0).getBackendPort());
-            } else if (component.getGrpcList().size() > 0) {
-                gatewaySpec.setType(ENVOY_GATEWAY);
-                templateSpec.setServicePort(component.getGrpcList().get(0).getBackendPort());
-                gatewaySpec.addGRPC(component.getGrpcList());
-            }
+            ServiceTemplateSpec templateSpec = getServiceTemplateSpec(gatewaySpec, component);
             unsecuredPaths.addAll(component.getUnsecuredPaths());
             templateSpec.setReplicas(component.getReplicas());
             templateSpec.setProtocol(component.getProtocol());
-            List<EnvVar> envVarList = new ArrayList<>();
-            component.getEnvVars().forEach((key, value) -> {
-                if (StringUtils.isEmpty(value)) {
-                    printWarning("Value is empty for environment variable \"" + key + "\"");
-                }
-                envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
-            });
+            List<EnvVar> envVarList = getEnvVars(component);
             templateSpec.setContainer(new ContainerBuilder()
                     .withImage(component.getSource())
                     .withPorts(new ContainerPortBuilder()
@@ -388,6 +362,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                     .withEnv(envVarList)
                     .withReadinessProbe(component.getReadinessProbe())
                     .withLivenessProbe(component.getLivenessProbe())
+                    .withResources(component.getResources())
                     .build());
 
             AutoScaling autoScaling = component.getAutoScaling();
@@ -427,6 +402,47 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             log.error(errMsg, e);
             throw new BallerinaException(errMsg);
         }
+    }
+
+    private List<EnvVar> getEnvVars(Component component) {
+        List<EnvVar> envVarList = new ArrayList<>();
+        component.getEnvVars().forEach((key, value) -> {
+            if (StringUtils.isEmpty(value)) {
+                printWarning("Value is empty for environment variable \"" + key + "\"");
+            }
+            envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
+        });
+        return envVarList;
+    }
+
+    private ServiceTemplateSpec getServiceTemplateSpec(GatewaySpec gatewaySpec, Component component) {
+        ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
+        if (component.getWebList().size() > 0) {
+            templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
+            gatewaySpec.setType(ENVOY_GATEWAY);
+            // Only Single web ingress is supported for 0.2.0
+            // Therefore we only process the 0th element
+            Web webIngress = component.getWebList().get(0);
+            gatewaySpec.addHttpAPI(Collections.singletonList(webIngress.getHttpAPI()));
+            gatewaySpec.setHost(webIngress.getVhost());
+            gatewaySpec.setOidc(webIngress.getOidc());
+        } else if (component.getApis().size() > 0) {
+            // HTTP ingress
+            templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
+            gatewaySpec.setType(MICRO_GATEWAY);
+            gatewaySpec.addHttpAPI(component.getApis());
+        } else if (component.getTcpList().size() > 0) {
+            // Only Single TCP ingress is supported for 0.2.0
+            // Therefore we only process the 0th element
+            gatewaySpec.setType(ENVOY_GATEWAY);
+            gatewaySpec.addTCP(component.getTcpList());
+            templateSpec.setServicePort(component.getTcpList().get(0).getBackendPort());
+        } else if (component.getGrpcList().size() > 0) {
+            gatewaySpec.setType(ENVOY_GATEWAY);
+            templateSpec.setServicePort(component.getGrpcList().get(0).getBackendPort());
+            gatewaySpec.addGRPC(component.getGrpcList());
+        }
+        return templateSpec;
     }
 
     private AutoScalingSpec generateAutoScaling(AutoScaling autoScaling) {

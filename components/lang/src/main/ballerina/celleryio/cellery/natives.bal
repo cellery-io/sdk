@@ -31,7 +31,7 @@ public type Label record {
 };
 
 # Ingress Expose types
-public type Expose "global"|"local";
+public type Expose "global" | "local";
 
 public type DockerSource record {|
     string dockerDir;
@@ -73,7 +73,7 @@ public type CpuUtilizationPercentage record {|
 
 public type Dependencies record {|
     Component?[] components?;
-    map<ImageName|string> cells?;
+    map<ImageName | string> cells?;
 |};
 
 public type Probe record {|
@@ -82,7 +82,7 @@ public type Probe record {|
     int timeoutSeconds = 1;
     int failureThreshold = 3;
     int successThreshold = 1;
-    TcpSocket|Exec|HttpGet kind;
+    TcpSocket | Exec | HttpGet kind;
 |};
 
 public type TcpSocket record {|
@@ -105,16 +105,27 @@ public type Probes record {|
     Probe liveness?;
 |};
 
+public type Resources record {|
+    Quota requests?;
+    Quota limits?;
+|};
+
+public type Quota record {|
+    string memory?;
+    string cpu?;
+|};
+
 public type Component record {|
     string name;
-    ImageSource|DockerSource source;
+    ImageSource | DockerSource source;
     int replicas = 1;
-    map<TCPIngress|HttpApiIngress|GRPCIngress|WebIngress> ingresses?;
+    map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress> ingresses?;
     Label labels?;
     map<Env> envVars?;
     Dependencies dependencies?;
     AutoScaling autoscaling?;
     Probes probes?;
+    Resources resources?;
 |};
 
 public type TCPIngress record {|
@@ -162,7 +173,7 @@ public type OIDC record {|
     string[] securePaths = [];
     string providerUrl;
     string clientId;
-    string|DCR clientSecret;
+    string | DCR clientSecret;
     string redirectUrl;
     string baseUrl;
     string subjectClaim?;
@@ -175,7 +186,7 @@ public type DCR record {|
 |};
 
 public type ParamValue record {
-    string|int|boolean|float value?;
+    string | int | boolean | float value?;
 };
 
 public type Env record {|
@@ -202,7 +213,7 @@ public type Reference record {
 # + cellImage - The cell image definition
 # + iName - The cell image org, name & version
 # + return - error
-public function createImage(CellImage cellImage, ImageName iName) returns (error?) {
+public function createImage(CellImage cellImage, ImageName iName) returns ( error?) {
     //Persist the Ballerina cell image record as a json
     json jsonValue = check json.stamp(cellImage.clone());
     string filePath = "./target/cellery/" + iName.name + "_meta.json";
@@ -220,7 +231,7 @@ public function createImage(CellImage cellImage, ImageName iName) returns (error
 # + cellImage - The cell image definition
 # + iName - The cell image org, name & version
 # + return - error
-public function createCellImage(CellImage cellImage, ImageName iName) returns (error?) = external;
+public function createCellImage(CellImage cellImage, ImageName iName) returns ( error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
@@ -228,20 +239,20 @@ public function createCellImage(CellImage cellImage, ImageName iName) returns (e
 # + iName - The cell instance name
 # + instances - The cell instance dependencies
 # + return - error optinal
-public function createInstance(CellImage cellImage, ImageName iName, map<ImageName> instances) returns (error?) = external;
+public function createInstance(CellImage cellImage, ImageName iName, map<ImageName> instances) returns ( error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
 # + iName - The cell instance name
 # + return - error or CellImage record
-public function constructCellImage(ImageName iName) returns (CellImage|error) {
+public function constructCellImage(ImageName iName) returns (CellImage | error) {
     string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
     var rResult = read(filePath);
     if (rResult is error) {
         log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
         return rResult;
     }
-    CellImage|error cellImage = CellImage.stamp(rResult);
+    CellImage | error cellImage = CellImage.stamp(rResult);
     return cellImage;
 }
 
@@ -249,13 +260,13 @@ public function constructCellImage(ImageName iName) returns (CellImage|error) {
 #
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
-public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition|error) = external;
+public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition | error) = external;
 
 # Returns a Reference record with url information
 #
 # + iName - Dependency Image Name
 # + return - Reference record
-public function readReference(ImageName iName) returns (Reference|error|()) = external;
+public function readReference(ImageName iName) returns (Reference | error | ()) = external;
 
 # Returns a Reference record with url information
 #
@@ -275,7 +286,7 @@ public function getReference(Component component, string dependencyAlias) return
         panic e;
     }
     aliasImage.instanceName = dependencyAlias;
-    Reference|error? ref = readReference(aliasImage);
+    Reference | error? ref = readReference(aliasImage);
     if (ref is error) {
         log:printError("Error occured while reading reference file ", err = ref);
         panic ref;
@@ -345,7 +356,7 @@ function write(json content, string path) returns error? {
     }
 }
 
-function read(string path) returns json|error {
+function read(string path) returns json | error {
     io:ReadableByteChannel rbc = io:openReadableFile(path);
     io:ReadableCharacterChannel rch = new(rbc, "UTF8");
     var result = rch.readJson();

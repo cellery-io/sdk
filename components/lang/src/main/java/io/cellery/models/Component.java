@@ -1,6 +1,7 @@
 package io.cellery.models;
 
 import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class Component {
     private List<String> unsecuredPaths;
     private Probe readinessProbe;
     private Probe livenessProbe;
+    private ResourceRequirements resources;
 
     public Component() {
         envVars = new HashMap<>();
