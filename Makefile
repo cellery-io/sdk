@@ -76,8 +76,8 @@ install-lang:
 
 .PHONY: install-cli
 install-cli:
-	cd ${PROJECT_ROOT}/components/cli; \
-	bash build.sh;
+	go build -o ${GO_BUILD_DIRECTORY}/cellery -ldflags "$(GO_LDFLAGS)" -x ./components/cli/cmd/cellery; \
+    cp ${GO_BUILD_DIRECTORY}/cellery /usr/local/bin; \
 
 .PHONY: copy-k8s-artefacts
 copy-k8s-artefacts:

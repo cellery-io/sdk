@@ -53,7 +53,7 @@ public function build(cellery:ImageName iName) returns error? {
                 maxReplicas: 10,
                 cpuPercentage: <cellery:CpuUtilizationPercentage>{ percentage: 50 }
             }
-        }
+        },
         envVars: {
             SALARY_HOST: {
                 value: cellery:getHost(salaryComponent)
