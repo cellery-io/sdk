@@ -172,7 +172,6 @@ func modifyAutoScalingPolicy() {
 	default:
 		{
 			// If user selects back he will get prompted back to modify runtime section
-			modifyRuntime()
 			return
 		}
 	}

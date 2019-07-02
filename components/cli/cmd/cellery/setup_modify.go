@@ -39,7 +39,7 @@ func newSetupModifyCommand() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&apimgt, "apimgt", false, "enable API Management in the runtime")
 	cmd.Flags().BoolVar(&observability, "observability", false, "enable Observability in the runtime")
-	cmd.Flags().BoolVar(&knative, "knative", false, "enable Knative serving in the runtime")
+	cmd.Flags().BoolVar(&knative, "scale-to-zero", false, "enable scale to zero in the runtime")
 	cmd.Flags().BoolVar(&hpa, "hpa", false, "enable horizontal pod auto scalar in the runtime")
 	return cmd
 }
