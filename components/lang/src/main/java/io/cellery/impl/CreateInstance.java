@@ -204,7 +204,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void updateResources(ServiceTemplate serviceTemplate, Component updatedComponent) {
         ResourceRequirements resourceRequirement = updatedComponent.getResources();
-        serviceTemplate.getSpec().getContainer().setResources(resourceRequirement);
+        serviceTemplate.getSpec().setResources(resourceRequirement);
     }
 
     /**

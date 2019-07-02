@@ -362,13 +362,13 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                     .withEnv(envVarList)
                     .withReadinessProbe(component.getReadinessProbe())
                     .withLivenessProbe(component.getLivenessProbe())
-                    .withResources(component.getResources())
                     .build());
 
             AutoScaling autoScaling = component.getAutoScaling();
             if (autoScaling != null) {
                 templateSpec.setAutoscaling(generateAutoScaling(autoScaling));
             }
+            templateSpec.setResources(component.getResources());
             ServiceTemplate serviceTemplate = new ServiceTemplate();
             serviceTemplate.setMetadata(new ObjectMetaBuilder()
                     .withName(component.getService())
