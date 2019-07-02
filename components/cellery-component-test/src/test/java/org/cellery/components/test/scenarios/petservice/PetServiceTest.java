@@ -18,7 +18,9 @@
 
 package org.cellery.components.test.scenarios.petservice;
 
+import io.cellery.models.AutoScalingPolicy;
 import io.cellery.models.Cell;
+import io.cellery.models.ServiceTemplateSpec;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -33,6 +35,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU;
+import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_MEMORY;
 import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
@@ -53,9 +57,8 @@ public class PetServiceTest {
 
     @Test(groups = "build")
     public void compileCellBuild() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-cell" + BAL,
-                cellImageInfo)
-                , 0);
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-cell" + BAL, cellImageInfo),
+                0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
         cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
@@ -79,12 +82,9 @@ public class PetServiceTest {
     @Test(groups = "build")
     public void validateBuildTimeMetaData() {
         Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
-                cellImageInfo.getOrg());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
-                cellImageInfo.getName());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
-                cellImageInfo.getVer());
+        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG), cellImageInfo.getOrg());
+        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME), cellImageInfo.getName());
+        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION), cellImageInfo.getVer());
     }
 
     @Test(groups = "build")
@@ -97,33 +97,33 @@ public class PetServiceTest {
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "debug");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "docker.io/mirage20/k8s-debug-tools");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
-                getContainerPort().intValue(), 0);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
+        final ServiceTemplateSpec debugSpec = cell.getSpec().getServicesTemplates().get(0).getSpec();
+        Assert.assertEquals(debugSpec.getContainer().getImage(), "docker.io/mirage20/k8s-debug-tools");
+        Assert.assertEquals(debugSpec.getContainer().getPorts().get(0).getContainerPort().intValue(), 0);
+        Assert.assertEquals(debugSpec.getReplicas(), 1);
+        Assert.assertFalse(debugSpec.getAutoscaling().isOverridable());
+        final AutoScalingPolicy zeroScalePolicy = debugSpec.getAutoscaling().getPolicy();
+        Assert.assertEquals(zeroScalePolicy.getMaxReplicas(), 10);
+        Assert.assertEquals(zeroScalePolicy.getConcurrency(), 25);
 
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "pet" +
-                "-service");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getImage(),
-                "docker.io/isurulucky/pet-service");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getPorts().get(0).
-                getContainerPort().intValue(), 9090);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getReplicas(), 1);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getServicePort(), 80);
 
-        Assert.assertTrue(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().isOverridable());
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
-                .getMaxReplicas(), new Integer(10));
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
-                .getMinReplicas(), new Integer(1));
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
-                .getMetrics().get(0).getResource().getName(), "cpu");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
-                .getMetrics().get(0).getResource().getTargetAverageUtilization(), new Integer(50));
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getAutoscaling().getPolicy()
-                .getMetrics().get(0).getType(), "Resource");
-
+        final ServiceTemplateSpec petSpec = cell.getSpec().getServicesTemplates().get(1).getSpec();
+        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "pet-service");
+        Assert.assertEquals(petSpec.getContainer().getImage(), "docker.io/isurulucky/pet-service");
+        Assert.assertEquals(petSpec.getContainer().getPorts().get(0).getContainerPort().intValue(), 9090);
+        Assert.assertEquals(petSpec.getReplicas(), 1);
+        Assert.assertEquals(petSpec.getServicePort(), 80);
+        Assert.assertTrue(petSpec.getAutoscaling().isOverridable());
+        final AutoScalingPolicy autoscalePolicy = petSpec.getAutoscaling().getPolicy();
+        Assert.assertEquals(autoscalePolicy.getMaxReplicas(), 10);
+        Assert.assertEquals(autoscalePolicy.getMinReplicas(), 1);
+        Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getType(), "Resource");
+        Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getResource().getName(),
+                AUTO_SCALING_METRIC_RESOURCE_CPU);
+        Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getResource().getTargetAverageValue(), "500m");
+        Assert.assertEquals(autoscalePolicy.getMetrics().get(1).getResource().getName(),
+                AUTO_SCALING_METRIC_RESOURCE_MEMORY);
+        Assert.assertEquals(autoscalePolicy.getMetrics().get(1).getResource().getTargetAverageUtilization(), 50);
     }
 
     @AfterClass

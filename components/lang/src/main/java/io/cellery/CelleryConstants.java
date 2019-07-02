@@ -33,7 +33,11 @@ public class CelleryConstants {
     public static final String IMAGE_SOURCE = "source";
     public static final String AUTO_SCALING_METRIC_RESOURCE = "Resource";
     public static final String AUTO_SCALING_METRIC_RESOURCE_CPU = "cpu";
+    public static final String AUTO_SCALING_METRIC_RESOURCE_MEMORY = "memory";
     public static final String INSTANCE_NAME = "instanceName";
+    public static final String BTYPE_STRING = "string";
+    public static final String MAX_REPLICAS = "maxReplicas";
+    public static final String CONCURRENCY_TARGET = "concurrencyTarget";
 
     //Dependency Constants
     public static final String DEPENDENCIES = "dependencies";
@@ -47,7 +51,7 @@ public class CelleryConstants {
     // Ballerina object name constants for probes
     public static final String INGRESSES = "ingresses";
     public static final String LABELS = "labels";
-    public static final String AUTO_SCALING = "autoscaling";
+    public static final String AUTO_SCALING = "scaling";
     public static final String ENV_VARS = "envVars";
     public static final String PROBES = "probes";
     public static final String POD_RESOURCES = "resources";

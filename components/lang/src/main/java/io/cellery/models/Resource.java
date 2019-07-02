@@ -18,16 +18,16 @@
 
 package io.cellery.models;
 
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerSpec;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Component Auto Scaling Spec.
+ * Autoscaling Resource Model.
  */
 @Data
 @NoArgsConstructor
-public class AutoScalingSpec {
-    private boolean overridable;
-    private HorizontalPodAutoscalerSpec policy;
+public class Resource {
+    private String name;
+    private int targetAverageUtilization;
+    private String targetAverageValue;
 }

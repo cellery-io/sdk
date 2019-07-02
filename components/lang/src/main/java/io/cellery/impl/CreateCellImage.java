@@ -18,13 +18,11 @@
 package io.cellery.impl;
 
 import com.google.gson.Gson;
-import io.cellery.CelleryConstants;
 import io.cellery.models.API;
 import io.cellery.models.APIDefinition;
 import io.cellery.models.AutoScaling;
 import io.cellery.models.AutoScalingPolicy;
 import io.cellery.models.AutoScalingResourceMetric;
-import io.cellery.models.AutoScalingSpec;
 import io.cellery.models.Cell;
 import io.cellery.models.CellImage;
 import io.cellery.models.CellSpec;
@@ -33,6 +31,7 @@ import io.cellery.models.Dependency;
 import io.cellery.models.GRPC;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.GatewayTemplate;
+import io.cellery.models.Resource;
 import io.cellery.models.STSTemplate;
 import io.cellery.models.STSTemplateSpec;
 import io.cellery.models.ServiceTemplate;
@@ -43,8 +42,6 @@ import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
-import io.fabric8.kubernetes.api.model.HorizontalPodAutoscalerSpecBuilder;
-import io.fabric8.kubernetes.api.model.MetricSpecBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import org.apache.commons.lang3.StringUtils;
@@ -85,8 +82,13 @@ import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
 import static io.cellery.CelleryConstants.AUTO_SCALING;
+import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE;
+import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU;
+import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_MEMORY;
+import static io.cellery.CelleryConstants.BTYPE_STRING;
 import static io.cellery.CelleryConstants.CELLS;
 import static io.cellery.CelleryConstants.COMPONENTS;
+import static io.cellery.CelleryConstants.CONCURRENCY_TARGET;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.DEPENDENCIES;
@@ -98,6 +100,7 @@ import static io.cellery.CelleryConstants.IMAGE_SOURCE;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.LABELS;
+import static io.cellery.CelleryConstants.MAX_REPLICAS;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
 import static io.cellery.CelleryConstants.POD_RESOURCES;
@@ -323,21 +326,50 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
      * @param component   current component
      */
     private void processAutoScalePolicy(LinkedHashMap<?, ?> scalePolicy, Component component) {
-        LinkedHashMap bScalePolicy = ((BMap) scalePolicy.get("policy")).getMap();
-        boolean bOverridable = ((BBoolean) scalePolicy.get("overridable")).booleanValue();
-
-        List<AutoScalingResourceMetric> autoScalingResourceMetrics = new ArrayList<>();
-        LinkedHashMap cpuPercentage = (((BMap) bScalePolicy.get("cpuPercentage")).getMap());
-        long percentage = ((BInteger) cpuPercentage.get("percentage")).intValue();
-        AutoScalingResourceMetric autoScalingResourceMetric
-                = new AutoScalingResourceMetric(CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU, (int) percentage);
-        autoScalingResourceMetrics.add(autoScalingResourceMetric);
-
         AutoScalingPolicy autoScalingPolicy = new AutoScalingPolicy();
-        autoScalingPolicy.setMinReplicas(((BInteger) bScalePolicy.get("minReplicas")).intValue());
-        autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get("maxReplicas")).intValue());
-        autoScalingPolicy.setMetrics(autoScalingResourceMetrics);
-        component.setAutoScaling(new AutoScaling(autoScalingPolicy, bOverridable));
+        final BMap policy = (BMap) scalePolicy.get("policy");
+        LinkedHashMap bScalePolicy = policy.getMap();
+        boolean bOverridable = false;
+        if ("AutoScalingPolicy".equals(policy.getType().getName())) {
+            // Autoscaling
+            autoScalingPolicy.setMinReplicas(((BInteger) bScalePolicy.get("minReplicas")).intValue());
+            autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
+            bOverridable = ((BBoolean) bScalePolicy.get("overridable")).booleanValue();
+            LinkedHashMap metricsMap = ((BMap) bScalePolicy.get("metrics")).getMap();
+            if (metricsMap.containsKey(AUTO_SCALING_METRIC_RESOURCE_CPU)) {
+                extractMetrics(autoScalingPolicy, metricsMap, AUTO_SCALING_METRIC_RESOURCE_CPU);
+            }
+            if (metricsMap.containsKey(AUTO_SCALING_METRIC_RESOURCE_MEMORY)) {
+                extractMetrics(autoScalingPolicy, metricsMap, AUTO_SCALING_METRIC_RESOURCE_MEMORY);
+            }
+
+        } else {
+            //Zero Scaling
+            if (bScalePolicy.containsKey(MAX_REPLICAS)) {
+                autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
+            }
+            if (bScalePolicy.containsKey(CONCURRENCY_TARGET)) {
+                autoScalingPolicy.setConcurrency(((BInteger) bScalePolicy.get(CONCURRENCY_TARGET)).intValue());
+            }
+        }
+        component.setAutoscaling(new AutoScaling(autoScalingPolicy, bOverridable));
+    }
+
+    private void extractMetrics(AutoScalingPolicy autoScalingPolicy, LinkedHashMap metricsMap,
+                                String autoScalingMetricResourceMemory) {
+        AutoScalingResourceMetric scalingResourceMetric = new AutoScalingResourceMetric();
+        scalingResourceMetric.setType(AUTO_SCALING_METRIC_RESOURCE);
+        Resource resource = new Resource();
+        resource.setName(autoScalingMetricResourceMemory);
+        scalingResourceMetric.setResource(resource);
+        autoScalingPolicy.addAutoScalingResourceMetric(scalingResourceMetric);
+        final BValue bValue = (BValue) ((BMap) metricsMap.get(autoScalingMetricResourceMemory)).getMap()
+                .get("threshold");
+        if (BTYPE_STRING.equals(bValue.getType().getName())) {
+            resource.setTargetAverageValue(bValue.stringValue());
+        } else {
+            resource.setTargetAverageUtilization((int) ((BInteger) bValue).intValue());
+        }
     }
 
     private void generateCell() {
@@ -364,9 +396,9 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                     .withLivenessProbe(component.getLivenessProbe())
                     .build());
 
-            AutoScaling autoScaling = component.getAutoScaling();
+            AutoScaling autoScaling = component.getAutoscaling();
             if (autoScaling != null) {
-                templateSpec.setAutoscaling(generateAutoScaling(autoScaling));
+                templateSpec.setAutoscaling(autoScaling);
             }
             templateSpec.setResources(component.getResources());
             ServiceTemplate serviceTemplate = new ServiceTemplate();
@@ -443,27 +475,6 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             gatewaySpec.addGRPC(component.getGrpcList());
         }
         return templateSpec;
-    }
-
-    private AutoScalingSpec generateAutoScaling(AutoScaling autoScaling) {
-        HorizontalPodAutoscalerSpecBuilder autoScaleSpecBuilder = new HorizontalPodAutoscalerSpecBuilder()
-                .withMaxReplicas((int) autoScaling.getPolicy().getMaxReplicas())
-                .withMinReplicas((int) autoScaling.getPolicy().getMinReplicas());
-
-        // Generating scale policy metrics config
-        for (AutoScalingResourceMetric metric : autoScaling.getPolicy().getMetrics()) {
-            autoScaleSpecBuilder.addToMetrics(new MetricSpecBuilder()
-                    .withType(CelleryConstants.AUTO_SCALING_METRIC_RESOURCE)
-                    .withNewResource()
-                    .withName(metric.getName())
-                    .withTargetAverageUtilization(metric.getValue())
-                    .endResource()
-                    .build());
-        }
-        AutoScalingSpec autoScalingSpec = new AutoScalingSpec();
-        autoScalingSpec.setOverridable(autoScaling.isOverridable());
-        autoScalingSpec.setPolicy(autoScaleSpecBuilder.build());
-        return autoScalingSpec;
     }
 
     /**
@@ -558,7 +569,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         cellDependencies.forEach((alias, dependencyValue) -> {
             JSONObject dependencyJsonObject = new JSONObject();
             String org, name, version;
-            if ("string".equals(((BValue) dependencyValue).getType().getName())) {
+            if (BTYPE_STRING.equals(((BValue) dependencyValue).getType().getName())) {
                 String dependency = ((BString) (dependencyValue)).stringValue();
                 // Validate dependency text
                 if (dependency.matches("^([^/:]*)/([^/:]*):([^/:]*)$")) {

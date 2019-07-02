@@ -20,13 +20,15 @@ package io.cellery.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Scale policy metrics model class for Resource type metric.
  */
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class AutoScalingResourceMetric {
-    private String name;
-    private Integer value;
+    private String type;
+    private Resource resource;
 }

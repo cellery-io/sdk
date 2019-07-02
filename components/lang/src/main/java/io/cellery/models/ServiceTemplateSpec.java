@@ -33,7 +33,7 @@ public class ServiceTemplateSpec {
     private int replicas;
     private int servicePort;
     private Container container;
-    private AutoScalingSpec autoscaling;
+    private AutoScaling autoscaling;
     private ResourceRequirements resources;
     private String protocol;
 }

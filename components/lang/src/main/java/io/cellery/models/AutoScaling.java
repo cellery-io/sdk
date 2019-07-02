@@ -20,12 +20,14 @@ package io.cellery.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Auto Scaling model class.
  */
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class AutoScaling {
     private AutoScalingPolicy policy;
     private boolean overridable;

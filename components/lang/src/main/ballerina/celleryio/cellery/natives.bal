@@ -57,18 +57,32 @@ public type ApiDefinition record {|
 |};
 
 public type AutoScaling record {|
-    AutoScalingPolicy policy;
-    boolean overridable = true;
+    AutoScalingPolicy | ZeroScalingPolicy policy;
+|};
+
+public type ZeroScalingPolicy record {|
+    int maxReplicas?;
+    int concurrencyTarget?;
 |};
 
 public type AutoScalingPolicy record {|
+    boolean overridable = true;
     int minReplicas;
     int maxReplicas;
-    CpuUtilizationPercentage cpuPercentage;
+    Metrics metrics;
 |};
 
-public type CpuUtilizationPercentage record {|
-    int percentage;
+public type Metrics record {|
+    Value | Percentage cpu?;
+    Value | Percentage memory?;
+|};
+
+public type Value record {|
+    string threshold;
+|};
+
+public type Percentage record {|
+    int threshold;
 |};
 
 public type Dependencies record {|
@@ -123,7 +137,7 @@ public type Component record {|
     Label labels?;
     map<Env> envVars?;
     Dependencies dependencies?;
-    AutoScaling autoscaling?;
+    AutoScaling scaling?;
     Probes probes?;
     Resources resources?;
 |};
@@ -317,7 +331,7 @@ function parseCellDependency(string alias) returns ImageName {
 # + return - hostname
 public function getHost(Component component) returns (string) {
     string host = "{{instance_name}}--" + getValidName(component.name) + "-service";
-    if (!(component["autoscaling"] is ()) && component.autoscaling.policy.minReplicas == 0) {
+    if (!(component["scaling"] is ()) && component.scaling.policy is ZeroScalingPolicy) {
         host += "-rev";
     }
     return host;

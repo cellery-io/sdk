@@ -27,7 +27,7 @@ public class Component {
     private String service;
     private String protocol;
     private int containerPort;
-    private AutoScaling autoScaling;
+    private AutoScaling autoscaling;
     private List<String> unsecuredPaths;
     private Probe readinessProbe;
     private Probe livenessProbe;
