@@ -31,3 +31,7 @@ func GetGatewayName(instance string) string {
 func GetCellVsName(instance string) string {
 	return fmt.Sprintf("%s--vs", instance)
 }
+
+func GetCellVsHttpMatchRegex(instance string) string {
+	return fmt.Sprintf("^(%s)(--gateway-service)(\\S*)$", instance)
+}

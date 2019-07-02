@@ -76,7 +76,7 @@ func newRouteTrafficCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			err := commands.RunRouteTrafficCommand(srcInstances, args[0], targetInstance, percentage)
 			if err != nil {
-				util.ExitWithErrorMessage(fmt.Sprintf("Unable to route traffic to the target instance: %s, percentage: %s", targetInstance, percentage), err)
+				util.ExitWithErrorMessage(fmt.Sprintf("Unable to route traffic to the target instance: %s, percentage: %d", targetInstance, percentage), err)
 			}
 		},
 	}

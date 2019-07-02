@@ -33,6 +33,9 @@ import (
 )
 
 const instance = "instance"
+const imageOrg = "org"
+const imageName = "name"
+const imageVersion = "version"
 const k8sMetadata = "metadata"
 const k8sAnnotations = "annotations"
 const cellOriginalGatewaySvcAnnKey = "mesh.cellery.io/original-gw-svc"
@@ -40,7 +43,7 @@ const cellOriginalGatewaySvcAnnKey = "mesh.cellery.io/original-gw-svc"
 func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string, targetInstance string, percentage int) error {
 	spinner := util.StartNewSpinner(fmt.Sprintf("Starting to route %d%% of traffic to instance %s", percentage, targetInstance))
 	// check if the target instance exists
-	_, err := kubectl.GetCell(targetInstance)
+	targetInst, err := kubectl.GetCell(targetInstance)
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -55,6 +58,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 		return fmt.Errorf("cell instance %s not found among dependencies of source cell instance(s)", dependencyInstance)
 	}
 	var modfiedVss []kubectl.VirtualService
+	var modifiedCellInstances []kubectl.Cell
 	spinner.SetNewAction("Modifying routing rules")
 	for _, depSrcInst := range *dependingSourceInstances {
 		vs, err := kubectl.GetVirtualService(routing.GetCellVsName(depSrcInst))
@@ -64,25 +68,24 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 		}
 		// modify the vs to include new route information.
 		modfiedVss = append(modfiedVss, *getModifiedVs(vs, dependencyInstance, targetInstance, percentage))
+		// if the percentage is 100, the running cell instance now fully depends on the new instance,
+		// hence update the dependency annotation
+		if percentage == 100 {
+			modifiedCellInst, err := getModifiedCellInstances(depSrcInst, dependencyInstance, targetInstance,
+				targetInst.CellMetaData.Annotations.Name, targetInst.CellMetaData.Annotations.Version,
+				targetInst.CellMetaData.Annotations.Organization)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
+			modifiedCellInstances = append(modifiedCellInstances, *modifiedCellInst)
+		}
 	}
 
 	// if the percentage is 100, include the original gateway service name as an annotation.
 	var gw []byte
 	if percentage == 100 {
-		gateway, err := kubectl.GetGatewayAsMapInterface(routing.GetGatewayName(targetInstance))
-		if err != nil {
-			spinner.Stop(false)
-			return err
-		}
-		if gateway == nil {
-			return fmt.Errorf("gateway of instance %s does not exist", targetInstance)
-		}
-		modifiedGw, err := addOriginalGwK8sServiceName(gateway, routing.GetCellGatewayHost(dependencyInstance))
-		if err != nil {
-			spinner.Stop(false)
-			return err
-		}
-		gw, err = json.Marshal(modifiedGw)
+		gw, err = getModifiedGateway(targetInstance, dependencyInstance)
 		if err != nil {
 			spinner.Stop(false)
 			return err
@@ -90,7 +93,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 	}
 
 	vsFile := fmt.Sprintf("./%s-routing-artifacts.yaml", dependencyInstance)
-	err = writeArtifactsToFile(vsFile, &modfiedVss, gw)
+	err = writeArtifactsToFile(vsFile, &modfiedVss, &modifiedCellInstances, gw)
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -108,6 +111,57 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 	spinner.Stop(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully routed %d%% of traffic to instance %s", percentage, targetInstance))
 	return nil
+}
+
+func getModifiedGateway(targetInstance string, dependencyInstance string) ([]byte, error) {
+	gateway, err := kubectl.GetGatewayAsMapInterface(routing.GetGatewayName(targetInstance))
+	if err != nil {
+		return nil, err
+	}
+	if gateway == nil {
+		return nil, fmt.Errorf("gateway of instance %s does not exist", targetInstance)
+	}
+	modifiedGw, err := addOriginalGwK8sServiceName(gateway, routing.GetCellGatewayHost(dependencyInstance))
+	if err != nil {
+		return nil, err
+	}
+	gw, err := json.Marshal(modifiedGw)
+	if err != nil {
+		return nil, err
+	}
+	return gw, nil
+}
+
+func getModifiedCellInstances(name string, existingDependency string, newDependency string, newCellImage string, newVersion string, newOrg string) (*kubectl.Cell, error) {
+	cellInst, err := kubectl.GetCell(name)
+	if err != nil {
+		return nil, err
+	}
+	dependencies, err := extractDependencies(cellInst.CellMetaData.Annotations.Dependencies)
+	if err != nil {
+		return nil, err
+	}
+	// copy all except previous dependency
+	var newDependencies []map[string]string
+	for _, dependency := range dependencies {
+		if dependency[instance] != existingDependency {
+			newDependencies = append(newDependencies, dependency)
+		}
+	}
+	// create & add the new dependency
+	newDepMap := make(map[string]string)
+	newDepMap[instance] = newDependency
+	newDepMap[imageOrg] = newOrg
+	newDepMap[imageName] = newCellImage
+	newDepMap[imageVersion] = newVersion
+	newDependencies = append(newDependencies, newDepMap)
+	// set the new dependencies to Cell
+	newDepByteArr, err := json.Marshal(newDependencies)
+	if err != nil {
+		return nil, err
+	}
+	cellInst.CellMetaData.Annotations.Dependencies = string(newDepByteArr)
+	return &cellInst, nil
 }
 
 func getDependingSrcInstances(sourceInstances []string, dependencyInstance string) (*[]string, error) {
@@ -163,12 +217,12 @@ func extractDependencies(depJson string) ([]map[string]string, error) {
 }
 
 func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst string, percentageForTarget int) *kubectl.VirtualService {
-	var routesCollection []kubectl.Route
+	var newRoutes []kubectl.Route
 	for i, httpRule := range vs.VsSpec.HTTP {
-		for _, match := range httpRule.Match {
-			if strings.HasPrefix(match.Authority.Regex, fmt.Sprintf("^(%s)", dependencyInst)) {
-				routesCollection = *buildRoutes(dependencyInst, targetInst, percentageForTarget)
-				httpRule.Route = routesCollection
+		for _, route := range httpRule.Route {
+			if strings.HasPrefix(route.Destination.Host, dependencyInst) {
+				newRoutes = *buildRoutes(dependencyInst, targetInst, percentageForTarget)
+				httpRule.Route = newRoutes
 			}
 		}
 		vs.VsSpec.HTTP[i] = httpRule
@@ -248,7 +302,7 @@ func addOriginalGwK8sServiceName(gw map[string]interface{}, originalGwK8sSvsName
 	return gw, nil
 }
 
-func writeArtifactsToFile(policiesFile string, vss *[]kubectl.VirtualService, gw []byte) error {
+func writeArtifactsToFile(policiesFile string, vss *[]kubectl.VirtualService, cellInstances *[]kubectl.Cell, gw []byte) error {
 	f, err := os.OpenFile(policiesFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
@@ -267,6 +321,20 @@ func writeArtifactsToFile(policiesFile string, vss *[]kubectl.VirtualService, gw
 		}
 		if _, err := f.Write([]byte("---\n")); err != nil {
 			return err
+		}
+	}
+	if len(*cellInstances) > 0 {
+		for _, inst := range *cellInstances {
+			yamlContent, err := yaml.Marshal(inst)
+			if err != nil {
+				return err
+			}
+			if _, err := f.Write(yamlContent); err != nil {
+				return err
+			}
+			if _, err := f.Write([]byte("---\n")); err != nil {
+				return err
+			}
 		}
 	}
 	// gateway
