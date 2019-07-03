@@ -99,7 +99,7 @@ public class PetServiceTest {
         Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "debug");
         final ServiceTemplateSpec debugSpec = cell.getSpec().getServicesTemplates().get(0).getSpec();
         Assert.assertEquals(debugSpec.getContainer().getImage(), "docker.io/mirage20/k8s-debug-tools");
-        Assert.assertEquals(debugSpec.getContainer().getPorts().get(0).getContainerPort().intValue(), 0);
+        Assert.assertEquals(debugSpec.getContainer().getPorts().size(), 0);
         Assert.assertEquals(debugSpec.getReplicas(), 1);
         Assert.assertTrue(debugSpec.getAutoscaling().isOverridable());
         final AutoScalingPolicy autoscalePolicy = debugSpec.getAutoscaling().getPolicy();
@@ -124,7 +124,7 @@ public class PetServiceTest {
         final AutoScalingPolicy zeroScalePolicy = petSpec.getAutoscaling().getPolicy();
         Assert.assertEquals(zeroScalePolicy.getMaxReplicas(), 10);
         Assert.assertEquals(zeroScalePolicy.getConcurrency(), 25);
-
+        Assert.assertEquals(zeroScalePolicy.getMinReplicas(), 0);
     }
 
     @AfterClass

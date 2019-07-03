@@ -38,6 +38,7 @@ import io.cellery.models.ServiceTemplate;
 import io.cellery.models.ServiceTemplateSpec;
 import io.cellery.models.TCP;
 import io.cellery.models.Web;
+import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -345,6 +346,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
         } else {
             //Zero Scaling
+            autoScalingPolicy.setMinReplicas(0);
             if (bScalePolicy.containsKey(MAX_REPLICAS)) {
                 autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
             }
@@ -386,16 +388,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             templateSpec.setReplicas(component.getReplicas());
             templateSpec.setProtocol(component.getProtocol());
             List<EnvVar> envVarList = getEnvVars(component);
-            templateSpec.setContainer(new ContainerBuilder()
-                    .withImage(component.getSource())
-                    .withPorts(new ContainerPortBuilder()
-                            .withContainerPort(component.getContainerPort())
-                            .build())
-                    .withEnv(envVarList)
-                    .withReadinessProbe(component.getReadinessProbe())
-                    .withLivenessProbe(component.getLivenessProbe())
-                    .build());
-
+            templateSpec.setContainer(getContainer(component, envVarList));
             AutoScaling autoScaling = component.getAutoscaling();
             if (autoScaling != null) {
                 templateSpec.setAutoscaling(autoScaling);
@@ -434,6 +427,19 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             log.error(errMsg, e);
             throw new BallerinaException(errMsg);
         }
+    }
+
+    private Container getContainer(Component component, List<EnvVar> envVarList) {
+        ContainerBuilder containerBuilder = new ContainerBuilder()
+                .withImage(component.getSource())
+                .withEnv(envVarList)
+                .withReadinessProbe(component.getReadinessProbe())
+                .withLivenessProbe(component.getLivenessProbe());
+        if (component.getContainerPort() != 0) {
+            containerBuilder.withPorts(new ContainerPortBuilder()
+                    .withContainerPort(component.getContainerPort()).build());
+        }
+        return containerBuilder.build();
     }
 
     private List<EnvVar> getEnvVars(Component component) {
