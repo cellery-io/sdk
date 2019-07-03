@@ -35,9 +35,9 @@ type changedComponent struct {
 }
 
 var apim = "API Manager"
-var autoscaling = "Autoscaling"
+var autoscaling = "Autoscaler"
 var knative = "Scale-to-Zero"
-var hpa = "Horizontal Pod Autoscalar"
+var hpa = "Horizontal Pod Autoscaler"
 var observability = "Observability"
 var apimEnabled = false
 var observabilityEnabled = false
@@ -62,13 +62,6 @@ func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime
 		util.ExitWithErrorMessage("Error while checking hpa status", err)
 	}
 	util.WaitForRuntime(knativeEnabled, hpaEnabled)
-}
-
-func ConvertToSelection(enable bool) runtime.Selection {
-	if enable {
-		return runtime.Enable
-	}
-	return runtime.Disable
 }
 
 func modifyRuntime() {
