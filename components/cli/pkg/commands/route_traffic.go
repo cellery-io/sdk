@@ -48,6 +48,13 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 		spinner.Stop(false)
 		return err
 	}
+	// if the target instance has only TCP components exposed, will not work.
+	// TODO: remove this once TCP is supported
+	if len(targetInst.CellSpec.GateWayTemplate.GatewaySpec.HttpApis) == 0 &&
+		len(targetInst.CellSpec.GateWayTemplate.GatewaySpec.TcpApis) > 0 {
+		spinner.Stop(false)
+		return fmt.Errorf("traffic switching to TCP cells not supported")
+	}
 	// check the source instance and see if the dependency exists in the source
 	dependingSourceInstances, err := getDependingSrcInstances(sourceInstances, dependencyInstance)
 	// now we have the source instance list which actually depend on the given dependency instance.
@@ -59,6 +66,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 	}
 	var modfiedVss []kubectl.VirtualService
 	var modifiedCellInstances []kubectl.Cell
+	var gw []byte
 	spinner.SetNewAction("Modifying routing rules")
 	for _, depSrcInst := range *dependingSourceInstances {
 		vs, err := kubectl.GetVirtualService(routing.GetCellVsName(depSrcInst))
@@ -67,10 +75,17 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 			return err
 		}
 		// modify the vs to include new route information.
-		modfiedVss = append(modfiedVss, *getModifiedVs(vs, dependencyInstance, targetInstance, percentage))
+		vss, err := getModifiedVs(vs, dependencyInstance, targetInstance, percentage)
+		if err != nil {
+			spinner.Stop(false)
+			return err
+		}
+		modfiedVss = append(modfiedVss, *vss)
 		// if the percentage is 100, the running cell instance now fully depends on the new instance,
 		// hence update the dependency annotation
+		// additionally, if the percentage is 100, include the original gateway service name as an annotation.
 		if percentage == 100 {
+			// get the modified instance
 			modifiedCellInst, err := getModifiedCellInstances(depSrcInst, dependencyInstance, targetInstance,
 				targetInst.CellMetaData.Annotations.Name, targetInst.CellMetaData.Annotations.Version,
 				targetInst.CellMetaData.Annotations.Organization)
@@ -79,19 +94,16 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 				return err
 			}
 			modifiedCellInstances = append(modifiedCellInstances, *modifiedCellInst)
+			// get the modified gw
+			gw, err = getModifiedGateway(targetInstance, dependencyInstance)
+			if err != nil {
+				spinner.Stop(false)
+				return err
+			}
 		}
 	}
 
-	// if the percentage is 100, include the original gateway service name as an annotation.
-	var gw []byte
-	if percentage == 100 {
-		gw, err = getModifiedGateway(targetInstance, dependencyInstance)
-		if err != nil {
-			spinner.Stop(false)
-			return err
-		}
-	}
-
+	// create and apply kubectl artifacts
 	vsFile := fmt.Sprintf("./%s-routing-artifacts.yaml", dependencyInstance)
 	err = writeArtifactsToFile(vsFile, &modfiedVss, &modifiedCellInstances, gw)
 	if err != nil {
@@ -216,25 +228,35 @@ func extractDependencies(depJson string) ([]map[string]string, error) {
 	return dependencies, nil
 }
 
-func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst string, percentageForTarget int) *kubectl.VirtualService {
-	var newRoutes []kubectl.Route
+func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst string, percentageForTarget int) (*kubectl.VirtualService, error) {
+	// http
 	for i, httpRule := range vs.VsSpec.HTTP {
 		for _, route := range httpRule.Route {
 			if strings.HasPrefix(route.Destination.Host, dependencyInst) {
-				newRoutes = *buildRoutes(dependencyInst, targetInst, percentageForTarget)
-				httpRule.Route = newRoutes
+				httpRule.Route = *buildHttpRoutes(dependencyInst, targetInst, percentageForTarget)
 			}
 		}
 		vs.VsSpec.HTTP[i] = httpRule
 	}
-	return &vs
+	// not supported atm
+	// TODO: support TCP
+	// TCP
+	//for i, tcpRule := range vs.VsSpec.TCP {
+	//	for _, route := range tcpRule.Route {
+	//		if strings.HasPrefix(route.Destination.Host, dependencyInst) {
+	//			tcpRule.Route = *buildTcpRoutes(dependencyInst, targetInst, route.Destination.Port, percentageForTarget)
+	//		}
+	//	}
+	//	vs.VsSpec.TCP[i] = tcpRule
+	//}
+	return &vs, nil
 }
 
-func buildRoutes(dependencyInst string, targetInst string, percentageForTarget int) *[]kubectl.Route {
-	var routes []kubectl.Route
+func buildHttpRoutes(dependencyInst string, targetInst string, percentageForTarget int) *[]kubectl.HTTPRoute {
+	var routes []kubectl.HTTPRoute
 	if percentageForTarget == 100 {
 		// full traffic switch to target, need only one route
-		routes = append(routes, kubectl.Route{
+		routes = append(routes, kubectl.HTTPRoute{
 			Destination: kubectl.Destination{
 				Host: routing.GetCellGatewayHost(targetInst),
 			},
@@ -242,16 +264,49 @@ func buildRoutes(dependencyInst string, targetInst string, percentageForTarget i
 		})
 	} else {
 		// modify the existing Route's weight
-		existingRoute := kubectl.Route{
+		existingRoute := kubectl.HTTPRoute{
 			Destination: kubectl.Destination{
 				Host: routing.GetCellGatewayHost(dependencyInst),
 			},
 			Weight: 100 - percentageForTarget,
 		}
 		// add the new route
-		newRoute := kubectl.Route{
+		newRoute := kubectl.HTTPRoute{
 			Destination: kubectl.Destination{
 				Host: routing.GetCellGatewayHost(targetInst),
+			},
+			Weight: percentageForTarget,
+		}
+		routes = append(routes, existingRoute)
+		routes = append(routes, newRoute)
+	}
+	return &routes
+}
+
+func buildTcpRoutes(dependencyInst string, targetInst string, port kubectl.TCPPort, percentageForTarget int) *[]kubectl.TCPRoute {
+	var routes []kubectl.TCPRoute
+	if percentageForTarget == 100 {
+		// full traffic switch to target, need only one route
+		routes = append(routes, kubectl.TCPRoute{
+			Destination: kubectl.TCPDestination{
+				Host: routing.GetCellGatewayHost(targetInst),
+				Port: port,
+			},
+		})
+	} else {
+		// modify the existing Route's weight
+		existingRoute := kubectl.TCPRoute{
+			Destination: kubectl.TCPDestination{
+				Host: routing.GetCellGatewayHost(dependencyInst),
+				Port: port,
+			},
+			Weight: 100 - percentageForTarget,
+		}
+		// add the new route
+		newRoute := kubectl.TCPRoute{
+			Destination: kubectl.TCPDestination{
+				Host: routing.GetCellGatewayHost(targetInst),
+				Port: port,
 			},
 			Weight: percentageForTarget,
 		}

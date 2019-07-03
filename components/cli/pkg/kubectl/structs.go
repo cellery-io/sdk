@@ -202,14 +202,39 @@ type VsMetaData struct {
 type VsSpec struct {
 	Hosts []string `json:"hosts"`
 	HTTP  []HTTP   `json:"http,omitempty"`
+	TCP   []TCP    `json:"tcp,omitempty"`
+}
+
+type TCP struct {
+	Match []TCPMatch `json:"match"`
+	Route []TCPRoute `json:"route"`
+}
+
+type TCPMatch struct {
+	Port         int               `json:"port"`
+	SourceLabels map[string]string `json:"sourceLabels"`
+}
+
+type TCPRoute struct {
+	Destination TCPDestination `json:"destination"`
+	Weight      int            `json:"weight,omitempty"`
+}
+
+type TCPDestination struct {
+	Host string  `json:"host"`
+	Port TCPPort `json:"port"`
+}
+
+type TCPPort struct {
+	Number int `json:"number"`
 }
 
 type HTTP struct {
-	Match []Match `json:"match"`
-	Route []Route `json:"route"`
+	Match []HTTPMatch `json:"match"`
+	Route []HTTPRoute `json:"route"`
 }
 
-type Match struct {
+type HTTPMatch struct {
 	Authority    Authority         `json:"authority"`
 	SourceLabels map[string]string `json:"sourceLabels"`
 }
@@ -218,7 +243,7 @@ type Authority struct {
 	Regex string `json:"regex"`
 }
 
-type Route struct {
+type HTTPRoute struct {
 	Destination Destination `json:"destination"`
 	Weight      int         `json:"weight,omitempty"`
 }
