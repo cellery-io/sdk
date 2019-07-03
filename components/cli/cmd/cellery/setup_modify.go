@@ -23,10 +23,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
 var apimEnabled = false
@@ -78,7 +77,10 @@ func newSetupModifyCommand() *cobra.Command {
 	cmd.Flags().StringVar(&apimgt, "apim", "", "enable or disable API Management in the runtime")
 	cmd.Flags().StringVar(&observability, "observability", "", "enable or disable observability in the runtime")
 	cmd.Flags().StringVar(&scaleToZero, "scale-to-zero", "", "enable or disable scale to zero in the runtime")
-	cmd.Flags().StringVar(&hpa, "hpa", "", "enable or disable hpa in the runtime")
+	if !runtime.IsGcpRuntime() {
+		// Metric server is included by default in gcp, therefore hpa flag will not be available on a gcp cluster
+		cmd.Flags().StringVar(&hpa, "hpa", "", "enable or disable hpa in the runtime")
+	}
 	return cmd
 }
 
