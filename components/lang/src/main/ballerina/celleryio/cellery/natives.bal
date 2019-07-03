@@ -232,9 +232,30 @@ public function createImage(CellImage cellImage, ImageName iName) returns ( erro
         log:printError("Error occurred while persisiting cell: " + iName.name, err = wResult);
         return wResult;
     }
+    validateScaling(cellImage);
     //Generate yaml file and other artifacts via extern function
     return createCellImage(cellImage, iName);
 }
+
+
+function validateScaling(CellImage cellImage) {
+    foreach var(key,component) in cellImage.components {
+        if (!(component["scalingPolicy"] is ()) && (component.scalingPolicy is AutoScalingPolicy)) {
+            AutoScalingPolicy policy = <AutoScalingPolicy> component.scalingPolicy;
+            if ((!(policy.metrics["cpu"] is ()) && (policy.metrics.cpu is Percentage)) &&
+            ((component["resources"] is ())|| component.resources["limits"] is ())) {
+                io:println("Warning: cpu percentage is defined without resource limits in component: [" + component.name+ "]."+
+                " Scaling may not work due to the missing resource limits.");
+            }
+            if ((!(policy.metrics["memory"] is ()) && (policy.metrics.memory is Percentage))
+            && ((component["resources"] is ()) || component.resources["limits"] is ())) {
+                io:println("Warning: memory percentage is defined without resource limits in component [" + component.name+ "]."+
+                " Scaling may not work due to the missing resource limits.");
+            }
+        }
+    }
+}
+
 
 # Build the cell yaml
 #
