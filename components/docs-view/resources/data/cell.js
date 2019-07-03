@@ -26,28 +26,42 @@
 window.__CELL_METADATA__ = {
     org: "my-org",
     name: "hr",
-    version: "0.1.0",
+    ver: "0.1.0",
     components: ["hr"],
+    ingresses: ["HTTP"],
     dependencies: {
         employee: {
             org: "my-org",
             name: "employee",
-            version: "0.1.0",
+            ver: "0.1.0",
             components: ["employee", "salary"],
+            ingresses: ["HTTP"],
             dependencies: {
                 hrSystem: {
                     org: "my-org",
                     name: "people-hr",
-                    version: "0.1.0",
-                    components: ["people-hr"]
+                    ver: "0.1.0",
+                    components: ["people-hr"],
+                    ingresses: ["HTTP"],
+                    dependencies: {},
+                    componentDep: {},
+                    exposed: ["people-hr"]
                 }
-            }
+            },
+            componentDep: {employee: ["salary"]},
+            exposed: ["employee"]
         },
         stock: {
             org: "my-org",
             name: "stock",
-            version: "0.1.0",
+            ver: "0.1.0",
             components: ["stock-options"],
+            ingresses: ["HTTP"],
+            dependencies: {},
+            componentDep: {},
+            exposed: ["stock-options"]
         }
-    }
+    },
+    componentDep: {},
+    exposed: ["hr"]
 };

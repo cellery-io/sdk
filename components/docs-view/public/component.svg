@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="14px" height="14px" viewBox="0 0 14 14" style="enable-background:new 0 0 14 14" xml:space="preserve">
-    <path fill="#fff" fill-opacity="0" stroke="#808080" stroke-width="0.2px"
-          d="M13 7a6 6 0 0 1-6 6.06A6 6 0 0 1 1 7 6 6 0 0 1 7 .94 6 6 0 0 1 13 7Z" transform="translate(-0.79 -0.69)"/>
-    <path fill="#808080" stroke="#fff" stroke-width="0.1px" d="M4.37,5c-.19.11-.19.28,0,.39L6.76,6.82a.76.76,0,0,0,.69,0L9.64,5.45a.23.23,0,0,0,0-.42L7.45,3.7a.76.76,0,0,0-.69,0Z" transform="translate(-0.79 -0.69)"/>
-    <path fill="#808080" stroke="#fff" stroke-width="0.1px" d="M10,5.93c0-.22-.15-.31-.34-.19L7.45,7.1a.73.73,0,0,1-.69,0L4.37,5.73c-.19-.11-.35,0-.35.2V8a.88.88,0,0,0,.33.63l2.43,1.68a.61.61,0,0,0,.65,0L9.66,8.63A.9.9,0,0,0,10,8Z" transform="translate(-0.79 -0.69)"/>
-    <text fill="#fff" font-size="1.63px" font-family="ArialMT, Arial" transform="translate(5.76 5.1) scale(0.98 1)">μ</text>'
+		  width="14px" height="14px" viewBox="0 0 13 13" style="enable-background:new 0 0 13 13" xml:space="preserve">
+    <path fill="#fff" fill-opacity="1" stroke="#808080" stroke-width="0.2px"
+          d="M13 7a6 6 0 0 1-6 6.06A6 6 0 0 1 1 7 6 6 0 0 1 7 .94 6 6 0 0 1 13 7Z" transform="translate(-0.59 -0.49)"/>
+    <path fill="#808080" stroke="#fff" stroke-width="0.1px"
+		  d="M4.37,5c-.19.11-.19.28,0,.39L6.76,6.82a.76.76,0,0,0,.69,0L9.64,5.45a.23.23,0,0,0,0-.42L7.45,3.7a.76.76,0,0,0-.69,0Z" transform="translate(-0.59 -0.49)"/>
+    <path fill="#808080" stroke="#fff" stroke-width="0.1px"
+		  d="M10,5.93c0-.22-.15-.31-.34-.19L7.45,7.1a.73.73,0,0,1-.69,0L4.37,5.73c-.19-.11-.35,0-.35.2V8a.88.88,0,0,0,.33.63l2.43,1.68a.61.61,0,0,0,.65,0L9.66,8.63A.9.9,0,0,0,10,8Z" transform="translate(-0.59 -0.49)"/>
+    <text fill="#fff" font-size="1.63px" font-family="ArialMT, Arial" transform="translate(5.96 5.1) scale(0.98 1)">μ
+	</text>'
 </svg>

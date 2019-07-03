@@ -46,7 +46,12 @@ class CellDiagram extends React.Component {
             size: 40,
             font: {
                 size: 15,
-                color: "#000000"
+                color: "#000000",
+                multi: true,
+                bold: {
+                    color: "#777777",
+                    size: 12
+                }
             },
             scaling: {
                 max: 10000
@@ -137,6 +142,8 @@ class CellDiagram extends React.Component {
         const dataEdges = [];
         const cellNodes = [];
         const availableCells = data.cells;
+        const focusCellIngressTypes = data.metaInfo[focusedCell].ingresses;
+        const componentDependencyLinks = data.metaInfo[focusedCell].componentDependencyLinks;
         const availableComponents = data.components.filter((component) => (focusedCell === component.cell))
             .map((component) => `${component.cell}${CellDiagram.CELL_COMPONENT_SEPARATOR}${component.name}`);
 
@@ -190,6 +197,73 @@ class CellDiagram extends React.Component {
             return result;
         };
 
+        const getIngressTypes = (cell) => data.metaInfo[cell].ingresses.join(", ");
+
+        const drawOnCanvas = (from, to, ctx, radius) => {
+            const arrow = {
+                h: 3,
+                w: 10
+            };
+            const ptCircleFrom = getPointOnCircle(radius, from, to);
+            const ptCircleTo = getPointOnCircle(radius, to, from);
+            const ptArrow = getPointOnCircle(radius + arrow.w + 10, to, from);
+
+            drawCircle(ctx, from, radius);
+            drawCircle(ctx, to, radius);
+            drawLine(ctx, ptCircleFrom, ptCircleTo);
+            drawArrow(ctx, arrow, ptArrow, ptCircleTo);
+        };
+
+        const drawArrow = (ctx, arrow, ptArrow, endPt) => {
+            const angleInDegrees = getAngleBetweenPoints(ptArrow, endPt);
+            ctx.save();
+            ctx.translate(ptArrow.x, ptArrow.y);
+            ctx.rotate(angleInDegrees * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -arrow.h);
+            ctx.lineTo(arrow.w, 0);
+            ctx.lineTo(0, Number(arrow.h));
+            ctx.closePath();
+            ctx.fillStyle = "#ccc7c7";
+            ctx.stroke();
+            ctx.fill();
+            ctx.restore();
+        };
+
+        const drawCircle = (ctx, circle, radius) => {
+            ctx.beginPath();
+            ctx.fillStyle = "#808080";
+            ctx.strokeStyle = "transparent";
+            ctx.arc(circle.x, circle.y, radius, 0, 2 * Math.PI, false);
+            ctx.stroke();
+            ctx.closePath();
+        };
+
+        const drawLine = (ctx, startPt, endPt) => {
+            ctx.beginPath();
+            ctx.moveTo(startPt.x, startPt.y);
+            ctx.lineTo(endPt.x, endPt.y);
+            ctx.strokeStyle = "#ccc7c7";
+            ctx.stroke();
+            ctx.closePath();
+        };
+
+        const getPointOnCircle = (radius, originPt, endPt) => {
+            const angleInDegrees = getAngleBetweenPoints(originPt, endPt);
+            const x = radius * Math.cos(angleInDegrees * Math.PI / 180) + originPt.x;
+            const y = radius * Math.sin(angleInDegrees * Math.PI / 180) + originPt.y;
+            return {x: x, y: y};
+        };
+
+        const getAngleBetweenPoints = (originPt, endPt) => {
+            const interPt = {
+                x: endPt.x - originPt.x,
+                y: endPt.y - originPt.y
+            };
+            return Math.atan2(interPt.y, interPt.x) * 180 / Math.PI;
+        };
+
         if (availableComponents) {
             availableComponents.forEach((node, index) => {
                 componentNodes.push({
@@ -215,7 +289,7 @@ class CellDiagram extends React.Component {
                 } else {
                     cellNodes.push({
                         id: cell,
-                        label: cell,
+                        label: `${cell}\n<b>(${getIngressTypes(cell)})</b>`,
                         shape: "image",
                         image: "./cell.svg",
                         group: CellDiagram.NodeType.CELL
@@ -286,7 +360,6 @@ class CellDiagram extends React.Component {
                 this.loader.current.style.visibility = "hidden";
                 this.loader.current.style.height = "0vh";
                 this.dependencyGraph.current.style.visibility = "visible";
-
                 this.network.setOptions({physics: false});
                 window.onresize = () => {
                     this.network.fit({
@@ -310,6 +383,19 @@ class CellDiagram extends React.Component {
                 ctx.textAlign = "center";
                 ctx.fillStyle = "#666666";
                 ctx.fillText(focusedCell, focusCellLabelPoint.x, focusCellLabelPoint.y + 20);
+                ctx.font = "bold 0.8rem Arial";
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#777777";
+                ctx.fillText(`(${focusCellIngressTypes.join(", ")})`, focusCellLabelPoint.x,
+                    focusCellLabelPoint.y + 45);
+
+                componentDependencyLinks.forEach((link) => {
+                    const from = this.network.getPositions([link.from]);
+                    const to = this.network.getPositions([link.to]);
+                    if (from[link.from] && to[link.to]) {
+                        drawOnCanvas(from[link.from], to[link.to], ctx, 37);
+                    }
+                });
             });
 
             this.network.on("stabilizationIterationsDone", () => {
@@ -339,7 +425,6 @@ class CellDiagram extends React.Component {
                         }
                     }
                 }
-
                 centerPoint = getPolygonCentroid(getGroupNodePositions(CellDiagram.NodeType.COMPONENT));
 
                 const focusedNode = nodes.get(focusedCell);
@@ -365,7 +450,6 @@ class CellDiagram extends React.Component {
                     this.network.moveNode(gatewayNode.id, x, y);
                     updatedNodes.push(gatewayNode);
                 }
-
                 nodes.update(updatedNodes);
             });
 
@@ -399,8 +483,8 @@ class CellDiagram extends React.Component {
 
 CellDiagram.propTypes = {
     classes: PropTypes.object.isRequired,
-    data: PropTypes.arrayOf(PropTypes.object),
-    focusedCell: PropTypes.arrayOf(PropTypes.object),
+    data: PropTypes.object,
+    focusedCell: PropTypes.string,
     onClickNode: PropTypes.func
 };
 
