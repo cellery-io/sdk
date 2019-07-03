@@ -22,13 +22,9 @@ public function build(cellery:ImageName iName) returns error? {
             }
         },
         scaling: {
-            policy: <cellery:AutoScalingPolicy> {
-                minReplicas: 1,
+            policy: <cellery:ZeroScalingPolicy> {
                 maxReplicas: 10,
-                metrics: {
-                    cpu: <cellery:Value>{ threshold : "500m" },
-                    memory: <cellery:Percentage> { threshold : 50 }
-                }
+                concurrencyTarget: 25
             }
         }
     };
@@ -41,9 +37,13 @@ public function build(cellery:ImageName iName) returns error? {
             image: "docker.io/mirage20/k8s-debug-tools"
         },
         scaling: {
-            policy: <cellery:ZeroScalingPolicy> {
+            policy: <cellery:AutoScalingPolicy> {
+                minReplicas: 1,
                 maxReplicas: 10,
-                concurrencyTarget: 25
+                metrics: {
+                    cpu: <cellery:Value>{ threshold : "500m" },
+                    memory: <cellery:Percentage> { threshold : 50 }
+                }
             }
         }
     };
