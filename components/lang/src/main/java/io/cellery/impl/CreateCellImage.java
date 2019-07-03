@@ -82,7 +82,6 @@ import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
-import static io.cellery.CelleryConstants.AUTO_SCALING;
 import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE;
 import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU;
 import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_MEMORY;
@@ -110,6 +109,7 @@ import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
 import static io.cellery.CelleryConstants.PROTOCOL_TCP;
 import static io.cellery.CelleryConstants.PROTO_FILE;
 import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
+import static io.cellery.CelleryConstants.SCALING_POLICY;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
@@ -175,8 +175,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 ((BMap<?, ?>) attributeMap.get(LABELS)).getMap().forEach((labelKey, labelValue) ->
                         component.addLabel(labelKey.toString(), labelValue.toString()));
             }
-            if (attributeMap.containsKey(AUTO_SCALING)) {
-                processAutoScalePolicy(((BMap<?, ?>) attributeMap.get(AUTO_SCALING)).getMap(), component);
+            if (attributeMap.containsKey(SCALING_POLICY)) {
+                processAutoScalePolicy(((BMap<?, ?>) attributeMap.get(SCALING_POLICY)), component);
             }
             if (attributeMap.containsKey(ENV_VARS)) {
                 processEnvVars(((BMap<?, ?>) attributeMap.get(ENV_VARS)).getMap(), component);
@@ -326,12 +326,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
      * @param scalePolicy Scale policy to be processed
      * @param component   current component
      */
-    private void processAutoScalePolicy(LinkedHashMap<?, ?> scalePolicy, Component component) {
+    private void processAutoScalePolicy(BMap<?, ?> scalePolicy, Component component) {
         AutoScalingPolicy autoScalingPolicy = new AutoScalingPolicy();
-        final BMap policy = (BMap) scalePolicy.get("policy");
-        LinkedHashMap bScalePolicy = policy.getMap();
+        LinkedHashMap bScalePolicy = scalePolicy.getMap();
         boolean bOverridable = false;
-        if ("AutoScalingPolicy".equals(policy.getType().getName())) {
+        if ("AutoScalingPolicy".equals(scalePolicy.getType().getName())) {
             // Autoscaling
             autoScalingPolicy.setMinReplicas(((BInteger) bScalePolicy.get("minReplicas")).intValue());
             autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());

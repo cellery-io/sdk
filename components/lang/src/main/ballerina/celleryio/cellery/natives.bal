@@ -56,10 +56,6 @@ public type ApiDefinition record {|
     ResourceDefinition[] resources;
 |};
 
-public type AutoScaling record {|
-    AutoScalingPolicy | ZeroScalingPolicy policy;
-|};
-
 public type ZeroScalingPolicy record {|
     int maxReplicas?;
     int concurrencyTarget?;
@@ -137,7 +133,7 @@ public type Component record {|
     Label labels?;
     map<Env> envVars?;
     Dependencies dependencies?;
-    AutoScaling scaling?;
+    AutoScalingPolicy | ZeroScalingPolicy scalingPolicy?;
     Probes probes?;
     Resources resources?;
 |};
@@ -331,7 +327,7 @@ function parseCellDependency(string alias) returns ImageName {
 # + return - hostname
 public function getHost(Component component) returns (string) {
     string host = "{{instance_name}}--" + getValidName(component.name) + "-service";
-    if (!(component["scaling"] is ()) && component.scaling.policy is ZeroScalingPolicy) {
+    if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
         host += "-rev";
     }
     return host;

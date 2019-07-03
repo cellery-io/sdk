@@ -51,7 +51,7 @@ public class CelleryConstants {
     // Ballerina object name constants for probes
     public static final String INGRESSES = "ingresses";
     public static final String LABELS = "labels";
-    public static final String AUTO_SCALING = "scaling";
+    public static final String SCALING_POLICY = "scalingPolicy";
     public static final String ENV_VARS = "envVars";
     public static final String PROBES = "probes";
     public static final String POD_RESOURCES = "resources";
