@@ -78,7 +78,7 @@ func RunLogin(registryURL string, username string, password string) {
 		fmt.Println("Logging in with existing Credentials")
 	} else {
 		if password == "" {
-			if username == "" {
+			if username == "" && registryURL == constants.CENTRAL_REGISTRY_HOST {
 				isAuthorized = make(chan bool)
 				done = make(chan bool)
 				registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(username,

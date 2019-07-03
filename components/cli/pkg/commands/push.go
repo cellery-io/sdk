@@ -104,17 +104,29 @@ func RunPush(cellImage string, username string, password string) {
 		if err != nil {
 			if strings.Contains(err.Error(), "401") {
 				// Requesting the credentials since server responded with an Unauthorized status code
-				isAuthorized := make(chan bool)
-				done := make(chan bool)
-				registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(username,
-					isAuthorized, done)
+				var isAuthorized chan bool
+				var done chan bool
+				finalizeChannelCalls := func() {
+					if isAuthorized != nil {
+						isAuthorized <- false
+					}
+					if done != nil {
+						<-done
+					}
+				}
+				if parsedCellImage.Registry == constants.CENTRAL_REGISTRY_HOST {
+					isAuthorized := make(chan bool)
+					done := make(chan bool)
+					registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(username,
+						isAuthorized, done)
+				} else {
+					registryCredentials.Username, registryCredentials.Password, err = credentials.FromTerminal(username)
+				}
 				if err != nil {
-					isAuthorized <- false
-					<-done
+					finalizeChannelCalls()
 					util.ExitWithErrorMessage("Failed to acquire credentials", err)
 				}
-				isAuthorized <- true
-				<-done
+				finalizeChannelCalls()
 				fmt.Println()
 
 				// Trying to push the image again with the provided credentials
