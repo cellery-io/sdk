@@ -72,7 +72,7 @@ func RunApplyAutoscalePolicies(file string, instance string) error {
 	}
 	if len(k8sAutoscalePolicies) == 0 {
 		spinner.Stop(false)
-		return fmt.Errorf(fmt.Sprintf("No autoscale policies can be updated in cell instance %s", instance))
+		return fmt.Errorf(fmt.Sprintf("no overridable autoscale policies found in instance %s", instance))
 	}
 	// write policies to file one by one, else kubectl apply issues can occur
 	policiesFile := filepath.Join("./", fmt.Sprintf("%s-autoscale-policies.yaml", instance))
@@ -328,7 +328,7 @@ func getK8sAutoscalePolicyMetrics(metrics []policies.Metric) ([]kubectl.Metric, 
 func getResourceFromMetric(metric *policies.Metric) (*kubectl.Resource, error) {
 	if metric.Resource.TargetAverageUtilization > 0 && metric.Resource.TargetAverageValue != "" {
 		// Cannot provide both
-		return nil, fmt.Errorf("TargetAverageUtilization and TargetAverageValue cannot be applied simultaneously in metric %s", metric.Resource.Name)
+		return nil, fmt.Errorf("both TargetAverageUtilization and TargetAverageValue cannot be applied simultaneously in metric %s", metric.Resource.Name)
 	}
 	if metric.Resource.TargetAverageUtilization > 0 {
 		return &kubectl.Resource{
@@ -341,7 +341,7 @@ func getResourceFromMetric(metric *policies.Metric) (*kubectl.Resource, error) {
 			TargetAverageValue: metric.Resource.TargetAverageValue,
 		}, nil
 	} else {
-		return nil, fmt.Errorf("Either TargetAverageUtilization or TargetAverageValue should be provided for metric %s", metric.Resource.Name)
+		return nil, fmt.Errorf("either TargetAverageUtilization or TargetAverageValue should be provided for metric %s", metric.Resource.Name)
 	}
 }
 
