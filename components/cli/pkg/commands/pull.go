@@ -83,10 +83,17 @@ func RunPull(cellImage string, isSilent bool, username string, password string) 
 		if err != nil {
 			if strings.Contains(err.Error(), "401") {
 				// Requesting the credentials since server responded with an Unauthorized status code
-				registryCredentials.Username, registryCredentials.Password, err = credentials.FromTerminal(username)
+				isAuthorized := make(chan bool)
+				done := make(chan bool)
+				registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(username,
+					isAuthorized, done)
 				if err != nil {
+					isAuthorized <- false
+					<-done
 					util.ExitWithErrorMessage("Failed to acquire credentials", err)
 				}
+				isAuthorized <- true
+				<-done
 				fmt.Println()
 
 				// Trying to pull the image again with the provided credentials
@@ -128,7 +135,7 @@ func pullImage(parsedCellImage *util.CellImage, username string, password string
 	hub, err := registry.New("https://"+parsedCellImage.Registry, username, password)
 	if err != nil {
 		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while initializing connection to the Cellery Registry", err)
+		return fmt.Errorf("failed to initialize connection to Cellery Registry %v", err)
 	}
 
 	// Fetching the Docker Image Manifest

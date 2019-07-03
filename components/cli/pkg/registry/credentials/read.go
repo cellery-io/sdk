@@ -122,6 +122,8 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 	select {
 	case <-authCode:
 	case <-timeout:
+		<-isAuthorized
+		done <- true
 		return "", "", errors.New("time out waiting for authentication")
 	}
 	token, err := getTokenFromCode(code, codeReceiverPort, conf)
