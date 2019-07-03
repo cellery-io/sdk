@@ -85,27 +85,27 @@ func RunPull(cellImage string, isSilent bool, username string, password string) 
 				// Requesting the credentials since server responded with an Unauthorized status code
 				var isAuthorized chan bool
 				var done chan bool
-				finalizeChannelCalls := func() {
+				finalizeChannelCalls := func(isAuthSuccessful bool) {
 					if isAuthorized != nil {
-						isAuthorized <- false
+						isAuthorized <- isAuthSuccessful
 					}
 					if done != nil {
 						<-done
 					}
 				}
 				if parsedCellImage.Registry == constants.CENTRAL_REGISTRY_HOST {
-					isAuthorized := make(chan bool)
-					done := make(chan bool)
+					isAuthorized = make(chan bool)
+					done = make(chan bool)
 					registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(username,
 						isAuthorized, done)
 				} else {
 					registryCredentials.Username, registryCredentials.Password, err = credentials.FromTerminal(username)
 				}
 				if err != nil {
-					finalizeChannelCalls()
+					finalizeChannelCalls(false)
 					util.ExitWithErrorMessage("Failed to acquire credentials", err)
 				}
-				finalizeChannelCalls()
+				finalizeChannelCalls(true)
 				fmt.Println()
 
 				// Trying to pull the image again with the provided credentials

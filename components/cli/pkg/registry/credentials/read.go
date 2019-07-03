@@ -85,7 +85,7 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-success", http.StatusSeeOther)
 				} else {
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-failure", http.StatusSeeOther)
-					fmt.Println("\n\U0000274C Failed to authenticate")
+					fmt.Println("\r\x1b[2K\n\U0000274C Failed to authenticate")
 				}
 				flusher, ok := w.(http.Flusher)
 				if !ok {
@@ -103,7 +103,7 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 	fmt.Printf("\nOpening %s\n\n", hubAuthUrl)
 	err := util.OpenBrowser(hubAuthUrl)
 	if err != nil {
-		fmt.Printf("\r\x1b[2K%s Could not open browser. Operating in the headless mode.",
+		fmt.Printf("\r\x1b[2K%s Could not open browser. Operating in the headless mode\n",
 			util.YellowBold("\U000026A0"))
 		username, token, err := FromTerminal(username)
 		go func() {
@@ -122,8 +122,11 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 	select {
 	case <-authCode:
 	case <-timeout:
-		<-isAuthorized
-		done <- true
+		go func() {
+			// Mocking the channels used by the server to avoid hanging
+			<-isAuthorized
+			done <- true
+		}()
 		return "", "", errors.New("time out waiting for authentication")
 	}
 	token, err := getTokenFromCode(code, codeReceiverPort, conf)
@@ -140,6 +143,7 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 // FromTerminal is to allow this login flow to work in headless mode
 func FromTerminal(username string) (string, string, error) {
 	var password string
+	fmt.Println()
 	if username == "" {
 		fmt.Print("Enter username: ")
 		_, err := fmt.Scanln(&username)
