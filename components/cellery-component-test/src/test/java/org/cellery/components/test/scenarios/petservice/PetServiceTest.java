@@ -104,7 +104,7 @@ public class PetServiceTest {
         Assert.assertTrue(debugSpec.getAutoscaling().isOverridable());
         final AutoScalingPolicy autoscalePolicy = debugSpec.getAutoscaling().getPolicy();
         Assert.assertEquals(autoscalePolicy.getMaxReplicas(), 10);
-        Assert.assertEquals(autoscalePolicy.getMinReplicas(), 1);
+        Assert.assertEquals(autoscalePolicy.getMinReplicas(), "1");
         Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getType(), "Resource");
         Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getResource().getName(),
                 AUTO_SCALING_METRIC_RESOURCE_CPU);
@@ -124,7 +124,7 @@ public class PetServiceTest {
         final AutoScalingPolicy zeroScalePolicy = petSpec.getAutoscaling().getPolicy();
         Assert.assertEquals(zeroScalePolicy.getMaxReplicas(), 10);
         Assert.assertEquals(zeroScalePolicy.getConcurrency(), 25);
-        Assert.assertEquals(zeroScalePolicy.getMinReplicas(), 0);
+        Assert.assertEquals(zeroScalePolicy.getMinReplicas(), "0");
     }
 
     @AfterClass

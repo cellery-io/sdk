@@ -332,7 +332,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         boolean bOverridable = false;
         if ("AutoScalingPolicy".equals(scalePolicy.getType().getName())) {
             // Autoscaling
-            autoScalingPolicy.setMinReplicas(((BInteger) bScalePolicy.get("minReplicas")).intValue());
+            autoScalingPolicy.setMinReplicas((bScalePolicy.get("minReplicas")).toString());
             autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
             bOverridable = ((BBoolean) bScalePolicy.get("overridable")).booleanValue();
             LinkedHashMap metricsMap = ((BMap) bScalePolicy.get("metrics")).getMap();
@@ -345,7 +345,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
         } else {
             //Zero Scaling
-            autoScalingPolicy.setMinReplicas(0);
+            autoScalingPolicy.setMinReplicas("0");
             if (bScalePolicy.containsKey(MAX_REPLICAS)) {
                 autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
             }

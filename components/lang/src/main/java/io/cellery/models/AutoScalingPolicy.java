@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Data
 public class AutoScalingPolicy {
-    private long minReplicas;
+    private String minReplicas;
     private long maxReplicas;
     private long concurrency;
     private List<AutoScalingResourceMetric> metrics;
