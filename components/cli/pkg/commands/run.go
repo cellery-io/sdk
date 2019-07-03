@@ -53,7 +53,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
-	imageDir, err := ExtractImage(parsedCellImage, spinner)
+	imageDir, err := ExtractImage(parsedCellImage, true, spinner)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while extracting image", err)
@@ -748,7 +748,7 @@ func startDependencyTree(registry string, tree *dependencyTreeNode, spinner *uti
 						ImageName:    dependencyNode.MetaData.Name,
 						ImageVersion: dependencyNode.MetaData.Version,
 					}
-					imageDir, err := ExtractImage(cellImage, spinner)
+					imageDir, err := ExtractImage(cellImage, true, spinner)
 					if err != nil {
 						spinner.Stop(false)
 						util.ExitWithErrorMessage(errorMessage, fmt.Errorf("failed to extract "+
@@ -1016,7 +1016,7 @@ func getYamlFiles(path string) ([]string, error) {
 
 // extractImage extracts the image into a temporary directory and returns the path.
 // Cleaning the path after finishing your work is your responsibility.
-func ExtractImage(cellImage *util.CellImage, spinner *util.Spinner) (string, error) {
+func ExtractImage(cellImage *util.CellImage, pullIfNotPresent bool, spinner *util.Spinner) (string, error) {
 	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", cellImage.Organization,
 		cellImage.ImageName, cellImage.ImageVersion)
 	zipLocation := filepath.Join(repoLocation, cellImage.ImageName+constants.CELL_IMAGE_EXT)
@@ -1027,15 +1027,20 @@ func ExtractImage(cellImage *util.CellImage, spinner *util.Spinner) (string, err
 		return "", err
 	}
 	if !imageExists {
-		if spinner != nil {
-			spinner.Pause()
-		}
-		cellImageTag := cellImage.Registry + "/" + cellImage.Organization + "/" + cellImage.ImageName +
-			":" + cellImage.ImageVersion
-		RunPull(cellImageTag, true, "", "")
-		fmt.Println()
-		if spinner != nil {
-			spinner.Resume()
+		if pullIfNotPresent {
+			if spinner != nil {
+				spinner.Pause()
+			}
+			cellImageTag := cellImage.Registry + "/" + cellImage.Organization + "/" + cellImage.ImageName +
+				":" + cellImage.ImageVersion
+			RunPull(cellImageTag, true, "", "")
+			fmt.Println()
+			if spinner != nil {
+				spinner.Resume()
+			}
+		} else {
+			return "", fmt.Errorf("image %s/%s:%s not present on the local repository", cellImage.Organization,
+				cellImage.ImageName, cellImage.ImageVersion)
 		}
 	}
 

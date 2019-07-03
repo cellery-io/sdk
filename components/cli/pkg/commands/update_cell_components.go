@@ -38,7 +38,11 @@ func RunUpdateCellComponents(instance string, image string) error {
 	// parse the new image
 	parsedCellImage, err := util.ParseImageTag(image)
 	// Read image name from metadata.json
-	imageDir, err := ExtractImage(parsedCellImage, spinner)
+	imageDir, err := ExtractImage(parsedCellImage, true, spinner)
+	if err != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error occurred while extracting image", err)
+	}
 	defer func() {
 		_ = os.RemoveAll(imageDir)
 	}()
