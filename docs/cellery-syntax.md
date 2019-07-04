@@ -17,7 +17,9 @@ This README explains,
     * [TCP Ingress](#3-tcp-ingress)
     * [GRPC Ingress](#4-grpc-ingress)
 * [Environmental Variables](#envvars)
-* [Autoscaling](#autoscaling)
+* [Scaling](#scaling)
+    * [Auto-Scaling](#1-auto-scaling)
+    * [Zero-Scaling](#2-zero-scaling)
 * [Intra-cell Communication](#intra-cell-communication)
 * [Inter-cell Communication](#inter-cell-communication)
     
@@ -66,7 +68,7 @@ cellery:Component helloComponent = {
 #### Ingresses
 An Ingress represents an entry point into a cell component. An ingress can be an HTTP, TCP, GRPC or Web endpoint.
 
-##### 1. HTTP Ingresses
+##### 1. HTTP Ingress
 `HttpApiIngress` supports defining HTTP API as an entry point for a cell. API definitions can be provided inline or as a swagger file. 
 A sample `HttpApiIngress` instance  with inline API definition would be as follows:
 ```ballerina
@@ -112,7 +114,7 @@ An `HttpApiIngress` can be exposed as an API by setting `expose` field. This fie
     -  `global`: Expose an HTTP API via global gateway.
 
 
-##### 2. Web Ingresses
+##### 2. Web Ingress
 Web cell ingress allows web traffic to the cell. A sample Web ingress would be as following: 
 Web ingress are always exposed globally.
 
@@ -240,7 +242,7 @@ If dynamic client registration is used dcr configs can be provided as below in t
 ```
 Similar to above sample the `clientSecret` and `clientId` values be set at the run method to pass value at the run time without burning to the image.
 
-##### 3. TCP Ingresses
+##### 3. TCP Ingress
 TCP ingress supports defining TCP endpoints. A sample TCP ingress would be as following:
 ```ballerina
 cellery:TCPIngress tcpIngress = {
@@ -251,7 +253,7 @@ cellery:TCPIngress tcpIngress = {
 
 The backendPort is the actual container port which is exposed by the container. The gatewayPort is the port exposed by the cell gateway.
 
-##### 4. GRPC Ingresses
+##### 4. GRPC Ingress
 GRPC ingress supports defining GRPC endpoints. This is similar to TCP ingress with optional field to define protofile. 
 protofile field is resolved at build method since protofile is packed at build time.
 ```ballerina
@@ -301,11 +303,12 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
 }
 ```
 
-#### Autoscaling
+#### Scaling
 
+##### 1. Auto-Scaling
 Autoscale policies can be specified by the Cell developer at Cell creation time. 
 
-If a component has a scaling policy as Autoscaling policy the specified component will be scaled with horizontal pod autoscaler
+If a component has a scaling policy as the `AutoScalingPolicy` then component will be scaled with horizontal pod autoscaler.
 
 ```ballerina
 import ballerina/io;
@@ -350,7 +353,12 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(petCell, untaint iName);
 }
 ```
-The autoscale policy defined by the developer can be overriden at the runtime by providing a different policy at the runtime.
+The Auto-scale policy defined by the developer can be overridden at the runtime by providing a different policy at the runtime.
+
+##### 2. Zero-scaling
+
+Zero scaling is powered by [Knative](https://knative.dev/v0.6-docs/). The zero-scaling have minimum replica count 0, and hence when the 
+component did not get any request, the component will be terminated and it will be running back once a request was directed to the component. 
 
 A zero-scaling policy can be defined as below.
 ```ballerina
