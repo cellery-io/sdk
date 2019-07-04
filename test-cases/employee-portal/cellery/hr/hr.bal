@@ -62,11 +62,11 @@ public function test(cellery:ImageName iName, map<cellery:ImageName> instances) 
     string emp_cell_url = "";
     string stock_cell_url = "";
 
-    foreach var (k, v) in instances {
-        if (k == "employeeCellDep") {
-            emp_cell_url = "http://" + v.instanceName + "--gateway-service:80/employee";
-        } else if (k == "stockCellDep") {
-            stock_cell_url = "http://" + v.instanceName + "--gateway-service:80/stock";
+    foreach var (dep, imageName) in instances {
+        if (dep == "employeeCellDep") {
+            emp_cell_url = "http://" + imageName.instanceName + "--gateway-service:80/employee";
+        } else if (dep == "stockCellDep") {
+            stock_cell_url = "http://" + imageName.instanceName + "--gateway-service:80/stock";
         }
     }
 

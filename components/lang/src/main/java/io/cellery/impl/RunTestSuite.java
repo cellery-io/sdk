@@ -50,9 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,8 +57,11 @@ import java.util.List;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
+import static io.cellery.CelleryConstants.NAME;
+import static io.cellery.CelleryConstants.ORG;
 import static io.cellery.CelleryConstants.SERVICE_TYPE_JOB;
 import static io.cellery.CelleryConstants.TARGET;
+import static io.cellery.CelleryConstants.VERSION;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.printWarning;
@@ -79,34 +79,15 @@ import static io.cellery.CelleryUtils.toYaml;
         isPublic = true
 )
 public class RunTestSuite extends BlockingNativeCallableUnit {
-
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
     private static final Logger log = LoggerFactory.getLogger(CreateCellImage.class);
-
     private List<CellImage> cellImageList = new ArrayList<>();
-
-    public static void writeToFile(String context, String targetPath) throws IOException {
-
-        File newFile = new File(targetPath);
-        // delete if file exists
-        if (newFile.exists()) {
-            Files.delete(Paths.get(newFile.getPath()));
-        }
-        //create required directories
-        if (newFile.getParentFile().mkdirs()) {
-            Files.write(Paths.get(targetPath), context.getBytes(StandardCharsets.UTF_8));
-            return;
-        }
-        Files.write(Paths.get(targetPath), context.getBytes(StandardCharsets.UTF_8));
-    }
 
     @Override
     public void execute(Context ctx) {
-
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(0)).getMap();
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(1);
         BRefType<?>[] tests = ((BValueArray) refArgument.getMap().get("tests")).getValues();
-
         try {
             processTests(tests, nameStruct);
             generateCells();
@@ -116,15 +97,12 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
     }
 
     private void processTests(BRefType<?>[] tests, LinkedHashMap nameStruct) {
-
         for (BRefType<?> refType : tests) {
             CellImage cellImage = new CellImage();
-            String name = ((BMap) refType).getMap().get("name").toString();
-
+            String name = ((BMap) refType).getMap().get(NAME).toString();
             cellImage.setCellName(name);
-            cellImage.setOrgName(((BString) nameStruct.get("org")).stringValue());
-            cellImage.setCellVersion(((BString) nameStruct.get("ver")).stringValue());
-
+            cellImage.setOrgName(((BString) nameStruct.get(ORG)).stringValue());
+            cellImage.setCellVersion(((BString) nameStruct.get(VERSION)).stringValue());
             if (name.isEmpty()) {
                 break;
             }
@@ -140,7 +118,6 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
     }
 
     private void generateCells() {
-
         for (CellImage cellImage : cellImageList) {
             List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
             List<String> unsecuredPaths = new ArrayList<>();
@@ -160,7 +137,6 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                     .withEnv(envVarList)
                     .build());
             templateSpec.setType(SERVICE_TYPE_JOB);
-
             ServiceTemplate serviceTemplate = new ServiceTemplate();
             serviceTemplate.setMetadata(new ObjectMetaBuilder()
                     .withName(cellImage.getTest().getName())
@@ -168,7 +144,6 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                     .build());
             serviceTemplate.setSpec(templateSpec);
             serviceTemplateList.add(serviceTemplate);
-
             stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
             stsTemplate.setSpec(stsTemplateSpec);
 
@@ -180,21 +155,17 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                     .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, cellImage.getCellName())
                     .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, cellImage.getCellVersion())
                     .build();
-
             Cell cell = new Cell(objectMeta, cellSpec);
-
             String targetPath =
                     OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + cellImage.getCellName() + YAML;
             try {
-                writeToFile(toYaml(cell), targetPath);
-
+                CelleryUtils.writeToFile(toYaml(cell), targetPath);
                 CelleryUtils.printDebug("Creating test cell " + cellImage.getCellName());
                 CelleryUtils.executeShellCommand("kubectl apply -f " + targetPath, null,
                         CelleryUtils::printDebug, CelleryUtils::printWarning);
                 CelleryUtils.printInfo("Executing test " + cellImage.getCellName() + "...");
 
                 String jobName = cellImage.getCellName() + "--" + cellImage.getCellName() + "-job";
-
                 String podName = CelleryUtils.executeShellCommand("kubectl get pods | grep "
                                 + cellImage.getCellName() + "--" + cellImage.getCellName() + "-job | awk '{print $1}'",
                         null, CelleryUtils::printDebug, CelleryUtils::printWarning);
@@ -224,13 +195,11 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                     deleteTestCell(cellImage.getCellName());
                     throw new BallerinaException("Error occurred while running pods for test execution.");
                 }
-
                 CelleryUtils.executeShellCommand("kubectl logs " + podName + " " + cellImage.getCellName()
                         + " -f", null, msg -> {
                     PrintStream out = System.out;
                     out.println("Log: " + msg);
                 }, CelleryUtils::printWarning);
-
                 CelleryUtils.printDebug("Waiting for test to complete...");
                 String jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
                         "-o jsonpath='{.status.conditions[?(@.type==\"Complete\")].status}'\n", null,
@@ -241,21 +210,17 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                             "-o jsonpath='{.status.conditions[?(@.type==\"Failed\")].status}'\n", null,
                             CelleryUtils::printDebug, CelleryUtils::printWarning);
                 }
-
                 if (!"True".equalsIgnoreCase(jobStatus)) {
                     deleteTestCell(cellImage.getCellName());
                     throw new BallerinaException("Error while waiting for test job completion.");
                 }
                 CelleryUtils.printInfo("Test execution completed. Collecting logs to " +
                         cellImage.getCellName() + ".log");
-
                 CelleryUtils.executeShellCommand(
                         "kubectl logs " + podName + " " + cellImage.getCellName() + " > "
                                 + cellImage.getCellName() + ".log", null, CelleryUtils::printDebug,
                         CelleryUtils::printWarning);
-
                 deleteTestCell(cellImage.getCellName());
-
             } catch (IOException e) {
                 String errMsg = "Error occurred while writing cell yaml " + targetPath;
                 log.error(errMsg, e);
@@ -268,7 +233,6 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
     }
 
     private void deleteTestCell(String instanceName) {
-
         CelleryUtils.printDebug("Deleting test cell " + instanceName);
         CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
                 CelleryUtils::printDebug, CelleryUtils::printWarning);

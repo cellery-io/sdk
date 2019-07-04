@@ -35,6 +35,9 @@ public class CelleryConstants {
     public static final String AUTO_SCALING_METRIC_RESOURCE = "Resource";
     public static final String AUTO_SCALING_METRIC_RESOURCE_CPU = "cpu";
     public static final String AUTO_SCALING_METRIC_RESOURCE_MEMORY = "memory";
+    public static final String ORG = "org";
+    public static final String NAME = "name";
+    public static final String VERSION = "ver";
     public static final String INSTANCE_NAME = "instanceName";
     public static final String BTYPE_STRING = "string";
     public static final String MAX_REPLICAS = "maxReplicas";

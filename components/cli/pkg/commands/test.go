@@ -234,7 +234,7 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 		util.ExitWithErrorMessage("Failed to confirm the dependency tree", err)
 	}
 
-	spinner.SetNewAction("Started running tests for instance: " + util.Bold(instanceName))
+	util.PrintSuccessMessage("Starting execution of tests for " + util.Bold(cellImageTag) + "...")
 	err = startTestCellInstance(imageDir, instanceName, mainNode, debug)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to start Cell instance "+instanceName, err)

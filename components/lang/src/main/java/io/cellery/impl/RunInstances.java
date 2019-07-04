@@ -38,6 +38,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
+import static io.cellery.CelleryConstants.NAME;
+import static io.cellery.CelleryConstants.ORG;
+import static io.cellery.CelleryConstants.VERSION;
 
 /**
  * Native function cellery:runInstances.
@@ -52,49 +55,42 @@ import static io.cellery.CelleryConstants.INSTANCE_NAME;
 )
 public class RunInstances extends BlockingNativeCallableUnit {
 
-    private static final String CHECK_INST_CMD = "kubectl get cells";
-
     @Override
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(0)).getMap();
         LinkedHashMap depStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
         Map<String, CellImage> instances = new HashMap<>();
         CellImage cellImage;
-
         BArrayType bArrayType =
                 new BArrayType(ctx.getProgramFile().getPackageInfo(CelleryConstants.CELLERY_PACKAGE).getTypeDefInfo(
                         CelleryConstants.IMAGE_NAME_DEFINITION).typeInfo.getType());
         BValueArray bValueArray = new BValueArray(bArrayType);
-
         for (Object object : depStruct.entrySet()) {
             cellImage = new CellImage();
             LinkedHashMap depNameStruct = ((BMap) ((Map.Entry) object).getValue()).getMap();
             String depAlias = ((Map.Entry) object).getKey().toString();
-            cellImage.setOrgName(depNameStruct.get("org").toString());
+            cellImage.setOrgName(depNameStruct.get(ORG).toString());
             cellImage.setCellName(depNameStruct.get(INSTANCE_NAME).toString());
-            cellImage.setCellVersion(depNameStruct.get("ver").toString());
+            cellImage.setCellVersion(depNameStruct.get(VERSION).toString());
             instances.put(depAlias, cellImage);
         }
-
-        String output = CelleryUtils.executeShellCommand(CHECK_INST_CMD, null, CelleryUtils::printDebug,
-                CelleryUtils::printWarning);
+        String output = CelleryUtils.executeShellCommand("kubectl get cells", null, CelleryUtils::printDebug,
+                CelleryUtils::printDebug);
         StringBuilder runCommand;
-        String imageName = nameStruct.get("org").toString() + "/" + nameStruct.get("name")
-                + ":" + nameStruct.get("ver");
-        AtomicLong runCount = new AtomicLong(0L);
+        String imageName = nameStruct.get(ORG).toString() + "/" + nameStruct.get(NAME)
+                + ":" + nameStruct.get(VERSION);
 
+        AtomicLong runCount = new AtomicLong(0L);
         if (!output.contains(nameStruct.get(INSTANCE_NAME).toString())) {
             CelleryUtils.printInfo(nameStruct.get(INSTANCE_NAME).toString() + " instance not found.");
             BMap<String, BValue> bmap = BLangConnectorSPIUtil.createBStruct(ctx,
                     CelleryConstants.CELLERY_PACKAGE,
                     CelleryConstants.IMAGE_NAME_DEFINITION,
-                    nameStruct.get("org").toString(), nameStruct.get("name"),
-                    nameStruct.get("ver"), nameStruct.get(INSTANCE_NAME));
+                    nameStruct.get(ORG).toString(), nameStruct.get(NAME),
+                    nameStruct.get(VERSION), nameStruct.get(INSTANCE_NAME));
             bValueArray.add(runCount.getAndIncrement(), bmap);
-
             runCommand = new StringBuilder(
                     "cellery run " + imageName + " -n " + nameStruct.get(INSTANCE_NAME) + " -d");
-
             instances.forEach((key, value) -> {
                 runCommand.append(" -l ").append(key).append(":").append(value.getCellName());
                 if (!output.contains(value.getCellName())) {
@@ -106,9 +102,7 @@ public class RunInstances extends BlockingNativeCallableUnit {
                     bValueArray.add(runCount.getAndIncrement(), bmap1);
                 }
             });
-
             runCommand.append(" -y");
-
             CelleryUtils.printInfo("Creating test instances...");
             CelleryUtils.executeShellCommand(runCommand.toString(), null, CelleryUtils::printDebug,
                     CelleryUtils::printWarning);

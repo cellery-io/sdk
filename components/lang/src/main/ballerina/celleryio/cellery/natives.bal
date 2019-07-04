@@ -218,15 +218,15 @@ public type Reference record {
 
 };
 
-public type Test record {
+public type Test record {|
     string name;
     ImageSource source;
     map<Env> envVars?;
-};
+|};
 
-public type TestSuite record {
+public type TestSuite record {|
 	Test[] tests = [];
-};
+|};
 
 # Build the cell artifacts and persist metadata
 #
