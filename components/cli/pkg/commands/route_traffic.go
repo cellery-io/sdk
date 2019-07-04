@@ -126,14 +126,33 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 }
 
 func getModifiedGateway(targetInstance string, dependencyInstance string) ([]byte, error) {
-	gateway, err := kubectl.GetGatewayAsMapInterface(routing.GetGatewayName(targetInstance))
+	// check if the annotation for previous gw service name annotation exists in the gateway of the dependency instance.
+	// this means that this annotation has been set previously, when doing a full traffic shift to the dependency instance.
+	// if so, copy that and use it in the target instance's annotation. this is done because even if there are
+	// series of traffic shifts, the original hostname used in the client cell for the dependency cell is still the same.
+	depGw, err := kubectl.GetGatewayAsMapInterface(routing.GetGatewayName(dependencyInstance))
 	if err != nil {
 		return nil, err
 	}
-	if gateway == nil {
+	annotations, err := getGwAnnotations(depGw)
+	if err != nil {
+		return nil, err
+	}
+	var originalGwAnnotation string
+	if annotations[cellOriginalGatewaySvcAnnKey] != "" {
+		originalGwAnnotation = annotations[cellOriginalGatewaySvcAnnKey]
+	} else {
+		originalGwAnnotation = routing.GetCellGatewayHost(dependencyInstance)
+	}
+
+	targetGw, err := kubectl.GetGatewayAsMapInterface(routing.GetGatewayName(targetInstance))
+	if err != nil {
+		return nil, err
+	}
+	if targetGw == nil {
 		return nil, fmt.Errorf("gateway of instance %s does not exist", targetInstance)
 	}
-	modifiedGw, err := addOriginalGwK8sServiceName(gateway, routing.GetCellGatewayHost(dependencyInstance))
+	modifiedGw, err := addOriginalGwK8sServiceName(targetGw, originalGwAnnotation)
 	if err != nil {
 		return nil, err
 	}
@@ -316,14 +335,22 @@ func buildTcpRoutes(dependencyInst string, targetInst string, port kubectl.TCPPo
 	return &routes
 }
 
-func addOriginalGwK8sServiceName(gw map[string]interface{}, originalGwK8sSvsName string) (map[string]interface{}, error) {
-	// get metadata
+func getGwMetadata(gw map[string]interface{}) (map[string]interface{}, error) {
 	gwBytes, err := json.Marshal(gw[k8sMetadata])
 	if err != nil {
 		return nil, err
 	}
 	var metadata map[string]interface{}
 	err = json.Unmarshal(gwBytes, &metadata)
+	if err != nil {
+		return nil, err
+	}
+	return metadata, nil
+}
+
+func getGwAnnotations(gw map[string]interface{}) (map[string]string, error) {
+	// get metadata
+	metadata, err := getGwMetadata(gw)
 	if err != nil {
 		return nil, err
 	}
@@ -334,6 +361,19 @@ func addOriginalGwK8sServiceName(gw map[string]interface{}, originalGwK8sSvsName
 	}
 	var annMap map[string]string
 	err = json.Unmarshal(annotationBytes, &annMap)
+	if err != nil {
+		return nil, err
+	}
+	return annMap, nil
+}
+
+func addOriginalGwK8sServiceName(gw map[string]interface{}, originalGwK8sSvsName string) (map[string]interface{}, error) {
+	// get metadata
+	metadata, err := getGwMetadata(gw)
+	if err != nil {
+		return nil, err
+	}
+	annMap, err := getGwAnnotations(gw)
 	if err != nil {
 		return nil, err
 	}
