@@ -156,6 +156,8 @@ type CellImageMetaData struct {
 	Dependencies        map[string]*CellImageMetaData `json:"dependencies"`
 	ComponentDep        map[string][]string           `json:"componentDep"`
 	Exposed             []string                      `json:"exposed"`
+	ZeroScaling         bool                          `json:"zeroScaling"`
+	AutoScaling         bool                          `json:"autoScaling"`
 }
 
 type progressWriter struct {

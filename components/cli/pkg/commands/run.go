@@ -39,6 +39,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	celleryRuntime "github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
@@ -101,6 +102,35 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 		}
 	}
 	fmt.Printf("\r\x1b[2K\n%s: %s\n\n", util.Bold("Main Instance"), instanceName)
+
+	if cellImageMetadata.ZeroScaling {
+		// Check K-Native is installed.
+		if ok, err := celleryRuntime.IsKnativeEnabled(); err == nil {
+			if !ok {
+				spinner.Stop(false)
+				util.ExitWithErrorMessage(fmt.Sprintf("Unable to start cell instance [%s] from image [%s/%s:%s]",
+					instanceName, cellImageMetadata.CellImageName.Organization, cellImageMetadata.CellImageName.Name,
+					cellImageMetadata.CellImageName.Version),
+					fmt.Errorf("cell contains zero-scaling components, "+
+						"but Knative is not enabled in Cellery runtime"))
+			}
+		} else {
+			util.ExitWithErrorMessage("Error occurred while checking whether Knative is enabled.", err)
+		}
+	}
+	if cellImageMetadata.AutoScaling {
+		// Check metrics-server is installed.
+		if ok, err := celleryRuntime.IsHpaEnabled(); err == nil {
+			if !ok {
+				util.PrintWarningMessage(fmt.Sprintf("Cell instance [%s] from image [%s/%s:%s] "+
+					"contains auto-scaling components, but metrics-server is not enabled in Cellery runtime. "+
+					"Autoscaling may not work. ", instanceName, cellImageMetadata.CellImageName.Organization,
+					cellImageMetadata.CellImageName.Name, cellImageMetadata.CellImageName.Version))
+			}
+		} else {
+			util.PrintWarningMessage("Error occurred while checking whether metrics-server is enabled.")
+		}
+	}
 
 	var parsedDependencyLinks []*dependencyAliasLink
 	if len(dependencyLinks) > 0 {

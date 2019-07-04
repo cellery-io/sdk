@@ -50,7 +50,8 @@ func IsHpaEnabled() (bool, error) {
 	enabled := true
 	_, err := kubectl.GetDeployment("kube-system", "metrics-server")
 	if err != nil {
-		if strings.Contains(err.Error(), "No resources found") {
+		if strings.Contains(err.Error(), "No resources found") ||
+			strings.Contains(err.Error(), "not found") {
 			enabled = false
 		} else {
 			return enabled, fmt.Errorf("error checking if hpa is enabled")

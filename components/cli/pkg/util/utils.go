@@ -909,6 +909,11 @@ func PrintSuccessMessage(message string) {
 	fmt.Printf("\n%s %s\n", GreenBold("\U00002714"), message)
 }
 
+func PrintWarningMessage(message string) {
+	fmt.Println()
+	fmt.Printf("%s\n", YellowBold("\U000026A0 "+message))
+}
+
 func GetSourceFileName(filePath string) (string, error) {
 	d, err := os.Open(filePath)
 	if err != nil {

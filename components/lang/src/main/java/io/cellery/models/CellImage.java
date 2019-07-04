@@ -19,6 +19,8 @@ public class CellImage {
     private String cellVersion;
     private List<String> dockerImages;
     private List<Dependency> dependencies;
+    private boolean zeroScaling;
+    private boolean autoScaling;
     private Test test;
 
     public CellImage() {
