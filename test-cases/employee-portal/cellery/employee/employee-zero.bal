@@ -47,12 +47,9 @@ public function build(cellery:ImageName iName) returns error? {
                 definition: <cellery:ApiDefinition>cellery:readSwaggerFile("./resources/employee.swagger.json")
             }
         },
-        autoscaling: {
-            policy: {
-                minReplicas: 0,
-                maxReplicas: 10,
-                cpuPercentage: <cellery:CpuUtilizationPercentage>{ percentage: 50 }
-            }
+        scalingPolicy: <cellery:ZeroScalingPolicy> {
+            maxReplicas: 10,
+            concurrencyTarget: 25
         },
         envVars: {
             SALARY_HOST: {
