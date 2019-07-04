@@ -20,9 +20,10 @@ package commands
 
 import (
 	"bufio"
+	"strconv"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
-	"strconv"
 
 	"encoding/json"
 	"fmt"
