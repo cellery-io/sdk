@@ -105,13 +105,6 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		return fmt.Errorf("error installing istio: %v", err)
 	}
 
-	if isCompleteSetup {
-		// Install knative
-		spinner.SetNewAction("Installing Knative serving")
-		if err := InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-			return fmt.Errorf("error installing knative: %v", err)
-		}
-	}
 	// Apply controller CRDs
 	spinner.SetNewAction("Creating controller")
 	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
