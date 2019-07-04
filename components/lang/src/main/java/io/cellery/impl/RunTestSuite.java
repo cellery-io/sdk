@@ -64,6 +64,7 @@ import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.VERSION;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.getValidName;
+import static io.cellery.CelleryUtils.printDebug;
 import static io.cellery.CelleryUtils.printInfo;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.toYaml;
@@ -165,6 +166,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                 CelleryUtils.executeShellCommand("kubectl apply -f " + targetPath, null,
                         CelleryUtils::printDebug, CelleryUtils::printWarning);
                 printInfo("Executing test " + cellImage.getCellName() + "...");
+
                 // Wait for job to be available
                 Thread.sleep(5000);
 
@@ -173,58 +175,26 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                                 + cellImage.getCellName() + "--" + cellImage.getCellName() + "-job",
                         null, CelleryUtils::printDebug, CelleryUtils::printWarning);
                 String podName = podInfo.substring(0, podInfo.indexOf(' '));
+
                 CelleryUtils.printDebug("podName is: " + podName);
                 CelleryUtils.printDebug("Waiting for pod " + podName + " status to be 'Running'...");
-                for (int i = 0; i < 60; i++) {
-                    if (podName.isEmpty()) {
-                        podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
-                                        + cellImage.getCellName() + "--" + cellImage.getCellName() + "-job",
-                                null, CelleryUtils::printDebug, CelleryUtils::printWarning);
-                        podName = podInfo.substring(0, podInfo.indexOf(' '));
-                    }
-                    if (!podInfo.contains("Running") && !podInfo.contains("Error") && !podInfo.contains("Completed")) {
-                        Thread.sleep(1000);
-                        podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
-                                        + cellImage.getCellName() + "--" + cellImage.getCellName() + "-job",
-                                null, CelleryUtils::printDebug, CelleryUtils::printWarning);
-                    } else {
-                        break;
-                    }
-                }
+
+                waitForPodRunning(podName, podInfo, cellImage.getCellName());
+
                 if (!podInfo.contains("Running") && !podInfo.contains("Error") && !podInfo.contains("Completed")) {
                     printWarning("Error getting status of pod " + podName + ". Skipping execution of test " +
                             cellImage.getCellName());
                     deleteTestCell(cellImage.getCellName());
-                    throw new BallerinaException("Error occurred while running pods for test execution.");
+                    continue;
                 }
+
                 CelleryUtils.executeShellCommand("kubectl logs " + podName + " " + cellImage.getCellName()
                         + " -f", null, msg -> {
                     PrintStream out = System.out;
                     out.println("Log: " + msg);
                 }, CelleryUtils::printWarning);
-                printInfo("Waiting for test job to complete...");
-                //Wait for job yaml to be updated with completion status
-                Thread.sleep(5000);
 
-                String jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
-                                "-o jsonpath='{.status.conditions[?(@.type==\"Complete\")].status}'\n", null,
-                        CelleryUtils::printDebug, CelleryUtils::printWarning);
-                if (!"True".equalsIgnoreCase(jobStatus)) {
-                    jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
-                                    "-o jsonpath='{.status.conditions[?(@.type==\"Failed\")].status}'\n", null,
-                            CelleryUtils::printDebug, CelleryUtils::printWarning);
-                }
-                if (!"True".equalsIgnoreCase(jobStatus)) {
-                    printWarning("Error getting status of job " + jobName + ". Skipping collection of logs.");
-                    deleteTestCell(cellImage.getCellName());
-                    throw new BallerinaException("Error while waiting for test job completion.");
-                }
-                printInfo("Test execution completed. Collecting logs to " +
-                        cellImage.getCellName() + ".log");
-                CelleryUtils.executeShellCommand(
-                        "kubectl logs " + podName + " " + cellImage.getCellName() + " > "
-                                + cellImage.getCellName() + ".log", null, CelleryUtils::printDebug,
-                        CelleryUtils::printWarning);
+                waitForJobCompletion(jobName, podName, cellImage.getCellName());
                 deleteTestCell(cellImage.getCellName());
             } catch (IOException e) {
                 String errMsg = "Error occurred while writing cell yaml " + targetPath;
@@ -237,6 +207,77 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         }
     }
 
+    /**
+     * Poll periodically for 10 minutes till the Pod reaches Running state.
+     *
+     * @param podName name of the pod
+     * @param podInfo pod info string from shell command output
+     * @param instanceName test cell name
+     * @throws InterruptedException thrown if error occurs in Thread.sleep
+     */
+    private void waitForPodRunning (String podName, String podInfo, String instanceName) throws InterruptedException {
+        int min = 10;
+        for (int i = 0; i < 12 * min; i++) {
+            if (podName.isEmpty()) {
+                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep " + instanceName + "--" +
+                                instanceName + "-job",
+                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
+                podName = podInfo.substring(0, podInfo.indexOf(' '));
+            }
+            if (!podInfo.contains("Running") && !podInfo.contains("Error") && !podInfo.contains("Completed")) {
+                Thread.sleep(5000);
+                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
+                                + instanceName + "--" + instanceName + "-job",
+                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
+            } else {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Poll periodically for 1 minute till the job reaches Complete or Failed state.
+     *
+     * @param jobName name of the job
+     * @param podName name of the pod
+     * @param instanceName test cell name
+     * @throws InterruptedException thrown if error occurs in Thread.sleep
+     */
+    private void waitForJobCompletion(String jobName, String podName, String instanceName) throws InterruptedException {
+        printInfo("Waiting for test job to complete...");
+        String jobStatus = "";
+        int min = 1;
+        for (int i = 0; i < 12 * min; i++) {
+            jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
+                            "-o jsonpath='{.status.conditions[?(@.type==\"Complete\")].status}'\n", null,
+                    CelleryUtils::printDebug, CelleryUtils::printWarning);
+
+            if (!"True".equalsIgnoreCase(jobStatus)) {
+                jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
+                                "-o jsonpath='{.status.conditions[?(@.type==\"Failed\")].status}'\n", null,
+                        CelleryUtils::printDebug, CelleryUtils::printWarning);
+            }
+            if ("True".equalsIgnoreCase(jobStatus)) {
+                break;
+            }
+            Thread.sleep(5000);
+        }
+        if (!"True".equalsIgnoreCase(jobStatus)) {
+            printWarning("Error getting status of job " + jobName + ". Skipping collection of logs.");
+        } else {
+            printInfo("Test execution completed. Collecting logs to " +
+                    instanceName + ".log");
+            CelleryUtils.executeShellCommand(
+                    "kubectl logs " + podName + " " + instanceName + " > " + instanceName + ".log", null,
+                    CelleryUtils::printDebug, CelleryUtils::printWarning);
+        }
+    }
+
+    /**
+     * Deletes the test cell.
+     *
+     * @param instanceName test cell name
+     */
     private void deleteTestCell(String instanceName) {
         printInfo("Deleting test cell " + instanceName);
         CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
