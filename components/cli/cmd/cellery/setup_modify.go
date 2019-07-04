@@ -20,6 +20,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -47,6 +48,12 @@ func newSetupModifyCommand() *cobra.Command {
 		Short: "Modify Cellery runtime",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if runtime.IsGcpRuntime() {
+				if strings.TrimSpace(hpa) != "" {
+					fmt.Printf("HPA cannot be changed in gcp runtime")
+					hpa = ""
+				}
+			}
 			invalidInputMessage := "invalid input for"
 			acceptedValuesMessage := "expected values are enable or disable"
 			if !isValidInput(apimgt) {
@@ -77,10 +84,7 @@ func newSetupModifyCommand() *cobra.Command {
 	cmd.Flags().StringVar(&apimgt, "apim", "", "enable or disable API Management in the runtime")
 	cmd.Flags().StringVar(&observability, "observability", "", "enable or disable observability in the runtime")
 	cmd.Flags().StringVar(&scaleToZero, "scale-to-zero", "", "enable or disable scale to zero in the runtime")
-	if !runtime.IsGcpRuntime() {
-		// Metric server is included by default in gcp, therefore hpa flag will not be available on a gcp cluster
-		cmd.Flags().StringVar(&hpa, "hpa", "", "enable or disable hpa in the runtime")
-	}
+	cmd.Flags().StringVar(&hpa, "hpa", "", "enable or disable hpa in the runtime")
 	return cmd
 }
 
