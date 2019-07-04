@@ -474,12 +474,16 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             // Only Single TCP ingress is supported for 0.2.0
             // Therefore we only process the 0th element
             gatewaySpec.setType(ENVOY_GATEWAY);
-            gatewaySpec.addTCP(component.getTcpList());
+            if (component.getTcpList().get(0).getPort() != 0) {
+                gatewaySpec.addTCP(component.getTcpList());
+            }
             templateSpec.setServicePort(component.getTcpList().get(0).getBackendPort());
         } else if (component.getGrpcList().size() > 0) {
             gatewaySpec.setType(ENVOY_GATEWAY);
             templateSpec.setServicePort(component.getGrpcList().get(0).getBackendPort());
-            gatewaySpec.addGRPC(component.getGrpcList());
+            if (component.getGrpcList().get(0).getPort() != 0) {
+                gatewaySpec.addGRPC(component.getGrpcList());
+            }
         }
         return templateSpec;
     }
