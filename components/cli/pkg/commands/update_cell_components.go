@@ -72,7 +72,7 @@ func RunUpdateCellComponents(instance string, image string) error {
 		spinner.Stop(false)
 		return err
 	}
-	cellImage := kubectl.Cell{}
+	cellImage := &kubectl.Cell{}
 	err = yaml.Unmarshal(imageFileContent, cellImage)
 	if err != nil {
 		spinner.Stop(false)
