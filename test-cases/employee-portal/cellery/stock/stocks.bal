@@ -1,5 +1,4 @@
 import ballerina/io;
-import ballerina/log;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
