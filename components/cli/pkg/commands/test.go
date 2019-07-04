@@ -48,7 +48,7 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
-	imageDir, err := ExtractImage(parsedCellImage, spinner)
+	imageDir, err := ExtractImage(parsedCellImage, true, spinner)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while extracting image", err)
