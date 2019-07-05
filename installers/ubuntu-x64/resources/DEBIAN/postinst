@@ -12,7 +12,7 @@ fi
 #echo "Post installation process started"
 PRODUCT_HOME=/usr/share/cellery
 BALLERINA_RUNTIME="ballerina-0.991.0"
-CELLERY_VERSION="0.3.0-SNAPSHOT"
+CELLERY_VERSION="0.3.0"
 chmod -R 0755 ${PRODUCT_HOME}
 chmod 0644 ${PRODUCT_HOME}/repo/celleryio/cellery/*/cellery.zip
 
