@@ -4,7 +4,7 @@
 * [init](#cellery-init) - initialize a cellery project.
 * [build](#cellery-build) - build a cell image.
 * [run](#cellery-run) - create cell instance(s). 
-* [list](#cellery-list) - list running instances/cell images.
+* [list](#cellery-list) - list information about cell instances/images.
 * [delete](#cellery-delete) - Delete cell images.
 * [login](#cellery-login) - login to cell image repository.
 * [push](#cellery-push) - push a built image to cell image repository.
@@ -14,6 +14,8 @@
 * [logs](#cellery-logs) - display logs of one/all components of a cell instance.
 * [inspect](#cellery-inspect) - list the files included in a cell image. 
 * [extract-resources](#cellery-extract-resources) - extract packed resources in a cell image.
+* [update](#cellery-update) - perform a patch update on a particular cell instance.
+* [route-traffic](#cellery-route-traffic) - route a percentage of traffic to a new cell instance.
 
 #### Cellery Setup
 Cellery setup command install and manage cellery runtimes. For this purpose it supports several sub commands. Please 
@@ -143,6 +145,23 @@ Ex:
 
  ```
     cellery list instances 
+ ```
+
+[Back to Command List](#cellery-cli-commands)
+
+###### Cellery List dependencies
+
+List the dependency information for a given cell instance. The dependency cell image, version and the cell instance name
+will be provided as the output. 
+
+###### Parameters: 
+
+* _cell instance name: A valid cell instance name._
+
+Ex:
+
+ ```
+    cellery list dependencies my-cell-inst 
  ```
 
 [Back to Command List](#cellery-cli-commands)
@@ -289,6 +308,47 @@ Ex:
  ```
    cellery extract-resources wso2/my-cell:1.0.0 
    cellery extract-resources wso2/my-cell:1.0.0 -o /my/output/resource
+ ```
+
+[Back to Command List](#cellery-cli-commands)
+
+#### Cellery Update
+
+Perform a patch update on a running cell instance, using the new cell image provided. This is done as a rolling update, hence only changes to docker images encapsulated within components will be applied.
+
+###### Parameters:
+
+* _cell instance name: The name of a running cell instance, which should be updated._
+* _cell image name: The name of the new cell image, which will be used to perform a rolling update on the running instance's components._
+
+Ex:
+ ```
+   cellery update myhello cellery/sample-hello:1.0.3
+ ```
+ 
+[Back to Command List](#cellery-cli-commands)
+
+#### Cellery Route Traffic
+
+This is used to direct a percentage of traffic originating from one cell instance to another. This command is used in advanced deployment patterns such as Blue-Green and Canary. 
+
+###### Parameters:
+
+* _existing dependency instance: Existing dependency instance, which is currently recieving 100% traffic from the relevane source instance(s)._
+
+###### Flags (Mandatory):
+
+* _-p, --percentage: The new dependency instance and the percentage of traffic which should be routed to it, joined by a '=' sign._
+
+###### Flags (Optional):
+
+* _-s, --source: The source instance which is generating traffic for the dependency instance specified in the Parameters above. 
+If this is not given all instances which are currently depending on the provided dependency instance will be considered._
+
+Ex:
+ ```
+   cellery route-traffic --source hr-client-1 hr-inst-1 --percentage hr-inst-2=20 
+   cellery route-traffic hr-inst-1 --percentage hr-inst-2=100
  ```
 
 [Back to Command List](#cellery-cli-commands)
