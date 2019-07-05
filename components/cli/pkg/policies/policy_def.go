@@ -37,7 +37,7 @@ type Target struct {
 }
 
 type Policy struct {
-	MinReplicas int      `json:"minReplicas"`
+	MinReplicas string   `json:"minReplicas"`
 	MaxReplicas int      `json:"maxReplicas"`
 	Metrics     []Metric `json:"metrics,omitempty"`
 }

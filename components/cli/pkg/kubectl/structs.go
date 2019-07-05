@@ -269,7 +269,7 @@ type AutoscalePolicySpec struct {
 }
 
 type Policy struct {
-	MinReplicas    int            `json:"minReplicas"`
+	MinReplicas    string         `json:"minReplicas"`
 	MaxReplicas    int            `json:"maxReplicas"`
 	ScaleTargetRef ScaleTargetRef `json:"scaleTargetRef"`
 	Metrics        []Metric       `json:"metrics"`
