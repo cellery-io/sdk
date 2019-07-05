@@ -311,6 +311,29 @@ public function readReference(ImageName iName) returns (Reference | error | ()) 
 
 # Returns a Reference record with url information
 #
+# + iName - The cell instance name
+# + return - Reference record
+public function resolveReference(ImageName iName) returns (Reference) {
+    Reference | error? ref = readReference(iName);
+    if (ref is error) {
+        log:printError("Error occured while reading reference file ", err = ref);
+        panic ref;
+    }
+    if (ref is ()) {
+        error err = error("Empty reference retrieved for " + iName.instanceName + "\n");
+        panic err;
+    }
+    Reference myRef = <Reference>ref;
+    foreach var(key,value) in myRef {
+        string temp = <string> value;
+        temp = temp.replaceAll("\\{", "");
+        temp = temp.replaceAll("\\}", "");
+        myRef[key]=temp;
+    }
+    return myRef;
+}
+# Returns a Reference record with url information
+#
 # + component - Component
 # + dependencyAlias - Dependency alias
 # + return - Reference record
