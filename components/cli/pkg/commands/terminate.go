@@ -22,17 +22,43 @@ import (
 	"fmt"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunTerminate(instanceName string) {
-	// Delete the Cell
-	output, err := kubectl.DeleteCell(instanceName)
+func RunTerminate(terminatingInstances []string, terminateAll bool) {
+	runningInstances, err := runtime.GetInstancesNames()
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while stopping the cell instance: "+instanceName, fmt.Errorf(output))
+		util.ExitWithErrorMessage("Error getting running cell instances", err)
+	}
+	// Delete all running instances
+	if terminateAll {
+		for _, runningInstance := range runningInstances {
+			terminateInstance(runningInstance)
+		}
+	} else {
+		// Check if any given instance is not running
+		for _, terminatingInstance := range terminatingInstances {
+			if util.ContainsInStringArray(runningInstances, terminatingInstance) {
+				continue
+			} else {
+				util.ExitWithErrorMessage("Error terminating cell instances", fmt.Errorf("instance: %s does not exist", terminatingInstance))
+			}
+		}
+		// If all given instances are running terminate them all
+		for _, terminatingInstance := range terminatingInstances {
+			terminateInstance(terminatingInstance)
+		}
+	}
+}
+
+func terminateInstance(instance string) {
+	output, err := kubectl.DeleteCell(instance)
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while stopping the cell instance: "+instance, fmt.Errorf(output))
 	}
 	// Delete the TLS Secret
-	secretName := instanceName + "--tls-secret"
+	secretName := instance + "--tls-secret"
 	output, err = kubectl.DeleteResource("secret", secretName)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while deleting the secret: "+secretName, fmt.Errorf(output))

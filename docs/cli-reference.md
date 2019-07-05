@@ -231,15 +231,17 @@ Ex:
 
 #### Cellery Terminate
 
-Terminate the running cell instance within cell runtime.
+Terminate running cell instances within cell runtime.
 
 ###### Parameters:
 
-* _cell instance name: Name of the instance running in the cellery system_
+* _cell instance names: Names of the instances running in the cellery system_
 
 Ex: 
  ```
-   cellery terminate my-cell-inst
+   cellery terminate employee
+   cellery terminate pet-fe pet-be
+   cellery terminate --all
  ```
  
  [Back to Command List](#cellery-cli-commands)

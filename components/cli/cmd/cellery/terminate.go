@@ -19,35 +19,33 @@
 package main
 
 import (
-	"fmt"
-	"regexp"
-
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 func newTerminateCommand() *cobra.Command {
+	var terminateAll = false
 	cmd := &cobra.Command{
-		Use:     "terminate <instance-name>",
-		Short:   "Terminate a running cell instance",
+		Use:     "terminate <instance1> <instance2> <instance-3>",
+		Short:   "Terminate running cell instances",
 		Aliases: []string{"term"},
 		Args: func(cmd *cobra.Command, args []string) error {
-			err := cobra.ExactArgs(1)(cmd, args)
-			if err != nil {
-				return err
-			}
-			isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
-			if err != nil || !isCellValid {
-				return fmt.Errorf("expects a valid cell name, received %s", args[0])
+			if !terminateAll {
+				err := cobra.MinimumNArgs(1)(cmd, args)
+				if err != nil {
+					return err
+				}
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunTerminate(args[0])
+			commands.RunTerminate(args, terminateAll)
 		},
-		Example: "  cellery terminate employee",
+		Example: "  cellery terminate employee\n" +
+			"  cellery terminate pet-fe pet-be\n" +
+			"  cellery terminate --all",
 	}
+	cmd.Flags().BoolVar(&terminateAll, "all", false, "Delete all cell instances")
 	return cmd
 }

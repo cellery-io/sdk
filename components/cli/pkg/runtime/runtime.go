@@ -356,3 +356,15 @@ func IsGcpRuntime() bool {
 	}
 	return false
 }
+
+func GetInstancesNames() ([]string, error) {
+	var instances []string
+	runningInstances, err := kubectl.GetCells()
+	if err != nil {
+		return nil, err
+	}
+	for _, runningInstance := range runningInstances.Items {
+		instances = append(instances, runningInstance.CellMetaData.Name)
+	}
+	return instances, nil
+}
