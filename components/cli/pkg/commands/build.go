@@ -306,8 +306,17 @@ func generateMetaData(cellImage *util.CellImage, targetDir string, spinner *util
 	}
 
 	metadata := &util.CellImageMetaData{
-		BuildCelleryVersion: version.BuildVersion(),
+		Labels:              map[string]string{},
+		DockerImages:        []string{},
 		BuildTimestamp:      time.Now().Unix(),
+		BuildCelleryVersion: version.BuildVersion(),
+		Ingresses:           []string{},
+		Components:          []string{},
+		Dependencies:        map[string]*util.CellImageMetaData{},
+		ComponentDep:        map[string][]string{},
+		Exposed:             []string{},
+		ZeroScaling:         false,
+		AutoScaling:         false,
 	}
 	err = json.Unmarshal(metadataJSON, metadata)
 	if err != nil {
