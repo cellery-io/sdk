@@ -118,7 +118,7 @@ func RunPush(cellImage string, username string, password string) {
 						<-done
 					}
 				}
-				if parsedCellImage.Registry == constants.CENTRAL_REGISTRY_HOST {
+				if strings.HasSuffix(parsedCellImage.Registry, constants.CENTRAL_REGISTRY_HOST) {
 					isAuthorized = make(chan bool)
 					done = make(chan bool)
 					registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(username,

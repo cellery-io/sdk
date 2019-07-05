@@ -151,7 +151,8 @@ func requestCredentialsFromUser(registryCredentials *credentials.RegistryCredent
 	var isAuthorized chan bool
 	var done chan bool
 	var err error
-	if registryCredentials.Username == "" && registryCredentials.Registry == constants.CENTRAL_REGISTRY_HOST {
+	if registryCredentials.Username == "" &&
+		strings.HasSuffix(registryCredentials.Registry, constants.CENTRAL_REGISTRY_HOST) {
 		isAuthorized = make(chan bool)
 		done = make(chan bool)
 		registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(
@@ -169,7 +170,7 @@ func requestCredentialsFromUser(registryCredentials *credentials.RegistryCredent
 // validateCredentialsWithRegistry initiates a connection to Cellery Registry to validate credentials
 func validateCredentialsWithRegistry(registryCredentials *credentials.RegistryCredentials) error {
 	registryPassword := registryCredentials.Password
-	if registryCredentials.Registry == constants.CENTRAL_REGISTRY_HOST {
+	if strings.HasSuffix(registryCredentials.Registry, constants.CENTRAL_REGISTRY_HOST) {
 		registryPassword = registryPassword + ":ping"
 	}
 	_, err := registry.New("https://"+registryCredentials.Registry, registryCredentials.Username, registryPassword)
