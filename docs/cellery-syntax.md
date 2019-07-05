@@ -17,9 +17,14 @@ This README explains,
     * [TCP Ingress](#3-tcp-ingress)
     * [GRPC Ingress](#4-grpc-ingress)
 * [Environmental Variables](#envvars)
+* [Resources](#resources)
 * [Scaling](#scaling)
     * [Auto-Scaling](#1-auto-scaling)
     * [Zero-Scaling](#2-zero-scaling)
+* [Probes](#probes)
+    * [TCP Socket](#1-tcp-socket)
+    * [Command](#2-command)
+    * [HTTP-GET](#3-http-get)    
 * [Intra-cell Communication](#intra-cell-communication)
 * [Inter-cell Communication](#inter-cell-communication)
     
@@ -303,6 +308,58 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
 }
 ```
 
+#### Resources
+Cellery allows to specify how much CPU and memory (RAM) each component needs. Resources can be specified as requests and limits. 
+When component have resource requests specified, the scheduler can make better decisions about which nodes to place component on. 
+When component have their limits specified, contention for resources on a node can be handled in a specified manner.
+
+Following is sample syntax on how to define limits/requests.
+
+```ballerina
+import celleryio/cellery;
+
+public function build(cellery:ImageName iName) returns error? {
+    //Stock Component
+    cellery:Component stockComponent = {
+        name: "stock",
+        source: {
+            image: "wso2cellery/sampleapp-stock:0.3.0"
+        },
+        ingresses: {
+            stock: <cellery:HttpApiIngress>{ port: 8080,
+                context: "stock",
+                definition: {
+                    resources: [
+                        {
+                            path: "/options",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "local"
+            }
+        },
+        resources: {
+            requests: {
+                memory: "64Mi",
+                cpu: "250m"
+            },
+            limits: {
+                memory: "128Mi",
+                cpu: "500m"
+            }
+        }
+    };
+
+    cellery:CellImage stockCell = {
+        components: {
+            stockComp: stockComponent
+        }
+    };
+    return cellery:createImage(stockCell, untaint iName);
+}
+``` 
+
 #### Scaling
 
 ##### 1. Auto-Scaling
@@ -400,6 +457,130 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(petCell, untaint iName);
 }
 ```  
+
+#### Probes
+Liveness and readiness probes can be defined for a component. 
+The probes can be defined by the means of tcp socket, command or as a http-get. 
+
+##### 1. TCP Socket
+```ballerina
+import celleryio/cellery;
+public function build(cellery:ImageName iName) returns error? {
+    int salaryContainerPort = 8080;
+
+    // Salary Component
+    cellery:Component salaryComponent = {
+        name: "salary",
+        source: {
+            image: "docker.io/celleryio/sampleapp-salary"
+        },
+        ingresses: {
+            SalaryAPI: <cellery:HttpApiIngress>{
+                port:salaryContainerPort,
+                context: "payroll",
+                definition: {
+                    resources: [
+                        {
+                            path: "salary",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        },
+        probes: {
+            liveness: {
+                initialDelaySeconds: 30,
+                kind: <cellery:TcpSocket>{
+                    port:salaryContainerPort
+                }
+            }
+        }
+    };
+}
+``` 
+
+##### 2. Command
+```ballerina
+import celleryio/cellery;
+public function build(cellery:ImageName iName) returns error? {
+    int salaryContainerPort = 8080;
+
+    // Salary Component
+    cellery:Component salaryComponent = {
+        name: "salary",
+        source: {
+            image: "docker.io/celleryio/sampleapp-salary"
+        },
+        ingresses: {
+            SalaryAPI: <cellery:HttpApiIngress>{
+                port:salaryContainerPort,
+                context: "payroll",
+                definition: {
+                    resources: [
+                        {
+                            path: "salary",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        },
+        probes: {
+            readiness: {
+                initialDelaySeconds: 10,
+                timeoutSeconds: 50,
+                kind: <cellery:Exec>{
+                    commands: ["bash", "-version"]
+                }
+            }
+        }
+    };
+}
+```
+
+##### 3. HTTP-GET
+```ballerina
+import celleryio/cellery;
+public function build(cellery:ImageName iName) returns error? {
+    int salaryContainerPort = 8080;
+
+    // Salary Component
+    cellery:Component salaryComponent = {
+        name: "salary",
+        source: {
+            image: "docker.io/celleryio/sampleapp-salary"
+        },
+        ingresses: {
+            SalaryAPI: <cellery:HttpApiIngress>{
+                port:salaryContainerPort,
+                context: "payroll",
+                definition: {
+                    resources: [
+                        {
+                            path: "salary",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        },
+        probes: {
+            readiness: {
+                initialDelaySeconds: 10,
+                timeoutSeconds: 50,
+                kind: <cellery:HttpGet>{
+                    port: salaryContainerPort,
+                    path: "/healthz"
+                }
+            }
+        }
+    };
+}
+```
 
 ### Intra Cell Communication
 
