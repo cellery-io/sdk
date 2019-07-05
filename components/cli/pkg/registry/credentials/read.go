@@ -85,7 +85,6 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-success", http.StatusSeeOther)
 				} else {
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-failure", http.StatusSeeOther)
-					fmt.Println("\r\x1b[2K\n\U0000274C Failed to authenticate")
 				}
 				flusher, ok := w.(http.Flusher)
 				if !ok {

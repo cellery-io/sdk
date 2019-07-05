@@ -78,14 +78,7 @@ func RunLogin(registryURL string, username string, password string) {
 		fmt.Println("Logging in with existing Credentials")
 	} else {
 		if password == "" {
-			if username == "" && registryURL == constants.CENTRAL_REGISTRY_HOST {
-				isAuthorized = make(chan bool)
-				done = make(chan bool)
-				registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(username,
-					isAuthorized, done)
-			} else {
-				registryCredentials.Username, registryCredentials.Password, err = credentials.FromTerminal(username)
-			}
+			isAuthorized, done, err = requestCredentialsFromUser(registryCredentials)
 			if err != nil {
 				runPreExitWithErrorTasks(nil)
 				util.ExitWithErrorMessage("Error occurred while reading Credentials", err)
@@ -96,18 +89,38 @@ func RunLogin(registryURL string, username string, password string) {
 		}
 	}
 
-	// Initiating a connection to Cellery Registry (to validate credentials)
 	fmt.Println()
 	spinner := util.StartNewSpinner("Logging into Cellery Registry " + registryURL)
-	registryPassword := registryCredentials.Password
-	if registryURL == constants.CENTRAL_REGISTRY_HOST {
-		registryPassword = registryPassword + ":ping"
-	}
-	_, err = registry.New("https://"+registryURL, registryCredentials.Username, registryPassword)
+	err = validateCredentialsWithRegistry(registryCredentials)
 	if err != nil {
 		runPreExitWithErrorTasks(spinner)
 		if strings.Contains(err.Error(), "401") {
-			util.ExitWithErrorMessage("Invalid Credentials", err)
+			if isCredentialsAlreadyPresent {
+				fmt.Println("\r\x1b[2K\U0000274C Failed to authenticate with existing credentials")
+				registryCredentials.Username = ""
+				registryCredentials.Password = ""
+				// Requesting credentials from user since the existing credentials failed
+				isAuthorized, done, err = requestCredentialsFromUser(registryCredentials)
+				if err != nil {
+					runPreExitWithErrorTasks(nil)
+					util.ExitWithErrorMessage("Error occurred while reading Credentials", err)
+				}
+
+				spinner = util.StartNewSpinner("Logging into Cellery Registry " + registryURL)
+				err = validateCredentialsWithRegistry(registryCredentials)
+				if err != nil {
+					runPreExitWithErrorTasks(spinner)
+					if strings.Contains(err.Error(), "401") {
+						util.ExitWithErrorMessage("Invalid Credentials", err)
+					} else {
+						util.ExitWithErrorMessage("Error occurred while initializing connection to the Cellery Registry",
+							err)
+					}
+				}
+				isCredentialsAlreadyPresent = false
+			} else {
+				util.ExitWithErrorMessage("Invalid Credentials", err)
+			}
 		} else {
 			util.ExitWithErrorMessage("Error occurred while initializing connection to the Cellery Registry",
 				err)
@@ -131,4 +144,37 @@ func RunLogin(registryURL string, username string, password string) {
 	}
 	spinner.Stop(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully logged into Registry: %s", util.Bold(registryURL)))
+}
+
+// requestCredentialsFromUser requests the user for credentials and returns the channels (or nil) created
+func requestCredentialsFromUser(registryCredentials *credentials.RegistryCredentials) (chan bool, chan bool, error) {
+	var isAuthorized chan bool
+	var done chan bool
+	var err error
+	if registryCredentials.Username == "" && registryCredentials.Registry == constants.CENTRAL_REGISTRY_HOST {
+		isAuthorized = make(chan bool)
+		done = make(chan bool)
+		registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(
+			registryCredentials.Username, isAuthorized, done)
+	} else {
+		registryCredentials.Username, registryCredentials.Password, err = credentials.FromTerminal(
+			registryCredentials.Username)
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	return isAuthorized, done, nil
+}
+
+// validateCredentialsWithRegistry initiates a connection to Cellery Registry to validate credentials
+func validateCredentialsWithRegistry(registryCredentials *credentials.RegistryCredentials) error {
+	registryPassword := registryCredentials.Password
+	if registryCredentials.Registry == constants.CENTRAL_REGISTRY_HOST {
+		registryPassword = registryPassword + ":ping"
+	}
+	_, err := registry.New("https://"+registryCredentials.Registry, registryCredentials.Username, registryPassword)
+	if err != nil {
+		return err
+	}
+	return nil
 }
