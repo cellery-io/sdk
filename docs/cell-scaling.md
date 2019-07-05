@@ -52,6 +52,12 @@ cellery:Component petComponent = {
                 }
             }
         },
+        resources: {
+            limits: {
+                memory: "128Mi",
+                cpu: "500m"
+            }
+        },
         scaling: {
             policy: <AutoScalingPolicy> {
                 minReplicas: 1,
