@@ -24,7 +24,7 @@ const (
 	ApiManager       SystemComponent = "ApiManager"
 	IdentityProvider SystemComponent = "IdentityProvider"
 	Observability    SystemComponent = "Observability"
-	Knative          SystemComponent = "Knative"
+	ScaleToZero      SystemComponent = "Scale to zero"
 	HPA              SystemComponent = "Horizontal pod auto scalar"
 	Controller       SystemComponent = "Controller"
 	System           SystemComponent = "System"

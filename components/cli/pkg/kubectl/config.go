@@ -149,3 +149,14 @@ func GetContexts() ([]byte, error) {
 	displayVerboseOutput(cmd)
 	return getCommandOutputFromTextFile(cmd)
 }
+
+func GetContext() (string, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"config",
+		"current-context",
+	)
+	displayVerboseOutput(cmd)
+	out, err := getCommandOutput(cmd)
+	return out, err
+}

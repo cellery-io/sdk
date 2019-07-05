@@ -19,6 +19,16 @@
 Cellery setup command install and manage cellery runtimes. For this purpose it supports several sub commands. Please 
 refer the [setup command readme](cli-setup-command.md) for complete instructions.
 
+##### Cellery setup status:
+
+Display status of cluster with a status list of system components
+
+Ex:
+
+ ```
+    cellery status status
+ ```
+
 [Back to Command List](#cellery-cli-commands)
 
 #### Cellery Init

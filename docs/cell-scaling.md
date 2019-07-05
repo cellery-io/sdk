@@ -29,7 +29,7 @@ Therefore, if you are using [local](setup/local-setup.md), or [existing kubernet
 then you can enable by following below command. This also can be performed by [modify setup](setup/modify-setup.md).
 
 ```bash
-    cellery setup modify --hpa
+    cellery setup modify --hpa=enable
 ```
 
 ### Syntax for scaling with HPA
@@ -99,7 +99,7 @@ component did not get any request, the component will be terminated and it will 
 By default, the cellery installations have zero-scaling disabled. Therefore, if you want to zero scale your components, 
 you have to enable zero-scaling as shown below.
 ```bash
- cellery setup modify --scale-to-zero
+ cellery setup modify --scale-to-zero=enable
 ``` 
 
 ### Syntax for zero-scaling

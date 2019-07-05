@@ -14,6 +14,7 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
  */
 
 package main
@@ -24,23 +25,15 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newSetupCommand() *cobra.Command {
+func newSetupStatusCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "setup",
-		Short: "Setup cellery runtime",
+		Use:   "status",
+		Short: "Display status of cluster with a status list of system components",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetup()
+			commands.RunSetupStatusCommand()
 		},
-		Example: "  cellery setup",
+		Example: "  cellery setup status",
 	}
-	cmd.AddCommand(
-		newSetupCreateCommand(),
-		newSetupCleanupCommand(),
-		newSetupModifyCommand(),
-		newSetupListCommand(),
-		newSetupSwitchCommand(),
-		newSetupStatusCommand(),
-	)
 	return cmd
 }

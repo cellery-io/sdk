@@ -223,13 +223,13 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 	}
 	if knative != NoChange {
 		if knative == Enable {
-			err = AddComponent(Knative)
+			err = AddComponent(ScaleToZero)
 			if err != nil {
 				spinner.Stop(false)
 				return err
 			}
 		} else {
-			err = DeleteComponent(Knative)
+			err = DeleteComponent(ScaleToZero)
 			if err != nil {
 				spinner.Stop(false)
 				return err
@@ -263,7 +263,7 @@ func AddComponent(component SystemComponent) error {
 		return addIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case Observability:
 		return addObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
-	case Knative:
+	case ScaleToZero:
 		return InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case HPA:
 		return InstallHPA(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
@@ -280,12 +280,27 @@ func DeleteComponent(component SystemComponent) error {
 		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	case Observability:
 		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
-	case Knative:
+	case ScaleToZero:
 		return deleteKnative()
 	case HPA:
 		return deleteHpa(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
+	}
+}
+
+func IsComponentEnabled(component SystemComponent) (bool, error) {
+	switch component {
+	case ApiManager:
+		return IsApimEnabled()
+	case Observability:
+		return IsObservabilityEnabled()
+	case ScaleToZero:
+		return IsKnativeEnabled()
+	case HPA:
+		return IsHpaEnabled()
+	default:
+		return false, fmt.Errorf("unknown system componenet %q", component)
 	}
 }
 

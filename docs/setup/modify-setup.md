@@ -1,7 +1,6 @@
 # Enabling/Disabling Cellery system components
 
 Cellery allows you to enable/disable different system components so that you can modify your runtime for your requirements.
-This will only modify the configurations on your `cellery-system` namespace.
 
 **Note:** You may need to redeploy the cells which uses OIDC Dynamic client registration when you enable/disable API Management
 
@@ -55,8 +54,8 @@ See [inline commands](#inline-method) to perform this with one step.
      BACK
 ```
    
-#### Enable/Disable Autoscaling 
-If you want to enable/disable Autoscaling, go into `Zero-Scaling` and/or `Horizontal Pod Autoscaler` options and select `enable` 
+#### Enable/Disable Autoscaler
+If you want to enable/disable Autoscaler, go into `Zero-Scaling` and/or `Horizontal Pod Autoscaler` options and select `enable`
 or `disable`. Select `Back` after the selection. You can select either `Zero-Scaling` or `Horizontal Pod Autoscaler` or enable both at the same time. 
 Once this is enabled, based on the configurations provided in the components, the scaling policies will be applied. Select `Back` after the selections 
 and come to modify command main menu options. See [inline commands](#inline-method) to perform this with one step. 
@@ -64,7 +63,7 @@ and come to modify command main menu options. See [inline commands](#inline-meth
  cellery setup
  ✔ Modify
  ....
- ✔ Autoscaling
+ ✔ Autoscaler
  [Use arrow keys]
  ? Select a runtime component
  ➤ Scale-to-Zero
@@ -82,7 +81,7 @@ and come to modify command main menu options. See [inline commands](#inline-meth
  [Use arrow keys]
  ? Select a runtime component
      API Manager
-     Autoscaling
+     Autoscaler
      Observability
    ➤ DONE
   BACK
@@ -104,51 +103,35 @@ Validate your changes by reviewing the list, and select `yes` to continue.
 1. Run `cellery setup modify --help` to see the available options
 
     ```text
-    cellery setup modify --help
     Modify Cellery runtime
-    
+
     Usage:
       cellery setup modify <command> [flags]
-    
+
+    Examples:
+      cellery setup modify --apim=enable --observability=disable
+
     Flags:
-          --apimgt          enable API Management in the runtime
-      -h, --help            help for modify
-          --hpa             enable horizontal pod auto scaler in the runtime
-          --observability   enable Observability in the runtime
-          --scale-to-zero   enable scale to zero in the runtime
-    
+          --apim string            enable or disable API Management in the runtime
+      -h, --help                   help for modify
+          --hpa string             enable or disable hpa in the runtime
+          --observability string   enable or disable observability in the runtime
+          --scale-to-zero string   enable or disable scale to zero in the runtime
+
     Global Flags:
       -k, --insecure   Allow insecure server connections when using SSL
       -v, --verbose    Run on verbose mode
     ```
 
-2. User appropriate flag to enable/disable system components
+2. Use appropriate flags to enable/disable system components
 
     ```text
     # Enable API Management and Observability
-    cellery setup modify --apimgt --observability
-    
-    # Enable Observability without API Management
-    cellery setup modify --observability
- 
-    # Enable horizontal autoscaler
-    cellery setup modify --hpa
-    
-    # Enable zero scaling
-    cellery setup modify --scale-to-zero
-    
-    #Enable both horizontal autoscaler and zero scaling
-    cellery setup modify --scale-to-zero --hpa
+    cellery setup modify --apim=enable --observability=enable
+
+    # Enable horizontal autoscaler and disable scale to zero
+    cellery setup modify --hpa=enable --scale-to-zero=disable
     ```
-
-### Feature comparison with apim and observability components
-
-| Flag --apimgt | Flag --observability | API Management  | Identity Provider | Observability |
-|:-------------:|:--------------------:|:---------------:|:-----------------:|:-------------:|
-| Disabled      | Disabled             | ✘               | ✔                 | ✘             |
-| Disabled      | Enabled              | ✘               | ✔                 | ✔             |
-| Enabled       | Disabled             | ✔               | ✔                 | ✘             |
-| Enabled       | Enabled              | ✔               | ✔                 | ✔             |
 
 ## What's Next?
 - [Developing a Cell](../writing-a-cell.md) - step by step explanation on how you could define your own cells.

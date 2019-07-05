@@ -81,7 +81,7 @@ Validate your changes by reviewing the list, and select `yes` to continue.
 Execute below command to enable observability component in your setup. You may need to add other components if you want 
 to have other components enabled as well, please check [here](setup/modify-setup.md#inline-method) for more details. 
 ```
-    cellery setup modify --observability
+    cellery setup modify --observability=enable
 ```
 
 ## Use Cellery dashboard
