@@ -39,7 +39,7 @@ func newTestCommand() *cobra.Command {
 	var envVars []string
 	cmd := &cobra.Command{
 		Use:   "test [<registry>/]<organization>/<cell-image>:<version>",
-		Short: "Use a cell image to create a running instance",
+		Short: "Test a cell image",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.MinimumNArgs(1)(cmd, args)
 			if err != nil {

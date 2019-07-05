@@ -174,14 +174,17 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                 String podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
                                 + cellImage.getCellName() + "--" + cellImage.getCellName() + "-job",
                         null, CelleryUtils::printDebug, CelleryUtils::printWarning);
-                String podName = podInfo.substring(0, podInfo.indexOf(' '));
+                String podName = getPodName(podInfo, cellImage.getCellName());
+                if (podName == null) {
+                    printWarning("Error while getting name of the test pod. Skipping execution of test "
+                            + cellImage.getCellName());
+                    continue;
+                }
 
                 CelleryUtils.printDebug("podName is: " + podName);
                 CelleryUtils.printDebug("Waiting for pod " + podName + " status to be 'Running'...");
 
-                waitForPodRunning(podName, podInfo, cellImage.getCellName());
-
-                if (!podInfo.contains("Running") && !podInfo.contains("Error") && !podInfo.contains("Completed")) {
+                if (!waitForPodRunning(podName, podInfo, cellImage.getCellName())) {
                     printWarning("Error getting status of pod " + podName + ". Skipping execution of test " +
                             cellImage.getCellName());
                     deleteTestCell(cellImage.getCellName());
@@ -215,7 +218,8 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
      * @param instanceName test cell name
      * @throws InterruptedException thrown if error occurs in Thread.sleep
      */
-    private void waitForPodRunning (String podName, String podInfo, String instanceName) throws InterruptedException {
+    private boolean waitForPodRunning (String podName, String podInfo, String instanceName) throws
+            InterruptedException {
         int min = 10;
         for (int i = 0; i < 12 * min; i++) {
             if (podName.isEmpty()) {
@@ -230,9 +234,10 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                                 + instanceName + "--" + instanceName + "-job",
                         null, CelleryUtils::printDebug, CelleryUtils::printWarning);
             } else {
-                break;
+                return true;
             }
         }
+        return false;
     }
 
     /**
@@ -271,6 +276,23 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                     "kubectl logs " + podName + " " + instanceName + " > " + instanceName + ".log", null,
                     CelleryUtils::printDebug, CelleryUtils::printWarning);
         }
+    }
+
+    private String getPodName (String podInfo, String instanceName) throws InterruptedException {
+        String podName;
+        int min = 1;
+        for (int i = 0; i < 12 * min; i++) {
+            if (podInfo.length() > 0) {
+                podName = podInfo.substring(0, podInfo.indexOf(' '));
+                return podName;
+            } else {
+                Thread.sleep(5000);
+                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
+                                + instanceName + "--" + instanceName + "-job",
+                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
+            }
+        }
+        return null;
     }
 
     /**
