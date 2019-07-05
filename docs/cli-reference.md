@@ -28,7 +28,7 @@ Display status of cluster with a status list of system components
 Ex:
 
  ```
-    cellery status status
+    cellery setup status
  ```
 
 [Back to Command List](#cellery-cli-commands)
