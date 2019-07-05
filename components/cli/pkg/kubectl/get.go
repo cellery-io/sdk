@@ -257,3 +257,21 @@ func GetGatewayAsMapInterface(gw string) (map[string]interface{}, error) {
 	err = json.Unmarshal([]byte(out), &output)
 	return output, err
 }
+
+func GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"cell",
+		cell,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	var output map[string]interface{}
+	out, err := getCommandOutput(cmd)
+	if err != nil {
+		return output, err
+	}
+	err = json.Unmarshal([]byte(out), &output)
+	return output, err
+}
