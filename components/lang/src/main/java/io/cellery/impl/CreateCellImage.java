@@ -294,6 +294,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             if ("global".equals(((BString) attributeMap.get("expose")).stringValue())) {
                 httpAPI.setGlobal(true);
                 httpAPI.setBackend(component.getService());
+                exposedComponents.add(component.getName());
             } else if ("local".equals(((BString) attributeMap.get("expose")).stringValue())) {
                 httpAPI.setGlobal(false);
                 httpAPI.setBackend(component.getService());
