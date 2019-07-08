@@ -94,7 +94,7 @@ func createOnExistingCluster() error {
 	return nil
 }
 
-func RunSetupCreateOnExistingCluster(hasNfsStorage, isPersistentVolume, isLoadBalancerIngressMode bool,
+func RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
 	nfs runtime.Nfs, db runtime.MysqlDb) {
 	artifactsPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.K8S_ARTIFACTS)
 	os.RemoveAll(artifactsPath)
