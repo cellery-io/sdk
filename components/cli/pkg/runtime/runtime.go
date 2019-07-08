@@ -79,7 +79,7 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	}
 
 	// Setup Cellery namespace
-	spinner.SetNewAction("Setting up cellery name space")
+	spinner.SetNewAction("Setting up cellery namespace")
 	if err := CreateCelleryNameSpace(); err != nil {
 		return fmt.Errorf("error creating cellery namespace: %v", err)
 	}
@@ -103,6 +103,15 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	spinner.SetNewAction("Installing istio")
 	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		return fmt.Errorf("error installing istio: %v", err)
+	}
+
+	// Fix for applying only knative serving CRD's
+	if err := InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+		return fmt.Errorf("error installing knative serving: %v", err)
+	}
+
+	if err := kubectl.DeleteNameSpace("knative-serving"); err != nil {
+		return fmt.Errorf("error removing knative-serving namespace: %v", err)
 	}
 
 	// Apply controller CRDs
