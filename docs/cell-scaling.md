@@ -145,6 +145,6 @@ Just [build and run the cell](writing-a-cell.md) with this scaling configuration
 #What's Next?
 - [Developing and runing a Cell](writing-a-cell.md) - step by step explanation on how you could define your own cells.
 - [How to code cells?](cellery-syntax.md) - explains how Cellery cells are written.
-- [Update cells](cell-update.md) - update the running cell instance with the new version.
+- [Update cells](cell-update-and-adv-deployment.md) - update a running cell instance using a new cell version.
 - [Observe cells](cellery-observability.md) - provides the runtime insight of cells and components.
 

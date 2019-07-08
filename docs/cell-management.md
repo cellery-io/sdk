@@ -25,4 +25,4 @@ Cells are immutable units, and hence the updates are performed on cell instances
 instance can be rolling updated to update the components inside the cell, and this is a viable operation when the API of the cell is unchanged. 
 Further, as advanced deployment options, Cellery supports both blue/green and canary deployment options. In that case, a new cell instance with updated 
 version will be spawned along with the old cell instance, and the traffic will be routed to completely or partially among them. 
-Find more details on updating cells [here.](cell-update.md)
+Find more details on updating cells [here.](cell-update-and-adv-deployment.md)
