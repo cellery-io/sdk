@@ -33,6 +33,13 @@ import (
 	//"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
+const k8sYamlSpec = "spec"
+const k8sYamlServicetemplates = "servicesTemplates"
+const k8sYamlMetadata = "metadata"
+const k8sYamlName = "name"
+const k8sYamlContainer = "container"
+const k8sYamlImage = "image"
+
 func RunUpdateCellComponents(instance string, image string) error {
 	spinner := util.StartNewSpinner("Updating cell components")
 	// parse the new image
@@ -116,7 +123,7 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 	if err != nil {
 		return cellInstance, err
 	}
-	cellSpecByteArr, err := yaml.Marshal(cellInstance["spec"])
+	cellSpecByteArr, err := yaml.Marshal(cellInstance[k8sYamlSpec])
 	if err != nil {
 		return cellInstance, err
 	}
@@ -125,7 +132,7 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 	if err != nil {
 		return cellInstance, err
 	}
-	svcTempalateBytes, err := yaml.Marshal(cellSpec["servicesTemplates"])
+	svcTempalateBytes, err := yaml.Marshal(cellSpec[k8sYamlServicetemplates])
 	if err != nil {
 		return cellInstance, err
 	}
@@ -137,7 +144,7 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 
 	for _, svcTemplate := range svcTemplates {
 		// metadata
-		svcTemplateMetadataBytes, err := yaml.Marshal(svcTemplate["metadata"])
+		svcTemplateMetadataBytes, err := yaml.Marshal(svcTemplate[k8sYamlMetadata])
 		if err != nil {
 			return cellInstance, err
 		}
@@ -148,8 +155,8 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 		}
 		// for each new component template, update the relevant container image
 		for i, newSvcTemplate := range newSvcTemplates {
-			if newSvcTemplate.Metadata.Name == svcTemplateMetadata["name"] {
-				svcTemplateSpecBytes, err := yaml.Marshal(svcTemplate["spec"])
+			if newSvcTemplate.Metadata.Name == svcTemplateMetadata[k8sYamlName] {
+				svcTemplateSpecBytes, err := yaml.Marshal(svcTemplate[k8sYamlSpec])
 				if err != nil {
 					return cellInstance, err
 				}
@@ -158,7 +165,7 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 				if err != nil {
 					return cellInstance, err
 				}
-				containerSpecBytes, err := yaml.Marshal(svcTemplateSpec["container"])
+				containerSpecBytes, err := yaml.Marshal(svcTemplateSpec[k8sYamlContainer])
 				if err != nil {
 					return cellInstance, err
 				}
@@ -167,15 +174,15 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 				if err != nil {
 					return cellInstance, err
 				}
-				containerSpec["image"] = newSvcTemplate.Spec.Container.Image
-				svcTemplateSpec["container"] = containerSpec
-				svcTemplate["spec"] = svcTemplateSpec
+				containerSpec[k8sYamlImage] = newSvcTemplate.Spec.Container.Image
+				svcTemplateSpec[k8sYamlContainer] = containerSpec
+				svcTemplate[k8sYamlSpec] = svcTemplateSpec
 				svcTemplates[i] = svcTemplate
 			}
 		}
 	}
-	cellSpec["servicesTemplates"] = svcTemplates
-	cellInstance["spec"] = cellSpec
+	cellSpec[k8sYamlServicetemplates] = svcTemplates
+	cellInstance[k8sYamlSpec] = cellSpec
 	return cellInstance, nil
 }
 
