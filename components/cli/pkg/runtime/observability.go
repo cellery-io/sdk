@@ -49,7 +49,8 @@ func IsObservabilityEnabled() (bool, error) {
 	enabled := true
 	_, err := kubectl.GetDeployment("cellery-system", "wso2sp-worker")
 	if err != nil {
-		if strings.Contains(err.Error(), "No resources found") {
+		if strings.Contains(err.Error(), "No resources found") ||
+			strings.Contains(err.Error(), "Error from server (NotFound)") {
 			enabled = false
 		} else {
 			return enabled, fmt.Errorf("error checking if observability is enabled")

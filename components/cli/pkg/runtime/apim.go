@@ -50,7 +50,8 @@ func IsApimEnabled() (bool, error) {
 	enabled := true
 	_, err := kubectl.GetDeployment("cellery-system", "gateway")
 	if err != nil {
-		if strings.Contains(err.Error(), "No resources found") {
+		if strings.Contains(err.Error(), "No resources found") ||
+			strings.Contains(err.Error(), "Error from server (NotFound)") {
 			enabled = false
 		} else {
 			return enabled, fmt.Errorf("error checking if apim is enabled")
