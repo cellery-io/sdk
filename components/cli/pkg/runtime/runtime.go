@@ -79,7 +79,7 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	}
 
 	// Setup Cellery namespace
-	spinner.SetNewAction("Setting up cellery name space")
+	spinner.SetNewAction("Setting up cellery namespace")
 	if err := CreateCelleryNameSpace(); err != nil {
 		return fmt.Errorf("error creating cellery namespace: %v", err)
 	}
