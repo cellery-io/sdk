@@ -213,7 +213,7 @@ Learn about full lifecycle of cells in Cellery from,
 * [Developing and runing a Cell](docs/writing-a-cell.md) - step by step explanation on how you could define your own cells.
 * [Testing a Cell](docs/cell-testing.md) - provides the instructions to run test against cells.
 * [Managing a Cell](docs/cell-management.md) - lists the management aspects of cells in the runtime.
-    * [Update](docs/cell-update-and-adv-deployment.md) - update the running cell instance with the new version.
+    * [Update](docs/cell-update-and-adv-deployment.md) - update a running cell instance using a new cell version.
     * [Scale up/down](docs/cell-scaling.md) - scalability of running cell instances with zero scaling and horizontal autoscaler.
     * [Observability](docs/cellery-observability.md) - provides the runtime insight of cells and components.
 

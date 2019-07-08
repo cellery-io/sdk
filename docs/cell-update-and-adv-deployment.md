@@ -19,7 +19,7 @@ The new application binary is packed to a docker image which with a patch versio
 As this operation simply updates the currently running instance, the client cells invoking this cell may not be aware of this. 
 Therefore, this should be only permitted when there is no API changes. 
  
-Below steps should be followed to perform the rolling update. 
+Below steps should be followed to perform the cell update. 
  
 1) Update the currently running `pet-be` instance with below command. This will update its components respectively.
 ```
@@ -43,6 +43,7 @@ pet-fe--gateway-deployment-67ccf688fb-dnhhw      2/2     Running           0    
 pet-fe--portal-deployment-69bb57c466-25nqd       2/2     Running           0          4h6m
 pet-fe--sts-deployment-59dbb995c7-g7tc7          3/3     Running           0          4h6m
 ```
+Refer to [CLI docs](cli-reference.md#cellery-update) for a complete guide on performing updates on cell instances.
 
 ## Blue/Green and Canary Deployment of Cell Instances
 Blue-Green and Canary are advanced deployment patterns which can used to perform updates to running cell instances. 
@@ -73,6 +74,7 @@ using the `-s/--source` option:
 ```
 $ cellery route-traffic -s pet-fe pet-be -p pet-be-v2=50
 ```
+Refer to [CLI docs](cli-reference.md#cellery-route-traffic) for a complete guide on managing advanced deployments with cell instances.
 
 ## Try with sample
 [Pet-store application sample](https://github.com/wso2-cellery/samples/tree/master/cells/pet-store) walks through the cell upate scenario. 
