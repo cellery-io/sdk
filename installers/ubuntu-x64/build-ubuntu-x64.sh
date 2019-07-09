@@ -42,6 +42,7 @@ fi
 #Parameters
 TARGET_DIRECTORY="target"
 INSTALLATION_DIRECTORY="cellery-ubuntu-x64-"${1}
+CELLERY_VERSION=${2}
 DATE=`date +%Y-%m-%d`
 TIME=`date +%H:%M:%S`
 LOG_PREFIX="[$DATE $TIME]"
@@ -164,6 +165,11 @@ createInstaller() {
     fakeroot dpkg-deb --build target/${INSTALLATION_DIRECTORY}
 }
 
+setCelleryVersion() {
+    sed -i -E "s/__CELLERY_VERSION__/${CELLERY_VERSION}/g" resources/DEBIAN/postinst
+    sed -i -E "s/__CELLERY_VERSION__/${CELLERY_VERSION}/g" resources/DEBIAN/control
+}
+
 #Pre-requisites
 command -v mvn -v >/dev/null 2>&1 || {
     log_warn "Apache Maven was not found. Please install Maven first."
@@ -177,6 +183,7 @@ command -v ballerina >/dev/null 2>&1 || {
 #Main script
 log_info "Installer Generating process started."
 
+setCelleryVersion
 buildBallerinaNatives
 buildCelleryCLI
 buildDocsView

@@ -21,7 +21,11 @@ GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)
 BALLERINA_VERSION := 0.991.0
 
-OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/lastSuccessfulBuild
+DISTRIBUTION_VERSION ?= master
+DISTRIBUTION_ARTIFACTS := https://github.com/wso2-cellery/distribution/archive/$(DISTRIBUTION_VERSION).zip
+OBSERVABILITY_BUILD ?= lastSuccessfulBuild
+
+OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/$(OBSERVABILITY_BUILD)
 OBSERVABILITY_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/components/global/*zip*
 OBSERVABILITY_ARTIFACTS := global.zip
 
@@ -47,7 +51,7 @@ GO_LDFLAGS += -X $(PROJECT_PKG)/components/cli/pkg/version.buildTime=$(shell dat
 
 # Docker info
 DOCKER_REPO ?= wso2cellery
-DOCKER_IMAGE_TAG ?= 0.4.0-SNAPSHOT
+DOCKER_IMAGE_TAG ?= $(VERSION)
 
 all: code.format build-lang build-docs-view build-cli
 
@@ -82,9 +86,10 @@ install-cli:
 .PHONY: copy-k8s-artefacts
 copy-k8s-artefacts:
 	cd ${PROJECT_ROOT}/installers; \
-	curl --retry 5 $(DISTRIBUTION_ARTIFACTS_PATH)/$(DISTRIBUTION_K8S_ARTIFACT) --output $(DISTRIBUTION_K8S_ARTIFACT); \
+	mkdir -p build-artifacts && cd build-artifacts;\
+	curl -LO --retry 5 $(DISTRIBUTION_ARTIFACTS); \
+	unzip $(DISTRIBUTION_VERSION).zip && mv distribution-master/installer/k8s-artefacts .; \
 	curl --retry 5 $(OBSERVABILITY_ARTIFACTS_PATH)/$(OBSERVABILITY_ARTIFACTS) --output $(OBSERVABILITY_ARTIFACTS); \
-	tar -xvf $(DISTRIBUTION_K8S_ARTIFACT); \
 	unzip $(OBSERVABILITY_ARTIFACTS); \
 	unzip $(OBSERVABILITY_SIDDHI_ARTIFACT) -d k8s-artefacts/observability/siddhi; \
 	mkdir -p k8s-artefacts/observability/node-server/config; \
@@ -94,15 +99,15 @@ copy-k8s-artefacts:
 build-ubuntu-installer: copy-k8s-artefacts
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
 	mkdir -p files; \
-	cp -r ../k8s-artefacts files/; \
-	bash build-ubuntu-x64.sh $(INSTALLER_VERSION)
+	mv ../build-artifacts/k8s-artefacts files/; \
+	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION)
 
 .PHONY: build-mac-installer
 build-mac-installer: copy-k8s-artefacts
 	cd ${PROJECT_ROOT}/installers/macOS-x64; \
 	mkdir -p files; \
-	cp -r ../k8s-artefacts files/; \
-	bash build-macos-x64.sh $(INSTALLER_VERSION)
+	mv ../build-artifacts/k8s-artefacts files/; \
+	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION)
 
 .PHONY: docker
 docker:

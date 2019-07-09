@@ -48,6 +48,7 @@ fi
 #Parameters
 TARGET_DIRECTORY="target"
 INST_VERSION=${1}
+CELLERY_VERSION=${2}
 PRODUCT="cellery"
 INSTALLATION_DIRECTORY="cellery-ubuntu-x64-"${INST_VERSION}
 DATE=`date +%Y-%m-%d`
@@ -227,6 +228,10 @@ function createUninstaller(){
     sed -i '' -e "s/__PRODUCT__/${PRODUCT}/g" "${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/uninstall.sh"
 }
 
+setCelleryVersion() {
+    sed -i '' -e "s/__CELLERY_VERSION__/${CELLERY_VERSION}/g" "darwin/scripts/postinstall"
+}
+
 #Pre-requisites
 command -v mvn -v >/dev/null 2>&1 || {
     log_warn "Apache Maven was not found. Please install Maven first."
@@ -240,6 +245,7 @@ command -v ballerina >/dev/null 2>&1 || {
 #Main script
 log_info "Installer generating process started."
 
+setCelleryVersion
 buildBallerinaNatives
 buildCelleryCLI
 buildDocsView
