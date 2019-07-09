@@ -77,12 +77,6 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 			return fmt.Errorf("error applying master node lable: %v", err)
 		}
 	}
-
-	// Apply nginx resources
-	spinner.SetNewAction("Creating ingress-nginx")
-	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
-		return fmt.Errorf("error installing ingress-nginx: %v", err)
-	}
 	// Setup Cellery namespace
 	spinner.SetNewAction("Setting up cellery namespace")
 	if err := CreateCelleryNameSpace(); err != nil {
@@ -108,6 +102,11 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	spinner.SetNewAction("Installing istio")
 	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		return fmt.Errorf("error installing istio: %v", err)
+	}
+	// Apply nginx resources
+	spinner.SetNewAction("Creating ingress-nginx")
+	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
+		return fmt.Errorf("error installing ingress-nginx: %v", err)
 	}
 
 	// Fix for applying only knative serving CRD's

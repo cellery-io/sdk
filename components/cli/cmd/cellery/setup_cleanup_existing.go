@@ -29,18 +29,20 @@ func newSetupCleanupExistingCommand() *cobra.Command {
 	var istio = false
 	var knative = false
 	var ingress = false
+	var hpa = false
 	cmd := &cobra.Command{
 		Use:   "existing",
 		Short: "Cleanup existing cluster setup",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunCleanupExisting(knative, istio, ingress, confirmed)
+			commands.RunCleanupExisting(knative, istio, ingress, hpa, confirmed)
 		},
 		Example: "  cellery setup cleanup existing",
 	}
 	cmd.Flags().BoolVar(&istio, "istio", false, "Remove istio")
 	cmd.Flags().BoolVar(&knative, "knative", false, "Remove knative-serving")
 	cmd.Flags().BoolVar(&ingress, "ingress", false, "Remove ingress")
+	cmd.Flags().BoolVar(&hpa, "hpa", false, "Remove hpa")
 	cmd.Flags().BoolVarP(&confirmed, "assume-yes", "y", false, "Confirm setup creation")
 	return cmd
 }

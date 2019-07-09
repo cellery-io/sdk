@@ -25,6 +25,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -43,7 +44,7 @@ func manageExistingCluster() error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select an option: %v", err)
 	}
 
 	switch value {
@@ -78,14 +79,22 @@ func cleanupExistingCluster() error {
 		if err != nil {
 			util.ExitWithErrorMessage("failed to select option", err)
 		}
+		removeHpa := false
+		hpaEnabled, err := runtime.IsHpaEnabled()
+		if hpaEnabled {
+			removeHpa, _, err = util.GetYesOrNoFromUser("Remove hpa", false)
+			if err != nil {
+				util.ExitWithErrorMessage("failed to select option", err)
+			}
+		}
 		spinner := util.StartNewSpinner("Cleaning up cluster")
-		cleanupCluster(removeKnative, removeIstio, removeIngress)
+		cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
 		spinner.Stop(true)
 	}
 	return nil
 }
 
-func RunCleanupExisting(removeKnative, removeIstio, removeIngress, confirmed bool) error {
+func RunCleanupExisting(removeKnative, removeIstio, removeIngress, removeHpa, confirmed bool) error {
 	var err error
 	var confirmCleanup = confirmed
 	if !confirmed {
@@ -100,13 +109,13 @@ func RunCleanupExisting(removeKnative, removeIstio, removeIngress, confirmed boo
 		if removeKnative {
 			kubectl.DeleteNameSpace("knative-serving")
 		}
-		cleanupCluster(removeKnative, removeIstio, removeIngress)
+		cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
 		spinner.Stop(true)
 	}
 	return nil
 }
 
-func cleanupCluster(removeKnative, removeIstio, removeIngress bool) {
+func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
 	kubectl.DeleteNameSpace("cellery-system")
 	if removeKnative {
 		kubectl.DeleteNameSpace("knative-serving")
@@ -116,6 +125,9 @@ func cleanupCluster(removeKnative, removeIstio, removeIngress bool) {
 	}
 	if removeIngress {
 		kubectl.DeleteNameSpace("ingress-nginx")
+	}
+	if removeHpa {
+		runtime.DeleteComponent(runtime.HPA)
 	}
 	kubectl.DeleteAllCells()
 	kubectl.DeletePersistedVolume("wso2apim-local-pv")
