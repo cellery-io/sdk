@@ -46,7 +46,7 @@ func manageLocal() error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select an option: %v", err)
 	}
 
 	switch value {
@@ -65,7 +65,7 @@ func manageLocal() error {
 		}
 	case constants.CELLERY_MANAGE_CLEANUP:
 		{
-			RunCleanupLocal()
+			RunCleanupLocal(false)
 		}
 	default:
 		{
@@ -75,7 +75,26 @@ func manageLocal() error {
 	return nil
 }
 
-func RunCleanupLocal() error {
+func RunCleanupLocal(confirmed bool) error {
+	var err error
+	var confirmCleanup = confirmed
+	if !confirmed {
+		confirmCleanup, _, err = util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
+			"delete all your cells and data)", false)
+		if err != nil {
+			util.ExitWithErrorMessage("failed to select option", err)
+		}
+	}
+	if confirmCleanup {
+		err = CleanupLocal()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func CleanupLocal() error {
 	spinner := util.StartNewSpinner("Removing Cellery Runtime")
 	defer func() {
 		spinner.Stop(true)
@@ -86,7 +105,10 @@ func RunCleanupLocal() error {
 	for isVmRuning() {
 		time.Sleep(2 * time.Second)
 	}
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "unregistervm", constants.VM_NAME, "--delete"), "Error deleting VM")
+	err := util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "unregistervm", constants.VM_NAME, "--delete"), "Error deleting VM")
+	if err != nil {
+		return err
+	}
 	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, vmComplete))
 	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, vmBasic))
 	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, configComplete))
