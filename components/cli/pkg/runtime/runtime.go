@@ -88,6 +88,11 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	if err := ApplyIstioCrds(artifactsPath); err != nil {
 		return fmt.Errorf("error creating istio crds: %v", err)
 	}
+	// Apply nginx resources
+	spinner.SetNewAction("Creating ingress-nginx")
+	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
+		return fmt.Errorf("error installing ingress-nginx: %v", err)
+	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
 	time.Sleep(20 * time.Second)
 
@@ -102,11 +107,6 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	spinner.SetNewAction("Installing istio")
 	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
 		return fmt.Errorf("error installing istio: %v", err)
-	}
-	// Apply nginx resources
-	spinner.SetNewAction("Creating ingress-nginx")
-	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
-		return fmt.Errorf("error installing ingress-nginx: %v", err)
 	}
 
 	// Fix for applying only knative serving CRD's
