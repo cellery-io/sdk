@@ -78,6 +78,11 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		}
 	}
 
+	// Apply nginx resources
+	spinner.SetNewAction("Creating ingress-nginx")
+	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
+		return fmt.Errorf("error installing ingress-nginx: %v", err)
+	}
 	// Setup Cellery namespace
 	spinner.SetNewAction("Setting up cellery namespace")
 	if err := CreateCelleryNameSpace(); err != nil {
@@ -157,10 +162,6 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		if err := addIdp(artifactsPath); err != nil {
 			return fmt.Errorf("error creating idp deployment: %v", err)
 		}
-	}
-	spinner.SetNewAction("Creating ingress-nginx")
-	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
-		return fmt.Errorf("error installing ingress-nginx: %v", err)
 	}
 	spinner.Stop(true)
 	return nil
