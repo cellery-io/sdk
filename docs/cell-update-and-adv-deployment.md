@@ -68,7 +68,7 @@ $ cellery route-traffic pet-be -p pet-be-v2=100
 cellery terminate pet-be
 ```
 
-####Note:
+#### Note:
 The above commands will apply to all cell instances which has a dependency on `pet-be`. If required, route-traffic command can be applied to only a selected set of instances
 using the `-s/--source` option:
 ```
