@@ -242,14 +242,18 @@ public function createImage(CellImage cellImage, ImageName iName) returns ( erro
         log:printError("Error occurred while persisiting cell: " + iName.name, err = wResult);
         return wResult;
     }
-    validateScaling(cellImage);
+    validateCell(cellImage);
     //Generate yaml file and other artifacts via extern function
     return createCellImage(cellImage, iName);
 }
 
 
-function validateScaling(CellImage cellImage) {
+function validateCell(CellImage cellImage) {
     foreach var(key,component) in cellImage.components {
+        if (!(component["ingresses"] is ()) && component.ingresses.length() > 1){
+             error err = error("component: [" + component.name + "] has more than one ingress");
+             panic(err);
+        }
         if (!(component["scalingPolicy"] is ()) && (component.scalingPolicy is AutoScalingPolicy)) {
             AutoScalingPolicy policy = <AutoScalingPolicy> component.scalingPolicy;
             if ((!(policy.metrics["cpu"] is ()) && (policy.metrics.cpu is Percentage)) &&
@@ -406,6 +410,47 @@ public function getHost(Component component) returns (string) {
         host += "-rev";
     }
     return host;
+}
+
+# Returns the port number of the target component
+#
+# + component - Target component
+# + return - port number
+public function getPort(Component component) returns (int) {
+    int port = 0;
+    if (component["ingresses"] is ()){
+         error err = error("getPort is invoked on a component: [" + component.name + "] with empty ingress");
+         panic(err);
+    }
+    if (component.ingresses.length() > 0){
+        var ingress = component.ingresses[component.ingresses.keys()[0]];
+        if (ingress is TCPIngress) {
+            TCPIngress ing = <TCPIngress>ingress;
+            port = ing.backendPort;
+        } else if (ingress is HttpApiIngress) {
+            if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
+                port = 80;
+            } else {
+                HttpApiIngress ing = <HttpApiIngress>ingress;
+                port = ing.port;
+            }
+        } else if (ingress is GRPCIngress) {
+            if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
+                port = 81;
+            } else {
+                GRPCIngress ing = <GRPCIngress>ingress;
+                port = ing.backendPort;
+            }
+        } else if (ingress is WebIngress) {
+            if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
+                port = 80;
+            } else {
+                WebIngress ing = <WebIngress>ingress;
+                port = ing.port;
+            }
+        }
+    }
+    return port;
 }
 
 function getValidName(string name) returns string {
