@@ -324,13 +324,15 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			if err != nil {
 				util.ExitWithErrorMessage("Docker Run Error", err)
 			}
-
+			os.Mkdir(currentDir+string(os.PathSeparator)+"logs", 0777)
 			if string(containerId) == "" {
 
-				cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+version.BuildVersion(),
+				cmdDockerRun := exec.Command("docker", "run", "-e", constants.TEST_DEGUB_FLAG+"="+debugMode,
+					"-d", "-l", "ballerina-runtime="+version.BuildVersion(),
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
+					"--mount", "type=bind,source="+currentDir+string(os.PathSeparator)+"logs,target=/home/cellery/logs",
 					"wso2cellery/ballerina-runtime:"+version.BuildVersion(), "sleep", "600",
 				)
 

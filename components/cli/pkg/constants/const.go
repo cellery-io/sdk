@@ -135,6 +135,7 @@ const DOCKER_CLI_BALLERINA_EXECUTABLE_PATH = "/usr/lib/ballerina/ballerina-0.991
 const WSO2_APIM_HOST = "https://wso2-apim-gateway"
 
 const CELLERY_IMAGE_DIR_ENV_VAR = "CELLERY_IMAGE_DIR"
+const TEST_DEGUB_FLAG = "DEBUG_MODE"
 
 const ROOT_DIR = "/"
 const VAR = "var"

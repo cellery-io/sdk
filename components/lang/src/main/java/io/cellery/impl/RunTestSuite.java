@@ -270,10 +270,10 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         if (!"True".equalsIgnoreCase(jobStatus)) {
             printWarning("Error getting status of job " + jobName + ". Skipping collection of logs.");
         } else {
-            printInfo("Test execution completed. Collecting logs to " +
+            printInfo("Test execution completed. Collecting logs to logs/" +
                     instanceName + ".log");
             CelleryUtils.executeShellCommand(
-                    "kubectl logs " + podName + " " + instanceName + " > " + instanceName + ".log", null,
+                    "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
                     CelleryUtils::printDebug, CelleryUtils::printWarning);
         }
     }
