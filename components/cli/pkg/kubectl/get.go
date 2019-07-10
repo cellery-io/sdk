@@ -119,7 +119,7 @@ func GetCell(cellName string) (Cell, error) {
 		"json",
 	)
 	displayVerboseOutput(cmd)
-	out, err := getCommandOutput(cmd)
+	out, err := getCommandOutputFromTextFile(cmd)
 	jsonOutput := Cell{}
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -127,7 +127,7 @@ func GetCell(cellName string) (Cell, error) {
 		}
 		return jsonOutput, fmt.Errorf("unknown error: %v", err)
 	}
-	err = json.Unmarshal([]byte(out), &jsonOutput)
+	err = json.Unmarshal(out, &jsonOutput)
 	if err != nil {
 		return jsonOutput, err
 	}
