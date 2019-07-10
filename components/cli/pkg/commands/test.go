@@ -24,6 +24,8 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/olekukonko/tablewriter"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 
@@ -77,6 +79,15 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while reading Cell Image metadata", err)
+	}
+
+	if instanceName == "" {
+		// Setting a unique instance name since it is not provided
+		instanceName, err = generateRandomInstanceName(cellImageMetadata)
+		if err != nil {
+			spinner.Stop(false)
+			util.ExitWithErrorMessage("Error occurred while preparing", err)
+		}
 	}
 
 	var parsedDependencyLinks []*dependencyAliasLink
@@ -232,7 +243,7 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 		util.ExitWithErrorMessage("Invalid instance linking", err)
 	}
 	spinner.SetNewAction("")
-	err = confirmDependencyTree(mainNode, assumeYes)
+	err = confirmTestDependencyTree(mainNode, assumeYes)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to confirm the dependency tree", err)
 	}
@@ -244,7 +255,139 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 	}
 
 	spinner.Stop(true)
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully completed running tests for instance: %s", util.Bold(cellImageTag)))
+	util.PrintSuccessMessage(fmt.Sprintf("Completed running tests for instance %s", util.Bold(instanceName)))
+}
+
+// confirmDependencyTree confirms from the user whether the intended dependency tree had been resolved
+func confirmTestDependencyTree(tree *dependencyTreeNode, assumeYes bool) error {
+	var dependencyData [][]string
+	var traversedInstances []string
+	// Preparing instances table data
+	var extractDependencyTreeData func(subTree *dependencyTreeNode)
+	extractDependencyTreeData = func(subTree *dependencyTreeNode) {
+		for _, dependency := range subTree.Dependencies {
+			// Traversing the dependency tree
+			if !dependency.IsRunning {
+				extractDependencyTreeData(dependency)
+			}
+
+			// Adding used instances table content
+			instanceAlreadyAdded := false
+			for _, instance := range traversedInstances {
+				if instance == dependency.Instance {
+					instanceAlreadyAdded = true
+					break
+				}
+			}
+			if !instanceAlreadyAdded {
+				var usedInstance string
+				if dependency.IsRunning {
+					usedInstance = "Available in Runtime"
+				} else {
+					usedInstance = "To be Created"
+				}
+				var sharedSymbol string
+				if dependency.IsShared {
+					sharedSymbol = "Shared"
+				} else {
+					sharedSymbol = " - "
+				}
+				dependencyData = append(dependencyData, []string{
+					dependency.Instance,
+					dependency.MetaData.Organization + "/" + dependency.MetaData.Name + ":" +
+						dependency.MetaData.Version,
+					usedInstance,
+					sharedSymbol,
+				})
+				traversedInstances = append(traversedInstances, dependency.Instance)
+			}
+		}
+	}
+	extractDependencyTreeData(tree)
+	usedInstance := "To be Created"
+	_, err := kubectl.GetCell(tree.Instance)
+	if err == nil {
+		usedInstance = "Available in Runtime"
+	}
+	dependencyData = append(dependencyData, []string{
+		tree.Instance,
+		tree.MetaData.Organization + "/" + tree.MetaData.Name + ":" + tree.MetaData.Version,
+		usedInstance,
+		" - ",
+	})
+
+	// Rendering the instances table
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"INSTANCE NAME", "CELL IMAGE", "USED INSTANCE", "SHARED"})
+	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+	table.SetAlignment(3)
+	table.SetRowSeparator("-")
+	table.SetCenterSeparator(" ")
+	table.SetColumnSeparator(" ")
+	table.SetHeaderColor(
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold})
+	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{})
+	table.AppendBulk(dependencyData)
+	fmt.Printf("\n%s:\n\n", util.Bold("Instance to be tested"))
+	table.Render()
+
+	// Printing the dependency tree
+	fmt.Printf("\n%s:\n\n", util.Bold("Dependency Tree to be Used"))
+	var printDependencyTree func(subTree *dependencyTreeNode, nestingLevel int, ancestorBranchPrintRequirement []bool)
+	printDependencyTree = func(subTree *dependencyTreeNode, nestingLevel int, ancestorBranchPrintRequirement []bool) {
+		var index = 0
+		for alias, dependency := range subTree.Dependencies {
+			// Adding the dependency tree visualization content
+			for j := 0; j < nestingLevel; j++ {
+				if ancestorBranchPrintRequirement[j] {
+					fmt.Print("   │ ")
+				} else {
+					fmt.Print("     ")
+				}
+			}
+			if index == len(subTree.Dependencies)-1 {
+				fmt.Print("   └")
+			} else {
+				fmt.Print("   ├")
+			}
+			fmt.Printf("── %s: %s\n", util.Bold(alias), dependency.Instance)
+
+			// Traversing the dependency tree
+			if !dependency.IsRunning {
+				printDependencyTree(dependency, nestingLevel+1,
+					append(ancestorBranchPrintRequirement, index != len(subTree.Dependencies)-1))
+			}
+			index++
+		}
+	}
+	if len(tree.Dependencies) > 0 {
+		fmt.Printf(" %s\n", util.Bold(tree.Instance))
+		printDependencyTree(tree, 0, []bool{})
+	} else {
+		fmt.Printf(" %s\n", util.Bold("No Dependencies"))
+	}
+	fmt.Println()
+
+	if !assumeYes {
+		fmt.Printf("%s Do you wish to continue with testing above Cell instances (Y/n)? ", util.YellowBold("?"))
+		reader := bufio.NewReader(os.Stdin)
+		confirmation, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		if strings.ToLower(strings.TrimSpace(confirmation)) == "n" {
+			return fmt.Errorf("Cell testing aborted")
+		}
+	}
+	fmt.Println()
+	return nil
 }
 
 func startTestCellInstance(imageDir string, instanceName string, runningNode *dependencyTreeNode,
