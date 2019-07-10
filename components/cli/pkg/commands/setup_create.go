@@ -63,6 +63,7 @@ func createEnvironment() error {
 	default:
 		{
 			RunSetup()
+			return nil
 		}
 	}
 
