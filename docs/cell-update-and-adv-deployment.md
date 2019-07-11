@@ -9,8 +9,10 @@ This README includes,
 - [Canary Deployment of Cell Instances](#bluegreen-and-canary-deployment-of-cell-instances)
 
 ## Updating Cell Components
-Components included in a running cell instance can be updated by this method. This will terminate the components one-by-one and apply changes to each component, and eventually all the components of the particuar cell instance will be updated. 
-This updating mechanism only considers changes done to docker images which are encapsulated in components. This is an in-place update mechanism.
+Components included in a running cell instance can be updated by this method. This will terminate the components one-by-one and apply changes to each component, and eventually all the components of the particuar cell instance will be updated. This is an in-place update mechanism.
+
+#### Note:
+__This updating mechanism only considers changes done to docker images which are encapsulated in components.__
  
 Let us assume, there is a cell `pet-be` running in the current runtime, created from the cell image `wso2cellery/pet-be-cell:1.0.0`. 
 And now, some changes are made to the application source and hence the users will have to update the running instance with those changes.
