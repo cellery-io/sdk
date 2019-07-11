@@ -452,6 +452,11 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		cmd := &exec.Cmd{}
 		debugMode := strconv.FormatBool(debug)
 		if exePath != "" {
+			currentDir, err := os.Getwd()
+			if err != nil {
+				util.ExitWithErrorMessage("Error in determining working directory", err)
+			}
+			os.Mkdir(currentDir+string(os.PathSeparator)+"logs", 0777)
 			cmd = exec.Command(exePath+"ballerina", cmdArgs...)
 		} else {
 			currentDir, err := os.Getwd()
