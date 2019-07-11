@@ -308,6 +308,26 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
 }
 ```
 
+##### Getting Host and Port from a component
+
+Sometimes you may need to pass one component's host and port as an environment variable to another component for intra-cell 
+communication. For this, you can use `cellery:getHost(<component>)`  and `cellery:getPort(<component>)` functions.
+
+```ballerina
+    cellery:Component myComponent = {
+        name: "comp1",
+        ...
+        envVars: {
+            COMP2_ADDRESS: {
+                value: cellery:getHost(comp2) + ":" + cellery:getPort(comp2)
+            },
+        },
+        ...
+    };
+```
+
+
+
 #### Resources
 Cellery allows to specify how much CPU and memory (RAM) each component needs. Resources can be specified as requests and limits. 
 When component have resource requests specified, the scheduler can make better decisions about which nodes to place component on. 
