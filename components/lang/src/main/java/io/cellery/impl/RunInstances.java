@@ -81,7 +81,7 @@ public class RunInstances extends BlockingNativeCallableUnit {
                 + ":" + nameStruct.get(VERSION);
 
         AtomicLong runCount = new AtomicLong(0L);
-        if (!output.contains(nameStruct.get(INSTANCE_NAME).toString())) {
+        if (!output.contains(nameStruct.get(INSTANCE_NAME).toString() + " ")) {
             CelleryUtils.printInfo(nameStruct.get(INSTANCE_NAME).toString() + " instance not found.");
             BMap<String, BValue> bmap = BLangConnectorSPIUtil.createBStruct(ctx,
                     CelleryConstants.CELLERY_PACKAGE,
