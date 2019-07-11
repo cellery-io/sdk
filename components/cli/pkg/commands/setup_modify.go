@@ -68,7 +68,8 @@ func modifyRuntime() {
 	var err error
 	const done = "DONE"
 	const back = "BACK"
-	value := getPromptValue([]string{apim, autoscaling, observability, done, back}, "Select a runtime component")
+	value := getPromptValue([]string{apim, autoscaling, observability, done, back}, "Modify system components "+
+		"and select DONE to apply the changes")
 	switch value {
 	case apim:
 		{
@@ -142,13 +143,14 @@ func modifyRuntime() {
 }
 
 func modifyAutoScalingPolicy() {
+	var label = "Select system components to modify"
 	var value = ""
 	var err error
 	const back = "BACK"
 	if runtime.IsGcpRuntime() {
-		value = getPromptValue([]string{knative, back}, "Select a runtime component")
+		value = getPromptValue([]string{knative, back}, label)
 	} else {
-		value = getPromptValue([]string{knative, hpa, back}, "Select a runtime component")
+		value = getPromptValue([]string{knative, hpa, back}, label)
 	}
 	switch value {
 	case knative:
