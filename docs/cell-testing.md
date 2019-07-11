@@ -61,5 +61,5 @@ new instances with the provided name will be started, and those will be terminat
 - [Pet store sample test](https://github.com/wso2-cellery/samples/blob/master/docs/pet-store/test-be-cell.md) - takes through the sample cellery test.
 - [Developing and runing a Cell](writing-a-cell.md) - step by step explanation on how you could define your own cells.
 - [How to code cells?](cellery-syntax.md) - explains how Cellery cells are written.
-- [Update cells](cell-update-and-adv-deployment.md) - update a running cell instance using a new cell version.
+- [Cell update and advanced deployments](cell-update-and-adv-deployment.md) - update components of running cell instance using a new cell image and create advanced deployments.
 - [Observe cells](cellery-observability.md) - provides the runtime insight of cells and components.

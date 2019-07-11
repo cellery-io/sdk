@@ -20,9 +20,8 @@ zero scaling is powered by [Knative](https://knative.dev/v0.6-docs/). By default
 and zero scaling disabled in the runtime, and you can enable it by [modify commands](setup/modify-setup.md#enabledisable-autoscaling). 
 Find more details on scaling up/down cells [here.](cell-scaling.md)
 
-## Updating cells
-Cells are immutable units, and hence the updates are performed on cell instances not on the component alone. A cell 
-instance can be rolling updated to update the components inside the cell, and this is a viable operation when the API of the cell is unchanged. 
-Further, as advanced deployment options, Cellery supports both blue/green and canary deployment options. In that case, a new cell instance with updated 
-version will be spawned along with the old cell instance, and the traffic will be routed to completely or partially among them. 
-Find more details on updating cells [here.](cell-update-and-adv-deployment.md)
+## Updating cell components and advanced deployments
+Cell instances are only allowed to be updated restrictively. Its possible to update components of cell instances, and this is a viable operation when there are no breaking changes to the components. 
+Further, as advanced deployment methods, Cellery supports both blue-green and canary deployment options. In that case, a new cell instance with updated 
+version will be spawned along with the old cell instance, and the traffic can be routed to completely or partially to the new instance. 
+Find more details on updating cell components and advanced deployment patterns [here.](cell-update-and-adv-deployment.md)
