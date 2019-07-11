@@ -47,8 +47,13 @@ func deleteHpa(artifactsPath string) error {
 }
 
 func IsHpaEnabled() (bool, error) {
+	var err error
 	enabled := true
-	_, err := kubectl.GetDeployment("kube-system", "metrics-server")
+	if IsGcpRuntime() {
+		_, err = kubectl.GetDeployment("kube-system", "metrics-server-v0.3.1")
+	} else {
+		_, err = kubectl.GetDeployment("kube-system", "metrics-server")
+	}
 	if err != nil {
 		if strings.Contains(err.Error(), "No resources found") ||
 			strings.Contains(err.Error(), "not found") {
