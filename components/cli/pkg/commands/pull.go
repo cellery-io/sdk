@@ -74,21 +74,18 @@ func RunPull(cellImage string, isSilent bool, username string, password string) 
 	if isCredentialsPresent {
 		// Pulling the image using the saved credentials
 		err = pullImage(parsedCellImage, registryCredentials.Username, registryCredentials.Password)
-		if err != nil {
-			util.ExitWithErrorMessage("Failed to pull image", err)
-		}
 	} else {
 		// Pulling image without credentials
 		err = pullImage(parsedCellImage, "", "")
-		if err != nil {
-			// Need to check 404 since docker auth does not validates the image tag
-			if strings.Contains(err.Error(), "401") || strings.Contains(err.Error(), "404") {
-				util.ExitWithErrorMessage(fmt.Sprintf("Image %s/%s:%s not found in Registry %s",
-					parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion,
-					parsedCellImage.Registry), err)
-			} else {
-				util.ExitWithErrorMessage("Failed to pull image", err)
-			}
+	}
+	if err != nil {
+		// Need to check 404 since docker auth does not validates the image tag
+		if strings.Contains(err.Error(), "401") || strings.Contains(err.Error(), "404") {
+			util.ExitWithErrorMessage(fmt.Sprintf("Image %s/%s:%s not found in Registry %s",
+				parsedCellImage.Organization, parsedCellImage.ImageName, parsedCellImage.ImageVersion,
+				parsedCellImage.Registry), err)
+		} else {
+			util.ExitWithErrorMessage("Failed to pull image", err)
 		}
 	}
 	if !isSilent {
