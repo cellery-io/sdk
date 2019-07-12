@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -1030,13 +1031,15 @@ func OpenBrowser(url string) error {
 		cmd.Stderr = os.Stderr
 		err := cmd.Start()
 		if err != nil {
-			fmt.Println("Failed to open browser: " + err.Error())
+			log.Printf("Failed to open browser due to error %v", err)
+			return fmt.Errorf("Failed to open browser: " + err.Error())
 		}
 		err = cmd.Wait()
 		if err != nil {
-			fmt.Println("Failed to open browser: " + err.Error())
+			log.Printf("Failed to wait for open browser command to finish due to error %v", err)
+			return fmt.Errorf("Failed to wait for open browser command to finish: " + err.Error())
 		}
-		return err
+		return nil
 	} else {
 		return errors.New("unsupported platform")
 	}
