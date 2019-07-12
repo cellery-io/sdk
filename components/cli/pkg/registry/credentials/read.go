@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -43,6 +44,7 @@ const callBackUrl = "http://localhost:%d" + callBackUrlContext
 
 // FromBrowser requests the credentials from the user
 func FromBrowser(username string, isAuthorized chan bool, done chan bool) (string, string, error) {
+	log.Printf("Requesting credentials through browser based login flow")
 	conf := config.LoadConfig()
 	timeout := make(chan bool)
 	authCode := make(chan string)
@@ -74,13 +76,16 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 			code = r.Form.Get("code")
 			ping := r.Form.Get("ping")
 			if ping == "true" {
+				log.Printf("Received ping request")
 				w.Header().Set("Access-Control-Allow-Origin", conf.Hub.Url)
 				w.Header().Set("Access-Control-Allow-Methods", http.MethodGet)
 				w.WriteHeader(http.StatusOK)
-			}
-			if code != "" {
+			} else if code != "" {
+				log.Printf("Received auth code request")
 				authCode <- code
+				log.Printf("Waiting for isAuthorized channel to see if the authorization was successful")
 				authorized := <-isAuthorized
+				log.Printf("Ping to registry was successful. isAuthorized channel received: %t", authorized)
 				if authorized {
 					http.Redirect(w, r, conf.Hub.Url+"/sdk/auth-success", http.StatusSeeOther)
 				} else {
@@ -91,7 +96,11 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 					util.ExitWithErrorMessage("Error in casting the flusher", err)
 				}
 				flusher.Flush()
+				log.Printf("Writing to done channel to signal server task finish")
 				done <- true
+				log.Printf("Finished writing to done channel to signal server task finish")
+			} else {
+				log.Printf("Received invalid request to server: %s %s", r.Method, r.URL)
 			}
 		})
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -107,24 +116,32 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 		username, token, err := FromTerminal(username)
 		go func() {
 			// Mocking the channels used by the server to avoid hanging
+			log.Printf("Mocking channel calls for automatic terminal flow fallback from browser flow")
 			<-isAuthorized
 			done <- true
+			log.Printf("Finished mocking channel calls for automatic terminal flow fallback from browser flow")
 		}()
 		return username, token, err
 	}
 	// Setting up a timeout
 	go func() {
 		time.Sleep(15 * time.Minute)
+		log.Printf("Triggering timeout since 15 minutes had elapsed")
 		timeout <- true
 	}()
 	// Wait for a code, or timeout
+	log.Printf("Waiting for authCode or timeout channels")
 	select {
 	case <-authCode:
+		log.Printf("Auth code channel data received by main goroutine")
 	case <-timeout:
+		log.Printf("Timeout channel data received by main goroutine")
 		go func() {
 			// Mocking the channels used by the server to avoid hanging
+			log.Printf("Mocking channel calls for timeout")
 			<-isAuthorized
 			done <- true
+			log.Printf("Finished mocking channel calls for timeout")
 		}()
 		return "", "", errors.New("time out waiting for authentication")
 	}
@@ -136,11 +153,13 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 	if err != nil {
 		return "", "", fmt.Errorf("failed to identify user from received token: %v", err)
 	}
+	log.Printf("Successfully received Access Token through the browser login flow")
 	return username, accessToken, nil
 }
 
 // FromTerminal is to allow this login flow to work in headless mode
 func FromTerminal(username string) (string, string, error) {
+	log.Printf("Requesting credentials through terminal based login flow")
 	var password string
 	fmt.Println()
 	if username == "" {
@@ -179,6 +198,7 @@ func getUsernameAndTokenFromJwt(response string) (string, string, error) {
 	if !ok {
 		return "", "", fmt.Errorf("failed to read the user ID: %v", err)
 	}
+	log.Printf("Extracted access token for subject: %s from token response", sub)
 	return sub, accessToken, nil
 }
 
@@ -196,6 +216,7 @@ func getTokenFromCode(code string, port int, conf *config.Conf) (string, error) 
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
 
+	log.Printf("Fetching token from IdP for auth code using request POST %s", tokenUrl)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to connect to Cellery Hub IdP: %v", err)
@@ -205,6 +226,7 @@ func getTokenFromCode(code string, port int, conf *config.Conf) (string, error) 
 	}()
 
 	respBody, err := ioutil.ReadAll(res.Body)
+	log.Printf("Received response for token request from IdP")
 	if err != nil {
 		return "", fmt.Errorf("failed to read the response body: %v", err)
 	}

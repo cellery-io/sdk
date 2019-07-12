@@ -107,15 +107,20 @@ func RunPush(cellImage string, username string, password string) {
 		err = pushImage(parsedCellImage, "", "")
 		if err != nil {
 			if strings.Contains(err.Error(), "401") {
+				log.Printf("Unauthorized to push Cell image. Trying to login")
 				// Requesting the credentials since server responded with an Unauthorized status code
 				var isAuthorized chan bool
 				var done chan bool
 				finalizeChannelCalls := func(isAuthSuccessful bool) {
 					if isAuthorized != nil {
+						log.Printf("Writing authorized status: %t to channel from main goroutine", isAuthorized)
 						isAuthorized <- isAuthSuccessful
+						log.Printf("Finished writing authorized status: %t to channel from main goroutine", isAuthorized)
 					}
 					if done != nil {
+						log.Printf("Reading done channel from main goroutine to wait for server task finish")
 						<-done
+						log.Printf("Finished reading done channel from main goroutine")
 					}
 				}
 				if strings.HasSuffix(parsedCellImage.Registry, constants.CENTRAL_REGISTRY_HOST) {
@@ -141,6 +146,7 @@ func RunPush(cellImage string, username string, password string) {
 				pushDockerImages(cellImageMetadata.DockerImages)
 
 				if credManager != nil {
+					log.Printf("Storing credentials in Credentials Manager")
 					err = credManager.StoreCredentials(registryCredentials)
 					if err == nil {
 						fmt.Printf("\n%s Saved Credentials for %s Registry", util.GreenBold("\U00002714"),
@@ -162,6 +168,7 @@ func RunPush(cellImage string, username string, password string) {
 }
 
 func pushDockerImages(dockerImages []string) {
+	log.Printf("Pushing docker images [%s]", strings.Join(dockerImages, ", "))
 	for _, elem := range dockerImages {
 		spinner := util.StartNewSpinner("Pushing Docker image " + util.Bold(elem))
 		cmd := exec.Command("docker", "push", elem)
@@ -198,6 +205,8 @@ func pushDockerImages(dockerImages []string) {
 }
 
 func pushImage(parsedCellImage *util.CellImage, username string, password string) error {
+	log.Printf("Pushing image %s/%s:%s to registry %s", parsedCellImage.Organization,
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.Registry)
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
 	cellImage := parsedCellImage.Registry + "/" + repository + ":" + parsedCellImage.ImageVersion
 
@@ -273,11 +282,11 @@ func pushImage(parsedCellImage *util.CellImage, username string, password string
 			spinner.Stop(false)
 			return err
 		}
-		log.Printf("Successfully uploaded %s cell image", cellImage)
+		log.Printf("Successfully uploaded %s cell image to registry %s", cellImage, parsedCellImage.Registry)
 	} else {
 		spinner.SetNewAction(fmt.Sprintf("Using already existing image %s in %s Registry", util.Bold(imageName),
 			util.Bold(parsedCellImage.Registry)))
-		log.Printf("%s cell image already exists", cellImage)
+		log.Printf("%s cell image already exists in registry %s", cellImage, parsedCellImage.Registry)
 	}
 
 	// Creating a Docker manifest to be uploaded
