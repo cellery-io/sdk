@@ -1026,23 +1026,16 @@ func OpenBrowser(url string) error {
 		cmd = exec.Command("cmd", "/c", "start", r.Replace(url))
 	}
 	if cmd != nil {
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		err := cmd.Start()
 		if err != nil {
-			errStr := string(stderr.Bytes())
-			fmt.Printf("%s\n", errStr)
 			fmt.Println("Failed to open browser: " + err.Error())
 		}
 		err = cmd.Wait()
 		if err != nil {
-			errStr := string(stderr.Bytes())
-			fmt.Printf("\x1b[31;1m%s\x1b[0m", errStr)
 			fmt.Println("Failed to open browser: " + err.Error())
 		}
-		outStr := string(stdout.Bytes())
-		fmt.Println(outStr)
 		return err
 	} else {
 		return errors.New("unsupported platform")
