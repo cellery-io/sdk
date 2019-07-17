@@ -21,7 +21,7 @@
 #echo "Post installation process started"
 PRODUCT_HOME=/Library/Cellery
 BALLERINA_RUNTIME="ballerina-0.991.0"
-CELLERY_VERSION="0.3.0"
+CELLERY_VERSION="0.4.0-SNAPSHOT"
 
 # Change permissions in home directory
 cd ${PRODUCT_HOME}

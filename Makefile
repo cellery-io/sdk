@@ -37,7 +37,7 @@ DISTRIBUTION_K8S_ARTIFACT := k8s-artefacts.tar.gz
 
 MAIN_PACKAGES := cli
 
-VERSION ?= $(GIT_REVISION)
+VERSION ?= 0.4.0-SNAPSHOT
 INSTALLER_VERSION ?= $(GIT_REVISION)
 
 # Go build time flags
@@ -47,7 +47,7 @@ GO_LDFLAGS += -X $(PROJECT_PKG)/components/cli/pkg/version.buildTime=$(shell dat
 
 # Docker info
 DOCKER_REPO ?= wso2cellery
-DOCKER_IMAGE_TAG ?= $(VERSION)
+DOCKER_IMAGE_TAG ?= 0.4.0-SNAPSHOT
 
 all: code.format build-lang build-docs-view build-cli
 
