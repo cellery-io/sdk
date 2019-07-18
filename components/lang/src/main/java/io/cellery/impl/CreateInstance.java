@@ -66,6 +66,7 @@ import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.POD_RESOURCES;
 import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.YAML;
+import static io.cellery.CelleryUtils.printDebug;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.processProbes;
@@ -216,6 +217,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void updateEnvVar(String instanceName, ServiceTemplate serviceTemplate, Component updatedComponent,
                               Map<?, ?> dependencyInfo) {
+        printDebug("[" + instanceName + "] cell instance [" + updatedComponent.getName() + "] component environment " +
+                "variables:");
         Map<String, String> updatedParams = updatedComponent.getEnvVars();
         // Override values with updated values
         serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
@@ -239,6 +242,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     envVar.setValue(value.replace(aliasPlaceHolder, depInstanceName));
                 }
             });
+            printDebug("\t" + envVar.getName() + "=" + envVar.getValue());
         });
     }
 
