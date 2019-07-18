@@ -64,7 +64,7 @@ func RunExtractResources(cellImage string, outputPath string) {
 
 	err = util.Unzip(imageLocation, tempPath)
 	if err != nil {
-		panic(err)
+		util.ExitWithErrorMessage("Error extracting zip file", err)
 	}
 
 	// Copying the image resources to the provided output directory

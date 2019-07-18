@@ -1054,12 +1054,12 @@ func ReadCellImageYaml(cellImage string) []byte {
 	tmpPath := filepath.Join(UserHomeDir(), constants.CELLERY_HOME, "tmp", "imageExtracted")
 	err = CleanOrCreateDir(tmpPath)
 	if err != nil {
-		panic(err)
+		ExitWithErrorMessage("Error creating directory", err)
 	}
 
 	err = Unzip(cellImageZip, tmpPath)
 	if err != nil {
-		panic(err)
+		ExitWithErrorMessage("Error extracting zip file", err)
 	}
 	if err != nil {
 		ExitWithErrorMessage("Error occurred while extracting cell image", err)
