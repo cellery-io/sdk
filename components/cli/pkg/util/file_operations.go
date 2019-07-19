@@ -280,7 +280,7 @@ func ExtractTarGzFile(extractTo, archive_name string) error {
 	cmd := exec.Command("tar", "-zxvf", archive_name)
 	cmd.Dir = extractTo
 
-	ExecuteCommand(cmd, "Error occured in extracting file :"+archive_name)
+	ExecuteCommand(cmd)
 
 	return nil
 }

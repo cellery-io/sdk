@@ -150,22 +150,19 @@ func installVM(isComplete bool) error {
 	vmPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.VM_FILE_NAME)
 	spinner := util.StartNewSpinner("Installing Cellery Runtime")
 
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "hostonlyif", "create"),
-		"Error Installing VM")
+	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "hostonlyif", "create"))
 	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "hostonlyif", "ipconfig", "vboxnet0",
-		"--ip", "192.168.56.1"), "Error Installing VM")
+		"--ip", "192.168.56.1"))
 
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "import", vmPath), "Error Installing VM")
+	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "import", vmPath))
 	cores := "2"
 	if isComplete {
 		cores = "4"
 	}
 	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "modifyvm", constants.VM_NAME,
 		"--ostype", "Ubuntu_64", "--cpus", cores, "--memory", "8192", "--natpf1", "guestkube,tcp,,6443,,6443", "--natpf1",
-		"guestssh,tcp,,2222,,22", "--natpf1", "guesthttps,tcp,,443,,443", "--natpf1", "guesthttp,tcp,,80,,80"),
-		"Error Installing VM")
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"),
-		"Error Installing VM")
+		"guestssh,tcp,,2222,,22", "--natpf1", "guesthttps,tcp,,443,,443", "--natpf1", "guesthttp,tcp,,80,,80"))
+	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"))
 
 	spinner.Stop(true)
 	return nil

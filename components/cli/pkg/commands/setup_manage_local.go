@@ -58,11 +58,11 @@ func manageLocal() error {
 			defer func() {
 				spinner.Stop(true)
 			}()
-			util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "controlvm", constants.VM_NAME, "acpipowerbutton"), "Error stopping VM")
+			util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "controlvm", constants.VM_NAME, "acpipowerbutton"))
 		}
 	case constants.CELLERY_MANAGE_START:
 		{
-			util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"), "Error starting VM")
+			util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"))
 			runtime.WaitForRuntime(false, false)
 		}
 	case constants.CELLERY_MANAGE_CLEANUP:
@@ -102,12 +102,12 @@ func CleanupLocal() error {
 		spinner.Stop(true)
 	}()
 	if isVmRuning() {
-		util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "controlvm", constants.VM_NAME, "acpipowerbutton"), "Error stopping VM")
+		util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "controlvm", constants.VM_NAME, "acpipowerbutton"))
 	}
 	for isVmRuning() {
 		time.Sleep(2 * time.Second)
 	}
-	err := util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "unregistervm", constants.VM_NAME, "--delete"), "Error deleting VM")
+	err := util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "unregistervm", constants.VM_NAME, "--delete"))
 	if err != nil {
 		return err
 	}
