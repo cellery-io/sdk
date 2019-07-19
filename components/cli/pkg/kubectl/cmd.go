@@ -22,11 +22,16 @@ package kubectl
 import (
 	"bufio"
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"syscall"
 )
+
+var tmpFile = filepath.Join(userHomeDir(), constants.CELLERY_HOME, constants.TMP, "./out.txt")
 
 func getCommandOutput(cmd *exec.Cmd) (string, error) {
 	exitCode := 0
@@ -67,7 +72,7 @@ func getCommandOutput(cmd *exec.Cmd) (string, error) {
 func getCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
 	exitCode := 0
 	var output string
-	outfile, err := os.Create("./out.txt")
+	outfile, err := os.Create(tmpFile)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +101,19 @@ func getCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
 		}
 		return nil, err
 	}
-	out, err := ioutil.ReadFile("./out.txt")
-	os.Remove("./out.txt")
+	out, err := ioutil.ReadFile(tmpFile)
+	os.Remove(tmpFile)
 	return out, err
+}
+
+// Cannot use userHomeDir function in util package since it creates a cyclic dependency
+func userHomeDir() string {
+	if runtime.GOOS == "windows" {
+		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+		if home == "" {
+			home = os.Getenv("USERPROFILE")
+		}
+		return home
+	}
+	return os.Getenv("HOME")
 }
