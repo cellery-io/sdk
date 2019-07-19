@@ -24,6 +24,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/manifoldco/promptui"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -105,7 +107,7 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 		}
 	}
 	installVM(true)
-	util.WaitForRuntime(false, false)
+	runtime.WaitForRuntime(false, false)
 }
 
 func createLocal() error {

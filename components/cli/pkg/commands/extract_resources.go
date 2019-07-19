@@ -25,13 +25,15 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // RunExtractResources extracts the cell image zip file and copies the resources folder to the provided path
 func RunExtractResources(cellImage string, outputPath string) {
-	parsedCellImage, err := util.ParseImageTag(cellImage)
+	parsedCellImage, err := image.ParseImageTag(cellImage)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}

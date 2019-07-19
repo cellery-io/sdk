@@ -21,10 +21,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
+	"github.com/spf13/cobra"
 )
 
 // newListFilesCommand creates a command which can be invoked to list the files (directory structure) of a cell images.
@@ -38,7 +38,7 @@ func newInspectCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = util.ValidateImageTag(args[0])
+			err = image.ValidateImageTag(args[0])
 			if err != nil {
 				return fmt.Errorf("expects <organization>/<cell-image>:<version> as cell-image, received %s", args[0])
 			}

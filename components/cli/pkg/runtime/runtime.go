@@ -377,3 +377,55 @@ func GetInstancesNames() ([]string, error) {
 	}
 	return instances, nil
 }
+
+func WaitForRuntime(checkKnative, hpaEnabled bool) {
+	spinner := util.StartNewSpinner("Checking cluster status...")
+	err := kubectl.WaitForCluster(time.Hour)
+	if err != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error while checking cluster status", err)
+	}
+	spinner.SetNewAction("Cluster status...OK")
+	spinner.Stop(true)
+
+	spinner = util.StartNewSpinner("Checking runtime status (Istio)...")
+	err = kubectl.WaitForDeployments("istio-system", time.Minute*15)
+	if err != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error while checking runtime status (Istio)", err)
+	}
+	spinner.SetNewAction("Runtime status (Istio)...OK")
+	spinner.Stop(true)
+
+	if checkKnative {
+		spinner = util.StartNewSpinner("Checking runtime status (Knative Serving)...")
+		err = kubectl.WaitForDeployments("knative-serving", time.Minute*15)
+		if err != nil {
+			spinner.Stop(false)
+			util.ExitWithErrorMessage("Error while checking runtime status (Knative Serving)", err)
+		}
+		spinner.SetNewAction("Runtime status (Knative Serving)...OK")
+		spinner.Stop(true)
+	}
+
+	if hpaEnabled {
+		spinner = util.StartNewSpinner("Checking runtime status (Metrics server)...")
+		err = kubectl.WaitForDeployment("available", 900, "metrics-server", "kube-system")
+		if err != nil {
+			spinner.Stop(false)
+			util.ExitWithErrorMessage("Error while checking runtime status (Metrics server)", err)
+		}
+		spinner.SetNewAction("Runtime status (Metrics server)...OK")
+		spinner.Stop(true)
+	}
+
+	spinner = util.StartNewSpinner("Checking runtime status (Cellery)...")
+	err = kubectl.WaitForDeployments("cellery-system", time.Minute*15)
+	if err != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error while checking runtime status (Cellery)", err)
+	}
+	spinner.SetNewAction("Runtime status (Cellery)...OK")
+	spinner.Stop(true)
+
+}

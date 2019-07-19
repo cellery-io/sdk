@@ -21,10 +21,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+
+	"github.com/spf13/cobra"
 )
 
 // newExtractResourcesCommand creates a command which can be invoked to extract the cell
@@ -40,7 +41,7 @@ func newExtractResourcesCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = util.ValidateImageTag(args[0])
+			err = image.ValidateImageTag(args[0])
 			if err != nil {
 				return fmt.Errorf("expects <organization>/<cell-image>:<version> as cell-image, received %s", args[0])
 			}

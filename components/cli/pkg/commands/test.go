@@ -24,6 +24,8 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
@@ -49,7 +51,7 @@ import (
 func RunTest(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string, assumeYes bool, debug bool) {
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
-	parsedCellImage, err := util.ParseImageTag(cellImageTag)
+	parsedCellImage, err := image.ParseImageTag(cellImageTag)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
@@ -74,7 +76,7 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while reading Cell Image metadata", err)
 	}
-	cellImageMetadata := &util.CellImageMetaData{}
+	cellImageMetadata := &image.CellImageMetaData{}
 	err = json.Unmarshal(metadataFileContent, cellImageMetadata)
 	if err != nil {
 		spinner.Stop(false)

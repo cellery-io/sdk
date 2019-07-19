@@ -25,6 +25,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+
 	"github.com/manifoldco/promptui"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -61,7 +63,7 @@ func manageLocal() error {
 	case constants.CELLERY_MANAGE_START:
 		{
 			util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"), "Error starting VM")
-			util.WaitForRuntime(false, false)
+			runtime.WaitForRuntime(false, false)
 		}
 	case constants.CELLERY_MANAGE_CLEANUP:
 		{

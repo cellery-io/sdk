@@ -22,11 +22,12 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newRunCommand() *cobra.Command {
@@ -44,7 +45,7 @@ func newRunCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = util.ValidateImageTagWithRegistry(args[0])
+			err = image.ValidateImageTagWithRegistry(args[0])
 			if err != nil {
 				return err
 			}

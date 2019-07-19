@@ -23,6 +23,8 @@ import (
 	"path"
 	"regexp"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -30,7 +32,7 @@ import (
 func RunDeleteImage(images []string, regex string, deleteAll bool) {
 	imagesInRepo := getImagesArray()
 	for _, imageInRepo := range imagesInRepo {
-		parsedCellImage, err := util.ParseImageTag(imageInRepo.name)
+		parsedCellImage, err := image.ParseImageTag(imageInRepo.name)
 		if err != nil {
 			util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 		}

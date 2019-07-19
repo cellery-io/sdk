@@ -29,7 +29,7 @@ import (
 )
 
 func ReadCellImageYaml(cellImage string) []byte {
-	parsedCellImage, err := util.ParseImageTag(cellImage)
+	parsedCellImage, err := ParseImageTag(cellImage)
 	cellImageZip := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 	// Create tmp directory

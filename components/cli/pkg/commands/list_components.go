@@ -24,6 +24,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/ghodss/yaml"
@@ -44,8 +46,8 @@ func RunListComponents(name string) {
 
 func getCellImageCompoents(cellImage string) []string {
 	var components []string
-	cellYamlContent := util.ReadCellImageYaml(cellImage)
-	cellImageContent := &util.Cell{}
+	cellYamlContent := image.ReadCellImageYaml(cellImage)
+	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)

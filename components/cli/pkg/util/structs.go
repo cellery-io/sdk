@@ -26,89 +26,6 @@ import (
 	"gopkg.in/cheggaaa/pb.v1"
 )
 
-type CellImage struct {
-	Registry     string
-	Organization string
-	ImageName    string
-	ImageVersion string
-}
-
-type Cell struct {
-	CellMetaData CellMetaData `json:"metadata"`
-	CellSpec     CellSpec     `json:"spec"`
-	CellStatus   CellStatus   `json:"status"`
-}
-
-type CellMetaData struct {
-	CreationTimestamp string          `json:"creationTimestamp"`
-	Annotations       CellAnnotations `json:"annotations"`
-	Name              string          `json:"name"`
-}
-
-type CellAnnotations struct {
-	Organization string `json:"mesh.cellery.io/cell-image-org"`
-	Name         string `json:"mesh.cellery.io/cell-image-name"`
-	Version      string `json:"mesh.cellery.io/cell-image-version"`
-}
-
-type CellSpec struct {
-	ComponentTemplates []ComponentTemplate `json:"servicesTemplates"`
-	GateWayTemplate    Gateway             `json:"gatewayTemplate"`
-}
-
-type ComponentTemplate struct {
-	Metadata ComponentTemplateMetadata `json:"metadata"`
-}
-
-type ComponentTemplateMetadata struct {
-	Name string `json:"name"`
-}
-
-type CellStatus struct {
-	Status       string `json:"status"`
-	Gateway      string `json:"gatewayHostname"`
-	ServiceCount int    `json:"serviceCount"`
-}
-
-type Gateway struct {
-	GatewaySpec GatewaySpec `json:"spec"`
-}
-
-type GatewaySpec struct {
-	HttpApis []GatewayHttpApi `json:"http"`
-	TcpApis  []GatewayTcpApi  `json:"tcp"`
-	GrpcApis []GatewayGrpcApi `json:"grpc"`
-}
-
-type GatewayHttpApi struct {
-	Backend     string              `json:"backend"`
-	Context     string              `json:"context"`
-	Definitions []GatewayDefinition `json:"definitions"`
-	Global      bool                `json:"global"`
-	Vhost       string              `json:"vhost"`
-}
-
-type GatewayTcpApi struct {
-	Backend     string              `json:"backend"`
-	Context     string              `json:"context"`
-	Definitions []GatewayDefinition `json:"definitions"`
-	Global      bool                `json:"global"`
-	Vhost       string              `json:"vhost"`
-}
-
-type GatewayGrpcApi struct {
-	Backend     string              `json:"backend"`
-	Context     string              `json:"context"`
-	Definitions []GatewayDefinition `json:"definitions"`
-	Global      bool                `json:"global"`
-	Vhost       string              `json:"vhost"`
-}
-
-type GatewayDefinition struct {
-	Method string `json:"method"`
-	Path   string `json:"path"`
-}
-
 type Spinner struct {
 	mux            sync.Mutex
 	core           *spin.Spinner
@@ -137,27 +54,6 @@ type GcpCore struct {
 type RegistryCredentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-}
-
-type CellImageName struct {
-	Organization string `json:"org"`
-	Name         string `json:"name"`
-	Version      string `json:"ver"`
-}
-
-type CellImageMetaData struct {
-	CellImageName
-	Labels              map[string]string             `json:"labels"`
-	DockerImages        []string                      `json:"dockerImages"`
-	BuildTimestamp      int64                         `json:"buildTimestamp"`
-	BuildCelleryVersion string                        `json:"buildCelleryVersion"`
-	Ingresses           []string                      `json:"ingresses"`
-	Components          []string                      `json:"components"`
-	Dependencies        map[string]*CellImageMetaData `json:"dependencies"`
-	ComponentDep        map[string][]string           `json:"componentDep"`
-	Exposed             []string                      `json:"exposed"`
-	ZeroScaling         bool                          `json:"zeroScaling"`
-	AutoScaling         bool                          `json:"autoScaling"`
 }
 
 type progressWriter struct {

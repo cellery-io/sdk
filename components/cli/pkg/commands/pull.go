@@ -39,7 +39,7 @@ import (
 // RunPull connects to the Cellery Registry and pulls the cell image and saves it in the local repository.
 // This also adds the relevant ballerina files to the ballerina repo directory.
 func RunPull(cellImage string, isSilent bool, username string, password string) {
-	parsedCellImage, err := util.ParseImageTag(cellImage)
+	parsedCellImage, err := image.ParseImageTag(cellImage)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
@@ -94,7 +94,7 @@ func RunPull(cellImage string, isSilent bool, username string, password string) 
 	}
 }
 
-func pullImage(parsedCellImage *util.CellImage, username string, password string) error {
+func pullImage(parsedCellImage *image.CellImage, username string, password string) error {
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
 
 	spinner := util.StartNewSpinner("Connecting to " + util.Bold(parsedCellImage.Registry))

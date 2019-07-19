@@ -25,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/ghodss/yaml"
@@ -109,8 +111,8 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 }
 
 func displayCellImageApisTable(cellImageName string) {
-	cellYamlContent := util.ReadCellImageYaml(cellImageName)
-	cellImageContent := &util.Cell{}
+	cellYamlContent := image.ReadCellImageYaml(cellImageName)
+	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)

@@ -25,10 +25,11 @@ import (
 	"path/filepath"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func ReadMetaData(organization, project, version string) (*util.CellImageMetaData, error) {
+func ReadMetaData(organization, project, version string) (*image.CellImageMetaData, error) {
 	r, err := zip.OpenReader(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
 		organization, project, version, project+".zip"))
 	if err != nil {
@@ -44,7 +45,7 @@ func ReadMetaData(organization, project, version string) (*util.CellImageMetaDat
 		if err != nil {
 			return nil, err
 		}
-		meta := &util.CellImageMetaData{}
+		meta := &image.CellImageMetaData{}
 		err = json.NewDecoder(metaReader).Decode(meta)
 		if err != nil {
 			return nil, err

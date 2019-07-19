@@ -33,6 +33,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 
 	"github.com/docker/distribution/manifest"
@@ -48,7 +50,7 @@ import (
 // RunPush parses the cell image name to recognize the Cellery Registry (A Docker Registry), Organization and version
 // and pushes to the Cellery Registry
 func RunPush(cellImage string, username string, password string) {
-	parsedCellImage, err := util.ParseImageTag(cellImage)
+	parsedCellImage, err := image.ParseImageTag(cellImage)
 	//Read docker images from metadata.json
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImage))
 	imageDir, err := ExtractImage(parsedCellImage, false, spinner)
@@ -62,7 +64,7 @@ func RunPush(cellImage string, username string, password string) {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while reading Cell Image metadata", err)
 	}
-	cellImageMetadata := &util.CellImageMetaData{}
+	cellImageMetadata := &image.CellImageMetaData{}
 	err = json.Unmarshal(metadataFileContent, cellImageMetadata)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
@@ -204,7 +206,7 @@ func pushDockerImages(dockerImages []string) {
 	}
 }
 
-func pushImage(parsedCellImage *util.CellImage, username string, password string) error {
+func pushImage(parsedCellImage *image.CellImage, username string, password string) error {
 	log.Printf("Pushing image %s/%s:%s to registry %s", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.Registry)
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName

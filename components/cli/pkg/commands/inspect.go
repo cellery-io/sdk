@@ -27,13 +27,15 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // RunInspect extracts the cell image and lists the files in the cell image
 func RunInspect(cellImage string) {
-	parsedCellImage, err := util.ParseImageTag(cellImage)
+	parsedCellImage, err := image.ParseImageTag(cellImage)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}

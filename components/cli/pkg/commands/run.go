@@ -38,6 +38,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	celleryRuntime "github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -50,7 +51,7 @@ import (
 func RunRun(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string, assumeYes bool) {
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
-	parsedCellImage, err := util.ParseImageTag(cellImageTag)
+	parsedCellImage, err := image.ParseImageTag(cellImageTag)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
@@ -75,7 +76,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while reading Cell Image metadata", err)
 	}
-	cellImageMetadata := &util.CellImageMetaData{}
+	cellImageMetadata := &image.CellImageMetaData{}
 	err = json.Unmarshal(metadataFileContent, cellImageMetadata)
 	if err != nil {
 		spinner.Stop(false)
@@ -350,7 +351,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 }
 
 // validateDependencyTree validates the dependency tree of the root instance
-func validateDependencyLinks(rootInstance string, rootMetaData *util.CellImageMetaData,
+func validateDependencyLinks(rootInstance string, rootMetaData *image.CellImageMetaData,
 	dependencyLinks []*dependencyAliasLink) error {
 	// Validating the links provided by the user
 	for _, link := range dependencyLinks {
@@ -359,21 +360,21 @@ func validateDependencyLinks(rootInstance string, rootMetaData *util.CellImageMe
 			// If the duplicate aliases have matching Cell Images, then they can share the instance.
 			// However, if duplicate aliases are present without parent instances and referring to different
 			// Cell Images, the links should be more specific using parent instance
-			var validateSubtree func(metadata *util.CellImageMetaData) error
+			var validateSubtree func(metadata *image.CellImageMetaData) error
 			// cellImage is used to store the Cell image which is referred to by this link. This is used to validate
 			// whether the Cell images of the duplicated aliases (without the parent instance) match.
-			var cellImage *util.CellImage
+			var cellImage *image.CellImage
 			// This is used to store the instances which were shared due to the user providing a non specific link
 			// (without the parent instance) which is duplicated in the dependency tree. A warning is shown later to
 			// the user about these instances since this could be a mistake
 			userSpecifiedSharedInstances := map[string]string{}
-			validateSubtree = func(metadata *util.CellImageMetaData) error {
+			validateSubtree = func(metadata *image.CellImageMetaData) error {
 				for alias, dependencyMetadata := range metadata.Dependencies {
 					if alias == link.DependencyAlias {
 						if cellImage == nil {
 							// This is the first time the alias was found in the dependency tree.
 							// (Since the Cell Image was not set)
-							cellImage = &util.CellImage{
+							cellImage = &image.CellImage{
 								Organization: dependencyMetadata.Organization,
 								ImageName:    dependencyMetadata.Name,
 								ImageVersion: dependencyMetadata.Version,
@@ -440,7 +441,7 @@ func validateDependencyLinks(rootInstance string, rootMetaData *util.CellImageMe
 }
 
 // generateDependencyOrder reads the metadata and generates a proper start up order for dependencies
-func generateDependencyTree(rootInstance string, rootMetaData *util.CellImageMetaData,
+func generateDependencyTree(rootInstance string, rootMetaData *image.CellImageMetaData,
 	dependencyLinks []*dependencyAliasLink, shareDependencies bool) (*dependencyTreeNode, error) {
 	// aliasToTreeNodeMap is used to keep track of the already created user provided tree nodes.
 	// The key of the is the alias and the value is the tree node.
@@ -457,8 +458,8 @@ func generateDependencyTree(rootInstance string, rootMetaData *util.CellImageMet
 
 	// traverseDependencies traverses through the dependency tree and populates the startup order considering the
 	// relationship between dependencies
-	var traverseDependencies func(instance string, metaData *util.CellImageMetaData, treeNode *dependencyTreeNode) error
-	traverseDependencies = func(instance string, metaData *util.CellImageMetaData, treeNode *dependencyTreeNode) error {
+	var traverseDependencies func(instance string, metaData *image.CellImageMetaData, treeNode *dependencyTreeNode) error
+	traverseDependencies = func(instance string, metaData *image.CellImageMetaData, treeNode *dependencyTreeNode) error {
 		for alias, dependencyMetaData := range metaData.Dependencies {
 			var dependencyNode *dependencyTreeNode
 
@@ -772,7 +773,7 @@ func startDependencyTree(registry string, tree *dependencyTreeNode, spinner *uti
 				defer dependencyNode.Mux.Unlock()
 				if !dependencyNode.IsRunning { // This level of checking is done to make sure the condition is met
 					startDependencyTree(registry, dependencyNode, spinner, instanceEnvVars)
-					cellImage := &util.CellImage{
+					cellImage := &image.CellImage{
 						Registry:     registry,
 						Organization: dependencyNode.MetaData.Organization,
 						ImageName:    dependencyNode.MetaData.Name,
@@ -1014,7 +1015,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 }
 
 // generateRandomInstanceName generates a random instance name with a UUID as the suffix
-func generateRandomInstanceName(dependencyMetaData *util.CellImageMetaData) (string, error) {
+func generateRandomInstanceName(dependencyMetaData *image.CellImageMetaData) (string, error) {
 	u := make([]byte, 4)
 	_, err := rand.Read(u)
 	if err != nil {
@@ -1045,7 +1046,7 @@ func getYamlFiles(path string) ([]string, error) {
 
 // extractImage extracts the image into a temporary directory and returns the path.
 // Cleaning the path after finishing your work is your responsibility.
-func ExtractImage(cellImage *util.CellImage, pullIfNotPresent bool, spinner *util.Spinner) (string, error) {
+func ExtractImage(cellImage *image.CellImage, pullIfNotPresent bool, spinner *util.Spinner) (string, error) {
 	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", cellImage.Organization,
 		cellImage.ImageName, cellImage.ImageVersion)
 	zipLocation := filepath.Join(repoLocation, cellImage.ImageName+constants.CELL_IMAGE_EXT)
@@ -1108,7 +1109,7 @@ type environmentVariable struct {
 type dependencyTreeNode struct {
 	Mux          sync.Mutex
 	Instance     string
-	MetaData     *util.CellImageMetaData
+	MetaData     *image.CellImageMetaData
 	Dependencies map[string]*dependencyTreeNode
 	IsShared     bool
 	IsRunning    bool

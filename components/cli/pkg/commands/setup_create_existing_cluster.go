@@ -103,7 +103,7 @@ func RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBa
 		isLoadBalancerIngressMode, nfs, db); err != nil {
 		util.ExitWithErrorMessage("Failed to deploy cellery runtime", err)
 	}
-	util.WaitForRuntime(false, false)
+	runtime.WaitForRuntime(false, false)
 }
 
 func getPersistentVolumeDataWithNfs() (runtime.Nfs, runtime.MysqlDb, error) {

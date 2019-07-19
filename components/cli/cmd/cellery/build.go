@@ -21,6 +21,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
@@ -41,7 +43,7 @@ func newBuildCommand() *cobra.Command {
 			if err != nil || !isProperFile {
 				return fmt.Errorf("expects a proper file as the cell-file, received %s", args[0])
 			}
-			err = util.ValidateImageTag(args[1])
+			err = image.ValidateImageTag(args[1])
 			if err != nil {
 				return err
 			}

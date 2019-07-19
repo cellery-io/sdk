@@ -34,6 +34,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/ghodss/yaml"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -50,7 +52,7 @@ func RunBuild(tag string, fileName string) {
 			errors.New(fmt.Sprintf("file '%s' does not exist", util.Bold(fileName))))
 	}
 
-	parsedCellImage, err := util.ParseImageTag(tag)
+	parsedCellImage, err := image.ParseImageTag(tag)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
@@ -71,7 +73,7 @@ func RunBuild(tag string, fileName string) {
 	}
 	_ = os.RemoveAll(targetDir)
 
-	var imageName = &util.CellImageName{
+	var imageName = &image.CellImageName{
 		Organization: parsedCellImage.Organization,
 		Name:         parsedCellImage.ImageName,
 		Version:      parsedCellImage.ImageVersion,
@@ -296,7 +298,7 @@ func RunBuild(tag string, fileName string) {
 }
 
 // generateMetaData generates the metadata file for cellery
-func generateMetaData(cellImage *util.CellImage, targetDir string, spinner *util.Spinner) {
+func generateMetaData(cellImage *image.CellImage, targetDir string, spinner *util.Spinner) {
 	errorMessage := "Error occurred while generating metadata"
 
 	metadataFile := filepath.Join(targetDir, "cellery", "metadata.json")
@@ -305,14 +307,14 @@ func generateMetaData(cellImage *util.CellImage, targetDir string, spinner *util
 		util.ExitWithErrorMessage("Error occurred while reading metadata "+metadataFile, err)
 	}
 
-	metadata := &util.CellImageMetaData{
+	metadata := &image.CellImageMetaData{
 		Labels:              map[string]string{},
 		DockerImages:        []string{},
 		BuildTimestamp:      time.Now().Unix(),
 		BuildCelleryVersion: version.BuildVersion(),
 		Ingresses:           []string{},
 		Components:          []string{},
-		Dependencies:        map[string]*util.CellImageMetaData{},
+		Dependencies:        map[string]*image.CellImageMetaData{},
 		ComponentDep:        map[string][]string{},
 		Exposed:             []string{},
 		ZeroScaling:         false,
@@ -365,7 +367,7 @@ func generateMetaData(cellImage *util.CellImage, targetDir string, spinner *util
 			util.ExitWithErrorMessage(errorMessage+". metadata.json file not found for dependency: "+dependencyImage,
 				err)
 		}
-		dependencyMetadata := &util.CellImageMetaData{}
+		dependencyMetadata := &image.CellImageMetaData{}
 		err = json.Unmarshal(metadataJsonContent, dependencyMetadata)
 		if err != nil {
 			util.ExitWithErrorMessage(errorMessage, err)
@@ -384,7 +386,7 @@ func generateMetaData(cellImage *util.CellImage, targetDir string, spinner *util
 	if err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
-	k8sCell := &util.Cell{}
+	k8sCell := &image.Cell{}
 	err = yaml.Unmarshal(cellYamlContent, k8sCell)
 	if err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)

@@ -28,9 +28,9 @@ import (
 	"github.com/ghodss/yaml"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	img "github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	//"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 const k8sYamlSpec = "spec"
@@ -43,7 +43,7 @@ const k8sYamlImage = "image"
 func RunUpdateCellComponents(instance string, image string) error {
 	spinner := util.StartNewSpinner("Updating cell components")
 	// parse the new image
-	parsedCellImage, err := util.ParseImageTag(image)
+	parsedCellImage, err := img.ParseImageTag(image)
 	// Read image name from metadata.json
 	imageDir, err := ExtractImage(parsedCellImage, true, spinner)
 	if err != nil {
@@ -61,7 +61,7 @@ func RunUpdateCellComponents(instance string, image string) error {
 		spinner.Stop(false)
 		return err
 	}
-	cellImageMetadata := &util.CellImageMetaData{}
+	cellImageMetadata := &image.CellImageMetaData{}
 	err = json.Unmarshal(metadataFileContent, cellImageMetadata)
 	if err != nil {
 		spinner.Stop(false)

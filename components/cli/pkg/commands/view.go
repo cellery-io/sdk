@@ -26,6 +26,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -46,7 +48,7 @@ func RunView(cellImage string) {
 	}
 
 	// Finding Cell Image location
-	parsedCellImage, err := util.ParseImageTag(cellImage)
+	parsedCellImage, err := image.ParseImageTag(cellImage)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
