@@ -20,6 +20,7 @@
 package kubectl
 
 import (
+	"fmt"
 	"os/exec"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -33,8 +34,9 @@ func GetCellLogs(cellName string) (string, error) {
 		"--all-containers=true",
 	)
 	displayVerboseOutput(cmd)
-	out, err := printCommandOutput(cmd)
-	return out, err
+	out, err := getCommandOutputFromTextFile(cmd)
+	fmt.Print(string(out))
+	return string(out), err
 }
 
 func GetComponentLogs(cellName, componentName string) (string, error) {
@@ -46,6 +48,7 @@ func GetComponentLogs(cellName, componentName string) (string, error) {
 		componentName,
 	)
 	displayVerboseOutput(cmd)
-	out, err := printCommandOutput(cmd)
-	return out, err
+	out, err := getCommandOutputFromTextFile(cmd)
+	fmt.Print(string(out))
+	return string(out), err
 }

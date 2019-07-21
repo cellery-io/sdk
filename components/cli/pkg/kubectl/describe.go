@@ -20,6 +20,7 @@
 package kubectl
 
 import (
+	"fmt"
 	"os/exec"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -33,6 +34,7 @@ func Describe(cellName string) error {
 		cellName,
 	)
 	displayVerboseOutput(cmd)
-	_, err := printCommandOutput(cmd)
+	out, err := getCommandOutputFromTextFile(cmd)
+	fmt.Print(string(out))
 	return err
 }
