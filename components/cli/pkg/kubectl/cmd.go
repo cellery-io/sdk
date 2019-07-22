@@ -22,13 +22,14 @@ package kubectl
 import (
 	"bufio"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"syscall"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 var tmpFile = filepath.Join(userHomeDir(), constants.CELLERY_HOME, constants.TMP, "./out.txt")

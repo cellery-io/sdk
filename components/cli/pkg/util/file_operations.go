@@ -31,6 +31,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 // File copies a single file from src to dst
@@ -217,6 +219,17 @@ func CreateDir(dirPath string) error {
 	return nil
 }
 
+func RemoveDir(dirPath string) error {
+	dirExist, _ := FileExists(dirPath)
+	if dirExist {
+		err := os.RemoveAll(dirPath)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func CleanOrCreateDir(dirPath string) error {
 	dirExist, _ := FileExists(dirPath)
 	if !dirExist {
@@ -323,4 +336,11 @@ func GetSourceFileName(filePath string) (string, error) {
 		}
 	}
 	return "", errors.New("Ballerina source file not found in extracted location: " + filePath)
+}
+
+func CopyK8sArtifacts(outPath string) {
+	k8sArtifactsDir := filepath.Join(outPath, constants.K8S_ARTIFACTS)
+	RemoveDir(k8sArtifactsDir)
+	CreateDir(k8sArtifactsDir)
+	CopyDir(filepath.Join(CelleryInstallationDir(), constants.K8S_ARTIFACTS), k8sArtifactsDir)
 }

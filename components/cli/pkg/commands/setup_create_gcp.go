@@ -94,6 +94,7 @@ func createGcp() error {
 }
 
 func createMinimalGcpRuntime() {
+	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
 	gcpBucketName := configureGCPCredentials()
 	_ = configureGCPCredentials()
 	ctx := context.Background()
@@ -111,10 +112,12 @@ func createMinimalGcpRuntime() {
 	// Deploy cellery runtime
 	gcpSpinner.SetNewAction("Deploying Cellery runtime")
 	deployMinimalCelleryRuntime()
+	util.RemoveDir(filepath.Join(util.UserHomeCelleryDir(), constants.K8S_ARTIFACTS))
 	gcpSpinner.Stop(true)
 }
 
 func createCompleteGcpRuntime() error {
+	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
 	gcpBucketName := configureGCPCredentials()
 	ctx := context.Background()
 
@@ -131,7 +134,7 @@ func createCompleteGcpRuntime() error {
 	// Deploy cellery runtime
 	gcpSpinner.SetNewAction("Deploying Cellery runtime")
 	deployCompleteCelleryRuntime()
-
+	util.RemoveDir(filepath.Join(util.UserHomeCelleryDir(), constants.K8S_ARTIFACTS))
 	gcpSpinner.Stop(true)
 	return nil
 }
@@ -261,10 +264,6 @@ func createKubernentesClusterOnGcp(ctx context.Context, gcpSpinner *util.Spinner
 }
 
 func configureGCPCredentials() string {
-	util.CopyDir(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS),
-		filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS_OLD))
-	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), filepath.Join(util.UserHomeDir(),
-		constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS, constants.K8S_ARTIFACTS))
 	// Get the GCP cluster data
 	projectName, accountName, region, zone = getGcpData()
 	var gcpBucketName = constants.GCP_BUCKET_NAME + uniqueNumber
@@ -356,8 +355,8 @@ func uploadSqlFile(client *storage.Client, bucket, object string) error {
 	if err := gcp.UpdateInitSql(constants.GCP_SQL_USER_NAME, constants.GCP_SQL_PASSWORD+uniqueNumber); err != nil {
 		return err
 	}
-	f, err := os.Open(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP, constants.ARTIFACTS,
-		constants.K8S_ARTIFACTS, constants.MYSQL, constants.DB_SCRIPTS, constants.INIT_SQL))
+	f, err := os.Open(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.K8S_ARTIFACTS,
+		constants.MYSQL, constants.DB_SCRIPTS, constants.INIT_SQL))
 	if err != nil {
 		return err
 	}

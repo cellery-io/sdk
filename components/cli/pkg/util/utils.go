@@ -153,6 +153,10 @@ func UserHomeDir() string {
 	return os.Getenv("HOME")
 }
 
+func UserHomeCelleryDir() string {
+	return filepath.Join(UserHomeDir(), constants.CELLERY_HOME)
+}
+
 func CelleryInstallationDir() string {
 	celleryHome := ""
 	if runtime.GOOS == "darwin" {

@@ -34,7 +34,7 @@ type ConfigMap struct {
 }
 
 func buildArtifactsPath(component runtime.SystemComponent) string {
-	artifactsPath := filepath.Join(util.UserHomeDir(), ".cellery", "gcp", "artifacts", constants.K8S_ARTIFACTS)
+	artifactsPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.K8S_ARTIFACTS)
 	switch component {
 	case runtime.ApiManager:
 		return filepath.Join(artifactsPath, "global-apim")
