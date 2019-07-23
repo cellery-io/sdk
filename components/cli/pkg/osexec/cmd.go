@@ -17,7 +17,7 @@
  *
  */
 
-package kubectl
+package osexec
 
 import (
 	"bufio"
@@ -34,7 +34,7 @@ import (
 
 var tmpFile = filepath.Join(userHomeDir(), constants.CELLERY_HOME, constants.TMP, "./out.txt")
 
-func getCommandOutput(cmd *exec.Cmd) (string, error) {
+func GetCommandOutput(cmd *exec.Cmd) (string, error) {
 	exitCode := 0
 	var output string
 	stdoutReader, _ := cmd.StdoutPipe()
@@ -70,7 +70,7 @@ func getCommandOutput(cmd *exec.Cmd) (string, error) {
 	return output, nil
 }
 
-func getCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
+func GetCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
 	exitCode := 0
 	var output string
 	outfile, err := os.Create(tmpFile)

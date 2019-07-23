@@ -63,7 +63,7 @@ func manageLocal() error {
 	case constants.CELLERY_MANAGE_START:
 		{
 			util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"))
-			runtime.WaitForRuntime(false, false)
+			runtime.WaitFor(false, false)
 		}
 	case constants.CELLERY_MANAGE_CLEANUP:
 		{

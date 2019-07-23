@@ -21,8 +21,9 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 
@@ -106,8 +107,8 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 			util.ExitWithErrorMessage("Failed to merge kube-config file", err)
 		}
 	}
-	installVM(true)
-	runtime.WaitForRuntime(false, false)
+	vbox.InstallVM(isCompleteSelected)
+	runtime.WaitFor(false, false)
 }
 
 func createLocal() error {
@@ -143,27 +144,5 @@ func createLocal() error {
 	}
 	RunSetupCreateLocal(isCompleteSelected, false)
 
-	return nil
-}
-
-func installVM(isComplete bool) error {
-	vmPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.VM_FILE_NAME)
-	spinner := util.StartNewSpinner("Installing Cellery Runtime")
-
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "hostonlyif", "create"))
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "hostonlyif", "ipconfig", "vboxnet0",
-		"--ip", "192.168.56.1"))
-
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "import", vmPath))
-	cores := "2"
-	if isComplete {
-		cores = "4"
-	}
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "modifyvm", constants.VM_NAME,
-		"--ostype", "Ubuntu_64", "--cpus", cores, "--memory", "8192", "--natpf1", "guestkube,tcp,,6443,,6443", "--natpf1",
-		"guestssh,tcp,,2222,,22", "--natpf1", "guesthttps,tcp,,443,,443", "--natpf1", "guesthttp,tcp,,80,,80"))
-	util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"))
-
-	spinner.Stop(true)
 	return nil
 }

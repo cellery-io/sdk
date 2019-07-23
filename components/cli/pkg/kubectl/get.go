@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 )
 
 func GetDeploymentNames(namespace string) ([]string, error) {
@@ -102,7 +103,7 @@ func GetCells() (Cells, error) {
 	)
 	displayVerboseOutput(cmd)
 	jsonOutput := Cells{}
-	out, err := getCommandOutputFromTextFile(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
@@ -119,7 +120,7 @@ func GetCell(cellName string) (Cell, error) {
 		"json",
 	)
 	displayVerboseOutput(cmd)
-	out, err := getCommandOutputFromTextFile(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	jsonOutput := Cell{}
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -145,7 +146,7 @@ func GetPods(cellName string) (Pods, error) {
 	)
 	displayVerboseOutput(cmd)
 	jsonOutput := Pods{}
-	out, err := getCommandOutputFromTextFile(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
@@ -165,7 +166,7 @@ func GetServices(cellName string) (Services, error) {
 	)
 	displayVerboseOutput(cmd)
 	jsonOutput := Services{}
-	out, err := getCommandOutputFromTextFile(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
@@ -183,7 +184,7 @@ func GetGateways(cellName string) (Gateway, error) {
 	)
 	displayVerboseOutput(cmd)
 	jsonOutput := Gateway{}
-	out, err := getCommandOutput(cmd)
+	out, err := osexec.GetCommandOutput(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
@@ -201,7 +202,7 @@ func GetVirtualService(vs string) (VirtualService, error) {
 	)
 	displayVerboseOutput(cmd)
 	jsonOutput := VirtualService{}
-	out, err := getCommandOutput(cmd)
+	out, err := osexec.GetCommandOutput(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
@@ -219,7 +220,7 @@ func GetAutoscalePolicy(autoscalepolicy string) (*AutoscalePolicy, error) {
 	)
 	displayVerboseOutput(cmd)
 	jsonOutput := &AutoscalePolicy{}
-	out, err := getCommandOutput(cmd)
+	out, err := osexec.GetCommandOutput(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
@@ -236,7 +237,7 @@ func GetDeployment(namespace, deployment string) (string, error) {
 		"-n", namespace,
 	)
 	displayVerboseOutput(cmd)
-	out, err := getCommandOutput(cmd)
+	out, err := osexec.GetCommandOutput(cmd)
 	return out, err
 }
 
@@ -250,7 +251,7 @@ func GetGatewayAsMapInterface(gw string) (map[string]interface{}, error) {
 	)
 	displayVerboseOutput(cmd)
 	var output map[string]interface{}
-	out, err := getCommandOutput(cmd)
+	out, err := osexec.GetCommandOutput(cmd)
 	if err != nil {
 		return output, err
 	}
@@ -268,7 +269,7 @@ func GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) 
 	)
 	displayVerboseOutput(cmd)
 	var output map[string]interface{}
-	out, err := getCommandOutput(cmd)
+	out, err := osexec.GetCommandOutput(cmd)
 	if err != nil {
 		return output, err
 	}

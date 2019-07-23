@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 
 	"github.com/ghodss/yaml"
 )
@@ -147,7 +148,7 @@ func GetContexts() ([]byte, error) {
 		"json",
 	)
 	displayVerboseOutput(cmd)
-	return getCommandOutputFromTextFile(cmd)
+	return osexec.GetCommandOutputFromTextFile(cmd)
 }
 
 func GetContext() (string, error) {
@@ -157,6 +158,6 @@ func GetContext() (string, error) {
 		"current-context",
 	)
 	displayVerboseOutput(cmd)
-	out, err := getCommandOutput(cmd)
+	out, err := osexec.GetCommandOutput(cmd)
 	return out, err
 }

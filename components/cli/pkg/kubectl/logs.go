@@ -24,6 +24,7 @@ import (
 	"os/exec"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 )
 
 func GetCellLogs(cellName string) (string, error) {
@@ -34,7 +35,7 @@ func GetCellLogs(cellName string) (string, error) {
 		"--all-containers=true",
 	)
 	displayVerboseOutput(cmd)
-	out, err := getCommandOutputFromTextFile(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	fmt.Print(string(out))
 	return string(out), err
 }
@@ -48,7 +49,7 @@ func GetComponentLogs(cellName, componentName string) (string, error) {
 		componentName,
 	)
 	displayVerboseOutput(cmd)
-	out, err := getCommandOutputFromTextFile(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	fmt.Print(string(out))
 	return string(out), err
 }

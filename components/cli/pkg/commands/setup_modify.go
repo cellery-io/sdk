@@ -65,7 +65,7 @@ func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime
 	if isGcpRuntime {
 		hpaEnabled = false
 	}
-	runtime.WaitForRuntime(knativeEnabled, hpaEnabled)
+	runtime.WaitFor(knativeEnabled, hpaEnabled)
 }
 
 func modifyRuntime() {

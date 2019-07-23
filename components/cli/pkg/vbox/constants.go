@@ -17,25 +17,23 @@
  *
  */
 
-package kubectl
+package vbox
 
-import (
-	"fmt"
-	"os/exec"
+const argNatpf1 = "--natpf1"
+const argIp = "--ip"
+const argOsType = "--ostype"
+const argCpus = "--cpus"
+const argMemory = "--memory"
+const argType = "--type"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
-)
+const startVm = "startvm"
+const modifyVm = "modifyvm"
+const create = "create"
+const importVm = "import"
 
-func Describe(cellName string) error {
-	cmd := exec.Command(
-		constants.KUBECTL,
-		"describe",
-		"cells",
-		cellName,
-	)
-	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	fmt.Print(string(out))
-	return err
-}
+const hostOnlyIf = "hostonlyif"
+const ubuntu64 = "Ubuntu_64"
+const vboxIp = "192.168.56.1"
+const ipconfig = "ipconfig"
+const vboxnet0 = "vboxnet0"
+const headless = "headless"

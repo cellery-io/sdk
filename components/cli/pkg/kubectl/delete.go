@@ -23,6 +23,7 @@ import (
 	"os/exec"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 )
 
 func DeleteFileWithNamespace(file, namespace string) error {
@@ -61,7 +62,7 @@ func DeleteResource(kind, instance string) (string, error) {
 		"--ignore-not-found",
 	)
 	displayVerboseOutput(cmd)
-	return getCommandOutput(cmd)
+	return osexec.GetCommandOutput(cmd)
 }
 
 func DeleteNameSpace(nameSpace string) error {
@@ -98,7 +99,7 @@ func DeleteCell(cellInstance string) (string, error) {
 		cellInstance,
 	)
 	displayVerboseOutput(cmd)
-	return getCommandOutput(cmd)
+	return osexec.GetCommandOutput(cmd)
 }
 
 func DeletePersistedVolume(persistedVolume string) error {

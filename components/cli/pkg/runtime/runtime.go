@@ -378,7 +378,7 @@ func GetInstancesNames() ([]string, error) {
 	return instances, nil
 }
 
-func WaitForRuntime(checkKnative, hpaEnabled bool) {
+func WaitFor(checkKnative, hpaEnabled bool) {
 	spinner := util.StartNewSpinner("Checking cluster status...")
 	err := kubectl.WaitForCluster(time.Hour)
 	if err != nil {
