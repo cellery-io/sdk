@@ -20,7 +20,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 
 	"github.com/spf13/cobra"
@@ -31,8 +30,12 @@ import (
 )
 
 func newUpdateCellComponentsCommand() *cobra.Command {
+	var containerImage string
+	var envVars []string
 	cmd := &cobra.Command{
-		Use:   "update <cell instance> <new cell image>",
+		Use: "update <cell instance> <new cell image> \n" +
+			"update <instance name> <component name> --container-image mycellorg/hellocell:1.0.0 \n" +
+			"update <instance name> <component name> --container-image mycellorg/hellocell:1.0.0 --env foo=bar --env bob=alice",
 		Short: "update components of a cell instance using a newer cell image",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(2)(cmd, args)
@@ -41,27 +44,39 @@ func newUpdateCellComponentsCommand() *cobra.Command {
 			}
 			isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			if !isCellInstValid {
 				return fmt.Errorf("expects a valid cell instance name, received %s", args[0])
 			}
-			isCellImageValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELL_IMAGE_PATTERN), args[1])
-			if err != nil {
-				log.Fatal(err)
-			}
-			if !isCellImageValid {
-				return fmt.Errorf("expects a valid cell image name, received %s", args[1])
+			// if the container image is empty we consider the 2nd argument as a image, hence validate
+			if containerImage == "" {
+				isCellImageValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELL_IMAGE_PATTERN), args[1])
+				if err != nil {
+					return err
+				}
+				if !isCellImageValid {
+					return fmt.Errorf("expects a valid cell image name, received %s", args[1])
+				}
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			var err = commands.RunUpdateCellComponents(args[0], args[1])
+			// if container image is provided, this is an inline update command targeting a particular component of the
+			// specified cell instance.
+			var err error
+			if containerImage != "" {
+				err = commands.RunUpdateForSingleCellComponent(args[0], args[1], containerImage, envVars)
+			} else {
+				err = commands.RunUpdateCellComponents(args[0], args[1])
+			}
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to instance %s", args[0]), err)
 			}
 		},
 		Example: "  cellery update hello1 cellery/sample-hello:1.0.3",
 	}
+	cmd.Flags().StringVarP(&containerImage, "container-image", "i", "", "container image name")
+	cmd.Flags().StringArrayVarP(&envVars, "env", "e", []string{}, "environment variables")
 	return cmd
 }
