@@ -96,18 +96,26 @@ copy-k8s-artefacts:
 	unzip $(OBSERVABILITY_PORTAL_ARTIFACT) && cp config/* k8s-artefacts/observability/node-server/config/
 
 .PHONY: build-ubuntu-installer
-build-ubuntu-installer: copy-k8s-artefacts
+build-ubuntu-installer: cleanup-installers copy-k8s-artefacts
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
 	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION)
 
 .PHONY: build-mac-installer
-build-mac-installer: copy-k8s-artefacts
+build-mac-installer: cleanup-installers copy-k8s-artefacts
 	cd ${PROJECT_ROOT}/installers/macOS-x64; \
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
 	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION)
+
+.PHONY: cleanup-installers
+cleanup-installers:
+	rm -rf ${PROJECT_ROOT}/installers/build-artifacts; \
+	rm -rf ${PROJECT_ROOT}/installers/macOS-x64/files; \
+	rm -rf ${PROJECT_ROOT}/installers/macOS-x64/target; \
+	rm -rf ${PROJECT_ROOT}/installers/ubuntu-x64/files; \
+	rm -rf ${PROJECT_ROOT}/installers/ubuntu-x64/target
 
 .PHONY: docker
 docker:
