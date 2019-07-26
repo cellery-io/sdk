@@ -335,9 +335,23 @@ Perform a patch update on a running cell instance, using the new cell image prov
 * _cell instance name: The name of a running cell instance, which should be updated._
 * _cell image name: The name of the new cell image, which will be used to perform a rolling update on the running instance's components._
 
+OR
+* _cell instance name: The name of a running cell instance, which should be updated._
+* _target component name: The name of the component of the running instance to update._
+
+###### Flags (Mandatory):
+
+* _-i, --container-image: container image name which will be used to update the target component. Only applicable when a target component is specified._
+
+###### Flags (Optional):
+
+* _-e, --env: environment variable name value pairs separated by a '=' sign. Only applicable when a target component is specified._
+
 Ex:
  ```
    cellery update myhello cellery/sample-hello:1.0.3
+   cellery update myhello controller --container-image mycellorg/hellocell:1.0.0
+   cellery update myhello controller --container-image mycellorg/hellocell:1.0.0 --env foo=bar --env name=alice
  ```
  
 [Back to Command List](#cellery-cli-commands)
