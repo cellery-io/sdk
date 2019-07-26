@@ -19,15 +19,13 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
-	"os/exec"
-	"strings"
 
 	"github.com/manifoldco/promptui"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
 )
 
 func manageEnvironment() error {
@@ -46,7 +44,7 @@ func manageEnvironment() error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select environment option to manage: %v", err)
 	}
 
 	switch value {
@@ -72,8 +70,8 @@ func manageEnvironment() error {
 
 func getManageLabel() string {
 	var manageLabel string
-	if IsVmInstalled() {
-		if isVmRuning() {
+	if vbox.IsVmInstalled() {
+		if vbox.IsVmRunning() {
 			manageLabel = constants.VM_NAME + " is running. Select `Stop` to stop the VM"
 		} else {
 			manageLabel = constants.VM_NAME + " is installed. Select `Start` to start the VM"
@@ -84,64 +82,13 @@ func getManageLabel() string {
 	return manageLabel
 }
 
-func isVmRuning() bool {
-	if IsVmInstalled() {
-		cmd := exec.Command(constants.VBOX_MANAGE, "showvminfo", constants.VM_NAME)
-		stdoutReader, _ := cmd.StdoutPipe()
-		stdoutScanner := bufio.NewScanner(stdoutReader)
-		output := ""
-		go func() {
-			for stdoutScanner.Scan() {
-				output = output + stdoutScanner.Text()
-			}
-		}()
-		err := cmd.Start()
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while starting to check VM status", err)
-		}
-		err = cmd.Wait()
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while waiting to check VM status", err)
-		}
-		if strings.Contains(output, "running (since") {
-			return true
-		}
-	}
-	return false
-}
-
 func getManageEnvOptions() []string {
-	if IsVmInstalled() {
-		if isVmRuning() {
+	if vbox.IsVmInstalled() {
+		if vbox.IsVmRunning() {
 			return []string{constants.CELLERY_MANAGE_STOP, constants.CELLERY_MANAGE_CLEANUP, constants.CELLERY_SETUP_BACK}
 		} else {
 			return []string{constants.CELLERY_MANAGE_START, constants.CELLERY_MANAGE_CLEANUP, constants.CELLERY_SETUP_BACK}
 		}
 	}
 	return []string{constants.CELLERY_SETUP_BACK}
-}
-
-func IsVmInstalled() bool {
-	cmd := exec.Command(constants.VBOX_MANAGE, "list", "vms")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while starting to check if VMs installed", err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while waiting to check if VMs installed", err)
-	}
-
-	if strings.Contains(output, constants.VM_NAME) {
-		return true
-	}
-	return false
 }

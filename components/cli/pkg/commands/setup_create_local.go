@@ -20,17 +20,17 @@ package commands
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
@@ -38,77 +38,133 @@ var vmComplete = fmt.Sprintf("cellery-runtime-complete-%s.tar.gz", version.Build
 var vmBasic = fmt.Sprintf("cellery-runtime-basic-%s.tar.gz", version.BuildVersion())
 var configComplete = fmt.Sprintf("config-cellery-runtime-complete-%s", version.BuildVersion())
 var configBasic = fmt.Sprintf("config-cellery-runtime-basic-%s", version.BuildVersion())
+var md5Complete = fmt.Sprintf("cellery-runtime-complete-%s.md5", version.BuildVersion())
+var md5Basic = fmt.Sprintf("cellery-runtime-basic-%s.md5", version.BuildVersion())
+
+var downloadLocation = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM)
+var downloadTempLocation = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.TMP, constants.VM)
+
+var vmPath string
+var md5Path string
+var vm string
+var config string
+var md5 string
+var etag string
 
 func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 	var err error
 	var confirmDownload = confirmed
+	var downloadVm = confirmed
 	if !util.IsCommandAvailable("VBoxManage") {
 		util.ExitWithErrorMessage("Error creating VM", fmt.Errorf("VBoxManage not installed"))
 	}
-	if IsVmInstalled() {
+	if vbox.IsVmInstalled() {
 		util.ExitWithErrorMessage("Error creating VM", fmt.Errorf("installed VM already exists"))
 	}
-	vmLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM)
-	repoCreateErr := util.CreateDir(vmLocation)
-	if repoCreateErr != nil {
-		util.ExitWithErrorMessage("Failed to create vm directory", err)
-	}
-
 	if isCompleteSelected {
-		if !confirmed {
-			confirmDownload, _, err = util.GetYesOrNoFromUser(fmt.Sprintf(
-				"Downloading %s will take %s from your machine. Do you want to continue",
-				vmComplete,
-				util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmComplete))),
-				false)
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to select an option", err)
-			}
-		}
-		if !confirmDownload {
-			os.Exit(1)
-		}
-		fmt.Println("Downloading " + vmComplete)
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, vmComplete, vmLocation,
-			true)
-		util.ExtractTarGzFile(vmLocation, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM,
-			vmComplete))
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, configComplete, vmLocation,
-			false)
-		err = util.MergeKubeConfig(filepath.Join(util.UserHomeDir(),
-			constants.CELLERY_HOME, constants.VM, configComplete))
-		if err != nil {
-			util.ExitWithErrorMessage("Failed to merge kube-config file", err)
-		}
+		vm = vmComplete
+		config = configComplete
+		md5 = md5Complete
 	} else {
-		if !confirmed {
-			confirmDownload, _, err = util.GetYesOrNoFromUser(fmt.Sprintf("Downloading %s will take %s from your "+
-				"machine. Do you want to continue",
-				vmBasic,
-				util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmBasic))),
+		vm = vmBasic
+		config = configBasic
+		md5 = md5Basic
+	}
+	// Set global variables
+	vmPath = filepath.Join(downloadLocation, vm)
+	md5Path = filepath.Join(downloadLocation, md5)
+
+	if !confirmDownload {
+		// Check if the vm should be downloaded
+		downloadVm = downloadVmConfirmation()
+	}
+	if downloadVm {
+		if !confirmDownload {
+			// Get the confirmation from user to download the vm
+			confirmDownload, _, err = util.GetYesOrNoFromUser(fmt.Sprintf(
+				"Downloading %s will take %s from your machine. Do you want to continue", vm,
+				util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vm))),
 				false)
 			if err != nil {
-				util.ExitWithErrorMessage("Failed to select an option", err)
+				util.ExitWithErrorMessage("Failed to get user confirmation to download", err)
+			}
+			if !confirmDownload {
+				os.Exit(1)
 			}
 		}
-		if !confirmDownload {
-			os.Exit(1)
+		fmt.Println("Downloading " + vm)
+		// Create a temporary location to download vm
+		util.RemoveDir(downloadTempLocation)
+		repoCreateErr := util.CreateDir(downloadTempLocation)
+		if repoCreateErr != nil {
+			util.ExitWithErrorMessage("Failed to create vm directory", err)
 		}
-		fmt.Println("Downloading " + vmBasic)
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, vmBasic, vmLocation,
-			true)
-		util.ExtractTarGzFile(vmLocation, filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM,
-			vmBasic))
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, configBasic, vmLocation,
-			false)
-		err = util.MergeKubeConfig(filepath.Join(util.UserHomeDir(),
-			constants.CELLERY_HOME, constants.VM, configBasic))
+		etag = util.GetS3ObjectEtag(constants.AWS_S3_BUCKET, vm)
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, vm, downloadTempLocation, true)
+		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, config, downloadTempLocation, false)
+		// Copy the files if the download was successful
+		util.CopyFile(filepath.Join(downloadTempLocation, vm), filepath.Join(downloadLocation, vm))
+		util.CopyFile(filepath.Join(downloadTempLocation, config), filepath.Join(downloadLocation, config))
+		util.RemoveDir(md5Path)
+		err = ioutil.WriteFile(md5Path, []byte(etag), 0666)
 		if err != nil {
-			util.ExitWithErrorMessage("Failed to merge kube-config file", err)
+			util.ExitWithErrorMessage(fmt.Sprintf("Error writing md5 value to %s", md5), err)
 		}
+		util.RemoveDir(downloadTempLocation)
 	}
+	// Merge the kube config file
+	err = util.MergeKubeConfig(filepath.Join(downloadLocation, config))
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to merge kube-config file", err)
+	}
+	fmt.Printf("Extracting %s ...", vm)
+	util.ExtractTarGzFile(downloadLocation, vmPath)
 	vbox.InstallVM(isCompleteSelected)
 	runtime.WaitFor(false, false)
+}
+
+func downloadVmConfirmation() bool {
+	var err error
+	vmFileExists := false
+	md5FileExists := false
+	downloadVm := false
+	vmFileExists, err = util.FileExists(vmPath)
+	if err != nil {
+		util.ExitWithErrorMessage(fmt.Sprintf("Error checking if %s exists", vm), err)
+	}
+	// Check if previously downloaded image of same version exists
+	if vmFileExists {
+		md5FileExists, err = util.FileExists(md5Path)
+		if err != nil {
+			util.ExitWithErrorMessage(fmt.Sprintf("Error checking if %s exists", md5), err)
+		}
+		if md5FileExists {
+			md5, err := ioutil.ReadFile(md5Path)
+			if err != nil {
+				util.ExitWithErrorMessage(fmt.Sprintf("Failed to read %s", md5Path), err)
+			}
+			// Check if updated version of vm is available
+			fmt.Println("Checking if updated cellery runtime is available ...")
+			etag = util.GetS3ObjectEtag(constants.AWS_S3_BUCKET, vm)
+			if !(strings.Contains(string(md5), etag)) {
+				// If the user wish to get the updated vm donwload the latest vm
+				downloadVm, _, err = util.GetYesOrNoFromUser(fmt.Sprintf(
+					"Updated version of cellery-local-setup is available. Do you wish to download it"),
+					false)
+			} else {
+				// If the existing vm is same as the one available in aws, then do not download
+				fmt.Println("Latest cellery-local-setup is already downloaded")
+				downloadVm = false
+			}
+		} else {
+			// If md5 file cannot be found download the latest vm
+			downloadVm = true
+		}
+	} else {
+		// If previously downloaded image does not exist download the latest image
+		downloadVm = true
+	}
+	return downloadVm
 }
 
 func createLocal() error {
@@ -119,13 +175,13 @@ func createLocal() error {
 		Inactive: "  {{ . | faint }}",
 		Help:     util.Faint("[Use arrow keys]"),
 	}
-	sizeMinimal := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmBasic))
+	sizeBasic := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmBasic))
 	sizeComplete := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmComplete))
 
 	cellPrompt := promptui.Select{
 		Label: util.YellowBold("?") + " Select the type of runtime",
 		Items: []string{
-			fmt.Sprintf("%s (size: %s)", constants.BASIC, sizeMinimal),
+			fmt.Sprintf("%s (size: %s)", constants.BASIC, sizeBasic),
 			fmt.Sprintf("%s (size: %s)", constants.COMPLETE, sizeComplete),
 			constants.CELLERY_SETUP_BACK,
 		},
@@ -143,6 +199,5 @@ func createLocal() error {
 		isCompleteSelected = true
 	}
 	RunSetupCreateLocal(isCompleteSelected, false)
-
 	return nil
 }

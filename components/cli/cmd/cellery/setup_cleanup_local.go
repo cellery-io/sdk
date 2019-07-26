@@ -21,9 +21,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
+
+	"github.com/spf13/cobra"
 )
 
 func newSetupCleanupLocalCommand() *cobra.Command {
@@ -32,7 +33,7 @@ func newSetupCleanupLocalCommand() *cobra.Command {
 		Short: "Cleanup local setup",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if !commands.IsVmInstalled() {
+			if !vbox.IsVmInstalled() {
 				return fmt.Errorf("VM is not installed")
 			}
 			return nil

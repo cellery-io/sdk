@@ -19,16 +19,22 @@
 
 package vbox
 
+const vBoxManage = "VBoxManage"
+
 const argNatpf1 = "--natpf1"
 const argIp = "--ip"
 const argOsType = "--ostype"
 const argCpus = "--cpus"
 const argMemory = "--memory"
 const argType = "--type"
+const argList = "list"
+const argDelete = "--delete"
 
 const startVm = "startvm"
+const controlvm = "controlvm"
 const modifyVm = "modifyvm"
 const create = "create"
+const unregistervm = "unregistervm"
 const importVm = "import"
 
 const hostOnlyIf = "hostonlyif"
@@ -37,3 +43,10 @@ const vboxIp = "192.168.56.1"
 const ipconfig = "ipconfig"
 const vboxnet0 = "vboxnet0"
 const headless = "headless"
+const vms = "vms"
+const vm = "vm"
+const acpipowerbutton = "acpipowerbutton"
+
+const vmName = "cellery-runtime-local"
+const vmFileName = "cellery-runtime-local.ovf"
+const vmDiskName = "cellery-runtime-local-disk001.vmdk"

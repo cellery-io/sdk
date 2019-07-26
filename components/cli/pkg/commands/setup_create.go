@@ -26,6 +26,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
 )
 
 func createEnvironment() error {
@@ -44,7 +45,7 @@ func createEnvironment() error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select environment to create option: %v", err)
 	}
 
 	switch value {
@@ -78,7 +79,7 @@ func createEnvironment() error {
 
 func getCreateEnvironmentList() []string {
 	if util.IsCommandAvailable("VBoxManage") {
-		if !IsVmInstalled() {
+		if !vbox.IsVmInstalled() {
 			return []string{constants.CELLERY_SETUP_LOCAL, constants.CELLERY_SETUP_GCP, constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK}
 		}
 	}

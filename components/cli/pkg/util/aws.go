@@ -59,7 +59,7 @@ func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 	writer.display = displayProgressBar
 
 	writer.init(s3ObjectSize)
-	numBytes, err := downloader.Download(writer,
+	_, err = downloader.Download(writer,
 		&s3.GetObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(item),
@@ -69,10 +69,18 @@ func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 	}
 
 	writer.finish()
-	fmt.Println("Download completed", file.Name(), numBytes, "bytes")
+	fmt.Println("Completed downloading", item)
 }
 
 func GetS3ObjectSize(bucket, item string) int64 {
+	return *getS3Object(bucket, item).ContentLength
+}
+
+func GetS3ObjectEtag(bucket, item string) string {
+	return *getS3Object(bucket, item).ETag
+}
+
+func getS3Object(bucket, item string) s3.HeadObjectOutput {
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String(constants.AWS_REGION), Credentials: credentials.AnonymousCredentials},
 	)
@@ -91,5 +99,5 @@ func GetS3ObjectSize(bucket, item string) int64 {
 			ExitWithErrorMessage("Error getting size of file", err)
 		}
 	}
-	return *result.ContentLength
+	return *result
 }

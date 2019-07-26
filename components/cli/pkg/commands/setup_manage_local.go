@@ -20,17 +20,13 @@ package commands
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"time"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-
-	"github.com/manifoldco/promptui"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
+
+	"github.com/manifoldco/promptui"
 )
 
 func manageLocal() error {
@@ -58,11 +54,11 @@ func manageLocal() error {
 			defer func() {
 				spinner.Stop(true)
 			}()
-			util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "controlvm", constants.VM_NAME, "acpipowerbutton"))
+			vbox.StopVm()
 		}
 	case constants.CELLERY_MANAGE_START:
 		{
-			util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "startvm", constants.VM_NAME, "--type", "headless"))
+			vbox.StartVm()
 			runtime.WaitFor(false, false)
 		}
 	case constants.CELLERY_MANAGE_CLEANUP:
@@ -80,15 +76,32 @@ func manageLocal() error {
 func RunCleanupLocal(confirmed bool) error {
 	var err error
 	var confirmCleanup = confirmed
+	removeImage := false
 	if !confirmed {
 		confirmCleanup, _, err = util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
 			"delete all your cells and data)", false)
 		if err != nil {
-			util.ExitWithErrorMessage("failed to select option", err)
+			util.ExitWithErrorMessage("failed get user confirmation", err)
 		}
 	}
 	if confirmCleanup {
-		err = CleanupLocal()
+		existingImages := vbox.ImageExists()
+		var imagesToDelete string
+		if existingImages > vbox.None {
+			if existingImages == vbox.Basic {
+				imagesToDelete = vmBasic
+			} else if existingImages == vbox.Complete {
+				imagesToDelete = vmComplete
+			} else {
+				imagesToDelete = fmt.Sprintf("%s and %s", vmBasic, vmComplete)
+			}
+			removeImage, _, err = util.GetYesOrNoFromUser(fmt.Sprintf("Do you want to remove downloaded images. "+
+				"This will delete %s", imagesToDelete), false)
+			if err != nil {
+				util.ExitWithErrorMessage("failed to get user permission to remove downloaded image", err)
+			}
+		}
+		err = CleanupLocal(removeImage)
 		if err != nil {
 			return err
 		}
@@ -96,26 +109,14 @@ func RunCleanupLocal(confirmed bool) error {
 	return nil
 }
 
-func CleanupLocal() error {
+func CleanupLocal(removeImage bool) error {
 	spinner := util.StartNewSpinner("Removing Cellery Runtime")
 	defer func() {
 		spinner.Stop(true)
 	}()
-	if isVmRuning() {
-		util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "controlvm", constants.VM_NAME, "acpipowerbutton"))
-	}
-	for isVmRuning() {
-		time.Sleep(2 * time.Second)
-	}
-	err := util.ExecuteCommand(exec.Command(constants.VBOX_MANAGE, "unregistervm", constants.VM_NAME, "--delete"))
+	err := vbox.RemoveVm(removeImage)
 	if err != nil {
 		return err
 	}
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, vmComplete))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, vmBasic))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, configComplete))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, configBasic))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.VM_FILE_NAME))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM, constants.VM_DISK_NAME))
 	return nil
 }
