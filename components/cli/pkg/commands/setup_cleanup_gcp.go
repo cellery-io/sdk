@@ -31,7 +31,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/container/v1"
 	"google.golang.org/api/file/v1"
-	sqladmin "google.golang.org/api/sqladmin/v1beta4"
+	"google.golang.org/api/sqladmin/v1beta4"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -52,7 +52,7 @@ func manageGcp() error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select an option: %v", err)
 	}
 
 	switch value {
@@ -96,6 +96,7 @@ func cleanupGcp() error {
 	if err != nil {
 		fmt.Printf("Failed to list clusters: %v", err)
 	}
+	userCreatedGcpClusters := getGcpClustersCreatedByUser(clusters)
 
 	selectTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -106,7 +107,7 @@ func cleanupGcp() error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select a GCP cluster to delete",
-		Items:     append(clusters, constants.CELLERY_SETUP_BACK),
+		Items:     append(userCreatedGcpClusters, constants.CELLERY_SETUP_BACK),
 		Templates: selectTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -128,22 +129,22 @@ func ValidateGcpCluster(cluster string) (bool, error) {
 	if len(jsonAuthFile) > 0 {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
 	} else {
-		return valid, fmt.Errorf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
+		return false, fmt.Errorf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
 			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP))
 	}
 	ctx := context.Background()
 	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)
 	if err != nil {
-		return valid, fmt.Errorf("failed to create gke client: %v", err)
+		return false, fmt.Errorf("failed to create gke client: %v", err)
 	}
 	gcpService, err := container.New(gkeClient)
 	if err != nil {
-		return valid, fmt.Errorf("failed to create gcp service: %v", err)
+		return false, fmt.Errorf("failed to create gcp service: %v", err)
 	}
 	projectName, accountName, region, zone = getGcpData()
 	clusters, err := getClusterList(gcpService, projectName, zone)
 	if err != nil {
-		return valid, fmt.Errorf("failed to list clusters: %v", err)
+		return false, fmt.Errorf("failed to list clusters: %v", err)
 	}
 	clusterNameSlice := strings.Split(cluster, constants.GCP_CLUSTER_NAME)
 	if len(clusterNameSlice) > 1 {
@@ -321,4 +322,21 @@ func gcpClusterExist(service *container.Service, projectID, zone, clusterName st
 		return true
 	}
 	return false
+}
+
+func getGcpClustersCreatedByUser(gcpClusters []string) []string {
+	var userCreatedGcpClusters []string
+	// Get the list of clusters created by the user
+	userCreatedClusters := getContexts()
+	for _, gcpCluster := range gcpClusters {
+		for _, userCreatedCluster := range userCreatedClusters {
+			// Check if the given gcp cluster is created by the user
+			if strings.Contains(userCreatedCluster, gcpCluster) {
+				// If the gcp cluster is created by user add it to the list of gcp clusters created by the user
+				userCreatedGcpClusters = append(userCreatedGcpClusters, gcpCluster)
+				break
+			}
+		}
+	}
+	return userCreatedGcpClusters
 }
