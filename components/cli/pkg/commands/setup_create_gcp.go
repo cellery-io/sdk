@@ -19,32 +19,44 @@
 package commands
 
 import (
+	"bufio"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime/gcp"
 
 	"cloud.google.com/go/storage"
 	"github.com/manifoldco/promptui"
 	"golang.org/x/oauth2/google"
-	sqladmin "google.golang.org/api/sqladmin/v1beta4"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
 	"google.golang.org/api/container/v1"
 	"google.golang.org/api/file/v1"
+	"google.golang.org/api/sqladmin/v1beta4"
 
-	"context"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime/gcp"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
+
+var projectName string
+var accountName string
+var region string
+var zone string
+var uniqueNumber string
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+	uniqueNumber = strconv.Itoa(rand.Intn(1000))
+}
 
 func RunSetupCreateGcp(isCompleteSetup bool) {
 	projectName, accountName, region, zone = getGcpData()
@@ -80,7 +92,7 @@ func createGcp() error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select an option: %v", err)
 	}
 	if value == constants.CELLERY_SETUP_BACK {
 		createEnvironment()
@@ -101,7 +113,7 @@ func createMinimalGcpRuntime() {
 
 	// Create a GKE client
 	gcpSpinner := util.StartNewSpinner("Creating GKE client")
-	createKubernentesClusterOnGcp(ctx, gcpSpinner)
+	createKubernetesClusterOnGcp(ctx, gcpSpinner)
 
 	sqlService, serviceAccountEmailAddress := configureMysqlOnGcp(ctx, gcpSpinner)
 
@@ -123,7 +135,7 @@ func createCompleteGcpRuntime() error {
 
 	// Create a GKE client
 	gcpSpinner := util.StartNewSpinner("Creating GKE client")
-	createKubernentesClusterOnGcp(ctx, gcpSpinner)
+	createKubernetesClusterOnGcp(ctx, gcpSpinner)
 
 	sqlService, serviceAccountEmailAddress := configureMysqlOnGcp(ctx, gcpSpinner)
 
@@ -222,7 +234,7 @@ func configureMysqlOnGcp(ctx context.Context, gcpSpinner *util.Spinner) (*sqladm
 	}
 	//Create sql instance
 	gcpSpinner.SetNewAction("Creating sql instance")
-	_, err = createSqlInstance(ctx, sqlService, projectName, region, region, constants.GCP_DB_INSTANCE_NAME+uniqueNumber)
+	_, err = createSqlInstance(sqlService, projectName, region, region, constants.GCP_DB_INSTANCE_NAME+uniqueNumber)
 	if err != nil {
 		gcpSpinner.Stop(false)
 		fmt.Printf("Error creating sql instance: %v", err)
@@ -240,7 +252,7 @@ func configureMysqlOnGcp(ctx context.Context, gcpSpinner *util.Spinner) (*sqladm
 	return sqlService, serviceAccountEmailAddress
 }
 
-func createKubernentesClusterOnGcp(ctx context.Context, gcpSpinner *util.Spinner) {
+func createKubernetesClusterOnGcp(ctx context.Context, gcpSpinner *util.Spinner) {
 	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)
 	if err != nil {
 		gcpSpinner.Stop(false)
@@ -294,6 +306,7 @@ func createGcpCluster(gcpService *container.Service, clusterName string) error {
 		InitialNodeCount:      1,
 		Location:              zone,
 		NodeConfig:            gcpGKENode,
+		ResourceLabels:        getCreatedByLabel(),
 	}
 	createClusterRequest := &container.CreateClusterRequest{
 		ProjectId: projectName,
@@ -319,11 +332,12 @@ func createGcpCluster(gcpService *container.Service, clusterName string) error {
 	return fmt.Errorf("failed to create clusters: %v", err)
 }
 
-func createSqlInstance(ctx context.Context, service *sqladmin.Service, projectId string, region string, zone string,
+func createSqlInstance(service *sqladmin.Service, projectId string, region string, zone string,
 	instanceName string) ([]*sqladmin.DatabaseInstance, error) {
 	settings := &sqladmin.Settings{
 		DataDiskSizeGb: constants.GCP_SQL_DISK_SIZE_GB,
 		Tier:           constants.GCP_SQL_TIER,
+		UserLabels:     getCreatedByLabel(),
 	}
 
 	dbInstance := &sqladmin.DatabaseInstance{
@@ -344,7 +358,10 @@ func createSqlInstance(ctx context.Context, service *sqladmin.Service, projectId
 
 func createGcpStorage(client *storage.Client, projectID, bucketName string) error {
 	ctx := context.Background()
-	if err := client.Bucket(bucketName).Create(ctx, projectID, nil); err != nil {
+	attributes := &storage.BucketAttrs{
+		Labels: getCreatedByLabel(),
+	}
+	if err := client.Bucket(bucketName).Create(ctx, projectID, attributes); err != nil {
 		return err
 	}
 	return nil
@@ -404,6 +421,7 @@ func createNfsServer(nfsService *file.Service) error {
 		FileShares: fileShares,
 		Networks:   networks,
 		Tier:       "STANDARD",
+		Labels:     getCreatedByLabel(),
 	}
 
 	if _, err := nfsService.Projects.Locations.Instances.Create("projects/"+projectName+"/locations/"+zone,
@@ -491,7 +509,7 @@ func updateInstance(service *sqladmin.Service, projectId string, instanceName st
 		Value: "0.0.0.0/0",
 	}
 
-	aclEntryList := []*sqladmin.AclEntry{}
+	var aclEntryList []*sqladmin.AclEntry
 	aclEntryList = append(aclEntryList, aclEntry)
 
 	ipConfigs := &sqladmin.IpConfiguration{
@@ -616,4 +634,49 @@ func createAllDeploymentArtifacts() {
 	if err := gcp.CreateIdpConfigMaps(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
+}
+
+func getGcpData() (string, string, string, string) {
+	cmd := exec.Command("gcloud", "config", "list", "--format", "json")
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	output := ""
+	go func() {
+		for stdoutScanner.Scan() {
+			output = output + stdoutScanner.Text()
+		}
+	}()
+
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Println(stderrScanner.Text())
+		}
+	}()
+	err := cmd.Start()
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while getting gcp data", err)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while getting gcp data", err)
+	}
+
+	jsonOutput := &util.Gcp{}
+
+	errJson := json.Unmarshal([]byte(output), jsonOutput)
+	if errJson != nil {
+		fmt.Println(errJson)
+	}
+	return jsonOutput.Core.Project, jsonOutput.Core.Account, jsonOutput.Compute.Region, jsonOutput.Compute.Zone
+}
+
+func getCreatedByLabel() map[string]string {
+	// Add a label to identify the user who created it
+	labels := make(map[string]string)
+	createdBy := util.ConvertToAlphanumeric(accountName, "_")
+	labels["created_by"] = createdBy
+	return labels
 }
