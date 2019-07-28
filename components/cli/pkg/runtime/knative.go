@@ -41,6 +41,16 @@ func InstallKnativeServing(artifactsPath string) error {
 	return nil
 }
 
+func ApplyKnativeCrds(artifactsPath string) error {
+	for _, v := range buildKnativeCrdsYamlPaths(artifactsPath) {
+		err := kubectl.ApplyFile(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func deleteKnative() error {
 	return kubectl.DeleteNameSpace("knative-serving")
 }
@@ -63,5 +73,12 @@ func buildKnativeYamlPaths(artifactsPath string) []string {
 	base := buildArtifactsPath(System, artifactsPath)
 	return []string{
 		filepath.Join(base, "knative-serving.yaml"),
+	}
+}
+
+func buildKnativeCrdsYamlPaths(artifactsPath string) []string {
+	base := buildArtifactsPath(System, artifactsPath)
+	return []string{
+		filepath.Join(base, "knative-serving-crds.yaml"),
 	}
 }
