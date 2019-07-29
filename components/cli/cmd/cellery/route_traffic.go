@@ -33,56 +33,56 @@ import (
 )
 
 func newRouteTrafficCommand() *cobra.Command {
-	var source string
+	var sourceInstance string
+	var dependencyInstance string
 	var targetPercentage string
 	var targetInstance string
 	var percentage int
 	var srcInstances []string
 	cmd := &cobra.Command{
-		Use:   "route-traffic [--source|-s=<list_of_source_cell_instances>] <dependency_instance_name> --percentage|-p <target_cell_instance>=<x>",
+		Use:   "route-traffic [--source|-s=<list_of_source_cell_instances>] --dependency|-d <dependency_instance_name> --target|-t <target instance name> [--percentage|-p <x>]",
 		Short: "route a percentage of the traffic to a cell instance",
-		Example: "cellery route-traffic --source hr-client-inst1 hr-inst-1 --percentage hr-inst-2=20 \n" +
-			"cellery route-traffic hr-inst-1 --percentage hr-inst-2=20",
+		Example: "cellery route-traffic --source hr-client-inst1 --dependency hr-inst-1 --target hr-inst-2 --percentage 20 \n" +
+			"cellery route-traffic --dependency hr-inst-1 --target hr-inst-2 --percentage 20 \n" +
+			"cellery route-traffic --dependency hr-inst-1 --target hr-inst-2",
 		Args: func(cmd *cobra.Command, args []string) error {
-			err := cobra.MinimumNArgs(1)(cmd, args)
+			// validate
+			err := validateArguments(dependencyInstance, targetInstance)
 			if err != nil {
 				return err
 			}
-			// validate dependency cell instance name
-			isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
-			if err != nil {
-				util.ExitWithErrorMessage("Error in running route traffic command", err)
-			}
-			if !isCellInstValid {
-				util.ExitWithErrorMessage("Error in running route traffic command", fmt.Errorf("expects a valid cell instance name, received %s", args[0]))
-			}
-			//validate source cell instances
-			srcInstances = getSourceCellInstanceArr(source)
+			// get source cell instances as an array
+			srcInstances = getSourceCellInstanceArr(sourceInstance)
+			// validate source cell instance name(s)
 			for _, srcInstance := range srcInstances {
-				isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), srcInstance)
+				err := validateInstanceName(srcInstance)
 				if err != nil {
 					util.ExitWithErrorMessage("Error in running route traffic command", err)
 				}
-				if !isCellInstValid {
-					util.ExitWithErrorMessage("Error in running route traffic command", fmt.Errorf("expects a valid source cell instance name, received %s", srcInstance))
-				}
 			}
-			targetInstance, percentage, err = getTargetCelInstanceAndPercentage(targetPercentage)
+			// validate target instance name
+			err = validateInstanceName(targetInstance)
+			if err != nil {
+				util.ExitWithErrorMessage("Error in running route traffic command", err)
+			}
+			// calculate target percentage value
+			percentage, err = getTargetInstancePercentage(targetPercentage)
 			if err != nil {
 				util.ExitWithErrorMessage("Error in running route traffic command", err)
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunRouteTrafficCommand(srcInstances, args[0], targetInstance, percentage)
+			err := commands.RunRouteTrafficCommand(srcInstances, dependencyInstance, targetInstance, percentage)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to route traffic to the target instance: %s, percentage: %d", targetInstance, percentage), err)
 			}
 		},
 	}
-	cmd.Flags().StringVarP(&source, "source", "s", "", "comma separated source instance list")
-	cmd.Flags().StringVarP(&targetPercentage, "percentage", "p", "", "target instance and percentage of traffic joined by a '=' mark")
-	_ = cmd.MarkFlagRequired("percentage")
+	cmd.Flags().StringVarP(&sourceInstance, "source", "s", "", "comma separated source instance list")
+	cmd.Flags().StringVarP(&dependencyInstance, "dependency", "d", "", "existing dependency instance name")
+	cmd.Flags().StringVarP(&targetInstance, "target", "t", "", "target instance to which the traffic should be re-routed")
+	cmd.Flags().StringVarP(&targetPercentage, "percentage", "p", "", "percentage to be switched to the target instance")
 	return cmd
 }
 
@@ -98,25 +98,38 @@ func getSourceCellInstanceArr(sourceCellInstances string) []string {
 	return trimmedInstances
 }
 
-func getTargetCelInstanceAndPercentage(target string) (string, int, error) {
-	parts := strings.Split(target, "=")
-	if len(parts) != 2 {
-		return "", -1, fmt.Errorf("target instance and percentage in incorrect format %s", target)
+func getTargetInstancePercentage(percentage string) (int, error) {
+	// if the percentage is not given, assume its 100 (full traffic switch - canary)
+	if percentage == "" {
+		return 100, nil
 	}
-	percentage, err := strconv.Atoi(parts[1])
+	intPercentage, err := strconv.Atoi(percentage)
 	if err != nil {
-		return "", -1, err
+		return -1, err
 	}
-	if percentage > 100 {
-		return "", -1, fmt.Errorf("invalid percentge provided for target instance: %d", percentage)
+	if intPercentage > 100 {
+		return -1, fmt.Errorf("invalid target percentage value %d", intPercentage)
 	}
-	// validate target cell instance name
-	isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), parts[0])
+	return intPercentage, nil
+}
+
+func validateInstanceName(instanceName string) error {
+	isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), instanceName)
 	if err != nil {
-		return "", -1, err
+		return err
 	}
 	if !isCellInstValid {
-		return "", -1, fmt.Errorf("expects a valid cell instance name, received %s", parts[0])
+		return fmt.Errorf("expects a valid cell instance name, received '%s'", instanceName)
 	}
-	return parts[0], percentage, nil
+	return nil
+}
+
+func validateArguments(dependency string, target string) error {
+	if dependency == "" {
+		return fmt.Errorf("mandatory flag dependency/d not provided")
+	}
+	if target == "" {
+		return fmt.Errorf("mandatory flag target/t not provided")
+	}
+	return nil
 }

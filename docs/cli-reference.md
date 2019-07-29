@@ -360,23 +360,23 @@ Ex:
 
 This is used to direct a percentage of traffic originating from one cell instance to another. This command is used in advanced deployment patterns such as Blue-Green and Canary. 
 
-###### Parameters:
-
-* _existing dependency instance: Existing dependency instance, which is currently recieving 100% traffic from the relevane source instance(s)._
 
 ###### Flags (Mandatory):
 
-* _-p, --percentage: The new dependency instance and the percentage of traffic which should be routed to it, joined by a '=' sign._
+* _-d, --dependency: Existing dependency instance, which is currently receiving traffic from the relevant source instance(s)._
+* _-t, --target: The new target instance to which traffic should be routed to._
 
 ###### Flags (Optional):
 
 * _-s, --source: The source instance which is generating traffic for the dependency instance specified in the Parameters above. 
 If this is not given all instances which are currently depending on the provided dependency instance will be considered._
+* _-p, --percentage: The percentage of traffic to be routed to the target instance. If not specified, this will be considered to be 100%._
 
 Ex:
  ```
-   cellery route-traffic --source hr-client-1 hr-inst-1 --percentage hr-inst-2=20 
-   cellery route-traffic hr-inst-1 --percentage hr-inst-2=100
+   cellery route-traffic --source hr-client-inst1 --dependency hr-inst-1 --target hr-inst-2 --percentage 20 
+   cellery route-traffic --dependency hr-inst-1 --target hr-inst-2 --percentage 20
+   cellery route-traffic --dependency hr-inst-1 --target hr-inst-2
  ```
 
 [Back to Command List](#cellery-cli-commands)
