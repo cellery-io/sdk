@@ -118,6 +118,10 @@ func RunCleanupExisting(removeKnative, removeIstio, removeIngress, removeHpa, co
 func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
 	kubectl.DeleteNameSpace("cellery-system")
 	if removeKnative {
+		out, err := kubectl.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while deleting the knative apiservice", fmt.Errorf(out))
+		}
 		kubectl.DeleteNameSpace("knative-serving")
 	}
 	if removeIstio {
