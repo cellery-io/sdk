@@ -28,6 +28,7 @@ import (
 
 func newSetupCreateLocalCommand(isComplete *bool) *cobra.Command {
 	var isCompleteSetup = false
+	var forceDownload = false
 	var confirmed = false
 	cmd := &cobra.Command{
 		Use:   "local",
@@ -38,11 +39,12 @@ func newSetupCreateLocalCommand(isComplete *bool) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateLocal(isCompleteSetup, confirmed)
+			commands.RunSetupCreateLocal(isCompleteSetup, forceDownload, true)
 		},
 		Example: "  cellery setup create local",
 	}
 	cmd.Flags().BoolVarP(&isCompleteSetup, "complete", "c", false, "Create complete local setup")
+	cmd.Flags().BoolVarP(&forceDownload, "force-download", "f", false, "Download image of vm")
 	cmd.Flags().BoolVarP(&confirmed, "assume-yes", "y", false, "Confirm setup creation")
 	return cmd
 }

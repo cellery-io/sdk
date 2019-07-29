@@ -51,10 +51,9 @@ var config string
 var md5 string
 var etag string
 
-func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
+func RunSetupCreateLocal(isCompleteSelected, forceDownload, confirmed bool) {
 	var err error
-	var confirmDownload = confirmed
-	var downloadVm = confirmed
+	var downloadVm = false
 	if !util.IsCommandAvailable("VBoxManage") {
 		util.ExitWithErrorMessage("Error creating VM", fmt.Errorf("VBoxManage not installed"))
 	}
@@ -73,25 +72,15 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 	// Set global variables
 	vmPath = filepath.Join(downloadLocation, vm)
 	md5Path = filepath.Join(downloadLocation, md5)
-
-	if !confirmDownload {
+	if forceDownload {
+		// If force-download flag is set download the vm regardless whether already downloaded image exists or not
+		downloadVm = true
+	} else {
 		// Check if the vm should be downloaded
-		downloadVm = downloadVmConfirmation()
+		downloadVm = downloadVmConfirmation(confirmed)
 	}
 	if downloadVm {
-		if !confirmDownload {
-			// Get the confirmation from user to download the vm
-			confirmDownload, _, err = util.GetYesOrNoFromUser(fmt.Sprintf(
-				"Downloading %s will take %s from your machine. Do you want to continue", vm,
-				util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vm))),
-				false)
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to get user confirmation to download", err)
-			}
-			if !confirmDownload {
-				os.Exit(1)
-			}
-		}
+		// If the download confirmed proceed to download for aws
 		fmt.Println("Downloading " + vm)
 		// Create a temporary location to download vm
 		util.RemoveDir(downloadTempLocation)
@@ -123,7 +112,7 @@ func RunSetupCreateLocal(isCompleteSelected, confirmed bool) {
 	runtime.WaitFor(false, false)
 }
 
-func downloadVmConfirmation() bool {
+func downloadVmConfirmation(confirmed bool) bool {
 	var err error
 	vmFileExists := false
 	md5FileExists := false
@@ -134,6 +123,7 @@ func downloadVmConfirmation() bool {
 	}
 	// Check if previously downloaded image of same version exists
 	if vmFileExists {
+		// If vm image is already downloaded check whether an updated version exists
 		md5FileExists, err = util.FileExists(md5Path)
 		if err != nil {
 			util.ExitWithErrorMessage(fmt.Sprintf("Error checking if %s exists", md5), err)
@@ -147,10 +137,20 @@ func downloadVmConfirmation() bool {
 			fmt.Println("Checking if updated cellery runtime is available ...")
 			etag = util.GetS3ObjectEtag(constants.AWS_S3_BUCKET, vm)
 			if !(strings.Contains(string(md5), etag)) {
-				// If the user wish to get the updated vm donwload the latest vm
-				downloadVm, _, err = util.GetYesOrNoFromUser(fmt.Sprintf(
-					"Updated version of cellery-local-setup is available. Do you wish to download it"),
-					false)
+				// md5 file confirms the availability of an updated image of vm
+				if !confirmed {
+					// If the user wish to get the updated vm download the latest vm
+					downloadVm, _, err = util.GetYesOrNoFromUser(fmt.Sprintf(
+						"Updated version of %s is available and will take %s from your "+
+							"machine. Do you want to continue",
+						vm, util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vm))), false)
+					if !downloadVm {
+						os.Exit(0)
+					}
+				} else {
+					// When inline command (cellery setup create local) is executed download confirmation will not be prompted
+					downloadVm = true
+				}
 			} else {
 				// If the existing vm is same as the one available in aws, then do not download
 				fmt.Println("Latest cellery-local-setup is already downloaded")
@@ -158,10 +158,16 @@ func downloadVmConfirmation() bool {
 			}
 		} else {
 			// If md5 file cannot be found download the latest vm
+			if !confirmed {
+				confirmDownload()
+			}
 			downloadVm = true
 		}
 	} else {
 		// If previously downloaded image does not exist download the latest image
+		if !confirmed {
+			confirmDownload()
+		}
 		downloadVm = true
 	}
 	return downloadVm
@@ -198,6 +204,19 @@ func createLocal() error {
 	if index == 1 {
 		isCompleteSelected = true
 	}
-	RunSetupCreateLocal(isCompleteSelected, false)
+	RunSetupCreateLocal(isCompleteSelected, false, false)
 	return nil
+}
+
+func confirmDownload() {
+	confirm, _, err := util.GetYesOrNoFromUser(fmt.Sprintf(
+		"Downloading %s will take %s from your machine. Do you want to continue", vm,
+		util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vm))),
+		false)
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to get user confirmation to download", err)
+	}
+	if !confirm {
+		os.Exit(0)
+	}
 }

@@ -142,7 +142,7 @@ func StopVm() {
 	}
 }
 
-func RemoveVm(removeImage bool) error {
+func RemoveVm() error {
 	var err error
 	if IsVmRunning() {
 		if _, err = osexec.GetCommandOutput(exec.Command(vBoxManage, controlvm, vmName, acpipowerbutton)); err != nil {
@@ -155,16 +155,17 @@ func RemoveVm(removeImage bool) error {
 	if _, err = osexec.GetCommandOutput(exec.Command(vBoxManage, unregistervm, vmName, argDelete)); err != nil {
 		return err
 	}
-	if removeImage {
-		// If user does not wish to retain the downloaded image delete the file from the system
-		os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmComplete))
-		os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmBasic))
-		os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, configComplete))
-		os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, configBasic))
-	}
 	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmFileName))
 	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmDiskName))
 	return nil
+}
+
+func RemoveVmImage() {
+	// If user does not wish to retain the downloaded image delete the file from the system
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmComplete))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmBasic))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, configComplete))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, configBasic))
 }
 func ImageExists() Exists {
 	exists := None

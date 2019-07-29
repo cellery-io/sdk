@@ -28,6 +28,7 @@ import (
 )
 
 func newSetupCleanupLocalCommand() *cobra.Command {
+	var deleteImage = false
 	cmd := &cobra.Command{
 		Use:   "local",
 		Short: "Cleanup local setup",
@@ -39,9 +40,10 @@ func newSetupCleanupLocalCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunCleanupLocal(true)
+			commands.RunCleanupLocal(true, deleteImage)
 		},
 		Example: "  cellery setup cleanup local",
 	}
+	cmd.Flags().BoolVarP(&deleteImage, "delete-image", "d", false, "Delete downloaded image of vm")
 	return cmd
 }

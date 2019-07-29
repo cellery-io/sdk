@@ -63,7 +63,7 @@ func manageLocal() error {
 		}
 	case constants.CELLERY_MANAGE_CLEANUP:
 		{
-			RunCleanupLocal(false)
+			RunCleanupLocal(false, false)
 		}
 	default:
 		{
@@ -73,18 +73,18 @@ func manageLocal() error {
 	return nil
 }
 
-func RunCleanupLocal(confirmed bool) error {
+func RunCleanupLocal(removeVm, removeVmImage bool) error {
 	var err error
-	var confirmCleanup = confirmed
-	removeImage := false
-	if !confirmed {
-		confirmCleanup, _, err = util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
+	// Get the confirmation to remove cellery local runtime
+	if !removeVm {
+		removeVm, _, err = util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
 			"delete all your cells and data)", false)
 		if err != nil {
 			util.ExitWithErrorMessage("failed get user confirmation", err)
 		}
 	}
-	if confirmCleanup {
+	// Get the confirmation to delete vm image
+	if !removeVmImage {
 		existingImages := vbox.ImageExists()
 		var imagesToDelete string
 		if existingImages > vbox.None {
@@ -95,26 +95,34 @@ func RunCleanupLocal(confirmed bool) error {
 			} else {
 				imagesToDelete = fmt.Sprintf("%s and %s", vmBasic, vmComplete)
 			}
-			removeImage, _, err = util.GetYesOrNoFromUser(fmt.Sprintf("Do you want to remove downloaded images. "+
+			removeVmImage, _, err = util.GetYesOrNoFromUser(fmt.Sprintf("Do you want to remove downloaded images. "+
 				"This will delete %s", imagesToDelete), false)
 			if err != nil {
 				util.ExitWithErrorMessage("failed to get user permission to remove downloaded image", err)
 			}
 		}
-		err = CleanupLocal(removeImage)
+	}
+	// remove cellery-runtime-local vm
+	if removeVm {
+		err = removeLocalSetup()
 		if err != nil {
 			return err
 		}
 	}
+	// remove downloaded image of vm
+	if removeVmImage {
+		vbox.RemoveVmImage()
+	}
 	return nil
 }
 
-func CleanupLocal(removeImage bool) error {
+func removeLocalSetup() error {
+	var err error
 	spinner := util.StartNewSpinner("Removing Cellery Runtime")
 	defer func() {
 		spinner.Stop(true)
 	}()
-	err := vbox.RemoveVm(removeImage)
+	err = vbox.RemoveVm()
 	if err != nil {
 		return err
 	}
