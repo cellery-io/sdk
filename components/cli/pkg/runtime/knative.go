@@ -52,6 +52,10 @@ func ApplyKnativeCrds(artifactsPath string) error {
 }
 
 func deleteKnative() error {
+	out, err := kubectl.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
+	if err != nil {
+		return fmt.Errorf("error occurred while deleting the knative apiservice: %s", fmt.Errorf(out))
+	}
 	return kubectl.DeleteNameSpace("knative-serving")
 }
 
