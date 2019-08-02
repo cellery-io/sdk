@@ -131,11 +131,6 @@
             <version>${fabric8.kubernetes.client.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.esotericsoftware.yamlbeans</groupId>
-            <artifactId>yamlbeans</artifactId>
-            <version>${yaml.beans.version}</version>
-        </dependency>
-        <dependency>
             <groupId>io.swagger.parser.v3</groupId>
             <artifactId>swagger-parser</artifactId>
             <version>${swagger.parser.version}</version>
@@ -299,7 +294,6 @@
                                     <include>io.fabric8*</include>
                                     <include>io.swagger.parser.v3*</include>
                                     <include>org.json*</include>
-                                    <include>com.esotericsoftware.yamlbeans*</include>
                                     <include>commons-io:commons-io</include>
                                     <include>commons-codec:commons-codec</include>
                                     <include>javax.validation:validation-api</include>
@@ -386,7 +380,6 @@
         <lombok.version>1.18.4</lombok.version>
         <fabric8.kubernetes.version>4.3.0</fabric8.kubernetes.version>
         <fabric8.kubernetes.client.version>4.3.0</fabric8.kubernetes.client.version>
-        <yaml.beans.version>1.13</yaml.beans.version>
         <org.json.version>20180813</org.json.version>
         <swagger.parser.version>2.0.8</swagger.parser.version>
         <shade.plugin.version>3.2.1</shade.plugin.version>

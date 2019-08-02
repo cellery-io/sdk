@@ -17,8 +17,8 @@
  */
 package io.cellery.impl;
 
-import com.esotericsoftware.yamlbeans.YamlReader;
 import com.google.gson.Gson;
+import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
 import io.cellery.models.CellImage;
 import io.cellery.models.Component;
@@ -30,7 +30,6 @@ import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.client.internal.SerializationUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
@@ -47,9 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,7 +71,6 @@ import static io.cellery.CelleryUtils.processResources;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
-import static org.apache.commons.lang3.StringUtils.removePattern;
 
 /**
  * Native function cellery:createInstance.
@@ -102,7 +98,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 "artifacts" + File.separator + "cellery";
         Map dependencyInfo = ((BMap) ctx.getNullableRefArgument(2)).getMap();
         String cellYAMLPath = destinationPath + File.separator + cellName + YAML;
-        Cell cell = getInstance(cellYAMLPath);
+        Cell cell = CelleryUtils.readCellYaml(cellYAMLPath);
         updateDependencyAnnotations(cell, dependencyInfo);
         try {
             processComponents((BMap) refArgument.getMap().get("components"));
@@ -121,7 +117,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 // Update resource limit and requests
                 updateResources(serviceTemplate, updatedComponent);
             });
-            writeToFile(removeTags(toYaml(cell)), cellYAMLPath);
+            writeToFile(toYaml(cell), cellYAMLPath);
         } catch (IOException | BallerinaException e) {
             String error = "Unable to persist updated cell yaml " + destinationPath;
             log.error(error, e);
@@ -205,7 +201,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void updateResources(ServiceTemplate serviceTemplate, Component updatedComponent) {
         ResourceRequirements resourceRequirement = updatedComponent.getResources();
-        serviceTemplate.getSpec().setResources(resourceRequirement);
+        serviceTemplate.getSpec().getContainer().setResources(resourceRequirement);
     }
 
     /**
@@ -265,28 +261,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     }
 
     /**
-     * Read the yaml and create a Cell object.
-     *
-     * @param destinationPath YAML path
-     * @return Constructed Cell object
-     */
-    private Cell getInstance(String destinationPath) {
-        Cell cell;
-        try (InputStreamReader fileReader = new InputStreamReader(new FileInputStream(destinationPath),
-                StandardCharsets.UTF_8)) {
-            YamlReader reader = new YamlReader(fileReader);
-            cell = reader.read(Cell.class);
-        } catch (IOException e) {
-            throw new BallerinaException("Unable to read Cell image file " + destinationPath + ". \nDid you " +
-                    "pull/build the cell image ?");
-        }
-        if (cell == null) {
-            throw new BallerinaException("Unable to extract Cell image from YAML " + destinationPath);
-        }
-        return cell;
-    }
-
-    /**
      * Add update components to CellImage.
      *
      * @param components component map
@@ -332,17 +306,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     }
 
     /**
-     * Removes yaml tags.
-     *
-     * @param string generate yaml
-     * @return yaml without tags
-     */
-    private String removeTags(String string) {
-        //a tag is a sequence of characters starting with ! and ending with whitespace
-        return removePattern(string, " ![^\\s]*");
-    }
-
-    /**
      * Create a secret file.
      *
      * @param instanceName    Cell Instance Name
@@ -357,7 +320,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 .withData(data)
                 .build();
         try {
-            writeToFile(SerializationUtils.dumpWithoutRuntimeStateAsYaml(secret), destinationPath);
+            writeToFile(toYaml(secret), destinationPath);
         } catch (IOException e) {
             throw new BallerinaException("Error while generating secrets for instance " + instanceName);
         }

@@ -225,7 +225,7 @@ public type Test record {|
 |};
 
 public type TestSuite record {|
-	Test[] tests = [];
+    Test[] tests = [];
 |};
 
 # Build the cell artifacts and persist metadata
@@ -250,20 +250,20 @@ public function createImage(CellImage cellImage, ImageName iName) returns ( erro
 
 function validateCell(CellImage cellImage) {
     foreach var(key,component) in cellImage.components {
-        if (!(component["ingresses"] is ()) && component.ingresses.length() > 1){
-             error err = error("component: [" + component.name + "] has more than one ingress");
-             panic(err);
+        if (!(component["ingresses"] is ()) && component.ingresses.length() > 1) {
+            error err = error("component: [" + component.name + "] has more than one ingress");
+            panic(err);
         }
         if (!(component["scalingPolicy"] is ()) && (component.scalingPolicy is AutoScalingPolicy)) {
             AutoScalingPolicy policy = <AutoScalingPolicy> component.scalingPolicy;
             if ((!(policy.metrics["cpu"] is ()) && (policy.metrics.cpu is Percentage)) &&
-            ((component["resources"] is ())|| component.resources["limits"] is ())) {
-                io:println("Warning: cpu percentage is defined without resource limits in component: [" + component.name+ "]."+
+            ((component["resources"] is ()) || component.resources["limits"] is ())) {
+                io:println("Warning: cpu percentage is defined without resource limits in component: [" + component.name + "]." +
                 " Scaling may not work due to the missing resource limits.");
             }
             if ((!(policy.metrics["memory"] is ()) && (policy.metrics.memory is Percentage))
             && ((component["resources"] is ()) || component.resources["limits"] is ())) {
-                io:println("Warning: memory percentage is defined without resource limits in component [" + component.name+ "]."+
+                io:println("Warning: memory percentage is defined without resource limits in component [" + component.name + "]." +
                 " Scaling may not work due to the missing resource limits.");
             }
         }
@@ -332,7 +332,7 @@ public function resolveReference(ImageName iName) returns (Reference) {
         string temp = <string> value;
         temp = temp.replaceAll("\\{", "");
         temp = temp.replaceAll("\\}", "");
-        myRef[key]=temp;
+        myRef[key] = temp;
     }
     return myRef;
 }
@@ -379,14 +379,14 @@ public function runInstances(ImageName iName, map<ImageName> instances) returns 
 # + iName - The cell instance name to test
 # + testSuite - The testsuite to run
 # + return - error optional
-public function runTestSuite(ImageName iName, TestSuite testSuite) returns (error?) = external;
+public function runTestSuite(ImageName iName, TestSuite testSuite) returns ( error?) = external;
 
 # Description
 #
 # + iName - Cell instance name to stop after executing tests
-# + instances -  The cell instance dependencies 
+# + instances -  The cell instance dependencies
 # + return - error optional
-public function stopInstances(ImageName iName, ImageName[] instances) returns (error?) = external;
+public function stopInstances(ImageName iName, ImageName[] instances) returns ( error?) = external;
 
 function parseCellDependency(string alias) returns ImageName {
     string org = alias.substring(0, alias.indexOf("/"));
@@ -418,11 +418,11 @@ public function getHost(Component component) returns (string) {
 # + return - port number
 public function getPort(Component component) returns (int) {
     int port = 0;
-    if (component["ingresses"] is ()){
-         error err = error("getPort is invoked on a component: [" + component.name + "] with empty ingress");
-         panic(err);
+    if (component["ingresses"] is ()) {
+        error err = error("getPort is invoked on a component: [" + component.name + "] with empty ingress");
+        panic (err);
     }
-    if (component.ingresses.length() > 0){
+    if (component.ingresses.length() > 0) {
         var ingress = component.ingresses[component.ingresses.keys()[0]];
         if (ingress is TCPIngress) {
             TCPIngress ing = <TCPIngress>ingress;

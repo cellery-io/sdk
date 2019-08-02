@@ -312,6 +312,19 @@ func ReplaceInFile(srcFile, oldString, newString string, replaceCount int) error
 	return nil
 }
 
+func ReplaceInstanceName(srcFile, oldString, newString string) error {
+	input, err := ioutil.ReadFile(srcFile)
+	if err != nil {
+		return err
+	}
+	fileContent := strings.Replace(string(input), oldString, newString, 1)
+	
+	if err = ioutil.WriteFile(srcFile, []byte(fileContent), 0666); err != nil {
+		return err
+	}
+	return nil
+}
+
 func GetCurrentPath() (string, error) {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {

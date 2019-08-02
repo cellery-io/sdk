@@ -987,7 +987,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 	k8sYamlFile := filepath.Join(celleryDir, runningNode.MetaData.Name+".yaml")
 	if instanceName != "" {
 		// Cell instance name changed.
-		err = util.ReplaceInFile(k8sYamlFile, "name: "+runningNode.MetaData.Name, "name: "+instanceName, 1)
+		err = util.ReplaceInstanceName(k8sYamlFile, fmt.Sprintf("  name: \"%s\"", runningNode.MetaData.Name), "  name: "+instanceName)
 		if err != nil {
 			return fmt.Errorf("failed to set instance name %s due to %v", instanceName, err)
 		}

@@ -18,6 +18,7 @@
 
 package org.cellery.components.test.scenarios.resource;
 
+import io.cellery.CelleryUtils;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.cellery.models.ServiceTemplate;
@@ -29,7 +30,6 @@ import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
-import org.cellery.components.test.utils.CelleryUtils;
 import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -70,7 +70,7 @@ public class ResourceTest {
                 , 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
+        cell = CelleryUtils.readCellYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
     @Test(groups = "build")
@@ -107,7 +107,7 @@ public class ResourceTest {
         final Container container = spec.getContainer();
         Assert.assertEquals(container.getImage(), "wso2cellery/sampleapp-stock:0.3.0");
         Assert.assertEquals(container.getPorts().get(0).getContainerPort().intValue(), 8080);
-        final ResourceRequirements resources = spec.getResources();
+        final ResourceRequirements resources = spec.getContainer().getResources();
         Assert.assertEquals(resources.getLimits().get("cpu"), new Quantity("500m"));
         Assert.assertEquals(resources.getLimits().get("memory"), new Quantity("128Mi"));
         Assert.assertEquals(resources.getRequests().get("memory"), new Quantity("64Mi"));
@@ -124,7 +124,7 @@ public class ResourceTest {
         Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "resource" + BAL,
                 cellImageInfo, dependencyCells, tmpDir), 0);
         File newYaml = tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
-        runtimeCell = CelleryUtils.getInstance(newYaml.getAbsolutePath());
+        runtimeCell = CelleryUtils.readCellYaml(newYaml.getAbsolutePath());
     }
 
     @Test(groups = "run")
@@ -153,7 +153,7 @@ public class ResourceTest {
         final ServiceTemplateSpec spec = servicesTemplates.get(0).getSpec();
         Assert.assertEquals(spec.getReplicas(), 1);
         Assert.assertEquals(spec.getServicePort(), 80);
-        final ResourceRequirements resources = spec.getResources();
+        final ResourceRequirements resources = spec.getContainer().getResources();
         Assert.assertEquals(resources.getLimits().get("cpu"), new Quantity("500m"));
         Assert.assertEquals(resources.getLimits().get("memory"), new Quantity("128Mi"));
         Assert.assertEquals(resources.getRequests().get("memory"), new Quantity("256Mi"));

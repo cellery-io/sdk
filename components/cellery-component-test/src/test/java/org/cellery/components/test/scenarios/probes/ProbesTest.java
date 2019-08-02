@@ -17,6 +17,7 @@
  */
 package org.cellery.components.test.scenarios.probes;
 
+import io.cellery.CelleryUtils;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.cellery.models.ServiceTemplate;
@@ -26,7 +27,6 @@ import io.fabric8.kubernetes.api.model.Probe;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
-import org.cellery.components.test.utils.CelleryUtils;
 import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -66,7 +66,7 @@ public class ProbesTest {
         Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "probes" + BAL, cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
+        cell = CelleryUtils.readCellYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
     @Test(groups = "build")
@@ -160,7 +160,7 @@ public class ProbesTest {
         Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "probes" + BAL,
                 cellImageInfo, dependencyCells, tmpDir), 0);
         File newYaml = tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
-        runtimeCell = CelleryUtils.getInstance(newYaml.getAbsolutePath());
+        runtimeCell = CelleryUtils.readCellYaml(newYaml.getAbsolutePath());
     }
 
     @Test(groups = "run")

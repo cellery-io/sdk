@@ -334,7 +334,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         if ("AutoScalingPolicy".equals(scalePolicy.getType().getName())) {
             // Autoscaling
             cellImage.setAutoScaling(true);
-            autoScalingPolicy.setMinReplicas((bScalePolicy.get("minReplicas")).toString());
+            autoScalingPolicy.setMinReplicas(((BInteger) (bScalePolicy.get("minReplicas"))).intValue());
             autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
             bOverridable = ((BBoolean) bScalePolicy.get("overridable")).booleanValue();
             LinkedHashMap metricsMap = ((BMap) bScalePolicy.get("metrics")).getMap();
@@ -348,7 +348,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         } else {
             //Zero Scaling
             cellImage.setZeroScaling(true);
-            autoScalingPolicy.setMinReplicas("0");
+            autoScalingPolicy.setMinReplicas(0);
             if (bScalePolicy.containsKey(MAX_REPLICAS)) {
                 autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
             }
@@ -395,7 +395,6 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             if (autoScaling != null) {
                 templateSpec.setAutoscaling(autoScaling);
             }
-            templateSpec.setResources(component.getResources());
             ServiceTemplate serviceTemplate = new ServiceTemplate();
             serviceTemplate.setMetadata(new ObjectMetaBuilder()
                     .withName(component.getService())
@@ -435,6 +434,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         ContainerBuilder containerBuilder = new ContainerBuilder()
                 .withImage(component.getSource())
                 .withEnv(envVarList)
+                .withResources(component.getResources())
                 .withReadinessProbe(component.getReadinessProbe())
                 .withLivenessProbe(component.getLivenessProbe());
         if (component.getContainerPort() != 0) {

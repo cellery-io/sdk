@@ -18,13 +18,13 @@
 
 package org.cellery.components.test.scenarios.petservice;
 
+import io.cellery.CelleryUtils;
 import io.cellery.models.AutoScalingPolicy;
 import io.cellery.models.Cell;
 import io.cellery.models.ServiceTemplateSpec;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
-import org.cellery.components.test.utils.CelleryUtils;
 import org.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -61,7 +61,7 @@ public class PetServiceTest {
                 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        cell = CelleryUtils.getInstance(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
+        cell = CelleryUtils.readCellYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
     @Test(groups = "build")
@@ -104,7 +104,7 @@ public class PetServiceTest {
         Assert.assertTrue(debugSpec.getAutoscaling().isOverridable());
         final AutoScalingPolicy autoscalePolicy = debugSpec.getAutoscaling().getPolicy();
         Assert.assertEquals(autoscalePolicy.getMaxReplicas(), 10);
-        Assert.assertEquals(autoscalePolicy.getMinReplicas(), "1");
+        Assert.assertEquals(autoscalePolicy.getMinReplicas(), 1);
         Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getType(), "Resource");
         Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getResource().getName(),
                 AUTO_SCALING_METRIC_RESOURCE_CPU);
@@ -124,7 +124,7 @@ public class PetServiceTest {
         final AutoScalingPolicy zeroScalePolicy = petSpec.getAutoscaling().getPolicy();
         Assert.assertEquals(zeroScalePolicy.getMaxReplicas(), 10);
         Assert.assertEquals(zeroScalePolicy.getConcurrency(), 25);
-        Assert.assertEquals(zeroScalePolicy.getMinReplicas(), "0");
+        Assert.assertEquals(zeroScalePolicy.getMinReplicas(), 0);
     }
 
     @AfterClass

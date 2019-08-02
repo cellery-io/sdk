@@ -17,8 +17,8 @@
  */
 package io.cellery;
 
-import com.esotericsoftware.yamlbeans.YamlWriter;
 import io.cellery.models.API;
+import io.cellery.models.Cell;
 import io.cellery.models.Component;
 import io.cellery.models.OIDC;
 import io.cellery.models.Test;
@@ -30,6 +30,7 @@ import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
+import io.fabric8.kubernetes.client.utils.Serialization;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.model.values.BInteger;
@@ -41,11 +42,11 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -182,11 +183,11 @@ public class CelleryUtils {
     public static void processResources(LinkedHashMap<?, ?> resources, Component component) {
         ResourceRequirements resourceRequirements = new ResourceRequirements();
         if (resources.containsKey(LIMITS)) {
-            LinkedHashMap<String, BValue> limitsConf = ((BMap) resources.get(LIMITS)).getMap();
+            LinkedHashMap limitsConf = ((BMap) resources.get(LIMITS)).getMap();
             resourceRequirements.setLimits(getResourceQuantityMap(limitsConf));
         }
         if (resources.containsKey(REQUESTS)) {
-            LinkedHashMap<String, BValue> requestConf = ((BMap) resources.get(REQUESTS)).getMap();
+            LinkedHashMap requestConf = ((BMap) resources.get(REQUESTS)).getMap();
             resourceRequirements.setRequests(getResourceQuantityMap(requestConf));
         }
         component.setResources(resourceRequirements);
@@ -223,13 +224,15 @@ public class CelleryUtils {
                     .endTcpSocket();
         } else if ("HttpGet".equals(probeKind)) {
             List<HTTPHeader> headers = new ArrayList<>();
-            ((BMap<?, ?>) probeKindConf.get("httpHeaders")).getMap().forEach((key, value) -> {
-                HTTPHeader header = new HTTPHeaderBuilder()
-                        .withName(key.toString())
-                        .withValue(value.stringValue())
-                        .build();
-                headers.add(header);
-            });
+            if (probeKindConf.containsKey("httpHeaders")) {
+                ((BMap<?, ?>) probeKindConf.get("httpHeaders")).getMap().forEach((key, value) -> {
+                    HTTPHeader header = new HTTPHeaderBuilder()
+                            .withName(key.toString())
+                            .withValue(value.stringValue())
+                            .build();
+                    headers.add(header);
+                });
+            }
             probeBuilder.withHttpGet(new HTTPGetActionBuilder()
                     .withNewPort((int) ((BInteger) probeKindConf.get("port")).intValue())
                     .withPath(((BString) probeKindConf.get("path")).stringValue())
@@ -253,8 +256,8 @@ public class CelleryUtils {
     /**
      * Process envVars and add to component.
      *
-     * @param envVars   Map of EnvVars
-     * @param test targetComponent
+     * @param envVars Map of EnvVars
+     * @param test    targetComponent
      */
     public static void processEnvVars(LinkedHashMap<?, ?> envVars, Test test) {
         envVars.forEach((k, v) -> {
@@ -356,15 +359,7 @@ public class CelleryUtils {
      * @return Yaml as a string.
      */
     public static <T> String toYaml(T object) {
-        try (StringWriter stringWriter = new StringWriter()) {
-            YamlWriter writer = new YamlWriter(stringWriter);
-            writer.write(object);
-            writer.getConfig().writeConfig.setWriteRootTags(false); //replaces only root tag
-            writer.close(); //don't add this to finally, because the text will not be flushed
-            return stringWriter.toString();
-        } catch (IOException e) {
-            throw new BallerinaException("Error occurred while generating yaml definition." + e.getMessage());
-        }
+        return Serialization.asYaml(object);
     }
 
     /**
@@ -429,25 +424,12 @@ public class CelleryUtils {
     }
 
     /**
-     * Interface to print shell command output.
-     */
-    public interface Writer {
-
-        /**
-         * Called when a newline should be printed.
-         *
-         * @param msg message to write
-         */
-        void writeMessage(String msg);
-    }
-
-    /**
      * Executes a shell command.
      *
-     * @param command command to execute
+     * @param command          command to execute
      * @param workingDirectory working directory
-     * @param stdout stdout of the command
-     * @param stderr stderr of the command
+     * @param stdout           stdout of the command
+     * @param stderr           stderr of the command
      * @return stdout/stderr
      */
     public static String executeShellCommand(String command, Path workingDirectory, Writer stdout, Writer stderr) {
@@ -502,6 +484,39 @@ public class CelleryUtils {
     }
 
     /**
+     * Read the yaml and create a Cell object.
+     *
+     * @param destinationPath YAML path
+     * @return Constructed Cell object
+     */
+    public static Cell readCellYaml(String destinationPath) {
+        Cell cell;
+        try (FileInputStream fileInputStream = new FileInputStream(destinationPath)) {
+            cell = Serialization.unmarshal(fileInputStream, Cell.class);
+        } catch (IOException e) {
+            throw new BallerinaException("Unable to read Cell image file " + destinationPath + ". \nDid you " +
+                    "pull/build the cell image ?");
+        }
+        if (cell == null) {
+            throw new BallerinaException("Unable to extract Cell image from YAML " + destinationPath);
+        }
+        return cell;
+    }
+
+    /**
+     * Interface to print shell command output.
+     */
+    public interface Writer {
+
+        /**
+         * Called when a newline should be printed.
+         *
+         * @param msg message to write
+         */
+        void writeMessage(String msg);
+    }
+
+    /**
      * StreamGobbler to handle process builder output.
      */
     private static class StreamGobbler implements Runnable {
@@ -519,5 +534,4 @@ public class CelleryUtils {
                     .forEach(consumer);
         }
     }
-
 }

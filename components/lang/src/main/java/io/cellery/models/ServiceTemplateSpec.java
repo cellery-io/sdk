@@ -18,7 +18,6 @@
 package io.cellery.models;
 
 import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,7 +33,6 @@ public class ServiceTemplateSpec {
     private int servicePort;
     private Container container;
     private AutoScaling autoscaling;
-    private ResourceRequirements resources;
     private String protocol;
     private String type;
 }
