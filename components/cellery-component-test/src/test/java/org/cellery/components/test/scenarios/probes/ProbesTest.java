@@ -151,6 +151,20 @@ public class ProbesTest {
         Assert.assertEquals(livenessProbeSalary.getTimeoutSeconds(), new Integer(1));
         Assert.assertEquals(livenessProbeSalary.getFailureThreshold(), new Integer(3));
         Assert.assertEquals(livenessProbeSalary.getTcpSocket().getPort().getIntVal(), new Integer(8080));
+
+        final Probe readinessProbeSalary = salaryContainer.getReadinessProbe();
+        Assert.assertNotNull(readinessProbeSalary);
+        Assert.assertEquals(readinessProbeSalary.getPeriodSeconds(), new Integer(10));
+        Assert.assertEquals(readinessProbeSalary.getInitialDelaySeconds(), new Integer(60));
+        Assert.assertEquals(readinessProbeSalary.getSuccessThreshold(), new Integer(1));
+        Assert.assertEquals(readinessProbeSalary.getTimeoutSeconds(), new Integer(50));
+        Assert.assertEquals(readinessProbeSalary.getFailureThreshold(), new Integer(3));
+        Assert.assertEquals(readinessProbeSalary.getHttpGet().getPath(), "/");
+        Assert.assertEquals(readinessProbeSalary.getHttpGet().getHttpHeaders().size(), 1);
+        Assert.assertEquals(readinessProbeSalary.getHttpGet().getHttpHeaders().get(0).getName(), "myCustomHeader");
+        Assert.assertEquals(readinessProbeSalary.getHttpGet().getHttpHeaders().get(0).getValue(),
+                "customerHeaderValue");
+        Assert.assertEquals(readinessProbeSalary.getHttpGet().getPort().getIntVal().intValue(), 80);
     }
 
     @Test(groups = "run")

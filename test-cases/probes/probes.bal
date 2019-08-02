@@ -31,6 +31,17 @@ public function build(cellery:ImageName iName) returns error? {
                 kind: <cellery:TcpSocket>{
                     port:salaryContainerPort
                 }
+            },
+            readiness: {
+                initialDelaySeconds: 60,
+                timeoutSeconds: 50,
+                kind: <cellery:HttpGet>{
+                                port: 80,
+                                path: "/",
+                                httpHeaders:{
+                                    myCustomHeader: "customerHeaderValue"
+                                }
+                            }
             }
         }
     };
