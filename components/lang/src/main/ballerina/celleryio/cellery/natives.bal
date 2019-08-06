@@ -129,7 +129,7 @@ public type Component record {|
     string name;
     ImageSource | DockerSource source;
     int replicas = 1;
-    map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress> ingresses?;
+    map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses?;
     Label labels?;
     map<Env> envVars?;
     Dependencies dependencies?;
@@ -159,6 +159,14 @@ public type HttpApiIngress record {|
 public type WebIngress record {|
     int port;
     GatewayConfig gatewayConfig;
+|};
+
+public type HttpPortIngress record {|
+    int port;
+|};
+
+public type HttpsPortIngress record {|
+    *HttpPortIngress;
 |};
 
 public type GatewayConfig record {|
@@ -213,6 +221,10 @@ public type CellImage record {|
     map<Component> components;
 |};
 
+public type Composite record {|
+    map<Component> components;
+|};
+
 # Open record to hold cell Reference fields.
 public type Reference record {
 
@@ -252,7 +264,7 @@ function validateCell(CellImage cellImage) {
     foreach var(key,component) in cellImage.components {
         if (!(component["ingresses"] is ()) && component.ingresses.length() > 1) {
             error err = error("component: [" + component.name + "] has more than one ingress");
-            panic(err);
+            panic (err);
         }
         if (!(component["scalingPolicy"] is ()) && (component.scalingPolicy is AutoScalingPolicy)) {
             AutoScalingPolicy policy = <AutoScalingPolicy> component.scalingPolicy;
