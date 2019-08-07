@@ -2,6 +2,7 @@
   "name": "@cellery-io/docs-view",
   "version": "0.1.0",
   "description": "Stand alone documentation viewer for Cells",
+  "license": "Apache-2.0",
   "homepage": ".",
   "scripts": {
     "clean": "rimraf ./build/ && rimraf ./node-server/public/ && rimraf ./coverage/",
@@ -12,16 +13,16 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@material-ui/core": "^3.9.3",
+    "@material-ui/core": "^4.3.1",
     "prop-types": "^15.7.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "react-scripts": "^2.1.8",
     "vis": "^4.21.0"
   },
   "devDependencies": {
-    "copyfiles": "^2.1.0",
-    "eslint-plugin-jest": "^22.4.1",
+    "copyfiles": "^2.1.1",
+    "eslint-plugin-jest": "^22.14.1",
+    "react-scripts": "^3.0.1",
     "rimraf": "^2.6.3"
   },
   "eslintConfig": {
