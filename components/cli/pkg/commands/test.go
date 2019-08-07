@@ -262,7 +262,7 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 		IsShared:     false,
 		Dependencies: immediateDependencies,
 	}
-	err = validateDependencyTree(mainNode)
+	err = validateDependencyTreeLinks(mainNode)
 	if err != nil {
 		util.ExitWithErrorMessage("Invalid instance linking", err)
 	}

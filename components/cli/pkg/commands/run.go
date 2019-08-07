@@ -104,35 +104,6 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 	}
 	fmt.Printf("\r\x1b[2K\n%s: %s\n\n", util.Bold("Main Instance"), instanceName)
 
-	if cellImageMetadata.ZeroScalingRequired {
-		// Check K-Native is installed.
-		if ok, err := celleryRuntime.IsKnativeEnabled(); err == nil {
-			if !ok {
-				spinner.Stop(false)
-				util.ExitWithErrorMessage(fmt.Sprintf("Unable to start cell instance [%s] from image [%s/%s:%s]",
-					instanceName, cellImageMetadata.CellImageName.Organization, cellImageMetadata.CellImageName.Name,
-					cellImageMetadata.CellImageName.Version),
-					fmt.Errorf("cell contains zero-scaling components, "+
-						"but zero-scaling is not enabled in Cellery runtime"))
-			}
-		} else {
-			util.ExitWithErrorMessage("Error occurred while checking whether zero-scaling is enabled.", err)
-		}
-	}
-	if cellImageMetadata.AutoScalingRequired {
-		// Check metrics-server is installed.
-		if ok, err := celleryRuntime.IsHpaEnabled(); err == nil {
-			if !ok {
-				util.PrintWarningMessage(fmt.Sprintf("Cell instance [%s] from image [%s/%s:%s] "+
-					"contains auto-scaling components, but metrics-server is not enabled in Cellery runtime. "+
-					"Autoscaling may not work. ", instanceName, cellImageMetadata.CellImageName.Organization,
-					cellImageMetadata.CellImageName.Name, cellImageMetadata.CellImageName.Version))
-			}
-		} else {
-			util.PrintWarningMessage("Error occurred while checking whether metrics-server is enabled.")
-		}
-	}
-
 	var parsedDependencyLinks []*dependencyAliasLink
 	if len(dependencyLinks) > 0 {
 		// Parsing the dependency links list
@@ -244,9 +215,14 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			util.ExitWithErrorMessage("Error occurred while generating the dependency tree", err)
 		}
 		spinner.SetNewAction("Validating dependency tree")
-		err = validateDependencyTree(dependencyTree)
+		err = validateDependencyTreeLinks(dependencyTree)
 		if err != nil {
 			util.ExitWithErrorMessage("Invalid instance linking", err)
+		}
+		spinner.SetNewAction("Validating requirements")
+		err = validateDependencyTreeRequirements(dependencyTree)
+		if err != nil {
+			util.ExitWithErrorMessage("Requirements unmet", err)
 		}
 		spinner.SetNewAction("")
 		err = confirmDependencyTree(dependencyTree, assumeYes)
@@ -350,9 +326,15 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			IsShared:     false,
 			Dependencies: immediateDependencies,
 		}
-		err = validateDependencyTree(mainNode)
+		spinner.SetNewAction("Validating links")
+		err = validateDependencyTreeLinks(mainNode)
 		if err != nil {
 			util.ExitWithErrorMessage("Invalid instance linking", err)
+		}
+		spinner.SetNewAction("Validating requirements")
+		err = validateDependencyTreeRequirements(mainNode)
+		if err != nil {
+			util.ExitWithErrorMessage("Requirements unmet", err)
 		}
 		spinner.SetNewAction("")
 		err = confirmDependencyTree(mainNode, assumeYes)
@@ -372,7 +354,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 	util.PrintWhatsNextMessage("list running cells", "cellery list instances")
 }
 
-// validateDependencyTree validates the dependency tree of the root instance
+// validateDependencyLinks validates the dependency tree of the root instance
 func validateDependencyLinks(rootInstance string, rootMetaData *image.MetaData,
 	dependencyLinks []*dependencyAliasLink) error {
 	// Validating the links provided by the user
@@ -591,8 +573,8 @@ func generateDependencyTree(rootInstance string, rootMetaData *image.MetaData, d
 	return dependencyTreeRoot, nil
 }
 
-// validateDependencyTree validates a generated dependency tree
-func validateDependencyTree(treeRoot *dependencyTreeNode) error {
+// validateDependencyTreeLinks validates a generated dependency tree's links
+func validateDependencyTreeLinks(treeRoot *dependencyTreeNode) error {
 	// This is used to store the instances provided by the user and later validate with the runtime and check
 	// whether the Cell Image of the instance matches with the linking provided by the user.
 	instanceToNodeMap := map[string]*dependencyTreeNode{}
@@ -652,6 +634,71 @@ func validateDependencyTree(treeRoot *dependencyTreeNode) error {
 				return fmt.Errorf("instance %s is not available in the runtime", instance)
 			}
 		}
+	}
+	return nil
+}
+
+// validateDependencyTreeRequirements validates whether the requirements of all the cells to be
+// started are met by the runtime.
+func validateDependencyTreeRequirements(treeRoot *dependencyTreeNode) error {
+	var validatedImages []string
+
+	// Validate whether the runtime satisfies all the requirements of the subtree
+	var validateDependencySubtreeOffline func(subTreeRoot *dependencyTreeNode) error
+	validateDependencySubtreeOffline = func(subTreeRoot *dependencyTreeNode) error {
+		alreadyValidated := false
+		imageToBeValidated := fmt.Sprintf("%s/%s:%s", subTreeRoot.MetaData.Organization, subTreeRoot.MetaData.Name,
+			subTreeRoot.MetaData.Version)
+		for _, validatedImage := range validatedImages {
+			if validatedImage == imageToBeValidated {
+				alreadyValidated = true
+				break
+			}
+		}
+
+		if !alreadyValidated {
+			if subTreeRoot.MetaData.ZeroScalingRequired {
+				// Check K-Native is installed.
+				if ok, err := celleryRuntime.IsKnativeEnabled(); err == nil {
+					if !ok {
+						return fmt.Errorf("cell contains zero-scaling components, " +
+							"but zero-scaling is not enabled in Cellery runtime")
+					}
+				} else {
+					util.ExitWithErrorMessage("Error occurred while checking whether zero-scaling is enabled.", err)
+				}
+			}
+			if subTreeRoot.MetaData.AutoScalingRequired {
+				// Check metrics-server is installed.
+				if ok, err := celleryRuntime.IsHpaEnabled(); err == nil {
+					if !ok {
+						util.PrintWarningMessage(fmt.Sprintf("Cell instance %s from image %s/%s:%s "+
+							"contains auto-scaling components, but metrics-server is not enabled in Cellery runtime. "+
+							"Autoscaling may not work. ", util.Bold(subTreeRoot.Instance),
+							subTreeRoot.MetaData.CellImageName.Organization,
+							subTreeRoot.MetaData.CellImageName.Name, subTreeRoot.MetaData.CellImageName.Version))
+					}
+				} else {
+					util.PrintWarningMessage("Error occurred while checking whether metrics-server is enabled.")
+				}
+			}
+			validatedImages = append(validatedImages, subTreeRoot.Instance)
+
+			// Traversing down the dependency tree
+			for _, dependency := range subTreeRoot.Dependencies {
+				if !dependency.IsRunning {
+					err := validateDependencySubtreeOffline(dependency)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+		return nil
+	}
+	err := validateDependencySubtreeOffline(treeRoot)
+	if err != nil {
+		return err
 	}
 	return nil
 }
