@@ -84,6 +84,7 @@ public type Percentage record {|
 public type Dependencies record {|
     Component?[] components?;
     map<ImageName | string> cells?;
+    map<ImageName | string> composites?;
 |};
 
 public type Probe record {|
@@ -245,18 +246,20 @@ public type TestSuite record {|
 # + cellImage - The cell image definition
 # + iName - The cell image org, name & version
 # + return - error
-public function createImage(CellImage cellImage, ImageName iName) returns ( error?) {
+public function createImage(CellImage | Composite image, ImageName iName) returns ( error?) {
     //Persist the Ballerina cell image record as a json
-    json jsonValue = check json.stamp(cellImage.clone());
+    json jsonValue = check json.stamp(image.clone());
     string filePath = "./target/cellery/" + iName.name + "_meta.json";
     var wResult = write(jsonValue, filePath);
     if (wResult is error) {
         log:printError("Error occurred while persisiting cell: " + iName.name, err = wResult);
         return wResult;
     }
-    validateCell(cellImage);
+    // Validate Cell
+    validateCell(image);
+
     //Generate yaml file and other artifacts via extern function
-    return createCellImage(cellImage, iName);
+    return createCellImage(image, iName);
 }
 
 
@@ -264,7 +267,7 @@ function validateCell(CellImage cellImage) {
     foreach var(key,component) in cellImage.components {
         if (!(component["ingresses"] is ()) && component.ingresses.length() > 1) {
             error err = error("component: [" + component.name + "] has more than one ingress");
-            panic (err);
+            panic err;
         }
         if (!(component["scalingPolicy"] is ()) && (component.scalingPolicy is AutoScalingPolicy)) {
             AutoScalingPolicy policy = <AutoScalingPolicy> component.scalingPolicy;
@@ -303,6 +306,17 @@ public function createInstance(CellImage cellImage, ImageName iName, map<ImageNa
 # + iName - The cell instance name
 # + return - error or CellImage record
 public function constructCellImage(ImageName iName) returns (CellImage | error) {
+    string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
+    var rResult = read(filePath);
+    if (rResult is error) {
+        log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
+        return rResult;
+    }
+    CellImage | error cellImage = CellImage.stamp(rResult);
+    return cellImage;
+}
+
+public function constructImage(ImageName iName) returns (Composite | error) {
     string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
     var rResult = read(filePath);
     if (rResult is error) {
@@ -432,7 +446,7 @@ public function getPort(Component component) returns (int) {
     int port = 0;
     if (component["ingresses"] is ()) {
         error err = error("getPort is invoked on a component: [" + component.name + "] with empty ingress");
-        panic (err);
+        panic err;
     }
     if (component.ingresses.length() > 0) {
         var ingress = component.ingresses[component.ingresses.keys()[0]];
