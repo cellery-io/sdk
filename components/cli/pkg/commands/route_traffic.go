@@ -40,7 +40,7 @@ const k8sMetadata = "metadata"
 const k8sAnnotations = "annotations"
 const cellOriginalGatewaySvcAnnKey = "mesh.cellery.io/original-gw-svc"
 
-func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string, targetInstance string, percentage int) error {
+func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string, targetInstance string, percentage int, sessionHeader string) error {
 	spinner := util.StartNewSpinner(fmt.Sprintf("Starting to route %d%% of traffic to instance %s", percentage, targetInstance))
 	// check if the target instance exists
 	targetInst, err := kubectl.GetCell(targetInstance)
@@ -75,7 +75,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 			return err
 		}
 		// modify the vs to include new route information.
-		vss, err := getModifiedVs(vs, dependencyInstance, targetInstance, percentage)
+		vss, err := getModifiedVs(vs, dependencyInstance, targetInstance, percentage, sessionHeader)
 		if err != nil {
 			spinner.Stop(false)
 			return err
@@ -247,15 +247,58 @@ func extractDependencies(depJson string) ([]map[string]string, error) {
 	return dependencies, nil
 }
 
-func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst string, percentageForTarget int) (*kubectl.VirtualService, error) {
+func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst string, percentageForTarget int, sessionHeader string) (*kubectl.VirtualService, error) {
 	// http
+	var httpRules []kubectl.HTTP
+	//var matchFound bool
 	for i, httpRule := range vs.VsSpec.HTTP {
 		for _, route := range httpRule.Route {
-			if strings.HasPrefix(route.Destination.Host, dependencyInst) {
-				httpRule.Route = *buildHttpRoutes(dependencyInst, targetInst, percentageForTarget)
+			// if the session header is not provided, just find and update the relevant percentage based rule
+			if sessionHeader != "" {
+				if !isSessionHeaderBasedRule(&httpRule, sessionHeader) && strings.HasPrefix(route.Destination.Host, dependencyInst) {
+					httpRule.Route = *buildPercentageBasedHttpRoutes(dependencyInst, targetInst, percentageForTarget)
+					vs.VsSpec.HTTP[i] = httpRule
+					// get the rule at (i-1) to see if it a session header based one
+					// if i < 3 {
+					if i == 0 {
+						// no session header based rules exist
+						httpRules = append(httpRules, buildHttpRulesForSessionHeaderBasedRouting(httpRule.Match[0].SourceLabels, httpRule.Match[0].Authority, dependencyInst, targetInst, sessionHeader, percentageForTarget)...)
+						// append everything else
+						httpRules = append(httpRules, vs.VsSpec.HTTP[i:]...)
+						// set the updated rules to the vs
+						vs.VsSpec.HTTP = httpRules
+					} else {
+						// check if rule at (i-1)th location is a session header based one
+						//if isSessionHeaderBasedRule(&vs.VsSpec.HTTP[i-1], sessionHeader) && isSessionHeaderBasedRule(&vs.VsSpec.HTTP[i-2], sessionHeader) &&
+						//	isSessionHeaderBasedRule(&vs.VsSpec.HTTP[i-3], sessionHeader) {
+						if isSessionHeaderBasedRule(&vs.VsSpec.HTTP[i-1], sessionHeader) {
+							// upate (i-1)st, (i-2)th and (i-3)rd rules
+							updatedRules := buildHttpRulesForSessionHeaderBasedRouting(httpRule.Match[0].SourceLabels, httpRule.Match[0].Authority, dependencyInst, targetInst, sessionHeader, percentageForTarget)
+							//vs.VsSpec.HTTP[i-3] = updatedRules[0]
+							//vs.VsSpec.HTTP[i-2] = updatedRules[1]
+							//vs.VsSpec.HTTP[i-1] = updatedRules[2]
+							vs.VsSpec.HTTP[i-1] = updatedRules[0]
+						} else {
+							// need to splice and insert
+							// splice up to i-1
+							httpRules = append(httpRules, vs.VsSpec.HTTP[:i-1]...)
+							// insert the new session based rule
+							httpRules = append(httpRules, buildHttpRulesForSessionHeaderBasedRouting(httpRule.Match[0].SourceLabels, httpRule.Match[0].Authority, dependencyInst, targetInst, sessionHeader, percentageForTarget)...)
+							// append remaining
+							httpRules = append(httpRules, vs.VsSpec.HTTP[i:]...)
+							// set the updated rules sto the vs
+							vs.VsSpec.HTTP = httpRules
+						}
+					}
+				}
+			} else {
+				// no session header
+				if strings.HasPrefix(route.Destination.Host, dependencyInst) || strings.HasPrefix(route.Destination.Host, targetInst) {
+					httpRule.Route = *buildPercentageBasedHttpRoutes(dependencyInst, targetInst, percentageForTarget)
+					vs.VsSpec.HTTP[i] = httpRule
+				}
 			}
 		}
-		vs.VsSpec.HTTP[i] = httpRule
 	}
 	// not supported atm
 	// TODO: support TCP
@@ -271,7 +314,80 @@ func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst 
 	return &vs, nil
 }
 
-func buildHttpRoutes(dependencyInst string, targetInst string, percentageForTarget int) *[]kubectl.HTTPRoute {
+func buildHttpRulesForSessionHeaderBasedRouting(srcLables map[string]string, authority kubectl.Authority, dependencyInst string, targetInst string, sessionHeader string, percentageForTarget int) []kubectl.HTTP {
+	var rules []kubectl.HTTP
+	if percentageForTarget < 100 {
+		//rules = append(rules, *buildHttpRuleForSessionHeaderExactMatch(srcLables, authority, sessionHeader, "0", dependencyInst))
+		//rules = append(rules, *buildHttpRuleForSessionHeaderExactMatch(srcLables, authority, sessionHeader, "1", targetInst))
+		rules = append(rules, *buildHttpRuleForSessionHeaderNonEmptyRegexMatch(srcLables, authority, sessionHeader, dependencyInst))
+	} else {
+		//rules = append(rules, *buildHttpRuleForSessionHeaderExactMatch(srcLables, authority, sessionHeader, "0", dependencyInst))
+		//rules = append(rules, *buildHttpRuleForSessionHeaderExactMatch(srcLables, authority, sessionHeader, "1", targetInst))
+		rules = append(rules, *buildHttpRuleForSessionHeaderNonEmptyRegexMatch(srcLables, authority, sessionHeader, targetInst))
+	}
+	return rules
+}
+
+func isSessionHeaderBasedRule(httpRule *kubectl.HTTP, sessionHeader string) bool {
+	for _, match := range httpRule.Match {
+		if match.Headers != nil && match.Headers[sessionHeader] != nil {
+			// this is a rule based on session header
+			return true
+		}
+	}
+	return false
+}
+
+func buildHttpRuleForSessionHeaderExactMatch(srcLables map[string]string, authority kubectl.Authority, sessionHeader string, sessionHeaderValue string, targetInst string) *kubectl.HTTP {
+	httpMatch := kubectl.HTTPMatch{
+		SourceLabels: srcLables,
+		Authority:    authority,
+		Headers: map[string]*kubectl.StringMatch{
+			sessionHeader: {
+				Exact: sessionHeaderValue,
+			},
+		},
+	}
+	return &kubectl.HTTP{
+		Match: []kubectl.HTTPMatch{
+			httpMatch,
+		},
+		Route: []kubectl.HTTPRoute{
+			{
+				Destination: kubectl.Destination{
+					Host: routing.GetCellGatewayHost(targetInst),
+				},
+			},
+		},
+	}
+}
+
+func buildHttpRuleForSessionHeaderNonEmptyRegexMatch(srcLables map[string]string, authority kubectl.Authority, sessionHeader string, targetInst string) *kubectl.HTTP {
+	httpMatch := kubectl.HTTPMatch{
+		SourceLabels: srcLables,
+		Authority:    authority,
+		Headers: map[string]*kubectl.StringMatch{
+			sessionHeader: {
+				// regex to check if the header is non-empty
+				Regex: "[^[:space:]]+",
+			},
+		},
+	}
+	return &kubectl.HTTP{
+		Match: []kubectl.HTTPMatch{
+			httpMatch,
+		},
+		Route: []kubectl.HTTPRoute{
+			{
+				Destination: kubectl.Destination{
+					Host: routing.GetCellGatewayHost(targetInst),
+				},
+			},
+		},
+	}
+}
+
+func buildPercentageBasedHttpRoutes(dependencyInst string, targetInst string, percentageForTarget int) *[]kubectl.HTTPRoute {
 	var routes []kubectl.HTTPRoute
 	if percentageForTarget == 100 {
 		// full traffic switch to target, need only one route
