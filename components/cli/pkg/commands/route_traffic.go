@@ -39,8 +39,9 @@ const imageVersion = "version"
 const k8sMetadata = "metadata"
 const k8sAnnotations = "annotations"
 const cellOriginalGatewaySvcAnnKey = "mesh.cellery.io/original-gw-svc"
+const instanceIdHeaderName = "x-instance-id"
 
-func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string, targetInstance string, percentage int) error {
+func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string, targetInstance string, percentage int, enableUserBasedSessionAwareness bool) error {
 	spinner := util.StartNewSpinner(fmt.Sprintf("Starting to route %d%% of traffic to instance %s", percentage, targetInstance))
 	// check if the target instance exists
 	targetInst, err := kubectl.GetCell(targetInstance)
@@ -75,7 +76,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 			return err
 		}
 		// modify the vs to include new route information.
-		vss, err := getModifiedVs(vs, dependencyInstance, targetInstance, percentage)
+		vss, err := getModifiedVs(vs, dependencyInstance, targetInstance, percentage, enableUserBasedSessionAwareness)
 		if err != nil {
 			spinner.Stop(false)
 			return err
@@ -247,12 +248,30 @@ func extractDependencies(depJson string) ([]map[string]string, error) {
 	return dependencies, nil
 }
 
-func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst string, percentageForTarget int) (*kubectl.VirtualService, error) {
+func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst string, percentageForTarget int, enableUserBasedSessionAwareness bool) (*kubectl.VirtualService, error) {
 	// http
 	for i, httpRule := range vs.VsSpec.HTTP {
 		for _, route := range httpRule.Route {
-			if strings.HasPrefix(route.Destination.Host, dependencyInst) {
-				httpRule.Route = *buildHttpRoutes(dependencyInst, targetInst, percentageForTarget)
+			// check whether the destination is either for previous dependency or the new dependency (target)
+			if strings.HasPrefix(route.Destination.Host, dependencyInst) || strings.HasPrefix(route.Destination.Host, targetInst) {
+				// if this is a session based rule, should be modified with normal percentage rules only if the enableUserBasedSessionAwareness flag is false
+				if isSessionHeaderBasedRule(&httpRule, instanceIdHeaderName) {
+					if enableUserBasedSessionAwareness {
+						// need to modify and add the routes to previous dependency cell and new dependency (target) cell instances.
+						// if the 'x-instance-id' header is 1, set destination to previous dependency instance gateway, and if its '2',
+						// set destination to new dependency instance gateway.
+						route, err := getHttRouteBasedOnInstanceId(&httpRule, instanceIdHeaderName, dependencyInst, targetInst)
+						if err != nil {
+							return nil, err
+						}
+						httpRule.Route = *route
+
+					} else {
+						httpRule.Route = *buildPercentageBasedHttpRoutes(dependencyInst, targetInst, percentageForTarget)
+					}
+				} else {
+					httpRule.Route = *buildPercentageBasedHttpRoutes(dependencyInst, targetInst, percentageForTarget)
+				}
 			}
 		}
 		vs.VsSpec.HTTP[i] = httpRule
@@ -271,7 +290,46 @@ func getModifiedVs(vs kubectl.VirtualService, dependencyInst string, targetInst 
 	return &vs, nil
 }
 
-func buildHttpRoutes(dependencyInst string, targetInst string, percentageForTarget int) *[]kubectl.HTTPRoute {
+func isSessionHeaderBasedRule(httpRule *kubectl.HTTP, sessionHeader string) bool {
+	for _, match := range httpRule.Match {
+		if match.Headers != nil && match.Headers[sessionHeader] != nil {
+			// this is a rule based on session header
+			return true
+		}
+	}
+	return false
+}
+
+func getHttRouteBasedOnInstanceId(httpRule *kubectl.HTTP, sessionHeader string, dependencyInstance string, targetInstance string) (*[]kubectl.HTTPRoute, error) {
+	for _, match := range httpRule.Match {
+		if match.Headers != nil && match.Headers[sessionHeader] != nil {
+			if match.Headers[sessionHeader].Exact == "1" {
+				return &[]kubectl.HTTPRoute{
+					{
+						Destination: kubectl.Destination{
+							Host: routing.GetCellGatewayHost(dependencyInstance),
+						},
+					},
+				}, nil
+			} else if match.Headers[sessionHeader].Exact == "2" {
+				return &[]kubectl.HTTPRoute{
+					{
+						Destination: kubectl.Destination{
+							Host: routing.GetCellGatewayHost(targetInstance),
+						},
+					},
+				}, nil
+			} else {
+				// should not happen
+				return nil, fmt.Errorf("unable to find accepted value match for %s header, expected either 1 or 2 but found %s", instanceIdHeaderName, match.Headers[sessionHeader].Exact)
+			}
+		}
+	}
+	// should not happen
+	return nil, fmt.Errorf("unable to find accepted value match for %s header", instanceIdHeaderName)
+}
+
+func buildPercentageBasedHttpRoutes(dependencyInst string, targetInst string, percentageForTarget int) *[]kubectl.HTTPRoute {
 	var routes []kubectl.HTTPRoute
 	if percentageForTarget == 100 {
 		// full traffic switch to target, need only one route

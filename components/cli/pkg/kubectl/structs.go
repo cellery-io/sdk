@@ -235,8 +235,15 @@ type HTTP struct {
 }
 
 type HTTPMatch struct {
-	Authority    Authority         `json:"authority"`
-	SourceLabels map[string]string `json:"sourceLabels"`
+	Authority    Authority               `json:"authority"`
+	SourceLabels map[string]string       `json:"sourceLabels"`
+	Headers      map[string]*StringMatch `json:"headers,omitempty"`
+}
+
+type StringMatch struct {
+	Exact  string `json:"exact,omitempty"`
+	Prefix string `json:"prefix,omitempty"`
+	Regex  string `json:"regex,omitempty"`
 }
 
 type Authority struct {

@@ -69,6 +69,8 @@ $ cellery route-traffic pet-be -p pet-be-v2=100
 ```
 cellery terminate pet-be
 ```
+- Additionally, you can use the flag `--enable-session-awareness` to enable session aware routing based on the user name. 
+An instance will be selected and will be propagated via the header `x-instance-id`. Its the cell component's responsibility to forward this header if this option is to be used.
 
 #### Note:
 The above commands will apply to all cell instances which has a dependency on `pet-be`. If required, route-traffic command can be applied to only a selected set of instances

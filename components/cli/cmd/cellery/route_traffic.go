@@ -39,12 +39,14 @@ func newRouteTrafficCommand() *cobra.Command {
 	var targetInstance string
 	var percentage int
 	var srcInstances []string
+	var enableSessionAwareness bool
 	cmd := &cobra.Command{
 		Use:   "route-traffic [--source|-s=<list_of_source_cell_instances>] --dependency|-d <dependency_instance_name> --target|-t <target instance name> [--percentage|-p <x>]",
 		Short: "route a percentage of the traffic to a cell instance",
 		Example: "cellery route-traffic --source hr-client-inst1 --dependency hr-inst-1 --target hr-inst-2 --percentage 20 \n" +
 			"cellery route-traffic --dependency hr-inst-1 --target hr-inst-2 --percentage 20 \n" +
-			"cellery route-traffic --dependency hr-inst-1 --target hr-inst-2",
+			"cellery route-traffic --dependency hr-inst-1 --target hr-inst-2 \n" +
+			"cellery route-traffic --dependency hr-inst-1 --target hr-inst-2 --percentage 25 --enable-session-awareness",
 		Args: func(cmd *cobra.Command, args []string) error {
 			// validate
 			err := validateArguments(dependencyInstance, targetInstance)
@@ -73,7 +75,7 @@ func newRouteTrafficCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunRouteTrafficCommand(srcInstances, dependencyInstance, targetInstance, percentage)
+			err := commands.RunRouteTrafficCommand(srcInstances, dependencyInstance, targetInstance, percentage, enableSessionAwareness)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to route traffic to the target instance: %s, percentage: %d", targetInstance, percentage), err)
 			}
@@ -83,6 +85,7 @@ func newRouteTrafficCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&dependencyInstance, "dependency", "d", "", "existing dependency instance name")
 	cmd.Flags().StringVarP(&targetInstance, "target", "t", "", "target instance to which the traffic should be re-routed")
 	cmd.Flags().StringVarP(&targetPercentage, "percentage", "p", "", "percentage to be switched to the target instance")
+	cmd.Flags().BoolVarP(&enableSessionAwareness, "enable-session-awareness", "a", false, "flag to enable session awareness based on user name")
 	return cmd
 }
 
