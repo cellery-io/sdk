@@ -40,6 +40,9 @@ type KeyringCredManager struct {
 func NewKeyringCredManager() (*KeyringCredManager, error) {
 	ring, err := keyring.Open(keyring.Config{
 		ServiceName:              celleryHubKeyringName,
+		KeychainName:             celleryHubKeyringName,
+		KWalletAppID:             celleryHubKeyringName,
+		LibSecretCollectionName:  celleryHubKeyringName,
 		FileDir:                  "~/.cellery/credentials",
 		KeychainTrustApplication: false,
 		AllowedBackends: []keyring.BackendType{keyring.SecretServiceBackend, keyring.KeychainBackend,
