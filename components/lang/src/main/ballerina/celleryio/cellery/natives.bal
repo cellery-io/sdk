@@ -243,7 +243,7 @@ public type TestSuite record {|
 
 # Build the cell artifacts and persist metadata
 #
-# + cellImage - The cell image definition
+# + image - The cell/composite image definition
 # + iName - The cell image org, name & version
 # + return - error
 public function createImage(CellImage | Composite image, ImageName iName) returns ( error?) {
@@ -265,10 +265,10 @@ public function createImage(CellImage | Composite image, ImageName iName) return
 
 function validateCell(CellImage cellImage) {
     foreach var(key,component) in cellImage.components {
-        if (!(component["ingresses"] is ()) && component.ingresses.length() > 1) {
-            error err = error("component: [" + component.name + "] has more than one ingress");
-            panic err;
-        }
+        //if (!(component["ingresses"] is ()) && component.ingresses.length() > 1) {
+        //    error err = error("component: [" + component.name + "] has more than one ingress");
+        //    panic err;
+        //}
         if (!(component["scalingPolicy"] is ()) && (component.scalingPolicy is AutoScalingPolicy)) {
             AutoScalingPolicy policy = <AutoScalingPolicy> component.scalingPolicy;
             if ((!(policy.metrics["cpu"] is ()) && (policy.metrics.cpu is Percentage)) &&
@@ -368,7 +368,12 @@ public function resolveReference(ImageName iName) returns (Reference) {
 # + dependencyAlias - Dependency alias
 # + return - Reference record
 public function getReference(Component component, string dependencyAlias) returns (Reference) {
-    var alias = component.dependencies.cells[dependencyAlias];
+    ImageName | string? alias;
+    if (!(component.dependencies["cells"] is ())) {
+        alias = component.dependencies.cells[dependencyAlias];
+    } else {
+        alias = component.dependencies.composites[dependencyAlias];
+    }
     ImageName aliasImage;
     if (alias is string) {
         aliasImage = parseCellDependency(alias);
