@@ -50,6 +50,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -82,7 +85,6 @@ import static io.cellery.CelleryUtils.toYaml;
 public class RunTestSuite extends BlockingNativeCallableUnit {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
     private static final Logger log = LoggerFactory.getLogger(CreateCellImage.class);
-    private List<Image> imageList = new ArrayList<>();
 
     @Override
     public void execute(Context ctx) {
@@ -90,121 +92,31 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(1);
         BRefType<?>[] tests = ((BValueArray) refArgument.getMap().get("tests")).getValues();
         try {
-            processTests(tests, nameStruct);
-            generateCells();
+            executeTests(tests, nameStruct);
         } catch (BallerinaException e) {
             ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
         }
     }
 
-    private void processTests(BRefType<?>[] tests, LinkedHashMap nameStruct) {
+    private void executeTests(BRefType<?>[] tests, LinkedHashMap nameStruct) {
         for (BRefType<?> refType : tests) {
-            Image image = new Image();
             String name = ((BMap) refType).getMap().get(NAME).toString();
-            image.setCellName(name);
-            image.setOrgName(((BString) nameStruct.get(ORG)).stringValue());
-            image.setCellVersion(((BString) nameStruct.get(VERSION)).stringValue());
             if (name.isEmpty()) {
                 break;
             }
             Test test = new Test();
             test.setName(name);
+
             LinkedHashMap sourceMap = ((BMap) ((BMap) refType).getMap().get("source")).getMap();
-            test.setSource(sourceMap.get("image").toString());
-            LinkedHashMap envMap = ((BMap) ((BMap) refType).getMap().get("envVars")).getMap();
-            CelleryUtils.processEnvVars(envMap, test);
-            image.setTest(test);
-            imageList.add(image);
-        }
-    }
-
-    private void generateCells() {
-        for (Image image : imageList) {
-            List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
-            List<String> unsecuredPaths = new ArrayList<>();
-            STSTemplate stsTemplate = new STSTemplate();
-            STSTemplateSpec stsTemplateSpec = new STSTemplateSpec();
-            ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
-
-            List<EnvVar> envVarList = new ArrayList<>();
-            image.getTest().getEnvVars().forEach((key, value) -> {
-                if (StringUtils.isEmpty(value)) {
-                    printWarning("Value is empty for environment variable \"" + key + "\"");
-                }
-                envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
-            });
-            templateSpec.setContainer(new ContainerBuilder()
-                    .withImage(image.getTest().getSource())
-                    .withEnv(envVarList)
-                    .build());
-            templateSpec.setType(SERVICE_TYPE_JOB);
-            ServiceTemplate serviceTemplate = new ServiceTemplate();
-            serviceTemplate.setMetadata(new ObjectMetaBuilder()
-                    .withName(image.getTest().getName())
-                    .withLabels(image.getTest().getLabels())
-                    .build());
-            serviceTemplate.setSpec(templateSpec);
-            serviceTemplateList.add(serviceTemplate);
-            stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
-            stsTemplate.setSpec(stsTemplateSpec);
-
-            CellSpec cellSpec = new CellSpec();
-            cellSpec.setServicesTemplates(serviceTemplateList);
-            cellSpec.setStsTemplate(stsTemplate);
-            ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(image.getCellName()))
-                    .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, image.getOrgName())
-                    .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, image.getCellName())
-                    .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, image.getCellVersion())
-                    .build();
-            Cell cell = new Cell(objectMeta, cellSpec);
-            String targetPath =
-                    OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + image.getCellName() + YAML;
-            try {
-                CelleryUtils.writeToFile(toYaml(cell), targetPath);
-                CelleryUtils.printDebug("Creating test cell " + image.getCellName());
-                CelleryUtils.executeShellCommand("kubectl apply -f " + targetPath, null,
-                        CelleryUtils::printDebug, CelleryUtils::printWarning);
-                printInfo("Executing test " + image.getCellName() + "...");
-
-                // Wait for job to be available
-                Thread.sleep(5000);
-
-                String jobName = image.getCellName() + "--" + image.getCellName() + "-job";
-                String podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
-                                + image.getCellName() + "--" + image.getCellName() + "-job",
-                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
-                String podName = getPodName(podInfo, image.getCellName());
-                if (podName == null) {
-                    printWarning("Error while getting name of the test pod. Skipping execution of test "
-                            + image.getCellName());
-                    continue;
-                }
-
-                CelleryUtils.printDebug("podName is: " + podName);
-                CelleryUtils.printDebug("Waiting for pod " + podName + " status to be 'Running'...");
-
-                if (!waitForPodRunning(podName, podInfo, image.getCellName())) {
-                    printWarning("Error getting status of pod " + podName + ". Skipping execution of test " +
-                            image.getCellName());
-                    deleteTestCell(image.getCellName());
-                    continue;
-                }
-
-                CelleryUtils.executeShellCommand("kubectl logs " + podName + " " + image.getCellName()
-                        + " -f", null, msg -> {
-                    PrintStream out = System.out;
-                    out.println("Log: " + msg);
-                }, CelleryUtils::printWarning);
-
-                waitForJobCompletion(jobName, podName, image.getCellName());
-                deleteTestCell(image.getCellName());
-            } catch (IOException e) {
-                String errMsg = "Error occurred while writing cell yaml " + targetPath;
-                log.error(errMsg, e);
-                throw new BallerinaException(errMsg);
-            } catch (InterruptedException e) {
-                log.error("Error while waiting for test completion. ", e.getMessage());
-                throw new BallerinaException(e);
+            if (sourceMap.get("image") == null) {
+                test.setSource(sourceMap.get("filepath").toString());
+                runInlineTest(test);
+            } else {
+                test.setSource(sourceMap.get("image").toString());
+                LinkedHashMap envMap = ((BMap) ((BMap) refType).getMap().get("envVars")).getMap();
+                CelleryUtils.processEnvVars(envMap, test);
+                Cell testCell = generateTestCell(test, nameStruct);
+                runImageBasedTest(testCell, test.getName());
             }
         }
     }
@@ -303,5 +215,112 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         printInfo("Deleting test cell " + instanceName);
         CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
                 CelleryUtils::printDebug, CelleryUtils::printWarning);
+    }
+
+    private void runInlineTest(Test test) {
+        Path workingDir = Paths.get(System.getProperty("user.dir"));
+        if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
+            CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
+                    CelleryUtils::printWarning);
+        }
+        CelleryUtils.executeShellCommand("ballerina test " + test.getSource(), workingDir, CelleryUtils::printInfo,
+                CelleryUtils::printWarning);
+    }
+
+    private Cell generateTestCell(Test test, LinkedHashMap nameStruct) {
+        Image cellImage = new Image();
+        cellImage.setCellName(test.getName());
+        cellImage.setTest(test);
+        cellImage.setOrgName(((BString) nameStruct.get(ORG)).stringValue());
+        cellImage.setCellVersion(((BString) nameStruct.get(VERSION)).stringValue());
+
+        List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
+        List<String> unsecuredPaths = new ArrayList<>();
+        STSTemplate stsTemplate = new STSTemplate();
+        STSTemplateSpec stsTemplateSpec = new STSTemplateSpec();
+        ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
+
+        List<EnvVar> envVarList = new ArrayList<>();
+        cellImage.getTest().getEnvVars().forEach((key, value) -> {
+            if (StringUtils.isEmpty(value)) {
+                printWarning("Value is empty for environment variable \"" + key + "\"");
+            }
+            envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
+        });
+        templateSpec.setContainer(new ContainerBuilder()
+                .withImage(cellImage.getTest().getSource())
+                .withEnv(envVarList)
+                .build());
+        templateSpec.setType(SERVICE_TYPE_JOB);
+        ServiceTemplate serviceTemplate = new ServiceTemplate();
+        serviceTemplate.setMetadata(new ObjectMetaBuilder()
+                .withName(cellImage.getTest().getName())
+                .withLabels(cellImage.getTest().getLabels())
+                .build());
+        serviceTemplate.setSpec(templateSpec);
+        serviceTemplateList.add(serviceTemplate);
+        stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
+        stsTemplate.setSpec(stsTemplateSpec);
+
+        CellSpec cellSpec = new CellSpec();
+        cellSpec.setServicesTemplates(serviceTemplateList);
+        cellSpec.setStsTemplate(stsTemplate);
+        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(cellImage.getCellName()))
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, cellImage.getOrgName())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, cellImage.getCellName())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, cellImage.getCellVersion())
+                .build();
+        return new Cell(objectMeta, cellSpec);
+    }
+
+    private void runImageBasedTest(Cell testCell, String testName) {
+        String targetPath = Paths.get(OUTPUT_DIRECTORY, "cellery", testName + YAML).toString();
+        try {
+
+            CelleryUtils.writeToFile(toYaml(testCell), targetPath);
+            CelleryUtils.writeToFile(toYaml(testCell), targetPath);
+            CelleryUtils.printDebug("Creating test cell " + testName);
+            CelleryUtils.executeShellCommand("kubectl apply -f " + targetPath, null,
+                    CelleryUtils::printDebug, CelleryUtils::printWarning);
+            printInfo("Executing test " + testName + "...");
+
+            // Wait for job to be available
+            Thread.sleep(5000);
+
+            String jobName = testName + "--" + testName + "-job";
+            String podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep " + testName + "--" +
+                            testName + "-job",
+                    null, CelleryUtils::printDebug, CelleryUtils::printWarning);
+            String podName = getPodName(podInfo, testName);
+            if (podName == null) {
+                printWarning("Error while getting name of the test pod. Skipping execution of test " + testName);
+                return;
+            }
+
+            CelleryUtils.printDebug("podName is: " + podName);
+            CelleryUtils.printDebug("Waiting for pod " + podName + " status to be 'Running'...");
+
+            if (!waitForPodRunning(podName, podInfo, testName)) {
+                printWarning("Error getting status of pod " + podName + ". Skipping execution of test " + testName);
+                deleteTestCell(testName);
+                return;
+            }
+
+            CelleryUtils.executeShellCommand("kubectl logs " + podName + " " + testName + " -f", null,
+                    msg -> {
+                        PrintStream out = System.out;
+                        out.println("Log: " + msg);
+                    }, CelleryUtils::printWarning);
+
+            waitForJobCompletion(jobName, podName, testName);
+            deleteTestCell(testName);
+        } catch (IOException e) {
+            String errMsg = "Error occurred while writing cell yaml " + targetPath;
+            log.error(errMsg, e);
+            throw new BallerinaException(errMsg);
+        } catch (InterruptedException e) {
+            log.error("Error while waiting for test completion. ", e.getMessage());
+            throw new BallerinaException(e);
+        }
     }
 }

@@ -51,6 +51,10 @@ public type GitSource record {|
     string tag;
 |};
 
+public type FileSource record {|
+    string filepath;
+|};
+
 public type ResourceDefinition record {|
     string path;
     string method;
@@ -240,12 +244,18 @@ public type Reference record {
 
 public type Test record {|
     string name;
-    ImageSource source;
+    ImageSource | FileSource source;
     map<Env> envVars?;
 |};
 
 public type TestSuite record {|
-    Test[] tests = [];
+	Test?[] tests = [];
+|};
+
+public type InstanceState record {|
+    ImageName iName;
+    boolean isRunning;
+    string alias?;
 |};
 
 # Build the cell artifacts and persist metadata
@@ -316,7 +326,7 @@ public function createCellImage(CellImage image, ImageName iName) returns ( erro
 # + instances - The cell instance dependencies
 # + startDependencies - Whether to start dependencies
 # + return - error optional
-public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances, boolean startDependencies) returns (CellImage[] | error?) = external;
+public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances, boolean startDependencies) returns (InstanceState[]|error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
@@ -422,19 +432,53 @@ public function getReference(Component component, string dependencyAlias) return
 # + return - error optional
 public function runInstances(ImageName iName, map<ImageName> instances) returns ImageName[] = external;
 
-# Run tests for cell instance
-#
-# + iName - The cell instance name to test
-# + testSuite - The testsuite to run
-# + return - error optional
 public function runTestSuite(ImageName iName, TestSuite testSuite) returns ( error?) = external;
 
-# Description
+# Terminate instances started for testing.
 #
-# + iName - Cell instance name to stop after executing tests
 # + instances -  The cell instance dependencies
 # + return - error optional
-public function stopInstances(ImageName iName, ImageName[] instances) returns ( error?) = external;
+public function stopInstances(InstanceState[] instances) returns ( error?) = external;
+
+# Returns the Image Name of the cell
+#
+# + return - ImageName
+public function getCellImage() returns (ImageName){
+    string org = config:getAsString("IMAGE_ORG");
+    string name = config:getAsString("IMAGE_NAME");
+    string ver = config:getAsString("IMAGE_VERSION");
+    ImageName iName = {
+        org: org, 
+        name: name, 
+        ver: ver
+    };
+
+    return iName;
+}
+
+# Returns cell gateway URL of the started cell
+#
+# + alias - dependency alias/"self" for instance
+# + return - URL of the cell gateway
+public function getGatewayHost(InstanceState[] iNameList, string alias = "") returns (string|error) {
+    string instanceName;
+    ImageName? iName = ();
+    if (alias == "") {
+        iName = <ImageName>getCellImage();
+        iName.instanceName = config:getAsString("INSTANCE_NAME");
+    } else {
+        foreach var inst in iNameList {
+            if (inst.alias == alias) {
+                iName = inst.iName;
+                break;
+            }
+        }
+    }
+    
+    Reference | error? ref = resolveReference(<ImageName>iName);
+    Reference tempRef = <Reference> ref;
+    return <string>tempRef.gateway_host;
+}
 
 function parseCellDependency(string alias) returns ImageName {
     string org = alias.substring(0, alias.indexOf("/"));
@@ -451,7 +495,7 @@ function parseCellDependency(string alias) returns ImageName {
 # Returns the hostname of the target component with placeholder for instances name
 #
 # + component - Target component
-# + return - hostname
+# + return - hostname 
 public function getHost(Component component) returns (string) {
     string host = "{{instance_name}}--" + getValidName(component.name) + "-service";
     if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
