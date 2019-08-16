@@ -91,6 +91,7 @@ import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_MEMORY;
 import static io.cellery.CelleryConstants.BTYPE_STRING;
 import static io.cellery.CelleryConstants.CELLS;
 import static io.cellery.CelleryConstants.COMPONENTS;
+import static io.cellery.CelleryConstants.COMPOSITES;
 import static io.cellery.CelleryConstants.CONCURRENCY_TARGET;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
@@ -103,6 +104,7 @@ import static io.cellery.CelleryConstants.GATEWAY_SERVICE;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
+import static io.cellery.CelleryConstants.KIND;
 import static io.cellery.CelleryConstants.LABELS;
 import static io.cellery.CelleryConstants.MAX_REPLICAS;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
@@ -545,23 +547,31 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
      */
     private void generateCellReference() {
         JSONObject json = new JSONObject();
-        image.getComponentNameToComponentMap().forEach((componentName, component) -> {
-            component.getApis().forEach(api -> {
-                String context = api.getContext();
-                if (StringUtils.isNotEmpty(context)) {
-                    String url = DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + GATEWAY_SERVICE + ":"
-                            + DEFAULT_GATEWAY_PORT + "/" + context;
-                    if ("/".equals(context)) {
-                        json.put(componentName + "_api_url", url.replaceAll("(?<!http:)//", "/"));
-                    } else {
-                        json.put(context + "_api_url", url.replaceAll("(?<!http:)//", "/"));
-                    }
-                }
+        if (image.isCompositeImage()) {
+            image.getComponentNameToComponentMap().forEach((componentName, component) -> {
+                json.put(componentName + "_host", INSTANCE_NAME_PLACEHOLDER + "-" + componentName + "--service");
+                json.put(componentName + "_port", component.getContainerPort());
             });
-            component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
-            component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
-        });
-        json.put("gateway_host", INSTANCE_NAME_PLACEHOLDER + GATEWAY_SERVICE);
+        } else {
+            image.getComponentNameToComponentMap().forEach((componentName, component) -> {
+                component.getApis().forEach(api -> {
+                    String context = api.getContext();
+                    if (StringUtils.isNotEmpty(context)) {
+                        String url =
+                                DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + GATEWAY_SERVICE + ":"
+                                        + DEFAULT_GATEWAY_PORT + "/" + context;
+                        if ("/".equals(context)) {
+                            json.put(componentName + "_api_url", url.replaceAll("(?<!http:)//", "/"));
+                        } else {
+                            json.put(context + "_api_url", url.replaceAll("(?<!http:)//", "/"));
+                        }
+                    }
+                });
+                component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
+                component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
+            });
+            json.put("gateway_host", INSTANCE_NAME_PLACEHOLDER + GATEWAY_SERVICE);
+        }
         String targetFileNameWithPath =
                 OUTPUT_DIRECTORY + File.separator + "ref" + File.separator + REFERENCE_FILE_NAME;
         try {
@@ -580,6 +590,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
      */
     private void generateMetadataFile(LinkedHashMap<?, ?> components) {
         JSONObject jsonObject = new JSONObject();
+        jsonObject.put(KIND, image.isCompositeImage() ? "Composite" : "Cell");
         jsonObject.put(ORG, image.getOrgName());
         jsonObject.put(NAME, image.getCellName());
         jsonObject.put(VERSION, image.getCellVersion());
@@ -600,12 +611,17 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             componentJson.put("labels", labelsJsonObject);
 
             JSONObject cellDependenciesJsonObject = new JSONObject();
+            JSONObject compositeDependenciesJsonObject = new JSONObject();
             JSONArray componentDependenciesJsonArray = new JSONArray();
             if (attributeMap.containsKey(DEPENDENCIES)) {
                 LinkedHashMap<?, ?> dependencies = ((BMap<?, ?>) attributeMap.get(DEPENDENCIES)).getMap();
                 if (dependencies.containsKey(CELLS)) {
                     LinkedHashMap<?, ?> cellDependencies = ((BMap) dependencies.get(CELLS)).getMap();
-                    extractCellDependencies(cellDependenciesJsonObject, cellDependencies);
+                    extractDependencies(cellDependenciesJsonObject, cellDependencies);
+                }
+                if (dependencies.containsKey(COMPOSITES)) {
+                    LinkedHashMap<?, ?> compositeDependencies = ((BMap) dependencies.get(COMPOSITES)).getMap();
+                    extractDependencies(compositeDependenciesJsonObject, compositeDependencies);
                 }
                 if (dependencies.containsKey(COMPONENTS)) {
                     BValueArray componentsArray = ((BValueArray) dependencies.get(COMPONENTS));
@@ -616,8 +632,9 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 }
             }
             JSONObject dependenciesJsonObject = new JSONObject();
-            dependenciesJsonObject.put("cells", cellDependenciesJsonObject);
-            dependenciesJsonObject.put("components", componentDependenciesJsonArray);
+            dependenciesJsonObject.put(CELLS, cellDependenciesJsonObject);
+            dependenciesJsonObject.put(COMPOSITES, compositeDependenciesJsonObject);
+            dependenciesJsonObject.put(COMPONENTS, componentDependenciesJsonArray);
             componentJson.put("dependencies", dependenciesJsonObject);
 
             componentJson.put("exposed", exposedComponents.contains(componentName));
@@ -641,7 +658,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         }
     }
 
-    private void extractCellDependencies(JSONObject dependenciesJsonObject, LinkedHashMap<?, ?> cellDependencies) {
+    private void extractDependencies(JSONObject dependenciesJsonObject, LinkedHashMap<?, ?> cellDependencies) {
         cellDependencies.forEach((alias, dependencyValue) -> {
             JSONObject dependencyJsonObject = new JSONObject();
             String org, name, version;

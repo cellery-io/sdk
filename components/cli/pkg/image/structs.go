@@ -126,5 +126,6 @@ type ComponentMetaData struct {
 
 type ComponentDependencies struct {
 	Cells      map[string]*MetaData `json:"cells"`
+	Composites map[string]*MetaData `json:"composites"`
 	Components []string             `json:"components"`
 }
