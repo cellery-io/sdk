@@ -250,7 +250,13 @@ func RunBuild(tag string, fileName string) {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred creating cell image", err)
 	}
-	folders := []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE}
+	isTestDirExists, _ := util.IsExists(constants.ZIP_TESTS)
+	var folders []string
+	if isTestDirExists {
+		folders = []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE, constants.ZIP_TESTS}
+	} else {
+		folders = []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE}
+	}
 	output := parsedCellImage.ImageName + ".zip"
 	err = util.RecursiveZip(nil, folders, output)
 	if err != nil {

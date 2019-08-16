@@ -257,7 +257,7 @@ func RunMethodExists(sourceFile string) (bool, error) {
 
 	// Check whether run method exists
 	return regexp.MatchString(
-		`.*public(\s)+function(\s)+run(\s)*\((s)*cellery:ImageName(\s)+.+(\s)*,(\s)*map<cellery:ImageName>(\s)+.+(\s)*\)(\s)+returns(\s)+error\\?`,
+		`.*public(\s)+function(\s)+run(\s)*\((s)*cellery:ImageName(\s)+.+(\s)*,(\s)*map<cellery:ImageName>(\s)+.+(\s)*\)(\s)+returns(\s)+\(cellery:InstanceState\[\]\|error\?\)`,
 		string(sourceFileBytes))
 }
 
@@ -455,7 +455,10 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 	} else if action == "run" {
 		ballerinaMain = `
 public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies) returns error? {
-	return run(iName, instances, startDependencies);
+	cellery:InstanceState[]|error? result = run(iName, instances, startDependencies);
+    if (result is error?) {
+		return result;
+	}
 }`
 	} else if action == "test" {
 		ballerinaMain = `
@@ -488,6 +491,18 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 	}
 
 	return targetFilePath, nil
+}
+
+// returns if the given file or directory exists
+func IsExists(filepath string) (bool, error) {
+	_, err := os.Stat(filepath)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
 }
 
 func ConvertToAlphanumeric(input, replacement string) string {

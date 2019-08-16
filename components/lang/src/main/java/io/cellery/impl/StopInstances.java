@@ -21,6 +21,7 @@ import io.cellery.CelleryUtils;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
+import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BRefType;
 import org.ballerinalang.model.values.BValueArray;
@@ -36,8 +37,7 @@ import static io.cellery.CelleryConstants.INSTANCE_NAME;
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "stopInstances",
-        args = {@Argument(name = "iName", type = TypeKind.RECORD),
-                @Argument(name = "instanceList", type = TypeKind.ARRAY)},
+        args = {@Argument(name = "instanceList", type = TypeKind.ARRAY)},
         returnType = {@ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )
@@ -45,18 +45,22 @@ public class StopInstances extends BlockingNativeCallableUnit {
 
     @Override
     public void execute(Context ctx) {
-        BRefType<?>[] instanceList = ((BValueArray) ctx.getNullableRefArgument(1)).getValues();
+        BRefType<?>[] instanceList = ((BValueArray) ctx.getNullableRefArgument(0)).getValues();
         String instanceName;
+        boolean wasRunning;
+        BRefType<?> iNameRefType;
         for (BRefType<?> refType: instanceList) {
-
-            if (((BMap) refType).getMap().get(INSTANCE_NAME) == null) {
+            if (((BMap) refType).getMap().get("iName") == null) {
                 break;
             }
-            instanceName = ((BMap) refType).getMap().get(INSTANCE_NAME).toString();
-
-            CelleryUtils.printInfo("Deleting " + instanceName + " instance...");
-            CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
-                    CelleryUtils::printDebug, CelleryUtils::printWarning);
+            wasRunning = ((BBoolean) ((BMap) refType).getMap().get("isRunning")).booleanValue();
+            if (!wasRunning) {
+                iNameRefType = (BRefType<?>) ((BMap) refType).getMap().get("iName");
+                instanceName = ((BMap) iNameRefType).getMap().get(INSTANCE_NAME).toString();
+                CelleryUtils.printInfo("Deleting " + instanceName + " instance...");
+                CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
+                        CelleryUtils::printDebug, CelleryUtils::printWarning);
+            }
         }
     }
 }

@@ -39,6 +39,9 @@ DISTRIBUTION_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/distribution
 DISTRIBUTION_ARTIFACTS_PATH := $(DISTRIBUTION_LAST_BUILD)/artifact
 DISTRIBUTION_K8S_ARTIFACT := k8s-artefacts.tar.gz
 
+TELEPRESENCE_VERSION := telepresence-0.101
+TELEPRESENCE_URL := https://s3.amazonaws.com/datawire-static-files/telepresence/$(TELEPRESENCE_VERSION).tar.gz
+
 MAIN_PACKAGES := cli
 
 VERSION ?= 0.4.0-SNAPSHOT
@@ -88,18 +91,26 @@ copy-k8s-artefacts:
 	cd ${PROJECT_ROOT}/installers; \
 	mkdir -p build-artifacts && cd build-artifacts;\
 	curl -LO --retry 5 $(DISTRIBUTION_ARTIFACTS); \
-	unzip $(DISTRIBUTION_VERSION).zip && mv distribution-master/installer/k8s-artefacts .; \
+	unzip $(DISTRIBUTION_VERSION).zip && mv distribution-$(DISTRIBUTION_VERSION)/installer/k8s-artefacts .; \
 	curl --retry 5 $(OBSERVABILITY_ARTIFACTS_PATH)/$(OBSERVABILITY_ARTIFACTS) --output $(OBSERVABILITY_ARTIFACTS); \
 	unzip $(OBSERVABILITY_ARTIFACTS); \
 	unzip $(OBSERVABILITY_SIDDHI_ARTIFACT) -d k8s-artefacts/observability/siddhi; \
 	mkdir -p k8s-artefacts/observability/node-server/config; \
 	unzip $(OBSERVABILITY_PORTAL_ARTIFACT) && cp config/* k8s-artefacts/observability/node-server/config/
 
+.PHONY: copy-telepresence-artefacts
+copy-telepresence-artefacts:
+	cd ${PROJECT_ROOT}/installers; \
+    mkdir -p build-artifacts && cd build-artifacts;\
+    curl -LO --retry 5 $(TELEPRESENCE_URL); \
+    tar -xvf $(TELEPRESENCE_VERSION).tar.gz
+
 .PHONY: build-ubuntu-installer
-build-ubuntu-installer: cleanup-installers copy-k8s-artefacts
+build-ubuntu-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-artefacts
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
+	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
 	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION)
 
 .PHONY: build-mac-installer

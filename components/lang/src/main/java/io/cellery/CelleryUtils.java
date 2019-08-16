@@ -17,12 +17,17 @@
  */
 package io.cellery;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
+import io.cellery.models.CellMeta;
 import io.cellery.models.Component;
 import io.cellery.models.Composite;
+import io.cellery.models.Node;
 import io.cellery.models.OIDC;
 import io.cellery.models.Test;
+import io.cellery.models.Tree;
 import io.cellery.models.Web;
 import io.cellery.util.KubernetesClient;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
@@ -770,5 +775,45 @@ public class CelleryUtils {
     public static boolean fileExists(String path) {
         File tmpDir = new File(path);
         return tmpDir.exists();
+    }
+
+    /**
+     *  Generate dependency tree.
+     *
+     * @param metadataJsonPath path to the metadata.json of the cell
+     * @throws IOException if dependency tree generation fails
+     */
+    public static void generateDependencyTree(String instanceName, String metadataJsonPath, Tree dependencyTree) throws
+            IOException {
+        //read json file data to String
+        byte[] jsonData = Files.readAllBytes(Paths.get(metadataJsonPath));
+        //create ObjectMapper instance
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        //convert json string to object
+        CellMeta rootCellMeta = objectMapper.readValue(jsonData, CellMeta.class);
+        Node<CellMeta> rootNode = new Node<>(rootCellMeta);
+        rootCellMeta.setInstanceName(instanceName);
+        // Set as root node
+        dependencyTree.setRoot(rootNode);
+        // Generating dependency tree
+        buildDependencyTree(rootNode, dependencyTree);
+    }
+
+    /**
+     * Build dependency tree.
+     *
+     * @param node node that will be added to the tree
+     */
+    private static void buildDependencyTree(Node<CellMeta> node, Tree dependencyTree) {
+        CellMeta cell = node.getData();
+        Map<String, CellMeta> dependentCells = cell.getCellDependencies();
+        if (dependentCells.size() > 0) {
+            for (Map.Entry<String, CellMeta> dependentCell : dependentCells.entrySet()) {
+                Node<CellMeta> childNode = node.addChild(dependentCell.getValue());
+                buildDependencyTree(childNode, dependencyTree);
+            }
+        }
+        dependencyTree.addNode(node);
     }
 }
