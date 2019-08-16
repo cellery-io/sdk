@@ -29,6 +29,7 @@ public class CelleryConstants {
     public static final String API_DEFINITION = "ApiDefinition";
     public static final String REFERENCE_DEFINITION = "Reference";
     public static final String IMAGE_NAME_DEFINITION = "ImageName";
+    public static final String INSTANCE_STATE_DEFINITION = "InstanceState";
     public static final String CELLERY_REPO_PATH =
             System.getProperty("user.home") + File.separator + ".cellery" + File.separator + "repo";
 

@@ -125,6 +125,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private Map dependencyInfo = new LinkedHashMap();
     private static Tree dependencyTree = new Tree();
     private BValueArray bValueArray;
+    private BMap<String, BValue> bmap;
     private AtomicLong runCount;
 
     public void execute(Context ctx) {
@@ -138,8 +139,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
         String cellName = ((BString) nameStruct.get("name")).stringValue();
-        String org = ((BString) nameStruct.get("org")).stringValue();
-        String version = ((BString) nameStruct.get("ver")).stringValue();
         instanceName = ((BString) nameStruct.get(INSTANCE_NAME)).stringValue();
         if (instanceName.isEmpty()) {
             instanceName = generateRandomInstanceName(((BString) nameStruct.get("name")).stringValue(),
@@ -178,6 +177,20 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         assignInstanceNames(userDependencyLinks);
         // Assign randomly generated instance names to instances user has not defined names for
         assignRandomInstanceNames();
+
+        CellMeta rootCellMeta = (CellMeta) dependencyTree.getRoot().getData();
+        BMap<String, BValue> rootCellInfo = new BMap<>(new BArrayType(BTypes.typeString));
+        rootCellInfo.put("org", new BString(rootCellMeta.getOrg()));
+        rootCellInfo.put("name", new BString(rootCellMeta.getName()));
+        rootCellInfo.put("ver", new BString(rootCellMeta.getVer()));
+        rootCellInfo.put("instanceName", new BString(rootCellMeta.getInstanceName()));
+
+        bmap = BLangConnectorSPIUtil.createBStruct(ctx,
+                CelleryConstants.CELLERY_PACKAGE,
+                CelleryConstants.INSTANCE_STATE_DEFINITION,
+                rootCellInfo, isCellInstanceRunning(rootCellMeta.getInstanceName()));
+        bValueArray.add(runCount.getAndIncrement(), bmap);
+
         // dependencyInfo is generated once all the validations are passing and all instance names are assigned
         // Generate dependency info
         dependencyInfo = generateDependencyInfo();
@@ -185,12 +198,29 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             try {
                 // Display the dependency tree info table
                 displayDependentCellTable();
+                dependencyInfo.forEach((alias, info) -> {
+                    String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
+                    bmap = BLangConnectorSPIUtil.createBStruct(ctx,
+                            CelleryConstants.CELLERY_PACKAGE,
+                            CelleryConstants.INSTANCE_STATE_DEFINITION,
+                            info, isCellInstanceRunning(depInstanceName), alias);
+                    bValueArray.add(runCount.getAndIncrement(), bmap);
+                });
+
                 // Start the dependency tree
                 startDependencyTree(ctx);
             } catch (Exception e) {
                 String error = "Unable to start dependencies";
                 log.error(error, e);
             }
+        } else {
+            dependencyInfo.forEach((alias, info) -> {
+                bmap = BLangConnectorSPIUtil.createBStruct(ctx,
+                        CelleryConstants.CELLERY_PACKAGE,
+                        CelleryConstants.INSTANCE_STATE_DEFINITION,
+                        info, true, alias);
+                bValueArray.add(runCount.getAndIncrement(), bmap);
+            });
         }
         updateDependencyAnnotations(composite, dependencyInfo);
         try {
@@ -217,7 +247,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             // Apply yaml file of the instance
             KubernetesClient.apply(cellYAMLPath);
             KubernetesClient.waitFor("Ready", 30 * 60, instanceArg, "default");
-            addToStartedInstances(ctx, org, cellName, version, instanceName);
             ctx.setReturnValues(bValueArray);
         } catch (IOException | BallerinaException e) {
             String error = "Unable to persist updated composite yaml " + destinationPath;
@@ -577,7 +606,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     dependentCellsMap.put(dependentCell.getKey(), dependentCellImage);
                 }
                 startInstance(org, name, version, cellMetaInstanceName, dependentCellsMap.toString());
-                addToStartedInstances(ctx, org, name, version, cellMetaInstanceName);
             }
         }
     }
@@ -713,23 +741,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     " is already available in the runtime";
             throw new BallerinaException(errMsg);
         }
-    }
-
-    /**
-     * Add the instance to started instances array.
-     *
-     * @param ctx          Context
-     * @param org          organization name
-     * @param name         cell name
-     * @param version      cell version
-     * @param instanceName cell instance name
-     */
-    private void addToStartedInstances(Context ctx, String org, String name, String version, String instanceName) {
-        BMap<String, BValue> bmap = BLangConnectorSPIUtil.createBStruct(ctx,
-                CelleryConstants.CELLERY_PACKAGE,
-                CelleryConstants.IMAGE_NAME_DEFINITION,
-                org, name, version, instanceName);
-        bValueArray.add(runCount.getAndIncrement(), bmap);
     }
 
     /**

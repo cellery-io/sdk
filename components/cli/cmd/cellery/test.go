@@ -33,6 +33,8 @@ import (
 func newTestCommand() *cobra.Command {
 	var name string
 	var debug bool
+	var verbose bool
+	var incell bool
 	var startDependencies bool
 	var shareAllInstances bool
 	var assumeYes bool
@@ -76,13 +78,16 @@ func newTestCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunTest(args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
-				assumeYes, debug)
+				assumeYes, debug, verbose, incell)
 		},
 		Example: "  cellery test cellery-samples/hr:1.0.0 -n hr-inst\n" +
 			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst -y\n" +
 			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst --assume-yes\n" +
-			"  cellery test registry.foo.io/cellery-samples/hr:1.0.0 -n hr-inst -l employee:employee-inst " +
-			"-l stock:stock-inst \n",
+			"  cellery test registry.foo.io/cellery-samples/hr:1.0.0 -n hr-inst -l employee:employee-inst" +
+			" -l stock:stock-inst \n" +
+			" -v\n" +
+			" --debug\n" +
+			" --incell",
 	}
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Name of the cell instance")
 	cmd.Flags().BoolVarP(&assumeYes, "assume-yes", "y", false,
@@ -96,6 +101,8 @@ func newTestCommand() *cobra.Command {
 	cmd.Flags().StringArrayVarP(&envVars, "env", "e", []string{},
 		"Set an environment variable for the cellery test method in the Cell file")
 
-	cmd.Flags().BoolVar(&debug, "debugMode", false, "Enable debug mode")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Run on verbose mode")
+	cmd.Flags().BoolVar(&debug, "debug", false, "Enable test debug mode")
+	cmd.Flags().BoolVar(&incell, "incell", false, "Enable in-cell testing")
 	return cmd
 }
