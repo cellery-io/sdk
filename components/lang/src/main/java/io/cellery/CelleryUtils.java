@@ -20,6 +20,7 @@ package io.cellery;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.cellery.models.Component;
+import io.cellery.models.Composite;
 import io.cellery.models.OIDC;
 import io.cellery.models.Test;
 import io.cellery.models.Web;
@@ -501,6 +502,26 @@ public class CelleryUtils {
             throw new BallerinaException("Unable to extract Cell image from YAML " + destinationPath);
         }
         return cell;
+    }
+
+    /**
+     * Read the yaml and create a Composite object.
+     *
+     * @param destinationPath YAML path
+     * @return Constructed Composite object
+     */
+    public static Composite readCompositeYaml(String destinationPath) {
+        Composite composite;
+        try (FileInputStream fileInputStream = new FileInputStream(destinationPath)) {
+            composite = Serialization.unmarshal(fileInputStream, Composite.class);
+        } catch (IOException e) {
+            throw new BallerinaException("Unable to read Cell image file " + destinationPath + ". \nDid you " +
+                    "pull/build the cell image ?");
+        }
+        if (composite == null) {
+            throw new BallerinaException("Unable to extract Cell image from YAML " + destinationPath);
+        }
+        return composite;
     }
 
     /**

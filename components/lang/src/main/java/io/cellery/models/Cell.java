@@ -20,20 +20,21 @@ package io.cellery.models;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 import static io.cellery.CelleryConstants.CELLERY_RESOURCE_VERSION;
 
 /**
  * Cell POJO model.
  */
-@Data
-@NoArgsConstructor
-public class Cell {
-    private String apiVersion;
-    private String kind;
-    private ObjectMeta metadata;
+@EqualsAndHashCode(callSuper = true)
+@Data()
+public class Cell extends Composite {
     private CellSpec spec;
+
+    public Cell() {
+        super("cell");
+    }
 
     public Cell(ObjectMeta metadata, CellSpec spec) {
         kind = "Cell";

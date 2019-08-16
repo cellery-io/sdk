@@ -20,20 +20,17 @@ package io.cellery.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Singular;
-
-import java.util.List;
 
 /**
  * Cell Spec.
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CellSpec {
+public class CellSpec extends CompositeSpec {
     private GatewayTemplate gatewayTemplate;
-    private @Singular
-    List<ServiceTemplate> servicesTemplates;
     private STSTemplate stsTemplate;
 }

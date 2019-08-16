@@ -19,6 +19,7 @@ package io.cellery.models;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import static io.cellery.CelleryConstants.CELLERY_RESOURCE_VERSION;
 
@@ -26,10 +27,11 @@ import static io.cellery.CelleryConstants.CELLERY_RESOURCE_VERSION;
  * Composite POJO model.
  */
 @Data
+@NoArgsConstructor
 public class Composite {
-    private String apiVersion;
-    private String kind;
-    private ObjectMeta metadata;
+    String apiVersion;
+    String kind;
+    ObjectMeta metadata;
     private CompositeSpec spec;
 
     public Composite(ObjectMeta metadata, CompositeSpec spec) {
@@ -37,5 +39,9 @@ public class Composite {
         apiVersion = CELLERY_RESOURCE_VERSION;
         this.metadata = metadata;
         this.spec = spec;
+    }
+
+    public Composite(String kind) {
+        this.kind = kind;
     }
 }

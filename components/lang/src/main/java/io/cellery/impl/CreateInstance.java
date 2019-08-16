@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
 import io.cellery.models.Component;
+import io.cellery.models.Composite;
 import io.cellery.models.Dependency;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.Image;
@@ -56,6 +57,7 @@ import java.util.Map;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
+import static io.cellery.CelleryConstants.CELLS;
 import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
@@ -98,18 +100,25 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 "artifacts" + File.separator + "cellery";
         Map dependencyInfo = ((BMap) ctx.getNullableRefArgument(2)).getMap();
         String cellYAMLPath = destinationPath + File.separator + cellName + YAML;
-        Cell cell = CelleryUtils.readCellYaml(cellYAMLPath);
-        updateDependencyAnnotations(cell, dependencyInfo);
+        Composite composite;
+        if (CELLS.equals(refArgument.getMap().get("kind"))) {
+            composite = CelleryUtils.readCellYaml(cellYAMLPath);
+        } else {
+            composite = CelleryUtils.readCompositeYaml(cellYAMLPath);
+        }
+        updateDependencyAnnotations(composite, dependencyInfo);
         try {
             processComponents((BMap) refArgument.getMap().get("components"));
-            cell.getSpec().getServicesTemplates().forEach(serviceTemplate -> {
+            composite.getSpec().getServicesTemplates().forEach(serviceTemplate -> {
                 String componentName = serviceTemplate.getMetadata().getName();
-                Component updatedComponent = image.getComponentNameToComponentMap().get(componentName);
+                Component updatedComponent = this.image.getComponentNameToComponentMap().get(componentName);
                 //Replace env values defined in the YAML.
                 updateEnvVar(instanceName, serviceTemplate, updatedComponent, dependencyInfo);
 
                 // Update Gateway Config
-                updateGatewayConfig(instanceName, destinationPath, cell, updatedComponent);
+                if (composite instanceof Cell) {
+                    updateGatewayConfig(instanceName, destinationPath, (Cell) composite, updatedComponent);
+                }
 
                 // Update liveness and readiness probe
                 updateProbes(serviceTemplate, updatedComponent);
@@ -117,9 +126,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 // Update resource limit and requests
                 updateResources(serviceTemplate, updatedComponent);
             });
-            writeToFile(toYaml(cell), cellYAMLPath);
+            writeToFile(toYaml(composite), cellYAMLPath);
         } catch (IOException | BallerinaException e) {
-            String error = "Unable to persist updated cell yaml " + destinationPath;
+            String error = "Unable to persist updated composite yaml " + destinationPath;
             log.error(error, e);
             ctx.setReturnValues(BLangVMErrors.createError(ctx, error + ". " + e.getMessage()));
         }
@@ -245,19 +254,19 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     /**
      * Update the dependencies annotation with dependent instance names.
      *
-     * @param cell           Cell definition
+     * @param composite      Cell definition
      * @param dependencyInfo dependency alias information map
      */
-    private void updateDependencyAnnotations(Cell cell, Map dependencyInfo) {
+    private void updateDependencyAnnotations(Composite composite, Map dependencyInfo) {
         Gson gson = new Gson();
-        Dependency[] dependencies = gson.fromJson(cell.getMetadata().getAnnotations()
+        Dependency[] dependencies = gson.fromJson(composite.getMetadata().getAnnotations()
                 .get(ANNOTATION_CELL_IMAGE_DEPENDENCIES), Dependency[].class);
         Arrays.stream(dependencies).forEach(dependency -> {
             dependency.setInstance(((BString) ((BMap) dependencyInfo.get(dependency.getAlias())).getMap().get(
                     INSTANCE_NAME)).stringValue());
             dependency.setAlias(null);
         });
-        cell.getMetadata().getAnnotations().put(ANNOTATION_CELL_IMAGE_DEPENDENCIES, gson.toJson(dependencies));
+        composite.getMetadata().getAnnotations().put(ANNOTATION_CELL_IMAGE_DEPENDENCIES, gson.toJson(dependencies));
     }
 
     /**

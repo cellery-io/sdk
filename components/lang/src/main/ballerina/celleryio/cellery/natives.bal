@@ -219,10 +219,12 @@ public type Secret record {|
 |};
 
 public type CellImage record {|
+    string kind = "Cell";
     map<Component> components;
 |};
 
 public type Composite record {|
+    string kind = "Composite";
     map<Component> components;
 |};
 
@@ -299,7 +301,7 @@ public function createCellImage(CellImage image, ImageName iName) returns ( erro
 # + iName - The cell instance name
 # + instances - The cell instance dependencies
 # + return - error optional
-public function createInstance(CellImage image, ImageName iName, map<ImageName> instances) returns ( error?) = external;
+public function createInstance(CellImage|Composite image, ImageName iName, map<ImageName> instances) returns ( error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
@@ -323,7 +325,7 @@ public function constructImage(ImageName iName) returns (Composite | error) {
         log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
         return rResult;
     }
-    CellImage | error image = CellImage.stamp(rResult);
+    Composite | error image = Composite.stamp(rResult);
     return image;
 }
 
