@@ -75,6 +75,7 @@ const GCP_SQL_DISK_SIZE_GB = 20
 
 const ZIP_BALLERINA_SOURCE = "src"
 const ZIP_ARTIFACTS = "artifacts"
+const ZIP_TESTS = "tests"
 
 const CELLERY_HOME_DOCS_VIEW_DIR = "docs-view"
 
@@ -86,6 +87,7 @@ const MYSQL = "mysql"
 const SP = "sp"
 const DB_SCRIPTS = "dbscripts"
 const INIT_SQL = "init.sql"
+const TELEPRESENCE = "telepresence"
 
 const KUBECTL = "kubectl"
 const CREATE = "create"
@@ -100,6 +102,7 @@ const CELLERY_EXECUTABLE_PATH = "/runtime/executable/"
 const BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-0.991.0"
 const BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-0.991.0"
 const BALLERINA_EXECUTABLE_PATH = "/bin/"
+const BALLERINA_CONF = "ballerina.conf"
 
 const DOCKER_CLI_BALLERINA_EXECUTABLE_PATH = "/usr/lib/ballerina/ballerina-0.991.0/bin/ballerina"
 
@@ -124,3 +127,5 @@ const INGRESS_MODE_NODE_PORT = "Node port [kubeadm, minikube]"
 const INGRESS_MODE_LOAD_BALANCER = "Load balancer [gcp, docker for desktop]"
 
 const CELLERY_DOCKER_CLI_USER_ID = "1000"
+
+const TELEPRESENCE_EXEC_PATH = "telepresence-0.101/bin/"

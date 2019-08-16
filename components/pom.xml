@@ -178,6 +178,11 @@
                 <version>${testng.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt</artifactId>
+                <version>${io.jsonwebtoken.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -288,6 +293,7 @@
         <snowdrop.istio.model.version>1.0.1</snowdrop.istio.model.version>
         <spotify.docker.client.version>8.15.0</spotify.docker.client.version>
         <testng.version>6.14.3</testng.version>
+        <io.jsonwebtoken.version>0.9.1</io.jsonwebtoken.version>
     </properties>
 
     <modules>

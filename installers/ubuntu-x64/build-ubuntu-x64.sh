@@ -19,6 +19,8 @@
 #
 #Generate WSO2 Product Installers for Ubuntu OS.
 
+# Download telepresence from https://s3.amazonaws.com/datawire-static-files/telepresence/telepresence-0.101.tar.gz
+
 #Configuration Variables and Parameters
 
 function printUsage() {
@@ -150,6 +152,7 @@ copyBuildDirectories() {
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/repo
 
     cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
+    cp -R $RESOURCE_LOCATION/telepresence-* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
 
     cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/repo
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib/
