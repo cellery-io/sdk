@@ -263,12 +263,12 @@ public function createImage(CellImage | Composite image, ImageName iName) return
 }
 
 
-function validateCell(CellImage cellImage) {
-    foreach var(key,component) in cellImage.components {
-        //if (!(component["ingresses"] is ()) && component.ingresses.length() > 1) {
-        //    error err = error("component: [" + component.name + "] has more than one ingress");
-        //    panic err;
-        //}
+function validateCell(CellImage image) {
+    foreach var(key,component) in image.components {
+        if (!(component["ingresses"] is ()) && component.ingresses.length() > 1) {
+            error err = error("component: [" + component.name + "] has more than one ingress");
+            panic err;
+        }
         if (!(component["scalingPolicy"] is ()) && (component.scalingPolicy is AutoScalingPolicy)) {
             AutoScalingPolicy policy = <AutoScalingPolicy> component.scalingPolicy;
             if ((!(policy.metrics["cpu"] is ()) && (policy.metrics.cpu is Percentage)) &&
@@ -288,18 +288,18 @@ function validateCell(CellImage cellImage) {
 
 # Build the cell yaml
 #
-# + cellImage - The cell image definition
+# + image - The cell image definition
 # + iName - The cell image org, name & version
 # + return - error
-public function createCellImage(CellImage cellImage, ImageName iName) returns ( error?) = external;
+public function createCellImage(CellImage image, ImageName iName) returns ( error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
-# + cellImage - The cell image definition
+# + image - The cell image definition
 # + iName - The cell instance name
 # + instances - The cell instance dependencies
 # + return - error optional
-public function createInstance(CellImage cellImage, ImageName iName, map<ImageName> instances) returns ( error?) = external;
+public function createInstance(CellImage image, ImageName iName, map<ImageName> instances) returns ( error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
@@ -312,8 +312,8 @@ public function constructCellImage(ImageName iName) returns (CellImage | error) 
         log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
         return rResult;
     }
-    CellImage | error cellImage = CellImage.stamp(rResult);
-    return cellImage;
+    CellImage | error image = CellImage.stamp(rResult);
+    return image;
 }
 
 public function constructImage(ImageName iName) returns (Composite | error) {
@@ -323,8 +323,8 @@ public function constructImage(ImageName iName) returns (Composite | error) {
         log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
         return rResult;
     }
-    CellImage | error cellImage = CellImage.stamp(rResult);
-    return cellImage;
+    CellImage | error image = CellImage.stamp(rResult);
+    return image;
 }
 
 # Parse the swagger file and returns API Defintions

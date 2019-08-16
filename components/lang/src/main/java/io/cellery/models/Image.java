@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Cell Image model Class.
+ * Cell/Composite Image model Class.
  */
 @Data
-public class CellImage {
+public class Image {
     private Map<String, Component> componentNameToComponentMap;
     private String orgName;
     private String cellName;
@@ -20,9 +20,10 @@ public class CellImage {
     private List<Dependency> dependencies;
     private boolean zeroScaling;
     private boolean autoScaling;
+    private boolean compositeImage;
     private Test test;
 
-    public CellImage() {
+    public Image() {
         componentNameToComponentMap = new HashMap<>();
         dependencies = new ArrayList<>();
     }

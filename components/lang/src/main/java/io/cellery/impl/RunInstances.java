@@ -19,7 +19,7 @@ package io.cellery.impl;
 
 import io.cellery.CelleryConstants;
 import io.cellery.CelleryUtils;
-import io.cellery.models.CellImage;
+import io.cellery.models.Image;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
@@ -59,20 +59,20 @@ public class RunInstances extends BlockingNativeCallableUnit {
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(0)).getMap();
         LinkedHashMap depStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
-        Map<String, CellImage> instances = new HashMap<>();
-        CellImage cellImage;
+        Map<String, Image> instances = new HashMap<>();
+        Image image;
         BArrayType bArrayType =
                 new BArrayType(ctx.getProgramFile().getPackageInfo(CelleryConstants.CELLERY_PACKAGE).getTypeDefInfo(
                         CelleryConstants.IMAGE_NAME_DEFINITION).typeInfo.getType());
         BValueArray bValueArray = new BValueArray(bArrayType);
         for (Object object : depStruct.entrySet()) {
-            cellImage = new CellImage();
+            image = new Image();
             LinkedHashMap depNameStruct = ((BMap) ((Map.Entry) object).getValue()).getMap();
             String depAlias = ((Map.Entry) object).getKey().toString();
-            cellImage.setOrgName(depNameStruct.get(ORG).toString());
-            cellImage.setCellName(depNameStruct.get(INSTANCE_NAME).toString());
-            cellImage.setCellVersion(depNameStruct.get(VERSION).toString());
-            instances.put(depAlias, cellImage);
+            image.setOrgName(depNameStruct.get(ORG).toString());
+            image.setCellName(depNameStruct.get(INSTANCE_NAME).toString());
+            image.setCellVersion(depNameStruct.get(VERSION).toString());
+            instances.put(depAlias, image);
         }
         String output = CelleryUtils.executeShellCommand("kubectl get cells", null, CelleryUtils::printDebug,
                 CelleryUtils::printDebug);

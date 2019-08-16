@@ -6,10 +6,9 @@ public function build(cellery:ImageName iName) returns error? {
     cellery:Component hrCompComponent = {
         name: "hr",
         source: {
-                image: "docker.io/celleryio/sampleapp-hr"
+            image: "docker.io/celleryio/sampleapp-hr"
         },
         ingresses: {
-            http:<cellery:HttpPortIngress>{port: 8080},
             https:<cellery:HttpsPortIngress>{port: 8443}
         },
         dependencies: {
@@ -19,18 +18,42 @@ public function build(cellery:ImageName iName) returns error? {
                 // dependency as a struct
                 stockCellDep: <cellery:ImageName>{ org: "myorg", name: "stock", ver: "1.0.0" }
             }
+        },
+        probes: {
+            liveness: {
+                initialDelaySeconds: 30,
+                kind: <cellery:TcpSocket>{
+                            port:fooComponentPort
+                        }
+            },
+            readiness: {
+                initialDelaySeconds: 60,
+                timeoutSeconds: 50,
+                kind: <cellery:HttpGet>{
+                                        port: 80,
+                                        path: "/",
+                                        httpHeaders:{
+                                            myCustomHeader: "customerHeaderValue"
+                                        }
+                                    }
+            }
         }
+
     };
 
     hrCompComponent.envVars = {
-        employee_api_url: { value: <string>cellery:getReference(hrCompComponent, "employeeCellDep").employee_api_url },
-        stock_api_url: { value: <string>cellery:getReference(hrCompComponent, "stockCellDep").stock_api_url }
+        employee_api_url: {
+            value: <string>cellery:getReference(hrCompComponent, "employeeCellDep").employee_api_url
+        },
+        stock_api_url: {
+            value: <string>cellery:getReference(hrCompComponent, "stockCellDep").stock_api_url
+        }
     };
 
     cellery:Component fooCompComponent = {
         name: "foo",
         source: {
-                image: "docker.io/celleryio/sampleapp-foo"
+            image: "docker.io/celleryio/sampleapp-foo"
         },
         ingresses: {
             http: <cellery:HttpPortIngress>{
@@ -45,7 +68,7 @@ public function build(cellery:ImageName iName) returns error? {
             hrComp: hrCompComponent
         }
     };
-    return cellery:createImage(hrComposite, untaint iName); // this will create an image with type = composite
+    return cellery:createImage(hrComposite, untaint iName);// this will create an image with type = composite
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {

@@ -24,13 +24,15 @@ import io.cellery.models.AutoScaling;
 import io.cellery.models.AutoScalingPolicy;
 import io.cellery.models.AutoScalingResourceMetric;
 import io.cellery.models.Cell;
-import io.cellery.models.CellImage;
 import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
+import io.cellery.models.Composite;
+import io.cellery.models.CompositeSpec;
 import io.cellery.models.Dependency;
 import io.cellery.models.GRPC;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.GatewayTemplate;
+import io.cellery.models.Image;
 import io.cellery.models.Resource;
 import io.cellery.models.STSTemplate;
 import io.cellery.models.STSTemplateSpec;
@@ -95,6 +97,7 @@ import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.DEPENDENCIES;
 import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
 import static io.cellery.CelleryConstants.ENV_VARS;
+import static io.cellery.CelleryConstants.EXPOSE;
 import static io.cellery.CelleryConstants.GATEWAY_PORT;
 import static io.cellery.CelleryConstants.GATEWAY_SERVICE;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
@@ -104,6 +107,8 @@ import static io.cellery.CelleryConstants.LABELS;
 import static io.cellery.CelleryConstants.MAX_REPLICAS;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
 import static io.cellery.CelleryConstants.MICRO_GATEWAY;
+import static io.cellery.CelleryConstants.NAME;
+import static io.cellery.CelleryConstants.ORG;
 import static io.cellery.CelleryConstants.POD_RESOURCES;
 import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.PROTOCOL_GRPC;
@@ -112,6 +117,7 @@ import static io.cellery.CelleryConstants.PROTO_FILE;
 import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
 import static io.cellery.CelleryConstants.SCALING_POLICY;
 import static io.cellery.CelleryConstants.TARGET;
+import static io.cellery.CelleryConstants.VERSION;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getApi;
@@ -130,7 +136,7 @@ import static io.cellery.CelleryUtils.writeToFile;
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "createCellImage",
-        args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
+        args = {@Argument(name = "image", type = TypeKind.RECORD),
                 @Argument(name = "iName", type = TypeKind.RECORD)},
         returnType = {@ReturnType(type = TypeKind.ERROR)},
         isPublic = true
@@ -139,21 +145,26 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
     private static final Logger log = LoggerFactory.getLogger(CreateCellImage.class);
 
-    private CellImage cellImage = new CellImage();
+    private Image image = new Image();
     private Set<String> exposedComponents = new HashSet<>();
 
     public void execute(Context ctx) {
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
-        cellImage.setOrgName(((BString) nameStruct.get("org")).stringValue());
-        cellImage.setCellName(((BString) nameStruct.get("name")).stringValue());
-        cellImage.setCellVersion(((BString) nameStruct.get("ver")).stringValue());
+        image.setOrgName(((BString) nameStruct.get(ORG)).stringValue());
+        image.setCellName(((BString) nameStruct.get(NAME)).stringValue());
+        image.setCellVersion(((BString) nameStruct.get(VERSION)).stringValue());
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
+        image.setCompositeImage("Composite".equals(refArgument.getType().getName()));
         LinkedHashMap<?, ?> components = ((BMap) refArgument.getMap().get("components")).getMap();
         try {
             processComponents(components);
             generateCellReference();
             generateMetadataFile(components);
-            generateCell();
+            if (image.isCompositeImage()) {
+                generateComposite(image);
+            } else {
+                generateCell(image);
+            }
         } catch (BallerinaException e) {
             ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
         }
@@ -188,7 +199,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             if (attributeMap.containsKey(POD_RESOURCES)) {
                 processResources(((BMap<?, ?>) attributeMap.get(POD_RESOURCES)).getMap(), component);
             }
-            cellImage.addComponent(component);
+            image.addComponent(component);
         });
     }
 
@@ -206,7 +217,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 throw new BallerinaException("Invalid docker tag: " + tag + ". Repository name is not supported when " +
                         "building from Dockerfile");
             }
-            tag = cellImage.getOrgName() + "/" + tag;
+            tag = image.getOrgName() + "/" + tag;
             createDockerImage(tag, ((BString) dockerSourceMap.get("dockerDir")).stringValue());
             component.setDockerPushRequired(true);
             component.setSource(tag);
@@ -225,6 +236,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             LinkedHashMap attributeMap = ingressValueMap.getMap();
             switch (ingressValueMap.getType().getName()) {
                 case "HttpApiIngress":
+                case "HttpPortIngress":
+                case "HttpsPortIngress":
                     processHttpIngress(component, attributeMap);
                     break;
                 case "TCPIngress":
@@ -237,6 +250,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                     processWebIngress(component, attributeMap);
                     exposedComponents.add(component.getName());
                     break;
+
                 default:
                     break;
             }
@@ -279,12 +293,13 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
     private void processHttpIngress(Component component, LinkedHashMap attributeMap) {
         API httpAPI = getApi(component, attributeMap);
+        component.setProtocol(DEFAULT_GATEWAY_PROTOCOL);
         // Process optional attributes
         if (attributeMap.containsKey("context")) {
             httpAPI.setContext(((BString) attributeMap.get("context")).stringValue());
         }
 
-        if (attributeMap.containsKey("expose")) {
+        if (attributeMap.containsKey(EXPOSE)) {
             httpAPI.setAuthenticate(((BBoolean) attributeMap.get("authenticate")).booleanValue());
             if (!httpAPI.isAuthenticate()) {
                 String context = httpAPI.getContext();
@@ -293,11 +308,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 }
                 component.addUnsecuredPaths(context);
             }
-            if ("global".equals(((BString) attributeMap.get("expose")).stringValue())) {
+            if ("global".equals(((BString) attributeMap.get(EXPOSE)).stringValue())) {
                 httpAPI.setGlobal(true);
                 httpAPI.setBackend(component.getService());
                 exposedComponents.add(component.getName());
-            } else if ("local".equals(((BString) attributeMap.get("expose")).stringValue())) {
+            } else if ("local".equals(((BString) attributeMap.get(EXPOSE)).stringValue())) {
                 httpAPI.setGlobal(false);
                 httpAPI.setBackend(component.getService());
                 // Component is exposed via ingress
@@ -335,7 +350,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         boolean bOverridable = false;
         if ("AutoScalingPolicy".equals(scalePolicy.getType().getName())) {
             // Autoscaling
-            cellImage.setAutoScaling(true);
+            image.setAutoScaling(true);
             autoScalingPolicy.setMinReplicas(((BInteger) (bScalePolicy.get("minReplicas"))).intValue());
             autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
             bOverridable = ((BBoolean) bScalePolicy.get("overridable")).booleanValue();
@@ -349,7 +364,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
         } else {
             //Zero Scaling
-            cellImage.setZeroScaling(true);
+            image.setZeroScaling(true);
             autoScalingPolicy.setMinReplicas(0);
             if (bScalePolicy.containsKey(MAX_REPLICAS)) {
                 autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
@@ -378,9 +393,57 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         }
     }
 
-    private void generateCell() {
+    private void generateComposite(Image image) {
         List<Component> components =
-                new ArrayList<>(cellImage.getComponentNameToComponentMap().values());
+                new ArrayList<>(image.getComponentNameToComponentMap().values());
+        List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
+        for (Component component : components) {
+            ServiceTemplateSpec templateSpec = getServiceTemplateSpec(new GatewaySpec(), component);
+            buildTemplateSpec(serviceTemplateList, component, templateSpec);
+        }
+
+        CompositeSpec compositeSpec = new CompositeSpec();
+        compositeSpec.setServicesTemplates(serviceTemplateList);
+        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(image.getCellName()))
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, image.getOrgName())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, image.getCellName())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, image.getCellVersion())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_DEPENDENCIES, new Gson().toJson(image.getDependencies()))
+                .build();
+        Composite composite = new Composite(objectMeta, compositeSpec);
+        String targetPath =
+                OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + image.getCellName() + YAML;
+        try {
+            writeToFile(toYaml(composite), targetPath);
+        } catch (IOException e) {
+            String errMsg = "Error occurred while writing composite yaml " + targetPath;
+            log.error(errMsg, e);
+            throw new BallerinaException(errMsg);
+        }
+    }
+
+    private void buildTemplateSpec(List<ServiceTemplate> serviceTemplateList, Component component,
+                                   ServiceTemplateSpec templateSpec) {
+        templateSpec.setReplicas(component.getReplicas());
+        templateSpec.setProtocol(component.getProtocol());
+        List<EnvVar> envVarList = getEnvVars(component);
+        templateSpec.setContainer(getContainer(component, envVarList));
+        AutoScaling autoScaling = component.getAutoscaling();
+        if (autoScaling != null) {
+            templateSpec.setAutoscaling(autoScaling);
+        }
+        ServiceTemplate serviceTemplate = new ServiceTemplate();
+        serviceTemplate.setMetadata(new ObjectMetaBuilder()
+                .withName(component.getService())
+                .withLabels(component.getLabels())
+                .build());
+        serviceTemplate.setSpec(templateSpec);
+        serviceTemplateList.add(serviceTemplate);
+    }
+
+    private void generateCell(Image image) {
+        List<Component> components =
+                new ArrayList<>(image.getComponentNameToComponentMap().values());
         GatewaySpec gatewaySpec = new GatewaySpec();
         List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
         List<String> unsecuredPaths = new ArrayList<>();
@@ -389,21 +452,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         for (Component component : components) {
             ServiceTemplateSpec templateSpec = getServiceTemplateSpec(gatewaySpec, component);
             unsecuredPaths.addAll(component.getUnsecuredPaths());
-            templateSpec.setReplicas(component.getReplicas());
-            templateSpec.setProtocol(component.getProtocol());
-            List<EnvVar> envVarList = getEnvVars(component);
-            templateSpec.setContainer(getContainer(component, envVarList));
-            AutoScaling autoScaling = component.getAutoscaling();
-            if (autoScaling != null) {
-                templateSpec.setAutoscaling(autoScaling);
-            }
-            ServiceTemplate serviceTemplate = new ServiceTemplate();
-            serviceTemplate.setMetadata(new ObjectMetaBuilder()
-                    .withName(component.getService())
-                    .withLabels(component.getLabels())
-                    .build());
-            serviceTemplate.setSpec(templateSpec);
-            serviceTemplateList.add(serviceTemplate);
+            buildTemplateSpec(serviceTemplateList, component, templateSpec);
         }
         stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
         stsTemplate.setSpec(stsTemplateSpec);
@@ -414,15 +463,15 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         cellSpec.setGatewayTemplate(gatewayTemplate);
         cellSpec.setServicesTemplates(serviceTemplateList);
         cellSpec.setStsTemplate(stsTemplate);
-        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(cellImage.getCellName()))
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, cellImage.getOrgName())
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, cellImage.getCellName())
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, cellImage.getCellVersion())
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_DEPENDENCIES, new Gson().toJson(cellImage.getDependencies()))
+        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(image.getCellName()))
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, image.getOrgName())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, image.getCellName())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, image.getCellVersion())
+                .addToAnnotations(ANNOTATION_CELL_IMAGE_DEPENDENCIES, new Gson().toJson(image.getDependencies()))
                 .build();
         Cell cell = new Cell(objectMeta, cellSpec);
         String targetPath =
-                OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + cellImage.getCellName() + YAML;
+                OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + image.getCellName() + YAML;
         try {
             writeToFile(toYaml(cell), targetPath);
         } catch (IOException e) {
@@ -496,7 +545,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
      */
     private void generateCellReference() {
         JSONObject json = new JSONObject();
-        cellImage.getComponentNameToComponentMap().forEach((componentName, component) -> {
+        image.getComponentNameToComponentMap().forEach((componentName, component) -> {
             component.getApis().forEach(api -> {
                 String context = api.getContext();
                 if (StringUtils.isNotEmpty(context)) {
@@ -531,11 +580,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
      */
     private void generateMetadataFile(LinkedHashMap<?, ?> components) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("org", cellImage.getOrgName());
-        jsonObject.put("name", cellImage.getCellName());
-        jsonObject.put("ver", cellImage.getCellVersion());
-        jsonObject.put("zeroScalingRequired", cellImage.isZeroScaling());
-        jsonObject.put("autoScalingRequired", cellImage.isAutoScaling());
+        jsonObject.put(ORG, image.getOrgName());
+        jsonObject.put(NAME, image.getCellName());
+        jsonObject.put(VERSION, image.getCellVersion());
+        jsonObject.put("zeroScalingRequired", image.isZeroScaling());
+        jsonObject.put("autoScalingRequired", image.isAutoScaling());
 
         JSONObject componentsJsonObject = new JSONObject();
         components.forEach((key, componentValue) -> {
@@ -574,7 +623,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             componentJson.put("exposed", exposedComponents.contains(componentName));
             componentsJsonObject.put(componentName, componentJson);
         });
-        cellImage.getComponentNameToComponentMap().forEach((componentName, component) -> {
+        image.getComponentNameToComponentMap().forEach((componentName, component) -> {
             JSONObject componentJsonObject = componentsJsonObject.getJSONObject(componentName);
             componentJsonObject.put("dockerImage", component.getSource());
             componentJsonObject.put("isDockerPushRequired", component.isDockerPushRequired());
@@ -611,15 +660,15 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 }
             } else {
                 LinkedHashMap dependency = ((BMap) dependencyValue).getMap();
-                org = ((BString) dependency.get("org")).stringValue();
-                name = ((BString) dependency.get("name")).stringValue();
-                version = ((BString) dependency.get("ver")).stringValue();
+                org = ((BString) dependency.get(ORG)).stringValue();
+                name = ((BString) dependency.get(NAME)).stringValue();
+                version = ((BString) dependency.get(VERSION)).stringValue();
             }
-            dependencyJsonObject.put("org", org);
-            dependencyJsonObject.put("name", name);
-            dependencyJsonObject.put("ver", version);
+            dependencyJsonObject.put(ORG, org);
+            dependencyJsonObject.put(NAME, name);
+            dependencyJsonObject.put(VERSION, version);
             dependencyJsonObject.put("alias", alias.toString());
-            cellImage.addDependency(new Dependency(org, name, version, alias.toString()));
+            image.addDependency(new Dependency(org, name, version, alias.toString()));
             dependenciesJsonObject.put(alias.toString(), dependencyJsonObject);
         });
     }

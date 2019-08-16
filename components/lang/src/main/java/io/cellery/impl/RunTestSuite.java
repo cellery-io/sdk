@@ -19,8 +19,8 @@ package io.cellery.impl;
 
 import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
-import io.cellery.models.CellImage;
 import io.cellery.models.CellSpec;
+import io.cellery.models.Image;
 import io.cellery.models.STSTemplate;
 import io.cellery.models.STSTemplateSpec;
 import io.cellery.models.ServiceTemplate;
@@ -64,7 +64,6 @@ import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.VERSION;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.getValidName;
-import static io.cellery.CelleryUtils.printDebug;
 import static io.cellery.CelleryUtils.printInfo;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.toYaml;
@@ -83,7 +82,7 @@ import static io.cellery.CelleryUtils.toYaml;
 public class RunTestSuite extends BlockingNativeCallableUnit {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
     private static final Logger log = LoggerFactory.getLogger(CreateCellImage.class);
-    private List<CellImage> cellImageList = new ArrayList<>();
+    private List<Image> imageList = new ArrayList<>();
 
     @Override
     public void execute(Context ctx) {
@@ -100,11 +99,11 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
 
     private void processTests(BRefType<?>[] tests, LinkedHashMap nameStruct) {
         for (BRefType<?> refType : tests) {
-            CellImage cellImage = new CellImage();
+            Image image = new Image();
             String name = ((BMap) refType).getMap().get(NAME).toString();
-            cellImage.setCellName(name);
-            cellImage.setOrgName(((BString) nameStruct.get(ORG)).stringValue());
-            cellImage.setCellVersion(((BString) nameStruct.get(VERSION)).stringValue());
+            image.setCellName(name);
+            image.setOrgName(((BString) nameStruct.get(ORG)).stringValue());
+            image.setCellVersion(((BString) nameStruct.get(VERSION)).stringValue());
             if (name.isEmpty()) {
                 break;
             }
@@ -114,13 +113,13 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             test.setSource(sourceMap.get("image").toString());
             LinkedHashMap envMap = ((BMap) ((BMap) refType).getMap().get("envVars")).getMap();
             CelleryUtils.processEnvVars(envMap, test);
-            cellImage.setTest(test);
-            cellImageList.add(cellImage);
+            image.setTest(test);
+            imageList.add(image);
         }
     }
 
     private void generateCells() {
-        for (CellImage cellImage : cellImageList) {
+        for (Image image : imageList) {
             List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
             List<String> unsecuredPaths = new ArrayList<>();
             STSTemplate stsTemplate = new STSTemplate();
@@ -128,21 +127,21 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
 
             List<EnvVar> envVarList = new ArrayList<>();
-            cellImage.getTest().getEnvVars().forEach((key, value) -> {
+            image.getTest().getEnvVars().forEach((key, value) -> {
                 if (StringUtils.isEmpty(value)) {
                     printWarning("Value is empty for environment variable \"" + key + "\"");
                 }
                 envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
             });
             templateSpec.setContainer(new ContainerBuilder()
-                    .withImage(cellImage.getTest().getSource())
+                    .withImage(image.getTest().getSource())
                     .withEnv(envVarList)
                     .build());
             templateSpec.setType(SERVICE_TYPE_JOB);
             ServiceTemplate serviceTemplate = new ServiceTemplate();
             serviceTemplate.setMetadata(new ObjectMetaBuilder()
-                    .withName(cellImage.getTest().getName())
-                    .withLabels(cellImage.getTest().getLabels())
+                    .withName(image.getTest().getName())
+                    .withLabels(image.getTest().getLabels())
                     .build());
             serviceTemplate.setSpec(templateSpec);
             serviceTemplateList.add(serviceTemplate);
@@ -152,53 +151,53 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             CellSpec cellSpec = new CellSpec();
             cellSpec.setServicesTemplates(serviceTemplateList);
             cellSpec.setStsTemplate(stsTemplate);
-            ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(cellImage.getCellName()))
-                    .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, cellImage.getOrgName())
-                    .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, cellImage.getCellName())
-                    .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, cellImage.getCellVersion())
+            ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(image.getCellName()))
+                    .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, image.getOrgName())
+                    .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, image.getCellName())
+                    .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, image.getCellVersion())
                     .build();
             Cell cell = new Cell(objectMeta, cellSpec);
             String targetPath =
-                    OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + cellImage.getCellName() + YAML;
+                    OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + image.getCellName() + YAML;
             try {
                 CelleryUtils.writeToFile(toYaml(cell), targetPath);
-                CelleryUtils.printDebug("Creating test cell " + cellImage.getCellName());
+                CelleryUtils.printDebug("Creating test cell " + image.getCellName());
                 CelleryUtils.executeShellCommand("kubectl apply -f " + targetPath, null,
                         CelleryUtils::printDebug, CelleryUtils::printWarning);
-                printInfo("Executing test " + cellImage.getCellName() + "...");
+                printInfo("Executing test " + image.getCellName() + "...");
 
                 // Wait for job to be available
                 Thread.sleep(5000);
 
-                String jobName = cellImage.getCellName() + "--" + cellImage.getCellName() + "-job";
+                String jobName = image.getCellName() + "--" + image.getCellName() + "-job";
                 String podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
-                                + cellImage.getCellName() + "--" + cellImage.getCellName() + "-job",
+                                + image.getCellName() + "--" + image.getCellName() + "-job",
                         null, CelleryUtils::printDebug, CelleryUtils::printWarning);
-                String podName = getPodName(podInfo, cellImage.getCellName());
+                String podName = getPodName(podInfo, image.getCellName());
                 if (podName == null) {
                     printWarning("Error while getting name of the test pod. Skipping execution of test "
-                            + cellImage.getCellName());
+                            + image.getCellName());
                     continue;
                 }
 
                 CelleryUtils.printDebug("podName is: " + podName);
                 CelleryUtils.printDebug("Waiting for pod " + podName + " status to be 'Running'...");
 
-                if (!waitForPodRunning(podName, podInfo, cellImage.getCellName())) {
+                if (!waitForPodRunning(podName, podInfo, image.getCellName())) {
                     printWarning("Error getting status of pod " + podName + ". Skipping execution of test " +
-                            cellImage.getCellName());
-                    deleteTestCell(cellImage.getCellName());
+                            image.getCellName());
+                    deleteTestCell(image.getCellName());
                     continue;
                 }
 
-                CelleryUtils.executeShellCommand("kubectl logs " + podName + " " + cellImage.getCellName()
+                CelleryUtils.executeShellCommand("kubectl logs " + podName + " " + image.getCellName()
                         + " -f", null, msg -> {
                     PrintStream out = System.out;
                     out.println("Log: " + msg);
                 }, CelleryUtils::printWarning);
 
-                waitForJobCompletion(jobName, podName, cellImage.getCellName());
-                deleteTestCell(cellImage.getCellName());
+                waitForJobCompletion(jobName, podName, image.getCellName());
+                deleteTestCell(image.getCellName());
             } catch (IOException e) {
                 String errMsg = "Error occurred while writing cell yaml " + targetPath;
                 log.error(errMsg, e);
@@ -213,12 +212,12 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
     /**
      * Poll periodically for 10 minutes till the Pod reaches Running state.
      *
-     * @param podName name of the pod
-     * @param podInfo pod info string from shell command output
+     * @param podName      name of the pod
+     * @param podInfo      pod info string from shell command output
      * @param instanceName test cell name
      * @throws InterruptedException thrown if error occurs in Thread.sleep
      */
-    private boolean waitForPodRunning (String podName, String podInfo, String instanceName) throws
+    private boolean waitForPodRunning(String podName, String podInfo, String instanceName) throws
             InterruptedException {
         int min = 10;
         for (int i = 0; i < 12 * min; i++) {
@@ -243,8 +242,8 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
     /**
      * Poll periodically for 1 minute till the job reaches Complete or Failed state.
      *
-     * @param jobName name of the job
-     * @param podName name of the pod
+     * @param jobName      name of the job
+     * @param podName      name of the pod
      * @param instanceName test cell name
      * @throws InterruptedException thrown if error occurs in Thread.sleep
      */
@@ -278,7 +277,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         }
     }
 
-    private String getPodName (String podInfo, String instanceName) throws InterruptedException {
+    private String getPodName(String podInfo, String instanceName) throws InterruptedException {
         String podName;
         int min = 1;
         for (int i = 0; i < 12 * min; i++) {

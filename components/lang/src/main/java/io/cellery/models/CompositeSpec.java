@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -15,30 +15,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package io.cellery.models;
 
-import io.fabric8.kubernetes.api.model.ObjectMeta;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Singular;
 
-import static io.cellery.CelleryConstants.CELLERY_RESOURCE_VERSION;
+import java.util.List;
 
 /**
- * Cell POJO model.
+ * Composite spec model.
  */
 @Data
 @NoArgsConstructor
-public class Cell {
-    private String apiVersion;
-    private String kind;
-    private ObjectMeta metadata;
-    private CellSpec spec;
-
-    public Cell(ObjectMeta metadata, CellSpec spec) {
-        kind = "Cell";
-        apiVersion = CELLERY_RESOURCE_VERSION;
-        this.metadata = metadata;
-        this.spec = spec;
-    }
+@AllArgsConstructor
+public class CompositeSpec {
+    private @Singular
+    List<ServiceTemplate> servicesTemplates;
 }

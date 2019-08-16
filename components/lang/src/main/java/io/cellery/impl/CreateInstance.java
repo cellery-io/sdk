@@ -20,10 +20,10 @@ package io.cellery.impl;
 import com.google.gson.Gson;
 import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
-import io.cellery.models.CellImage;
 import io.cellery.models.Component;
 import io.cellery.models.Dependency;
 import io.cellery.models.GatewaySpec;
+import io.cellery.models.Image;
 import io.cellery.models.OIDC;
 import io.cellery.models.ServiceTemplate;
 import io.fabric8.kubernetes.api.model.Probe;
@@ -78,7 +78,7 @@ import static io.cellery.CelleryUtils.writeToFile;
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "createInstance",
-        args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
+        args = {@Argument(name = "image", type = TypeKind.RECORD),
                 @Argument(name = "iName", type = TypeKind.RECORD),
                 @Argument(name = "instances", type = TypeKind.MAP)
         },
@@ -87,7 +87,7 @@ import static io.cellery.CelleryUtils.writeToFile;
 )
 public class CreateInstance extends BlockingNativeCallableUnit {
     private static final Logger log = LoggerFactory.getLogger(CreateInstance.class);
-    private CellImage cellImage = new CellImage();
+    private Image image = new Image();
 
     public void execute(Context ctx) {
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
@@ -104,7 +104,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             processComponents((BMap) refArgument.getMap().get("components"));
             cell.getSpec().getServicesTemplates().forEach(serviceTemplate -> {
                 String componentName = serviceTemplate.getMetadata().getName();
-                Component updatedComponent = cellImage.getComponentNameToComponentMap().get(componentName);
+                Component updatedComponent = image.getComponentNameToComponentMap().get(componentName);
                 //Replace env values defined in the YAML.
                 updateEnvVar(instanceName, serviceTemplate, updatedComponent, dependencyInfo);
 
@@ -261,7 +261,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     }
 
     /**
-     * Add update components to CellImage.
+     * Add update components to Image.
      *
      * @param components component map
      */
@@ -285,7 +285,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             if (attributeMap.containsKey(POD_RESOURCES)) {
                 processResources(((BMap<?, ?>) attributeMap.get(POD_RESOURCES)).getMap(), component);
             }
-            cellImage.addComponent(component);
+            image.addComponent(component);
         });
     }
 
