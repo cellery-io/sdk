@@ -359,8 +359,8 @@ func generateMetaData(cellImage *image.CellImage, targetDir string, spinner *uti
 			}
 		}
 		if !hasTCPType {
-			metadata.Components[tcpApi.Backend].IngressTypes = append(metadata.Components[tcpApi.Backend].IngressTypes,
-				"TCP")
+			metadata.Components[tcpApi.Backend].IngressTypes =
+				append(metadata.Components[tcpApi.Backend].IngressTypes, "TCP")
 		}
 	}
 	for _, httpApi := range k8sCell.CellSpec.GateWayTemplate.GatewaySpec.HttpApis {
@@ -373,8 +373,8 @@ func generateMetaData(cellImage *image.CellImage, targetDir string, spinner *uti
 				}
 			}
 			if !hasHttpType {
-				metadata.Components[httpApi.Backend].IngressTypes = append(metadata.Components[httpApi.Backend].IngressTypes,
-					ingressType)
+				metadata.Components[httpApi.Backend].IngressTypes =
+					append(metadata.Components[httpApi.Backend].IngressTypes, ingressType)
 			}
 		}
 		if k8sCell.CellSpec.GateWayTemplate.GatewaySpec.Host == "" {
@@ -392,8 +392,8 @@ func generateMetaData(cellImage *image.CellImage, targetDir string, spinner *uti
 			}
 		}
 		if !hasGrpcType {
-			metadata.Components[grpcApi.Backend].IngressTypes = append(metadata.Components[grpcApi.Backend].IngressTypes,
-				"GRPC")
+			metadata.Components[grpcApi.Backend].IngressTypes =
+				append(metadata.Components[grpcApi.Backend].IngressTypes, "GRPC")
 		}
 	}
 

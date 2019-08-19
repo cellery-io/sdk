@@ -142,7 +142,7 @@ const App = ({data, classes}) => {
                             to: dependentComponent
                         });
                     });
-                    if (node.kind === Constants.Type.CELL && component.exposed) {
+                    if (node.kind === Constants.Type.CELL) {
                         nodeMetaInfo.componentDependencyLinks.push({
                             from: "gateway",
                             to: componentName

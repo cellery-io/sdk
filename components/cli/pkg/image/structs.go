@@ -121,7 +121,6 @@ type ComponentMetaData struct {
 	Labels               map[string]string      `json:"labels"`
 	IngressTypes         []string               `json:"ingressTypes"`
 	Dependencies         *ComponentDependencies `json:"dependencies"`
-	Exposed              bool                   `json:"exposed"`
 }
 
 type ComponentDependencies struct {

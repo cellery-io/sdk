@@ -61,8 +61,7 @@ window.__CELL_METADATA__ = {
                                     "components": [
                                         "salary"
                                     ]
-                                },
-                                "exposed": true
+                                }
                             },
                             "salary": {
                                 "dockerImage": "wso2cellery/sampleapp-salary:0.3.0",
@@ -77,8 +76,7 @@ window.__CELL_METADATA__ = {
                                 "dependencies": {
                                     "cells": {},
                                     "components": []
-                                },
-                                "exposed": true
+                                }
                             }
                         },
                         "buildTimestamp": 1565001781,
@@ -102,8 +100,7 @@ window.__CELL_METADATA__ = {
                                 "dependencies": {
                                     "cells": {},
                                     "components": []
-                                },
-                                "exposed": true
+                                }
                             }
                         },
                         "buildTimestamp": 1565001794,
@@ -113,8 +110,7 @@ window.__CELL_METADATA__ = {
                     }
                 },
                 "components": []
-            },
-            "exposed": true
+            }
         }
     },
     "buildTimestamp": 1565001804,

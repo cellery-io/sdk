@@ -222,7 +222,6 @@ public class EmployeeTest {
                     Assert.assertEquals(employeeComponent.get("dockerImage").getAsString(),
                             "wso2cellery/sampleapp-employee:0.3.0");
                     Assert.assertFalse(employeeComponent.get("isDockerPushRequired").getAsBoolean());
-                    Assert.assertTrue(employeeComponent.get("exposed").getAsBoolean());
 
                     JsonObject labels = employeeComponent.getAsJsonObject("labels");
                     Assert.assertEquals(labels.size(), 1);
@@ -240,7 +239,6 @@ public class EmployeeTest {
                     Assert.assertEquals(salaryComponent.get("dockerImage").getAsString(),
                             "wso2cellery/sampleapp-salary:0.3.0");
                     Assert.assertFalse(salaryComponent.get("isDockerPushRequired").getAsBoolean());
-                    Assert.assertTrue(salaryComponent.get("exposed").getAsBoolean());
 
                     JsonObject labels = salaryComponent.getAsJsonObject("labels");
                     Assert.assertEquals(labels.size(), 2);
