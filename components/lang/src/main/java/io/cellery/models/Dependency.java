@@ -17,14 +17,12 @@
  */
 package io.cellery.models;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
  * Dependency Model class.
  */
 @Data
-@AllArgsConstructor
 public class Dependency {
     String org;
     String name;

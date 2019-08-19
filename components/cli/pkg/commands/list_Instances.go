@@ -19,6 +19,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -29,49 +30,101 @@ import (
 )
 
 func RunListInstances() {
-	cells, err := kubectl.GetCells()
+	displayCellTable()
+	displayCompositeTable()
+}
+
+func displayCellTable() {
+	cellData, err := kubectl.GetCells()
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting information of cells", err)
 	}
-	displayCellTable(cells)
+	if len(cellData.Items) > 0 {
+		fmt.Printf("\n %s\n", util.Bold("Cell Instances:"))
+
+		var tableData [][]string
+
+		for i := 0; i < len(cellData.Items); i++ {
+			age := util.GetDuration(util.ConvertStringToTime(cellData.Items[i].CellMetaData.CreationTimestamp))
+			instance := cellData.Items[i].CellMetaData.Name
+			cellImage := cellData.Items[i].CellMetaData.Annotations.Organization + "/" + cellData.Items[i].CellMetaData.Annotations.Name + ":" + cellData.Items[i].CellMetaData.Annotations.Version
+			gateway := cellData.Items[i].CellStatus.Gateway
+			components := cellData.Items[i].CellStatus.ServiceCount
+			status := cellData.Items[i].CellStatus.Status
+			tableRecord := []string{instance, cellImage, status, gateway, strconv.Itoa(components), age}
+			tableData = append(tableData, tableRecord)
+		}
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"INSTANCE", "IMAGE", "STATUS", "GATEWAY", "COMPONENTS", "AGE"})
+		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+		table.SetAlignment(3)
+		table.SetRowSeparator("-")
+		table.SetCenterSeparator(" ")
+		table.SetColumnSeparator(" ")
+		table.SetHeaderColor(
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold})
+		table.SetColumnColor(
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{})
+
+		table.AppendBulk(tableData)
+		table.Render()
+	}
 }
 
-func displayCellTable(cellData kubectl.Cells) {
-	var tableData [][]string
-
-	for i := 0; i < len(cellData.Items); i++ {
-		age := util.GetDuration(util.ConvertStringToTime(cellData.Items[i].CellMetaData.CreationTimestamp))
-		instance := cellData.Items[i].CellMetaData.Name
-		cellImage := cellData.Items[i].CellMetaData.Annotations.Organization + "/" + cellData.Items[i].CellMetaData.Annotations.Name + ":" + cellData.Items[i].CellMetaData.Annotations.Version
-		gateway := cellData.Items[i].CellStatus.Gateway
-		components := cellData.Items[i].CellStatus.ServiceCount
-		status := cellData.Items[i].CellStatus.Status
-		tableRecord := []string{instance, cellImage, status, gateway, strconv.Itoa(components), age}
-		tableData = append(tableData, tableRecord)
+func displayCompositeTable() {
+	compositeData, err := kubectl.GetComposites()
+	if err != nil {
+		util.ExitWithErrorMessage("Error getting information of composites", err)
 	}
+	if len(compositeData.Items) > 0 {
+		fmt.Printf(" \n %s\n", util.Bold("Composite Instances:"))
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"INSTANCE", "CELL IMAGE", "STATUS", "GATEWAY", "COMPONENTS", "AGE"})
-	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
-	table.SetAlignment(3)
-	table.SetRowSeparator("-")
-	table.SetCenterSeparator(" ")
-	table.SetColumnSeparator(" ")
-	table.SetHeaderColor(
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold})
-	table.SetColumnColor(
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{})
+		var tableData [][]string
 
-	table.AppendBulk(tableData)
-	table.Render()
+		for i := 0; i < len(compositeData.Items); i++ {
+			age := util.GetDuration(util.ConvertStringToTime(compositeData.Items[i].CompositeMetaData.CreationTimestamp))
+			instance := compositeData.Items[i].CompositeMetaData.Name
+			cellImage := compositeData.Items[i].CompositeMetaData.Annotations.Organization + "/" +
+				compositeData.Items[i].CompositeMetaData.Annotations.Name + ":" +
+				compositeData.Items[i].CompositeMetaData.Annotations.Version
+			components := compositeData.Items[i].CompositeStatus.ServiceCount
+			status := compositeData.Items[i].CompositeStatus.Status
+			tableRecord := []string{instance, cellImage, status, strconv.Itoa(components), age}
+			tableData = append(tableData, tableRecord)
+		}
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"INSTANCE", "IMAGE", "STATUS", "COMPONENTS", "AGE"})
+		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+		table.SetAlignment(3)
+		table.SetRowSeparator("-")
+		table.SetCenterSeparator(" ")
+		table.SetColumnSeparator(" ")
+		table.SetHeaderColor(
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold})
+		table.SetColumnColor(
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{})
+
+		table.AppendBulk(tableData)
+		table.Render()
+	}
 }

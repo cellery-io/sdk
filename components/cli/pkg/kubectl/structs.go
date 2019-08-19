@@ -43,15 +43,27 @@ type Cells struct {
 	Items []Cell `json:"items"`
 }
 
-type Cell struct {
-	Kind         string       `json:"kind"`
-	APIVersion   string       `json:"apiVersion"`
-	CellMetaData CellMetaData `json:"metadata"`
-	CellSpec     CellSpec     `json:"spec"`
-	CellStatus   CellStatus   `json:"status"`
+type Composites struct {
+	Items []Composite `json:"items"`
 }
 
-type CellMetaData struct {
+type Cell struct {
+	Kind         string      `json:"kind"`
+	APIVersion   string      `json:"apiVersion"`
+	CellMetaData K8SMetaData `json:"metadata"`
+	CellSpec     CellSpec    `json:"spec"`
+	CellStatus   CellStatus  `json:"status"`
+}
+
+type Composite struct {
+	Kind              string          `json:"kind"`
+	APIVersion        string          `json:"apiVersion"`
+	CompositeMetaData K8SMetaData     `json:"metadata"`
+	CompositeSpec     CompositeSpec   `json:"spec"`
+	CompositeStatus   CompositeStatus `json:"status"`
+}
+
+type K8SMetaData struct {
 	CreationTimestamp string          `json:"creationTimestamp"`
 	Annotations       CellAnnotations `json:"annotations"`
 	Name              string          `json:"name"`
@@ -60,6 +72,10 @@ type CellMetaData struct {
 type CellSpec struct {
 	ComponentTemplates []ComponentTemplate `json:"servicesTemplates"`
 	GateWayTemplate    Gateway             `json:"gatewayTemplate,omitempty"`
+}
+
+type CompositeSpec struct {
+	ComponentTemplates []ComponentTemplate `json:"servicesTemplates"`
 }
 
 type ComponentTemplate struct {
@@ -139,6 +155,11 @@ type CellAnnotations struct {
 type CellStatus struct {
 	Status       string `json:"status"`
 	Gateway      string `json:"gatewayHostname"`
+	ServiceCount int    `json:"serviceCount"`
+}
+
+type CompositeStatus struct {
+	Status       string `json:"status"`
 	ServiceCount int    `json:"serviceCount"`
 }
 

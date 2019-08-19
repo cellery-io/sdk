@@ -56,8 +56,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
+import static io.cellery.CelleryConstants.CELL;
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
-import static io.cellery.CelleryConstants.CELLS;
+import static io.cellery.CelleryConstants.COMPONENTS;
 import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
@@ -101,14 +102,14 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         Map dependencyInfo = ((BMap) ctx.getNullableRefArgument(2)).getMap();
         String cellYAMLPath = destinationPath + File.separator + cellName + YAML;
         Composite composite;
-        if (CELLS.equals(refArgument.getMap().get("kind"))) {
+        if (CELL.equals(((BString) (refArgument.getMap().get("kind"))).stringValue())) {
             composite = CelleryUtils.readCellYaml(cellYAMLPath);
         } else {
             composite = CelleryUtils.readCompositeYaml(cellYAMLPath);
         }
         updateDependencyAnnotations(composite, dependencyInfo);
         try {
-            processComponents((BMap) refArgument.getMap().get("components"));
+            processComponents((BMap) refArgument.getMap().get(COMPONENTS));
             composite.getSpec().getServicesTemplates().forEach(serviceTemplate -> {
                 String componentName = serviceTemplate.getMetadata().getName();
                 Component updatedComponent = this.image.getComponentNameToComponentMap().get(componentName);

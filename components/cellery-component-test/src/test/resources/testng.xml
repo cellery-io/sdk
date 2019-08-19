@@ -40,6 +40,9 @@
             <class name="org.cellery.components.test.scenarios.probes.ProbesTest"/>
             <class name="org.cellery.components.test.scenarios.resource.ResourceTest"/>
             <class name="org.cellery.components.test.scenarios.tcp.TCPTest"/>
+            <class name="org.cellery.components.test.scenarios.composite.StockCompositeTest"/>
+            <class name="org.cellery.components.test.scenarios.composite.EmployeeCompositeTest"/>
+            <class name="org.cellery.components.test.scenarios.composite.HRCompositeTest"/>
         </classes>
     </test>
 </suite>

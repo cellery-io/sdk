@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.cellery.components.test.scenarios.employee;
+package org.cellery.components.test.scenarios.composite;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -56,7 +56,7 @@ import static org.cellery.components.test.utils.CelleryTestConstants.METADATA;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
-public class EmployeeTest {
+public class EmployeeCompositeTest {
 
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
     private static final Path SOURCE_DIR_PATH =
@@ -207,7 +207,7 @@ public class EmployeeTest {
             try (InputStreamReader inputStreamReader = new InputStreamReader(input)) {
                 JsonElement parsedJson = new JsonParser().parse(inputStreamReader);
                 JsonObject metadataJson = parsedJson.getAsJsonObject();
-                Assert.assertEquals(metadataJson.size(), 7);
+                Assert.assertEquals(metadataJson.size(), 6);
                 Assert.assertEquals(metadataJson.get("org").getAsString(), "myorg");
                 Assert.assertEquals(metadataJson.get("name").getAsString(), "employee");
                 Assert.assertEquals(metadataJson.get("ver").getAsString(), "1.0.0");

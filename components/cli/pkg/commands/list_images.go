@@ -42,16 +42,17 @@ type imageData struct {
 	name    string
 	size    string
 	created string
+	kind    string
 }
 
 func RunImage() {
 	var data [][]string
 	images := getImagesArray()
 	for _, image := range images {
-		data = append(data, []string{image.name, image.size, image.created})
+		data = append(data, []string{image.name, image.size, image.created, image.kind})
 	}
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"IMAGE", "SIZE", "CREATED"})
+	table.SetHeader([]string{"IMAGE", "SIZE", "CREATED","KIND"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")
@@ -60,12 +61,13 @@ func RunImage() {
 	table.SetHeaderColor(
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold})
 	table.SetColumnColor(
 		tablewriter.Colors{},
 		tablewriter.Colors{},
+		tablewriter.Colors{},
 		tablewriter.Colors{})
-
 	table.AppendBulk(data)
 	table.Render()
 }
@@ -107,6 +109,7 @@ func getImagesArray() []imageData {
 						fmt.Sprintf("%s/%s:%s", organization, project, version),
 						units.HumanSize(float64(size)),
 						fmt.Sprintf("%s ago", units.HumanDuration(time.Since(time.Unix(meta.BuildTimestamp, 0)))),
+						fmt.Sprintf("%s", meta.Kind),
 					})
 				}
 			}

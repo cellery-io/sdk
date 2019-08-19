@@ -33,6 +33,10 @@ public type Label record {
 # Ingress Expose types
 public type Expose "global" | "local";
 
+public type ImageType "Cell" | "Composite";
+
+public type ComponentType "Job" | "Deployment";
+
 public type DockerSource record {|
     string dockerDir;
     string tag;
@@ -137,6 +141,7 @@ public type Component record {|
     AutoScalingPolicy | ZeroScalingPolicy scalingPolicy?;
     Probes probes?;
     Resources resources?;
+    ComponentType ^"type" = "Deployment";
 |};
 
 public type TCPIngress record {|
@@ -219,12 +224,12 @@ public type Secret record {|
 |};
 
 public type CellImage record {|
-    string kind = "Cell";
+    ImageType kind = "Cell";
     map<Component> components;
 |};
 
 public type Composite record {|
-    string kind = "Composite";
+    ImageType kind = "Composite";
     map<Component> components;
 |};
 
@@ -301,7 +306,7 @@ public function createCellImage(CellImage image, ImageName iName) returns ( erro
 # + iName - The cell instance name
 # + instances - The cell instance dependencies
 # + return - error optional
-public function createInstance(CellImage|Composite image, ImageName iName, map<ImageName> instances) returns ( error?) = external;
+public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances) returns ( error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #

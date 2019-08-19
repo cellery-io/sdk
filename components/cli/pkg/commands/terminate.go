@@ -53,9 +53,14 @@ func RunTerminate(terminatingInstances []string, terminateAll bool) {
 }
 
 func terminateInstance(instance string) {
-	output, err := kubectl.DeleteCell(instance)
+	output, err := kubectl.DeleteResource("cell", instance)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while stopping the cell instance: "+instance, fmt.Errorf(output))
+	}
+
+	output, err = kubectl.DeleteResource("composite", instance)
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while stopping the composite instance: "+instance, fmt.Errorf(output))
 	}
 	// Delete the TLS Secret
 	secretName := instance + "--tls-secret"

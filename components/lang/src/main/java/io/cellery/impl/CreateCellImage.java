@@ -180,6 +180,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             component.setName(((BString) attributeMap.get("name")).stringValue());
             component.setReplicas((int) (((BInteger) attributeMap.get("replicas")).intValue()));
             component.setService(component.getName());
+            component.setType(((BString) attributeMap.get("type")).stringValue());
             processSource(component, attributeMap);
             //Process Optional fields
             if (attributeMap.containsKey(INGRESSES)) {

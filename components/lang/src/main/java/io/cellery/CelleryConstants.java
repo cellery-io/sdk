@@ -47,7 +47,9 @@ public class CelleryConstants {
     //Dependency Constants
     public static final String DEPENDENCIES = "dependencies";
     public static final String CELLS = "cells";
+    public static final String CELL = "Cell";
     public static final String COMPOSITES = "composites";
+    public static final String COMPOSITE = "Composite";
     public static final String COMPONENTS = "components";
 
     // Ballerina object name constants for Resources

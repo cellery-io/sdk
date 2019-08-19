@@ -17,6 +17,7 @@ public class Component {
     private String name;
     private int replicas;
     private String gatewayType;
+    private String type;
     private Map<String, String> envVars;
     private Map<String, String> labels;
     private List<API> apis;

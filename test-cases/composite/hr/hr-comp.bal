@@ -13,9 +13,9 @@ public function build(cellery:ImageName iName) returns error? {
         dependencies: {
             composites: {
                 //  fully qualified dependency image name as a string
-                employeeCellDep: "myorg/employee-comp:1.0.0",
+                employeeCompDep: "myorg/employee-comp:1.0.0",
                 // dependency as a struct
-                stockCellDep: <cellery:ImageName>{ org: "myorg", name: "stock-comp", ver: "1.0.0" }
+                stockCompDep: <cellery:ImageName>{ org: "myorg", name: "stock-comp", ver: "1.0.0" }
             }
         },
         labels: {
@@ -24,12 +24,18 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
 
+    cellery:Reference empRef = cellery:getReference(hrCompComponent, "employeeCompDep");
+    string empURL = "http://" +<string>empRef.employee_host + ":" +<string>empRef.employee_port;
+
+    cellery:Reference stockRef = cellery:getReference(hrCompComponent, "stockCompDep");
+    string stockURL = "http://" +<string>stockRef.stock_host + ":" +<string>stockRef.stock_port;
+
     hrCompComponent.envVars = {
         employee_api_url: {
-            value: <string>cellery:getReference(hrCompComponent, "employeeCellDep").employee_host
+            value: empURL
         },
         stock_api_url: {
-            value: <string>cellery:getReference(hrCompComponent, "stockCellDep").stock_host
+            value: stockURL
         }
     };
 
