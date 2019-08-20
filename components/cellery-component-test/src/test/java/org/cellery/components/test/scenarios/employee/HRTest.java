@@ -49,8 +49,7 @@ public class HRTest {
 
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
     private static final Path SOURCE_DIR_PATH =
-            SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + File.separator + CELLERY +
-                    File.separator + "hr");
+            SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + File.separator + CELLERY + File.separator + "hr");
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
@@ -127,8 +126,7 @@ public class HRTest {
         dependencyCells.put("stockCellDep", stockDep);
         Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "hr" + BAL, cellImageInfo,
                 dependencyCells, tmpDir), 0);
-        File newYaml =
-                tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
+        File newYaml = tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
         runtimeCell = CelleryUtils.readCellYaml(newYaml.getAbsolutePath());
     }
 

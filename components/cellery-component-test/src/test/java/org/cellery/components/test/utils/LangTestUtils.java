@@ -240,21 +240,28 @@ public class LangTestUtils {
                 JsonElement parsedJson = new JsonParser().parse(inputStreamReader);
                 JsonObject componentsJsonObject = parsedJson.getAsJsonObject().getAsJsonObject("components");
                 for (Map.Entry<String, JsonElement> componentEntry : componentsJsonObject.entrySet()) {
-                    JsonObject dependenciesJsonObject = componentEntry.getValue().getAsJsonObject()
-                            .getAsJsonObject("dependencies").getAsJsonObject("cells");
-                    for (Map.Entry<String, JsonElement> e : dependenciesJsonObject.entrySet()) {
-                        JsonObject dependency = e.getValue().getAsJsonObject();
-                        String key = e.getKey();
-                        String org = dependency.getAsJsonPrimitive(CelleryConstants.ORG).getAsString();
-                        String name = dependency.getAsJsonPrimitive(CelleryConstants.NAME).getAsString();
-                        String ver = dependency.getAsJsonPrimitive(CelleryConstants.VERSION).getAsString();
-                        CellImageInfo cell = new CellImageInfo(org, name, ver, "");
-                        dependencyMap.put(key, cell);
-                    }
+                    final JsonObject dependencies = componentEntry.getValue().getAsJsonObject()
+                            .getAsJsonObject("dependencies");
+                    // Add component and composite dependencies
+                    populateDependencyMap(dependencyMap, dependencies.getAsJsonObject("cells"));
+                    populateDependencyMap(dependencyMap, dependencies.getAsJsonObject("composites"));
                 }
             }
         }
         return dependencyMap;
+    }
+
+    private static void populateDependencyMap(Map<String, CellImageInfo> dependencyMap,
+                                              JsonObject compositeDependencies) {
+        for (Map.Entry<String, JsonElement> e : compositeDependencies.entrySet()) {
+            JsonObject dependency = e.getValue().getAsJsonObject();
+            String key = e.getKey();
+            String org = dependency.getAsJsonPrimitive(CelleryConstants.ORG).getAsString();
+            String name = dependency.getAsJsonPrimitive(CelleryConstants.NAME).getAsString();
+            String ver = dependency.getAsJsonPrimitive(CelleryConstants.VERSION).getAsString();
+            CellImageInfo cellImageInfo = new CellImageInfo(org, name, ver, "");
+            dependencyMap.put(key, cellImageInfo);
+        }
     }
 
     public static String createTempImageDir(Path sourceDir, String imageName) throws IOException {
@@ -288,7 +295,9 @@ public class LangTestUtils {
         File destDir =
                 new File(CELLERY_REPO_PATH + File.separator + cellImageInfo.getOrg() + File.separator +
                         cellImageInfo.getName() + File.separator + cellImageInfo.getVer());
-        destDir.mkdirs();
+        if (destDir.mkdirs()) {
+            log.info("Created directory " + destDir);
+        }
         ZipUtil.pack(new File(targetPath.toString()),
                 new File(destDir.toPath() + File.separator + cellImageInfo.getName() + ".zip"),
                 name -> "artifacts/" + name);

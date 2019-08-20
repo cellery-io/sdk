@@ -22,8 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.cellery.CelleryUtils;
-import io.cellery.models.API;
-import io.cellery.models.Cell;
+import io.cellery.models.Composite;
 import io.cellery.models.ServiceTemplate;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
@@ -51,7 +50,6 @@ import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMA
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_MESH_VERSION;
-import static org.cellery.components.test.utils.CelleryTestConstants.EMPLOYEE_PORTAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.METADATA;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
@@ -59,59 +57,45 @@ import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 public class EmployeeCompositeTest {
 
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
-    private static final Path SOURCE_DIR_PATH =
-            SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + File.separator + CELLERY + File.separator + "employee");
+    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve("composite" + File.separator + "employee");
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
-    private Cell cell;
-    private Cell runtimeCell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "employee", "1.0.0", "emp-inst");
+    private Composite composite;
+    private Composite runtimeComposite;
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "employee-comp", "1.0.0", "emp-inst");
     private Map<String, CellImageInfo> dependencyCells = new HashMap<>();
 
     @Test(groups = "build")
     public void compileCellBuild() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "employee" + BAL, cellImageInfo),
-                0);
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "employee-comp" + BAL,
+                cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        cell = CelleryUtils.readCellYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
+        composite = CelleryUtils.readCompositeYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
     @Test(groups = "build")
     public void validateBuildTimeCellAvailability() {
-        Assert.assertNotNull(cell);
+        Assert.assertNotNull(composite);
     }
 
     @Test(groups = "build")
     public void validateBuildTimeAPIVersion() {
-        Assert.assertEquals(cell.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(composite.getApiVersion(), "mesh.cellery.io/v1alpha1");
     }
 
     @Test(groups = "build")
     public void validateBuildTimeMetaData() {
-        Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG), cellImageInfo.getOrg());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME), cellImageInfo.getName());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION), cellImageInfo.getVer());
-    }
-
-    @Test(groups = "build")
-    public void validateBuildTimeGatewayTemplate() {
-        final List<API> http = cell.getSpec().getGatewayTemplate().getSpec().getHttp();
-        Assert.assertEquals(http.get(0).getBackend(), "employee");
-        Assert.assertEquals(http.get(0).getContext(), "employee");
-        Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
-        Assert.assertEquals(http.get(0).getDefinitions().get(0).getPath(), "/details");
-        Assert.assertEquals(http.get(1).getBackend(), "salary");
-        Assert.assertEquals(http.get(1).getContext(), "payroll");
-        Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
-        Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(composite.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG), cellImageInfo.getOrg());
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME), cellImageInfo.getName());
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
+                cellImageInfo.getVer());
     }
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        final List<ServiceTemplate> servicesTemplates = cell.getSpec().getServicesTemplates();
+        final List<ServiceTemplate> servicesTemplates = composite.getSpec().getServicesTemplates();
         Assert.assertEquals(servicesTemplates.get(0).getMetadata().getName(), "employee");
         Assert.assertEquals(servicesTemplates.get(0).getMetadata().getLabels().get("team"), "HR");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(0).getName(), "SALARY_HOST");
@@ -136,49 +120,36 @@ public class EmployeeCompositeTest {
     public void compileCellRun() throws IOException, InterruptedException {
         String tmpDir = LangTestUtils.createTempImageDir(SOURCE_DIR_PATH, cellImageInfo.getName());
         Path tempPath = Paths.get(tmpDir);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "employee" + BAL, cellImageInfo,
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "employee-comp" + BAL, cellImageInfo,
                 dependencyCells, tmpDir), 0);
         File newYaml = tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
-        runtimeCell = CelleryUtils.readCellYaml(newYaml.getAbsolutePath());
+        runtimeComposite = CelleryUtils.readCompositeYaml(newYaml.getAbsolutePath());
     }
 
     @Test(groups = "run")
     public void validateRunTimeCellAvailability() {
-        Assert.assertNotNull(runtimeCell);
+        Assert.assertNotNull(runtimeComposite);
     }
 
     @Test(groups = "run")
     public void validateRunTimeAPIVersion() {
-        Assert.assertEquals(runtimeCell.getApiVersion(), CELLERY_MESH_VERSION);
+        Assert.assertEquals(runtimeComposite.getApiVersion(), CELLERY_MESH_VERSION);
     }
 
     @Test(groups = "run")
     public void validateRunTimeMetaData() {
-        Assert.assertEquals(runtimeCell.getMetadata().getName(), cellImageInfo.getName());
-        Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG), cellImageInfo.getOrg());
-        Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
+        Assert.assertEquals(runtimeComposite.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
+                cellImageInfo.getOrg());
+        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
                 cellImageInfo.getName());
-        Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
+        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
                 cellImageInfo.getVer());
     }
 
     @Test(groups = "run")
-    public void validateRunTimeGatewayTemplate() {
-        final List<API> http = runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp();
-        Assert.assertEquals(http.get(0).getBackend(), "employee");
-        Assert.assertEquals(http.get(0).getContext(), "employee");
-        Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
-        Assert.assertEquals(http.get(0).getDefinitions().get(0).getPath(), "/details");
-        Assert.assertEquals(http.get(1).getBackend(), "salary");
-        Assert.assertEquals(http.get(1).getContext(), "payroll");
-        Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
-        Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
-    }
-
-    @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
-        final List<ServiceTemplate> servicesTemplates = runtimeCell.getSpec().getServicesTemplates();
+        final List<ServiceTemplate> servicesTemplates = runtimeComposite.getSpec().getServicesTemplates();
         Assert.assertEquals(servicesTemplates.get(0).getMetadata().getName(), "employee");
         Assert.assertEquals(servicesTemplates.get(0).getMetadata().getLabels().get("team"), "HR");
         Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(0).getName(), "SALARY_HOST");
@@ -207,9 +178,9 @@ public class EmployeeCompositeTest {
             try (InputStreamReader inputStreamReader = new InputStreamReader(input)) {
                 JsonElement parsedJson = new JsonParser().parse(inputStreamReader);
                 JsonObject metadataJson = parsedJson.getAsJsonObject();
-                Assert.assertEquals(metadataJson.size(), 6);
+                Assert.assertEquals(metadataJson.size(), 7);
                 Assert.assertEquals(metadataJson.get("org").getAsString(), "myorg");
-                Assert.assertEquals(metadataJson.get("name").getAsString(), "employee");
+                Assert.assertEquals(metadataJson.get("name").getAsString(), "employee-comp");
                 Assert.assertEquals(metadataJson.get("ver").getAsString(), "1.0.0");
                 Assert.assertFalse(metadataJson.get("zeroScalingRequired").getAsBoolean());
                 Assert.assertFalse(metadataJson.get("autoScalingRequired").getAsBoolean());
@@ -222,8 +193,6 @@ public class EmployeeCompositeTest {
                     Assert.assertEquals(employeeComponent.get("dockerImage").getAsString(),
                             "wso2cellery/sampleapp-employee:0.3.0");
                     Assert.assertFalse(employeeComponent.get("isDockerPushRequired").getAsBoolean());
-                    Assert.assertTrue(employeeComponent.get("exposed").getAsBoolean());
-
                     JsonObject labels = employeeComponent.getAsJsonObject("labels");
                     Assert.assertEquals(labels.size(), 1);
                     Assert.assertEquals(labels.get("team").getAsString(), "HR");
@@ -240,7 +209,6 @@ public class EmployeeCompositeTest {
                     Assert.assertEquals(salaryComponent.get("dockerImage").getAsString(),
                             "wso2cellery/sampleapp-salary:0.3.0");
                     Assert.assertFalse(salaryComponent.get("isDockerPushRequired").getAsBoolean());
-                    Assert.assertTrue(salaryComponent.get("exposed").getAsBoolean());
 
                     JsonObject labels = salaryComponent.getAsJsonObject("labels");
                     Assert.assertEquals(labels.size(), 2);

@@ -5,7 +5,7 @@ public function build(cellery:ImageName iName) returns error? {
     cellery:Component hrCompComponent = {
         name: "hr",
         source: {
-            image: "docker.io/celleryio/sampleapp-hr"
+            image: "wso2cellery/sampleapp-hr:0.3.0"
         },
         ingresses: {
             http:<cellery:HttpsPortIngress>{port: 8080}

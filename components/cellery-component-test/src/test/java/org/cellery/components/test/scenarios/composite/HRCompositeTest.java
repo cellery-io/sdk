@@ -19,7 +19,7 @@
 package org.cellery.components.test.scenarios.composite;
 
 import io.cellery.CelleryUtils;
-import io.cellery.models.Cell;
+import io.cellery.models.Composite;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -41,165 +41,129 @@ import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
-import static org.cellery.components.test.utils.CelleryTestConstants.EMPLOYEE_PORTAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
 public class HRCompositeTest {
 
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
-    private static final Path SOURCE_DIR_PATH =
-            SAMPLE_DIR.resolve(EMPLOYEE_PORTAL + File.separator + CELLERY + File.separator + "hr");
+    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve("composite" + File.separator + "hr");
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
-    private Cell cell;
-    private Cell runtimeCell;
-    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "hr-img", "1.0.0", "hr-inst");
+    private Composite composite;
+    private Composite runtimeComposite;
+    private CellImageInfo cellImageInfo = new CellImageInfo("myorg", "hr-comp", "1.0.0", "hr-inst");
     private Map<String, CellImageInfo> dependencyCells = new HashMap<>();
 
     @Test(groups = "build")
     public void compileCellBuild() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "hr" + BAL,
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "hr-comp" + BAL,
                 cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        cell = CelleryUtils.readCellYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
+        composite = CelleryUtils.readCompositeYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toString());
     }
 
     @Test(groups = "build")
     public void validateBuildTimeCellAvailability() {
-        Assert.assertNotNull(cell);
+        Assert.assertNotNull(composite);
     }
 
     @Test(groups = "build")
     public void validateBuildTimeAPIVersion() {
-        Assert.assertEquals(cell.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(composite.getApiVersion(), "mesh.cellery.io/v1alpha1");
     }
 
     @Test(groups = "build")
     public void validateBuildTimeMetaData() {
-        Assert.assertEquals(cell.getMetadata().getName(), cellImageInfo.getName());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
-                cellImageInfo.getOrg());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
-                cellImageInfo.getName());
-        Assert.assertEquals(cell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
+        Assert.assertEquals(composite.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG), cellImageInfo.getOrg());
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME), cellImageInfo.getName());
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
                 cellImageInfo.getVer());
-    }
-
-    @Test(groups = "build")
-    public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
-                "hr");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
-                "hr");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
-                getMethod(), "GET");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
-                getPath(), "/");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get("mesh.cellery.io/cell-dependencies").length(),
+                199);
     }
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "hr");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0).
+        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "hr");
+        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(0).
                 getName(), "stock_api_url");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
+        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv().get(1).
                 getName(), "employee_api_url");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
+        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
                 "wso2cellery/sampleapp-hr:0.3.0");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
-                getContainerPort().intValue(), 8080);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 80);
+        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0)
+                .getContainerPort().intValue(), 8080);
+        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
+        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 80);
     }
 
     @Test(groups = "run")
     public void compileCellRun() throws IOException, InterruptedException {
         String tmpDir = LangTestUtils.createTempImageDir(SOURCE_DIR_PATH, cellImageInfo.getName());
         Path tempPath = Paths.get(tmpDir);
-        CellImageInfo employeeDep = new CellImageInfo("myorg", "employee", "1.0.0", "emp-inst");
-        dependencyCells.put("employeeCellDep", employeeDep);
-        CellImageInfo stockDep = new CellImageInfo("myorg", "stock", "1.0.0", "stock-inst");
-        dependencyCells.put("stockCellDep", stockDep);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "hr" + BAL, cellImageInfo,
+        CellImageInfo employeeDep = new CellImageInfo("myorg", "employee-comp", "1.0.0", "emp-inst");
+        dependencyCells.put("employeeCompDep", employeeDep);
+        CellImageInfo stockDep = new CellImageInfo("myorg", "stock-comp", "1.0.0", "stock-inst");
+        dependencyCells.put("stockCompDep", stockDep);
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "hr-comp" + BAL, cellImageInfo,
                 dependencyCells, tmpDir), 0);
-        File newYaml =
-                tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
-        runtimeCell = CelleryUtils.readCellYaml(newYaml.getAbsolutePath());
+        File newYaml = tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
+        runtimeComposite = CelleryUtils.readCompositeYaml(newYaml.getAbsolutePath());
     }
 
     @Test(groups = "run")
     public void validateMetadata() throws IOException {
         Map<String, CellImageInfo> dependencyInfo = LangTestUtils.getDependencyInfo(SOURCE_DIR_PATH);
-        CellImageInfo employeeImage = dependencyInfo.get("employeeCellDep");
+        CellImageInfo employeeImage = dependencyInfo.get("employeeCompDep");
         Assert.assertEquals(employeeImage.getOrg(), "myorg");
-        Assert.assertEquals(employeeImage.getName(), "employee");
+        Assert.assertEquals(employeeImage.getName(), "employee-comp");
         Assert.assertEquals(employeeImage.getVer(), "1.0.0");
 
-        CellImageInfo stockImage = dependencyInfo.get("stockCellDep");
+        CellImageInfo stockImage = dependencyInfo.get("stockCompDep");
         Assert.assertEquals(stockImage.getOrg(), "myorg");
-        Assert.assertEquals(stockImage.getName(), "stock");
+        Assert.assertEquals(stockImage.getName(), "stock-comp");
         Assert.assertEquals(stockImage.getVer(), "1.0.0");
     }
 
     @Test(groups = "run")
     public void validateRunTimeCellAvailability() {
-        Assert.assertNotNull(runtimeCell);
+        Assert.assertNotNull(runtimeComposite);
     }
 
     @Test(groups = "run")
     public void validateRunTimeAPIVersion() {
-        Assert.assertEquals(runtimeCell.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(runtimeComposite.getApiVersion(), "mesh.cellery.io/v1alpha1");
     }
 
     @Test(groups = "run")
     public void validateRunTimeMetaData() {
-        Assert.assertEquals(runtimeCell.getMetadata().getName(), cellImageInfo.getName());
-        Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
+        Assert.assertEquals(runtimeComposite.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
                 cellImageInfo.getOrg());
-        Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
+        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
                 cellImageInfo.getName());
-        Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
+        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CELLERY_IMAGE_VERSION),
                 cellImageInfo.getVer());
-    }
-
-    @Test(groups = "run")
-    public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend()
-                , "hr");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext()
-                , "hr");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
-                .get(0).
-                        getMethod(), "GET");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
-                .get(0).
-                        getPath(), "/");
-        Assert.assertTrue(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get("mesh.cellery.io/cell-dependencies").length(),
+                199);
     }
 
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getMetadata().getName(),
-                "hr");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv()
-                .get(0).
-                        getName(), "stock_api_url");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv()
-                .get(1).
-                        getName(), "employee_api_url");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
-                "wso2cellery/sampleapp-hr:0.3.0");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts()
-                .get(0).
-                        getContainerPort().intValue(), 8080);
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(),
-                80);
+        Assert.assertEquals(runtimeComposite.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "hr");
+        Assert.assertEquals(runtimeComposite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv()
+                .get(0).getName(), "stock_api_url");
+        Assert.assertEquals(runtimeComposite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getEnv()
+                .get(1).getName(), "employee_api_url");
+        Assert.assertEquals(runtimeComposite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage()
+                , "wso2cellery/sampleapp-hr:0.3.0");
+        Assert.assertEquals(runtimeComposite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts()
+                .get(0).getContainerPort().intValue(), 8080);
+        Assert.assertEquals(runtimeComposite.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
+        Assert.assertEquals(runtimeComposite.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 80);
     }
 
     @AfterClass
