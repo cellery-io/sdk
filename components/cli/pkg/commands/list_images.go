@@ -52,7 +52,7 @@ func RunImage() {
 		data = append(data, []string{image.name, image.size, image.created, image.kind})
 	}
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"IMAGE", "SIZE", "CREATED","KIND"})
+	table.SetHeader([]string{"IMAGE", "SIZE", "CREATED", "KIND"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")

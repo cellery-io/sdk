@@ -419,6 +419,9 @@ func extractDependenciesFromMetaData(dependencyMetadata *image.MetaData, cellIma
 	}
 	// Pulling the dependency if not exist (This will not be executed most of the time)
 	dependencyExists, err := util.FileExists(cellImageZip)
+	if err != nil {
+		util.ExitWithErrorMessage(errorMessage, err)
+	}
 	if !dependencyExists {
 		spinner.Pause()
 		RunPull(dependencyImage, true, "", "")
