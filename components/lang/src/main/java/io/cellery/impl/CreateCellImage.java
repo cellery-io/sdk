@@ -89,8 +89,10 @@ import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE;
 import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU;
 import static io.cellery.CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_MEMORY;
 import static io.cellery.CelleryConstants.BTYPE_STRING;
+import static io.cellery.CelleryConstants.CELL;
 import static io.cellery.CelleryConstants.CELLS;
 import static io.cellery.CelleryConstants.COMPONENTS;
+import static io.cellery.CelleryConstants.COMPOSITE;
 import static io.cellery.CelleryConstants.COMPOSITES;
 import static io.cellery.CelleryConstants.CONCURRENCY_TARGET;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
@@ -618,11 +620,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 LinkedHashMap<?, ?> dependencies = ((BMap<?, ?>) attributeMap.get(DEPENDENCIES)).getMap();
                 if (dependencies.containsKey(CELLS)) {
                     LinkedHashMap<?, ?> cellDependencies = ((BMap) dependencies.get(CELLS)).getMap();
-                    extractDependencies(cellDependenciesJsonObject, cellDependencies);
+                    extractDependencies(cellDependenciesJsonObject, cellDependencies, CELL);
                 }
                 if (dependencies.containsKey(COMPOSITES)) {
                     LinkedHashMap<?, ?> compositeDependencies = ((BMap) dependencies.get(COMPOSITES)).getMap();
-                    extractDependencies(compositeDependenciesJsonObject, compositeDependencies);
+                    extractDependencies(compositeDependenciesJsonObject, compositeDependencies, COMPOSITE);
                 }
                 if (dependencies.containsKey(COMPONENTS)) {
                     BValueArray componentsArray = ((BValueArray) dependencies.get(COMPONENTS));
@@ -659,7 +661,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         }
     }
 
-    private void extractDependencies(JSONObject dependenciesJsonObject, LinkedHashMap<?, ?> cellDependencies) {
+    private void extractDependencies(JSONObject dependenciesJsonObject, LinkedHashMap<?, ?> cellDependencies,
+                                     String kind) {
         cellDependencies.forEach((alias, dependencyValue) -> {
             JSONObject dependencyJsonObject = new JSONObject();
             String org, name, version;
@@ -686,7 +689,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             dependencyJsonObject.put(NAME, name);
             dependencyJsonObject.put(VERSION, version);
             dependencyJsonObject.put("alias", alias.toString());
-            image.addDependency(new Dependency(org, name, version, alias.toString()));
+            dependencyJsonObject.put(KIND, kind);
+            image.addDependency(new Dependency(org, name, version, alias.toString(), kind));
             dependenciesJsonObject.put(alias.toString(), dependencyJsonObject);
         });
     }

@@ -29,11 +29,13 @@ public class Dependency {
     String version;
     String instance;
     String alias;
+    String kind;
 
-    public Dependency(String org, String name, String version, String alias) {
+    public Dependency(String org, String name, String version, String alias, String kind) {
         this.org = org;
         this.name = name;
         this.version = version;
         this.alias = alias;
+        this.kind = kind;
     }
 }
