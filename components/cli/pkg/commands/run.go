@@ -128,17 +128,19 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			if err != nil && !strings.Contains(err.Error(), "not found") {
 				spinner.Stop(false)
 				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
+			} else {
+				dependencyLink.IsRunning = err == nil && cellInstance.CellStatus.Status == "Ready"
+				parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
+				continue
 			}
-			dependencyLink.IsRunning = err == nil && cellInstance.CellStatus.Status == "Ready"
-			parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
-
 			compositeInstance, err := kubectl.GetComposite(dependencyLink.DependencyInstance)
 			if err != nil && !strings.Contains(err.Error(), "not found") {
 				spinner.Stop(false)
 				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
+			} else {
+				dependencyLink.IsRunning = err == nil && compositeInstance.CompositeStatus.Status == "Ready"
+				parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
 			}
-			dependencyLink.IsRunning = err == nil && compositeInstance.CompositeStatus.Status == "Ready"
-			parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
 		}
 		err = validateDependencyLinks(instanceName, cellImageMetadata, parsedDependencyLinks)
 		if err != nil {
