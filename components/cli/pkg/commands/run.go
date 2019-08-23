@@ -536,14 +536,76 @@ func generateDependencyTree(rootInstance string, rootMetaData *image.MetaData, d
 	// user. Therefore this is validated.
 	var usedDependencyLinks []*dependencyAliasLink
 
+	var traverseInternalDependencies = func(alias string, dependencyMetaData *image.MetaData) (*dependencyTreeNode, error) {
+		var dependencyNode *dependencyTreeNode
+
+		// Check if the dependency link is provided by the user
+		for _, link := range dependencyLinks {
+			if alias == link.DependencyAlias && (link.Instance == "" || link.Instance == instance) {
+				var aliasPrefix string
+				if link.Instance != "" {
+					aliasPrefix = link.Instance + "."
+				}
+				key := aliasPrefix + alias
+
+				if node, hasKey := aliasToTreeNodeMap[key]; hasKey {
+					// Since the alias is already present in the map, the instance will be shared
+					dependencyNode = node
+					dependencyNode.IsShared = true
+				} else {
+					dependencyNode = &dependencyTreeNode{
+						Instance:     link.DependencyInstance,
+						MetaData:     dependencyMetaData,
+						Dependencies: map[string]*dependencyTreeNode{},
+						IsShared:     false,
+						IsRunning:    link.IsRunning,
+					}
+					aliasToTreeNodeMap[key] = dependencyNode
+					usedDependencyLinks = append(usedDependencyLinks, link)
+				}
+				break
+			}
+		}
+
+		if dependencyNode == nil {
+			if shareDependencies {
+				// Check if an instance had been already allocated for this image
+				for _, existingNode := range generatedInstanceTreeNodes {
+					if existingNode.MetaData.Organization == dependencyMetaData.Organization &&
+						existingNode.MetaData.Name == dependencyMetaData.Name &&
+						existingNode.MetaData.Version == dependencyMetaData.Version {
+						dependencyNode = existingNode
+						existingNode.IsShared = true
+					}
+				}
+			}
+
+			if dependencyNode == nil {
+				// Since no suitable instance that can be used is present, a random name is generated
+				dependencyInstance, err := generateRandomInstanceName(dependencyMetaData)
+				if err != nil {
+					return nil, err
+				}
+				dependencyNode = &dependencyTreeNode{
+					Instance:     dependencyInstance,
+					MetaData:     dependencyMetaData,
+					Dependencies: map[string]*dependencyTreeNode{},
+					IsShared:     false,
+					IsRunning:    false,
+				}
+				generatedInstanceTreeNodes = append(generatedInstanceTreeNodes, dependencyNode)
+			}
+		}
+		return dependencyNode, nil
+	}
+
 	// traverseDependencies traverses through the dependency tree and populates the startup order considering the
 	// relationship between dependencies
 	var traverseDependencies func(instance string, metaData *image.MetaData, treeNode *dependencyTreeNode) error
 	traverseDependencies = func(instance string, metaData *image.MetaData, treeNode *dependencyTreeNode) error {
 		for _, componentMetaData := range metaData.Components {
 			for alias, dependencyMetaData := range componentMetaData.Dependencies.Cells {
-				dependencyNode, err := traverseInternalDependencies(dependencyLinks, alias, dependencyMetaData,
-					aliasToTreeNodeMap, usedDependencyLinks, shareDependencies, generatedInstanceTreeNodes)
+				dependencyNode, err := traverseInternalDependencies(alias, dependencyMetaData)
 				if err != nil {
 					return err
 				}
@@ -555,8 +617,7 @@ func generateDependencyTree(rootInstance string, rootMetaData *image.MetaData, d
 				}
 			}
 			for alias, dependencyMetaData := range componentMetaData.Dependencies.Composites {
-				dependencyNode, err := traverseInternalDependencies(dependencyLinks, alias, dependencyMetaData,
-					aliasToTreeNodeMap, usedDependencyLinks, shareDependencies, generatedInstanceTreeNodes)
+				dependencyNode, err := traverseInternalDependencies(alias, dependencyMetaData)
 				if err != nil {
 					return err
 				}
@@ -602,71 +663,6 @@ func generateDependencyTree(rootInstance string, rootMetaData *image.MetaData, d
 		}
 	}
 	return dependencyTreeRoot, nil
-}
-
-func traverseInternalDependencies(dependencyLinks []*dependencyAliasLink, alias string, dependencyMetaData *image.MetaData,
-	aliasToTreeNodeMap map[string]*dependencyTreeNode, usedDependencyLinks []*dependencyAliasLink, shareDependencies bool,
-	generatedInstanceTreeNodes []*dependencyTreeNode) (*dependencyTreeNode, error) {
-	var dependencyNode *dependencyTreeNode
-
-	// Check if the dependency link is provided by the user
-	for _, link := range dependencyLinks {
-		if alias == link.DependencyAlias && (link.Instance == "" || link.Instance == instance) {
-			var aliasPrefix string
-			if link.Instance != "" {
-				aliasPrefix = link.Instance + "."
-			}
-			key := aliasPrefix + alias
-
-			if node, hasKey := aliasToTreeNodeMap[key]; hasKey {
-				// Since the alias is already present in the map, the instance will be shared
-				dependencyNode = node
-				dependencyNode.IsShared = true
-			} else {
-				dependencyNode = &dependencyTreeNode{
-					Instance:     link.DependencyInstance,
-					MetaData:     dependencyMetaData,
-					Dependencies: map[string]*dependencyTreeNode{},
-					IsShared:     false,
-					IsRunning:    link.IsRunning,
-				}
-				aliasToTreeNodeMap[key] = dependencyNode
-				usedDependencyLinks = append(usedDependencyLinks, link)
-			}
-			break
-		}
-	}
-
-	if dependencyNode == nil {
-		if shareDependencies {
-			// Check if an instance had been already allocated for this image
-			for _, existingNode := range generatedInstanceTreeNodes {
-				if existingNode.MetaData.Organization == dependencyMetaData.Organization &&
-					existingNode.MetaData.Name == dependencyMetaData.Name &&
-					existingNode.MetaData.Version == dependencyMetaData.Version {
-					dependencyNode = existingNode
-					existingNode.IsShared = true
-				}
-			}
-		}
-
-		if dependencyNode == nil {
-			// Since no suitable instance that can be used is present, a random name is generated
-			dependencyInstance, err := generateRandomInstanceName(dependencyMetaData)
-			if err != nil {
-				return nil, err
-			}
-			dependencyNode = &dependencyTreeNode{
-				Instance:     dependencyInstance,
-				MetaData:     dependencyMetaData,
-				Dependencies: map[string]*dependencyTreeNode{},
-				IsShared:     false,
-				IsRunning:    false,
-			}
-			generatedInstanceTreeNodes = append(generatedInstanceTreeNodes, dependencyNode)
-		}
-	}
-	return dependencyNode, nil
 }
 
 // validateDependencyTreeLinks validates a generated dependency tree's links
