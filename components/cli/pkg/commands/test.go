@@ -20,6 +20,7 @@ package commands
 
 import (
 	"bufio"
+	"math/rand"
 	"os/user"
 	"runtime"
 	"strconv"
@@ -594,4 +595,120 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		}
 	}
 	return nil
+}
+
+
+// validateDependencyTreeLinks validates a generated dependency tree's links
+func validateDependencyTreeLinks(treeRoot *dependencyTreeNode) error {
+	// This is used to store the instances provided by the user and later validate with the runtime and check
+	// whether the Cell Image of the instance matches with the linking provided by the user.
+	instanceToNodeMap := map[string]*dependencyTreeNode{}
+
+	// Validate whether the Cell Image of all the specified instances match
+	var validateDependencySubtreeOffline func(subTreeRoot *dependencyTreeNode) error
+	validateDependencySubtreeOffline = func(subTreeRoot *dependencyTreeNode) error {
+		for _, dependency := range subTreeRoot.Dependencies {
+			if node, hasKey := instanceToNodeMap[dependency.Instance]; hasKey {
+				if node.MetaData.Organization != dependency.MetaData.Organization ||
+					node.MetaData.Name != dependency.MetaData.Name ||
+					node.MetaData.Version != dependency.MetaData.Version {
+					// The user had pointed using links to share an instance with different Cell Images
+					return fmt.Errorf("instance %s cannot be shared by different Cell Images %s/%s:%s and %s/%s:%s",
+						dependency.Instance,
+						dependency.MetaData.Organization, dependency.MetaData.Name, dependency.MetaData.Version,
+						node.MetaData.Organization, node.MetaData.Name, node.MetaData.Version)
+				}
+			} else {
+				instanceToNodeMap[dependency.Instance] = dependency
+			}
+			err := validateDependencySubtreeOffline(dependency)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	instanceToNodeMap[treeRoot.Instance] = treeRoot
+	err := validateDependencySubtreeOffline(treeRoot)
+	if err != nil {
+		return err
+	}
+
+	// Validating whether the instances running in the runtime match the linked image
+	for instance, node := range instanceToNodeMap {
+		if node.IsRunning {
+			cellInstance, err := kubectl.GetCell(instance)
+			if err == nil && cellInstance.CellStatus.Status == "Ready" {
+				if cellInstance.CellMetaData.Annotations.Organization != node.MetaData.Organization ||
+					cellInstance.CellMetaData.Annotations.Name != node.MetaData.Name ||
+					cellInstance.CellMetaData.Annotations.Version != node.MetaData.Version {
+					// If the instance in the runtime and the user link for the instance refers to different images,
+					// the linking is invalid.
+					return fmt.Errorf("provided instance %s is required to be of type %s/%s:%s, "+
+						"instance available in the runtime is from cell image %s/%s:%s",
+						instance, node.MetaData.Organization, node.MetaData.Name, node.MetaData.Version,
+						cellInstance.CellMetaData.Annotations.Organization, cellInstance.CellMetaData.Annotations.Name,
+						cellInstance.CellMetaData.Annotations.Version)
+				}
+			} else if err != nil && !strings.Contains(err.Error(), "not found") {
+				// If an error occurred which does not include not found (eg:- connection refused, insufficient
+				// permissions), the run with dependencies task should fail
+				return fmt.Errorf("failed to check whether instance %s exists in the runtime due to %v",
+					instance, err)
+			} else {
+				composite, err := kubectl.GetComposite(instance)
+				if err == nil && composite.CompositeStatus.Status == "Ready" {
+					if composite.CompositeMetaData.Annotations.Organization != node.MetaData.Organization ||
+						composite.CompositeMetaData.Annotations.Name != node.MetaData.Name ||
+						composite.CompositeMetaData.Annotations.Version != node.MetaData.Version {
+						// If the instance in the runtime and the user link for the instance refers to different images,
+						// the linking is invalid.
+						return fmt.Errorf("provided instance %s is required to be of type %s/%s:%s, "+
+							"instance available in the runtime is from cell image %s/%s:%s",
+							instance, node.MetaData.Organization, node.MetaData.Name, node.MetaData.Version,
+							composite.CompositeMetaData.Annotations.Organization, composite.CompositeMetaData.Annotations.Name,
+							composite.CompositeMetaData.Annotations.Version)
+					}
+				} else if err != nil && !strings.Contains(err.Error(), "not found") {
+					// If an error occurred which does not include not found (eg:- connection refused, insufficient
+					// permissions), the run with dependencies task should fail
+					return fmt.Errorf("failed to check whether instance %s exists in the runtime due to %v",
+						instance, err)
+				} else {
+					return fmt.Errorf("instance %s is not available in the runtime", instance)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// generateRandomInstanceName generates a random instance name with a UUID as the suffix
+func generateRandomInstanceName(dependencyMetaData *image.MetaData) (string, error) {
+	u := make([]byte, 4)
+	_, err := rand.Read(u)
+	if err != nil {
+		return "", err
+	}
+	uuid := fmt.Sprintf("%x", u)
+
+	// Generating random instance name
+	return dependencyMetaData.Name + "-" + strings.Replace(dependencyMetaData.Version, ".", "-", -1) + "-" + uuid, nil
+}
+
+// Get list of yaml files in a dir.
+func getYamlFiles(path string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(path, func(path string, f os.FileInfo, _ error) error {
+		if !f.IsDir() {
+			if filepath.Ext(path) == ".yaml" {
+				files = append(files, path)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
 }
