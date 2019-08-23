@@ -24,6 +24,7 @@ import io.cellery.models.Composite;
 import io.cellery.models.OIDC;
 import io.cellery.models.Test;
 import io.cellery.models.Web;
+import io.cellery.util.KubernetesClient;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.HTTPHeader;
 import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
@@ -42,17 +43,22 @@ import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.util.exceptions.BallerinaException;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -66,6 +72,8 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.KIND;
@@ -80,6 +88,8 @@ import static io.cellery.CelleryConstants.TARGET;
  * Cellery Utility methods.
  */
 public class CelleryUtils {
+    private static final String LOWER_CASE_ALPHA_NUMERIC_STRING = "0123456789abcdefghijklmnopqrstuvwxyz";
+    private static SecureRandom random = new SecureRandom();
 
     /**
      * Returns swagger file as a String.
@@ -353,6 +363,24 @@ public class CelleryUtils {
     }
 
     /**
+     * Append content to a file.
+     *
+     * @param content content to be added
+     * @param targetPath path to the file
+     */
+    public static void appendToFile(String content, String targetPath) {
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(targetPath,
+                true), StandardCharsets.UTF_8))) {
+            bufferedWriter.newLine();
+            bufferedWriter.write(content);
+        } catch (FileNotFoundException e) {
+            throw new BallerinaException("Error getting file: " + targetPath + " " + e.getMessage());
+        } catch (IOException e) {
+            throw new BallerinaException("Error appending to file: " + targetPath + " " + e.getMessage());
+        }
+    }
+
+    /**
      * Generates Yaml from a object.
      *
      * @param object Object
@@ -463,7 +491,8 @@ public class CelleryUtils {
 
             exitCode = process.waitFor();
             if (exitCode > 0) {
-                throw new BallerinaException("Command " + command + " exited with exit code " + exitCode);
+                throw new BallerinaException("Command " + command + " exited with exit code " + exitCode +
+                        " message: " + stdErr.toString());
             }
 
         } catch (IOException e) {
@@ -474,6 +503,74 @@ public class CelleryUtils {
             throw new BallerinaException(
                     "InterruptedException occurred while executing the command '" + command + "', " + "from directory '"
                             + workingDirectory.toString(), e);
+        } finally {
+            executor.shutdownNow();
+        }
+
+        if (stdOut.toString().isEmpty()) {
+            return stdErr.toString();
+        }
+        return stdOut.toString();
+    }
+
+    /**
+     * Executes a shell command.
+     *
+     * @param command          command to execute
+     * @param workingDirectory working directory
+     * @param stdout           stdout of the command
+     * @param stderr           stderr of the command
+     * @return stdout/stderr
+     */
+    public static String executeShellCommand(Path workingDirectory, Writer stdout, Writer stderr,
+                                             Map<String, String> environment, String... command) {
+        StringBuilder stdOut = new StringBuilder();
+        StringBuilder stdErr = new StringBuilder();
+
+        // Set environment variables
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        Map<String, String> processEnvironment = processBuilder.environment();
+        for (Map.Entry<String, String> environmentEntry : environment.entrySet()) {
+            processEnvironment.put(environmentEntry.getKey(), environmentEntry.getValue());
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        int exitCode;
+        try {
+            if (workingDirectory != null) {
+                File workDirectory = workingDirectory.toFile();
+                if (workDirectory.exists()) {
+                    processBuilder.directory(workDirectory);
+                }
+            }
+            Process process = processBuilder.start();
+
+            StreamGobbler outputStreamGobbler = new StreamGobbler(process.getInputStream(), msg -> {
+                stdOut.append(msg);
+                stdout.writeMessage(msg);
+            });
+            StreamGobbler errorStreamGobbler = new StreamGobbler(process.getErrorStream(), msg -> {
+                stdErr.append(msg);
+                stderr.writeMessage(msg);
+            });
+
+            executor.execute(outputStreamGobbler);
+            executor.execute(errorStreamGobbler);
+
+            exitCode = process.waitFor();
+            if (exitCode > 0) {
+                throw new BallerinaException("Command " + String.join(" ", command) +
+                        " exited with exit code " + exitCode + " message: " + stdErr.toString());
+            }
+
+        } catch (IOException e) {
+            throw new BallerinaException(
+                    "Error occurred while executing the command '" + String.join(" ", command) + "', " +
+                            "from directory '" + workingDirectory.toString(), e);
+        } catch (InterruptedException e) {
+            throw new BallerinaException(
+                    "InterruptedException occurred while executing the command '" + String.join(" ", command) +
+                            "', " + "from directory '" + workingDirectory.toString(), e);
         } finally {
             executor.shutdownNow();
         }
@@ -554,5 +651,97 @@ public class CelleryUtils {
             new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines()
                     .forEach(consumer);
         }
+    }
+
+    /**
+     * Check if a cell instance is running.
+     *
+     * @param instance name of the instance
+     * @return whether cell instance is running or note
+     */
+    public static boolean isCellInstanceRunning(String instance) {
+        return !(KubernetesClient.getCells(instance).contains("not found"));
+    }
+
+    /**
+     * Extract a zip file to a given location.
+     *
+     * @param zipFilePath path to the zip file
+     * @param destDir location which the zip file will be extracted to
+     * @throws IOException if zip extraction fails
+     */
+    public static void unzip(String zipFilePath, String destDir) {
+        PrintStream out = System.out;
+        File dir = new File(destDir);
+        // create output directory if it doesn't exist
+        if (!dir.exists()) {
+            boolean dirCreated = dir.mkdirs();
+            if (!dirCreated) {
+                out.println("Failed to create directory " + dir);
+            }
+        }
+        //buffer for read and write data to file
+        byte[] buffer = new byte[1024];
+        try (FileInputStream fileInputStream = new FileInputStream(zipFilePath)) {
+            if (!zipFilePath.isEmpty()) {
+                try (ZipInputStream zipInputStream = new ZipInputStream(fileInputStream)) {
+                    ZipEntry zipEntry = zipInputStream.getNextEntry();
+                    while (zipEntry != null) {
+                        String fileName = zipEntry.getName();
+                        File newFile = new File(destDir + File.separator + fileName);
+                        //create directories for sub directories in zip
+                        boolean dirCreated = new File(newFile.getParent()).mkdirs();
+                        if (!dirCreated) {
+                            out.println("Failed to create directory " + dir);
+                        }
+                        try (FileOutputStream fileOutputStream = new FileOutputStream(newFile)) {
+                            int len;
+                            while ((len = zipInputStream.read(buffer)) > 0) {
+                                fileOutputStream.write(buffer, 0, len);
+                            }
+                            fileOutputStream.close();
+                            zipInputStream.closeEntry();
+                            zipEntry = zipInputStream.getNextEntry();
+                        }
+                    }
+                    zipInputStream.closeEntry();
+                    zipInputStream.close();
+                    fileInputStream.close();
+                }
+            }
+        } catch (IOException e) {
+            throw new BallerinaException("Error while extracting file " + zipFilePath);
+        }
+    }
+
+    /**
+     * Generate a random string.
+     *
+     * @param len length of the random string to be generated
+     * @return random string
+     */
+    public static String randomString(int len) {
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) {
+            sb.append(LOWER_CASE_ALPHA_NUMERIC_STRING.charAt(random.nextInt(LOWER_CASE_ALPHA_NUMERIC_STRING.length())));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Replace a string in a file.
+     *
+     * @param srcPath path to the file
+     * @param oldString string to be replaced
+     * @param newString string which will be replaced by
+     * @throws IOException
+     */
+    public static void replaceInFile(String srcPath, String oldString, String newString) throws IOException {
+        Path path = Paths.get(srcPath);
+        Charset charset = StandardCharsets.UTF_8;
+
+        String content = new String(Files.readAllBytes(path), charset);
+        content = content.replaceAll(oldString, newString);
+        Files.write(path, content.getBytes(charset));
     }
 }
