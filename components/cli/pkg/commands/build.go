@@ -318,6 +318,7 @@ func generateMetaData(cellImage *image.CellImage, targetDir string, spinner *uti
 	}
 
 	metadata := &image.MetaData{
+		SchemaVersion: "0.1.0",
 		CellImageName: image.CellImageName{
 			Organization: cellImage.Organization,
 			Name:         cellImage.ImageName,

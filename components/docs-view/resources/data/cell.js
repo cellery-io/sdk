@@ -27,6 +27,7 @@
 /* eslint no-underscore-dangle: ["off"] */
 
 window.__CELL_METADATA__ = {
+    "schemaVersion": "0.1.0",
     "org": "myorg",
     "name": "hr",
     "ver": "1.0.0",
@@ -42,6 +43,7 @@ window.__CELL_METADATA__ = {
             "dependencies": {
                 "cells": {
                     "employeeCellDep": {
+                        "schemaVersion": "0.1.0",
                         "org": "myorg",
                         "name": "employee",
                         "ver": "1.0.0",
@@ -85,6 +87,7 @@ window.__CELL_METADATA__ = {
                         "autoScalingRequired": false
                     },
                     "stockCellDep": {
+                        "schemaVersion": "0.1.0",
                         "org": "myorg",
                         "name": "stock",
                         "ver": "1.0.0",
