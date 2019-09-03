@@ -18,20 +18,36 @@
 
 package routing
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
-func GetCellGatewayHost(instance string) string {
+func isCellInstanceNotFoundError(srcInst string, cellErr error) (bool, error) {
+	matches, err := regexp.MatchString(buildCellInstanceNonExistErrorMatcher(srcInst),
+		cellErr.Error())
+	if err != nil {
+		return false, err
+	}
+	return matches, nil
+}
+
+func getCellGatewayHost(instance string) string {
 	return fmt.Sprintf("%s--gateway-service", instance)
 }
 
-func GetGatewayName(instance string) string {
+func getGatewayName(instance string) string {
 	return fmt.Sprintf("%s--gateway", instance)
 }
 
-func GetCellVsName(instance string) string {
+func getVsName(instance string) string {
 	return fmt.Sprintf("%s--vs", instance)
 }
 
-func GetCellVsHttpMatchRegex(instance string) string {
-	return fmt.Sprintf("^(%s)(--gateway-service)(\\S*)$", instance)
+func getCompositeServiceHost(instance string, component string) string {
+	return fmt.Sprintf("%s--%s-service", instance, component)
+}
+
+func buildCellInstanceNonExistErrorMatcher(name string) string {
+	return fmt.Sprintf("cell(.)+(%s)(.)+not found", name)
 }

@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/routing"
+
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
@@ -32,7 +34,7 @@ func RunListDependencies(instanceName string) error {
 	if err != nil {
 		return err
 	}
-	dependencies, err := extractDependencies(cellInst.CellMetaData.Annotations.Dependencies)
+	dependencies, err := routing.ExtractDependencies(cellInst.CellMetaData.Annotations.Dependencies)
 	if err != nil {
 		return err
 	}

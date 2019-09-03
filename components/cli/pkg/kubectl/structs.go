@@ -146,10 +146,11 @@ type GatewayDefinition struct {
 }
 
 type CellAnnotations struct {
-	Organization string `json:"mesh.cellery.io/cell-image-org"`
-	Name         string `json:"mesh.cellery.io/cell-image-name"`
-	Version      string `json:"mesh.cellery.io/cell-image-version"`
-	Dependencies string `json:"mesh.cellery.io/cell-dependencies"`
+	Organization                        string `json:"mesh.cellery.io/cell-image-org"`
+	Name                                string `json:"mesh.cellery.io/cell-image-name"`
+	Version                             string `json:"mesh.cellery.io/cell-image-version"`
+	Dependencies                        string `json:"mesh.cellery.io/cell-dependencies"`
+	OriginalDependencyComponentServices string `json:"mesh.cellery.io/original-component-svcs,omitempty"`
 }
 
 type CellStatus struct {

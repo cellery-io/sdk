@@ -541,7 +541,7 @@ func generateDependencyTree(rootInstance string, rootMetaData *image.MetaData, d
 
 		// Check if the dependency link is provided by the user
 		for _, link := range dependencyLinks {
-			if alias == link.DependencyAlias && (link.Instance == "" || link.Instance == instance) {
+			if alias == link.DependencyAlias && (link.Instance == "" || link.Instance == "instance") {
 				var aliasPrefix string
 				if link.Instance != "" {
 					aliasPrefix = link.Instance + "."
