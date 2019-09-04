@@ -324,7 +324,7 @@ func generateMetaData(cellImage *image.CellImage, targetDir string, spinner *uti
 			Name:         cellImage.ImageName,
 			Version:      cellImage.ImageVersion,
 		},
-		Kind:                "Cell", // TODO: Remove hardcoded kind and set value based on the type (Cell/Composite)
+		Kind:                k8sCell.Kind,
 		Components:          map[string]*image.ComponentMetaData{},
 		BuildTimestamp:      time.Now().Unix(),
 		BuildCelleryVersion: version.BuildVersion(),

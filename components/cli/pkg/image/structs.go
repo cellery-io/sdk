@@ -20,6 +20,7 @@
 package image
 
 type Cell struct {
+	Kind         string       `json:"kind"`
 	CellMetaData CellMetaData `json:"metadata"`
 	CellSpec     CellSpec     `json:"spec"`
 	CellStatus   CellStatus   `json:"status"`
