@@ -84,7 +84,7 @@ const App = ({data, classes}) => {
         const nodeFQN = getFQN(node);
         if (node.components) {
             Object.entries(node.components).forEach(([componentName, component]) => {
-                Object.entries(component.dependencies.cells).forEach(([alias, dependency]) => {
+                const traverseDependencies = ([alias, dependency]) => {
                     const dependencyFQN = getFQN(dependency);
 
                     // Adding the dependency to the Cells/Composites list
@@ -123,7 +123,9 @@ const App = ({data, classes}) => {
                         });
                     }
                     extractData(dependency);
-                });
+                };
+                Object.entries(component.dependencies.cells).forEach(traverseDependencies);
+                Object.entries(component.dependencies.composites).forEach(traverseDependencies);
             });
         }
 
