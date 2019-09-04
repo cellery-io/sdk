@@ -26,6 +26,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
+
 	"github.com/ghodss/yaml"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -42,12 +44,11 @@ const k8sYamlContainer = "container"
 const k8sYamlImage = "image"
 const k8sYamlImageEnvVars = "env"
 
-func RunUpdateCellComponents(instance string, image string) error {
-	spinner := util.StartNewSpinner("Updating cell components")
-	// parse the new image
-	parsedCellImage, err := img.ParseImageTag(image)
-	// Read image name from metadata.json
-	imageDir, err := ExtractImage(parsedCellImage, true, spinner)
+func RunUpdateComponents(instance string, fqImage string) error {
+	spinner := util.StartNewSpinner(fmt.Sprintf("Updating components in instance %s", instance))
+	// parse the fully qualified image name
+	parsedImage, err := img.ParseImageTag(fqImage)
+	imageDir, err := ExtractImage(parsedImage, true, spinner)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while extracting image", err)
@@ -63,13 +64,13 @@ func RunUpdateCellComponents(instance string, image string) error {
 		spinner.Stop(false)
 		return err
 	}
-	cellImageMetadata := &img.MetaData{}
-	err = json.Unmarshal(metadataFileContent, cellImageMetadata)
+	imageMetadata := &img.MetaData{}
+	err = json.Unmarshal(metadataFileContent, imageMetadata)
 	if err != nil {
 		spinner.Stop(false)
 		return err
 	}
-	imageName := cellImageMetadata.Name
+	imageName := imageMetadata.Name
 	if imageName == "" {
 		spinner.Stop(false)
 		return fmt.Errorf("unable to extract image name from metadata file %s", metadataFile)
@@ -81,74 +82,165 @@ func RunUpdateCellComponents(instance string, image string) error {
 		spinner.Stop(false)
 		return err
 	}
-	cellImage := &kubectl.Cell{}
-	err = yaml.Unmarshal(imageFileContent, cellImage)
+	// need to decide if the file should be parsed as a Composite or a Cell
+	var canBeComposite bool
+	_, err = kubectl.GetCell(instance)
 	if err != nil {
-		spinner.Stop(false)
-		return err
+		if notFound, _ := errorpkg.IsCellInstanceNotFoundError(instance, err); notFound {
+			// could be a composite
+			canBeComposite = true
+		} else {
+			spinner.Stop(false)
+			return err
+		}
 	}
 
-	cellInst, err := getUpdatedCellInstance(instance, cellImage.CellSpec.ComponentTemplates)
-	if err != nil {
-		spinner.Stop(false)
-		return err
-	}
-
-	updatedCellInstContents, err := yaml.Marshal(cellInst)
-	if err != nil {
-		spinner.Stop(false)
-		return err
-	}
-	cellInstFile := filepath.Join("./", fmt.Sprintf("%s.yaml", instance))
-	err = writeToFile(updatedCellInstContents, cellInstFile)
-	if err != nil {
-		spinner.Stop(false)
-		return err
-	}
+	artifacttFile := filepath.Join("./", fmt.Sprintf("%s.yaml", instance))
 	defer func() {
-		_ = os.Remove(cellInstFile)
+		_ = os.Remove(artifacttFile)
 	}()
+	// check whether this is actually a Cell or a Composite
+	if canBeComposite {
+		err := updateCompositeInstace(imageFileContent, instance, artifacttFile)
+		if err != nil {
+			spinner.Stop(false)
+			return err
+		}
+	} else {
+		err := updateCellInstance(imageFileContent, instance, artifacttFile)
+		if err != nil {
+			spinner.Stop(false)
+			return err
+		}
+	}
+
 	// kubectl apply
-	err = kubectl.ApplyFile(cellInstFile)
+	err = kubectl.ApplyFile(artifacttFile)
 	if err != nil {
 		spinner.Stop(false)
 		return err
 	}
 
 	spinner.Stop(true)
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully updated the instance %s with new component images in %s", instance, image))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully updated the instance %s with new component images in %s", instance, fqImage))
 	return nil
 }
 
-func RunUpdateForSingleCellComponent(instance string, component string, containerImage string, envVars []string) error {
-	spinner := util.StartNewSpinner(fmt.Sprintf("Updating cell component %s", component))
-	cellInst, err := getUpdatedCellInstanceForSingleComponent(instance, component, containerImage, envVars)
+func updateCompositeInstace(imageFileContent []byte, instance string, artifactFile string) error {
+	image := &kubectl.Composite{}
+	err := yaml.Unmarshal(imageFileContent, image)
 	if err != nil {
-		spinner.Stop(false)
+		return err
+	}
+	compositeInst, err := getUpdatedCompositeInstance(instance, image.CompositeSpec.ComponentTemplates)
+	if err != nil {
+		return err
+	}
+
+	updatedCompositeInstContents, err := yaml.Marshal(compositeInst)
+	if err != nil {
+		return err
+	}
+	err = writeToFile(updatedCompositeInstContents, artifactFile)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func updateCellInstance(imageFileContent []byte, instance string, artifactFile string) error {
+	image := &kubectl.Cell{}
+	err := yaml.Unmarshal(imageFileContent, image)
+	if err != nil {
+		return err
+	}
+	cellInst, err := getUpdatedCellInstance(instance, image.CellSpec.ComponentTemplates)
+	if err != nil {
 		return err
 	}
 	updatedCellInstContents, err := yaml.Marshal(cellInst)
 	if err != nil {
-		spinner.Stop(false)
 		return err
 	}
-	cellInstFile := filepath.Join("./", fmt.Sprintf("%s.yaml", instance))
-	err = writeToFile(updatedCellInstContents, cellInstFile)
+	err = writeToFile(updatedCellInstContents, artifactFile)
 	if err != nil {
-		spinner.Stop(false)
 		return err
 	}
+	return nil
+}
+
+func RunUpdateForSingleComponent(instance string, component string, containerImage string, envVars []string) error {
+	spinner := util.StartNewSpinner(fmt.Sprintf("Updating component %s in instance %s", component, instance))
+	var canBeComposite bool
+	_, err := kubectl.GetCell(instance)
+	if err != nil {
+		if notFound, _ := errorpkg.IsCellInstanceNotFoundError(instance, err); notFound {
+			// could be a composite
+			canBeComposite = true
+		} else {
+			spinner.Stop(false)
+			return err
+		}
+	}
+	artifactFile := filepath.Join("./", fmt.Sprintf("%s.yaml", instance))
 	defer func() {
-		_ = os.Remove(cellInstFile)
+		_ = os.Remove(artifactFile)
 	}()
+
+	if canBeComposite {
+		err := updateSingleComponentinComposite(instance, component, containerImage, envVars, artifactFile)
+		if err != nil {
+			spinner.Stop(false)
+			return err
+		}
+	} else {
+		err := updateSingleComponentinCell(instance, component, containerImage, envVars, artifactFile)
+		if err != nil {
+			spinner.Stop(false)
+			return err
+		}
+	}
+
 	// kubectl apply
-	err = kubectl.ApplyFile(cellInstFile)
+	err = kubectl.ApplyFile(artifactFile)
 	if err != nil {
 		spinner.Stop(false)
 		return err
 	}
 	spinner.Stop(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully updated the component %s in instance %s with container image %s", component, instance, containerImage))
+	return nil
+}
+
+func updateSingleComponentinComposite(instance string, component string, containerImage string, envVars []string, artifactFile string) error {
+	compositeInst, err := getUpdatedCompositeInstanceForSingleComponent(instance, component, containerImage, envVars)
+	if err != nil {
+		return err
+	}
+	updatedCompInstContents, err := yaml.Marshal(compositeInst)
+	if err != nil {
+		return err
+	}
+	err = writeToFile(updatedCompInstContents, artifactFile)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func updateSingleComponentinCell(instance string, component string, containerImage string, envVars []string, artifactFile string) error {
+	cellInst, err := getUpdatedCellInstanceForSingleComponent(instance, component, containerImage, envVars)
+	if err != nil {
+		return err
+	}
+	updatedCellInstContents, err := yaml.Marshal(cellInst)
+	if err != nil {
+		return err
+	}
+	err = writeToFile(updatedCellInstContents, artifactFile)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -161,83 +253,23 @@ func getUpdatedCellInstanceForSingleComponent(instance string, componentName str
 	if err != nil {
 		return cellInstance, err
 	}
-	cellSpecByteArr, err := yaml.Marshal(cellInstance[k8sYamlSpec])
-	if err != nil {
-		return cellInstance, err
-	}
-	var cellSpec map[string]interface{}
-	err = yaml.Unmarshal(cellSpecByteArr, &cellSpec)
-	if err != nil {
-		return cellInstance, err
-	}
-	svcTempalateBytes, err := yaml.Marshal(cellSpec[k8sYamlServicetemplates])
-	if err != nil {
-		return cellInstance, err
-	}
-	var svcTemplates []map[string]interface{}
-	err = yaml.Unmarshal(svcTempalateBytes, &svcTemplates)
-	if err != nil {
-		return cellInstance, err
-	}
-
-	var matchFound bool
-	for i, svcTemplate := range svcTemplates {
-		// metadata
-		svcTemplateMetadataBytes, err := yaml.Marshal(svcTemplate[k8sYamlMetadata])
-		if err != nil {
-			return cellInstance, err
-		}
-		var svcTemplateMetadata map[string]string
-		err = yaml.Unmarshal(svcTemplateMetadataBytes, &svcTemplateMetadata)
-		if err != nil {
-			return cellInstance, err
-		}
-		// if the component name matches, update the container
-		if componentName == svcTemplateMetadata[k8sYamlName] {
-			matchFound = true
-			svcTemplateSpecBytes, err := yaml.Marshal(svcTemplate[k8sYamlSpec])
-			if err != nil {
-				return cellInstance, err
-			}
-			var svcTemplateSpec map[string]interface{}
-			err = yaml.Unmarshal(svcTemplateSpecBytes, &svcTemplateSpec)
-			if err != nil {
-				return cellInstance, err
-			}
-			containerSpecBytes, err := yaml.Marshal(svcTemplateSpec[k8sYamlContainer])
-			if err != nil {
-				return cellInstance, err
-			}
-			var containerSpec map[string]interface{}
-			err = yaml.Unmarshal(containerSpecBytes, &containerSpec)
-			if err != nil {
-				return cellInstance, err
-			}
-			if len(newEnvVars) > 0 {
-				envVarBytes, err := yaml.Marshal(containerSpec[k8sYamlImageEnvVars])
-				if err != nil {
-					return cellInstance, err
-				}
-				var envVars []kubectl.Env
-				err = yaml.Unmarshal(envVarBytes, &envVars)
-				if err != nil {
-					return cellInstance, err
-				}
-				containerSpec[k8sYamlImageEnvVars] = getMergedEnvVars(envVars, convertToPodSpecEnvVars(newEnvVars))
-			}
-			containerSpec[k8sYamlImage] = containerImage
-			svcTemplateSpec[k8sYamlContainer] = containerSpec
-			svcTemplate[k8sYamlSpec] = svcTemplateSpec
-			svcTemplates[i] = svcTemplate
-			break
-		}
-	}
-	if !matchFound {
-		return cellInstance, fmt.Errorf("no component with name %s found in instance %s", componentName, instance)
-	}
-	cellSpec[k8sYamlServicetemplates] = svcTemplates
+	cellSpec, err := getModifiedSpecForComponent(cellInstance, componentName, containerImage, newEnvVars)
 	cellInstance[k8sYamlSpec] = cellSpec
 	return cellInstance, nil
+}
+
+func getUpdatedCompositeInstanceForSingleComponent(instance string, componentName string, containerImage string, newEnvVars []string) (map[string]interface{}, error) {
+	err := validateEnvVars(newEnvVars)
+	if err != nil {
+		return nil, err
+	}
+	compositeInst, err := kubectl.GetCompositeInstanceAsMapInterface(instance)
+	if err != nil {
+		return compositeInst, err
+	}
+	compSpec, err := getModifiedSpecForComponent(compositeInst, componentName, containerImage, newEnvVars)
+	compositeInst[k8sYamlSpec] = compSpec
+	return compositeInst, nil
 }
 
 func convertToPodSpecEnvVars(envVars []string) []kubectl.Env {
@@ -293,56 +325,158 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 	if err != nil {
 		return cellInstance, err
 	}
-	cellSpecByteArr, err := yaml.Marshal(cellInstance[k8sYamlSpec])
+	cellSpec, err := getModifedSpec(cellInstance, newSvcTemplates)
 	if err != nil {
 		return cellInstance, err
+	}
+	cellInstance[k8sYamlSpec] = cellSpec
+	return cellInstance, nil
+}
+
+func getUpdatedCompositeInstance(instance string, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
+	compositeInstance, err := kubectl.GetCompositeInstanceAsMapInterface(instance)
+	if err != nil {
+		return compositeInstance, err
+	}
+	compositeSpec, err := getModifedSpec(compositeInstance, newSvcTemplates)
+	if err != nil {
+		return compositeInstance, err
+	}
+	compositeInstance[k8sYamlSpec] = compositeSpec
+	return compositeInstance, nil
+}
+
+func getModifiedSpecForComponent(instance map[string]interface{}, componentName string, containerImage string,
+	newEnvVars []string) (map[string]interface{}, error) {
+	cellSpecByteArr, err := yaml.Marshal(instance[k8sYamlSpec])
+	if err != nil {
+		return instance, err
 	}
 	var cellSpec map[string]interface{}
 	err = yaml.Unmarshal(cellSpecByteArr, &cellSpec)
 	if err != nil {
-		return cellInstance, err
+		return instance, err
 	}
 	svcTempalateBytes, err := yaml.Marshal(cellSpec[k8sYamlServicetemplates])
 	if err != nil {
-		return cellInstance, err
+		return instance, err
 	}
 	var svcTemplates []map[string]interface{}
 	err = yaml.Unmarshal(svcTempalateBytes, &svcTemplates)
 	if err != nil {
-		return cellInstance, err
+		return instance, err
+	}
+
+	var matchFound bool
+	for i, svcTemplate := range svcTemplates {
+		// metadata
+		svcTemplateMetadataBytes, err := yaml.Marshal(svcTemplate[k8sYamlMetadata])
+		if err != nil {
+			return instance, err
+		}
+		var svcTemplateMetadata map[string]string
+		err = yaml.Unmarshal(svcTemplateMetadataBytes, &svcTemplateMetadata)
+		if err != nil {
+			return instance, err
+		}
+		// if the component name matches, update the container
+		if componentName == svcTemplateMetadata[k8sYamlName] {
+			matchFound = true
+			svcTemplateSpecBytes, err := yaml.Marshal(svcTemplate[k8sYamlSpec])
+			if err != nil {
+				return instance, err
+			}
+			var svcTemplateSpec map[string]interface{}
+			err = yaml.Unmarshal(svcTemplateSpecBytes, &svcTemplateSpec)
+			if err != nil {
+				return instance, err
+			}
+			containerSpecBytes, err := yaml.Marshal(svcTemplateSpec[k8sYamlContainer])
+			if err != nil {
+				return instance, err
+			}
+			var containerSpec map[string]interface{}
+			err = yaml.Unmarshal(containerSpecBytes, &containerSpec)
+			if err != nil {
+				return instance, err
+			}
+			if len(newEnvVars) > 0 {
+				envVarBytes, err := yaml.Marshal(containerSpec[k8sYamlImageEnvVars])
+				if err != nil {
+					return instance, err
+				}
+				var envVars []kubectl.Env
+				err = yaml.Unmarshal(envVarBytes, &envVars)
+				if err != nil {
+					return instance, err
+				}
+				containerSpec[k8sYamlImageEnvVars] = getMergedEnvVars(envVars, convertToPodSpecEnvVars(newEnvVars))
+			}
+			containerSpec[k8sYamlImage] = containerImage
+			svcTemplateSpec[k8sYamlContainer] = containerSpec
+			svcTemplate[k8sYamlSpec] = svcTemplateSpec
+			svcTemplates[i] = svcTemplate
+			break
+		}
+	}
+	if !matchFound {
+		return instance, fmt.Errorf("no component with name %s found in instance %s", componentName, instance)
+	}
+	cellSpec[k8sYamlServicetemplates] = svcTemplates
+	return cellSpec, nil
+}
+
+func getModifedSpec(instance map[string]interface{}, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
+	cellSpecByteArr, err := yaml.Marshal(instance[k8sYamlSpec])
+	if err != nil {
+		return instance, err
+	}
+	var cellSpec map[string]interface{}
+	err = yaml.Unmarshal(cellSpecByteArr, &cellSpec)
+	if err != nil {
+		return instance, err
+	}
+	svcTempalateBytes, err := yaml.Marshal(cellSpec[k8sYamlServicetemplates])
+	if err != nil {
+		return instance, err
+	}
+	var svcTemplates []map[string]interface{}
+	err = yaml.Unmarshal(svcTempalateBytes, &svcTemplates)
+	if err != nil {
+		return instance, err
 	}
 
 	for _, svcTemplate := range svcTemplates {
 		// metadata
 		svcTemplateMetadataBytes, err := yaml.Marshal(svcTemplate[k8sYamlMetadata])
 		if err != nil {
-			return cellInstance, err
+			return instance, err
 		}
 		var svcTemplateMetadata map[string]string
 		err = yaml.Unmarshal(svcTemplateMetadataBytes, &svcTemplateMetadata)
 		if err != nil {
-			return cellInstance, err
+			return instance, err
 		}
 		// for each new component template, update the relevant container image
 		for i, newSvcTemplate := range newSvcTemplates {
 			if newSvcTemplate.Metadata.Name == svcTemplateMetadata[k8sYamlName] {
 				svcTemplateSpecBytes, err := yaml.Marshal(svcTemplate[k8sYamlSpec])
 				if err != nil {
-					return cellInstance, err
+					return instance, err
 				}
 				var svcTemplateSpec map[string]interface{}
 				err = yaml.Unmarshal(svcTemplateSpecBytes, &svcTemplateSpec)
 				if err != nil {
-					return cellInstance, err
+					return instance, err
 				}
 				containerSpecBytes, err := yaml.Marshal(svcTemplateSpec[k8sYamlContainer])
 				if err != nil {
-					return cellInstance, err
+					return instance, err
 				}
 				var containerSpec map[string]interface{}
 				err = yaml.Unmarshal(containerSpecBytes, &containerSpec)
 				if err != nil {
-					return cellInstance, err
+					return instance, err
 				}
 				containerSpec[k8sYamlImage] = newSvcTemplate.Spec.Container.Image
 				svcTemplateSpec[k8sYamlContainer] = containerSpec
@@ -352,6 +486,5 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 		}
 	}
 	cellSpec[k8sYamlServicetemplates] = svcTemplates
-	cellInstance[k8sYamlSpec] = cellSpec
-	return cellInstance, nil
+	return cellSpec, nil
 }

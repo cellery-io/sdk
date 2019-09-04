@@ -21,6 +21,8 @@ package routing
 import (
 	"encoding/json"
 
+	errors "github.com/cellery-io/sdk/components/cli/pkg/error"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
@@ -58,7 +60,7 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 			var dependencies []map[string]string
 			inst, err := kubectl.GetCell(srcInst)
 			if err != nil {
-				if notFound, _ := isCellInstanceNotFoundError(srcInst, err); notFound {
+				if notFound, _ := errors.IsCellInstanceNotFoundError(srcInst, err); notFound {
 					// might be a composite, check whether the srcInst is a composite
 					compInst, err := kubectl.GetComposite(srcInst)
 					if err != nil {

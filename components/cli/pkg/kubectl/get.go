@@ -318,3 +318,21 @@ func GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) 
 	err = json.Unmarshal([]byte(out), &output)
 	return output, err
 }
+
+func GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{}, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"composite",
+		composite,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	var output map[string]interface{}
+	out, err := osexec.GetCommandOutput(cmd)
+	if err != nil {
+		return output, err
+	}
+	err = json.Unmarshal([]byte(out), &output)
+	return output, err
+}

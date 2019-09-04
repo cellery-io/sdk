@@ -16,24 +16,22 @@
  * under the License.
  */
 
-package routing
+package error
 
 import (
 	"fmt"
+	"regexp"
 )
 
-func getCellGatewayHost(instance string) string {
-	return fmt.Sprintf("%s--gateway-service", instance)
+func IsCellInstanceNotFoundError(srcInst string, cellErr error) (bool, error) {
+	matches, err := regexp.MatchString(buildCellInstanceNonExistErrorMatcher(srcInst),
+		cellErr.Error())
+	if err != nil {
+		return false, err
+	}
+	return matches, nil
 }
 
-func getGatewayName(instance string) string {
-	return fmt.Sprintf("%s--gateway", instance)
-}
-
-func getVsName(instance string) string {
-	return fmt.Sprintf("%s--vs", instance)
-}
-
-func getCompositeServiceHost(instance string, component string) string {
-	return fmt.Sprintf("%s--%s-service", instance, component)
+func buildCellInstanceNonExistErrorMatcher(name string) string {
+	return fmt.Sprintf("cell(.)+(%s)(.)+not found", name)
 }

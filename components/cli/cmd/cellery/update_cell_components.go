@@ -66,9 +66,9 @@ func newUpdateCellComponentsCommand() *cobra.Command {
 			// specified cell instance.
 			var err error
 			if containerImage != "" {
-				err = commands.RunUpdateForSingleCellComponent(args[0], args[1], containerImage, envVars)
+				err = commands.RunUpdateForSingleComponent(args[0], args[1], containerImage, envVars)
 			} else {
-				err = commands.RunUpdateCellComponents(args[0], args[1])
+				err = commands.RunUpdateComponents(args[0], args[1])
 			}
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to instance %s", args[0]), err)
