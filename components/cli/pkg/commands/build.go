@@ -54,7 +54,7 @@ func RunBuild(tag string, fileName string) {
 
 	parsedCellImage, err := image.ParseImageTag(tag)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+		util.ExitWithErrorMessage("Error occurred while parsing image", err)
 	}
 	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
@@ -81,7 +81,7 @@ func RunBuild(tag string, fileName string) {
 	iName, err := json.Marshal(imageName)
 	if err != nil {
 		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
+		util.ExitWithErrorMessage("Error in generating cellery:ImageName construct", err)
 	}
 	// Executing the build method in the cell file
 	moduleMgr := &util.BLangManager{}
@@ -217,7 +217,7 @@ func RunBuild(tag string, fileName string) {
 		spinner.Stop(false)
 		errStr := string(stderr.Bytes())
 		fmt.Printf("%s\n", errStr)
-		util.ExitWithErrorMessage("Error occurred while building cell image", err)
+		util.ExitWithErrorMessage("Error occurred while building image", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
@@ -227,7 +227,7 @@ func RunBuild(tag string, fileName string) {
 		fmt.Println("\x1b[31;1m======================\x1b[0m")
 		errStr := string(stderr.Bytes())
 		fmt.Printf("\x1b[31;1m%s\x1b[0m", errStr)
-		util.ExitWithErrorMessage("Error occurred while building cell image", err)
+		util.ExitWithErrorMessage("Error occurred while building image", err)
 	}
 	_ = os.Remove(tempBuildFileName)
 	outStr := string(stdout.Bytes())
@@ -238,12 +238,12 @@ func RunBuild(tag string, fileName string) {
 	folderCopyError := util.CopyDir(targetDir, filepath.Join(projectDir, constants.ZIP_ARTIFACTS))
 	if folderCopyError != nil {
 		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred creating cell image", err)
+		util.ExitWithErrorMessage("Error occurred creating image", err)
 	}
 	err = util.CleanOrCreateDir(filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE))
 	if err != nil {
 		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while creating the cell image", err)
+		util.ExitWithErrorMessage("Error occurred while creating the image", err)
 	}
 	fileCopyError := util.CopyFile(fileName, filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE, filepath.Base(fileName)))
 	if fileCopyError != nil {
@@ -255,7 +255,7 @@ func RunBuild(tag string, fileName string) {
 	err = util.RecursiveZip(nil, folders, output)
 	if err != nil {
 		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while creating the cell image", err)
+		util.ExitWithErrorMessage("Error occurred while creating the image", err)
 	}
 
 	_ = os.RemoveAll(filepath.Join(projectDir, constants.ZIP_ARTIFACTS))
@@ -265,7 +265,7 @@ func RunBuild(tag string, fileName string) {
 	hasOldImage, err := util.FileExists(repoLocation)
 	if err != nil {
 		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while removing the old cell image", err)
+		util.ExitWithErrorMessage("Error occurred while removing the old image", err)
 	}
 	if hasOldImage {
 		spinner.SetNewAction("Removing old Image")
@@ -288,12 +288,12 @@ func RunBuild(tag string, fileName string) {
 	zipCopyError := util.CopyFile(zipSrc, zipDst)
 	if zipCopyError != nil {
 		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while saving cell image to local repo", err)
+		util.ExitWithErrorMessage("Error occurred while saving image to local repo", err)
 	}
 
 	_ = os.Remove(zipSrc)
 	spinner.Stop(true)
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully built cell image: %s", util.Bold(tag)))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully built image: %s", util.Bold(tag)))
 	util.PrintWhatsNextMessage("run the image", "cellery run "+tag)
 }
 
