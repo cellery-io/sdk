@@ -45,10 +45,15 @@ type CellSpec struct {
 
 type ComponentTemplate struct {
 	Metadata ComponentTemplateMetadata `json:"metadata"`
+	Spec     ComponentTemplateSpec     `json:"spec"`
 }
 
 type ComponentTemplateMetadata struct {
 	Name string `json:"name"`
+}
+
+type ComponentTemplateSpec struct {
+	Protocol string `json:"protocol"`
 }
 
 type CellStatus struct {
