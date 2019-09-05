@@ -459,8 +459,8 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 }`
 	} else if action == "test" {
 		ballerinaMain = `
-public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-	return test(iName, instances);
+public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies) returns error? {
+	return test(iName, instances, startDependencies);
 }`
 	} else {
 		return "", errors.New("invalid action:" + action)
