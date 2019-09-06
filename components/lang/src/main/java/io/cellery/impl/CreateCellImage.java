@@ -542,7 +542,11 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         if (image.isCompositeImage()) {
             image.getComponentNameToComponentMap().forEach((componentName, component) -> {
                 json.put(componentName + "_host", INSTANCE_NAME_PLACEHOLDER + "--" + componentName + "-service");
-                json.put(componentName + "_port", component.getContainerPort());
+                if (component.getApis().size() > 0) {
+                    json.put(componentName + "_port", DEFAULT_GATEWAY_PORT);
+                }
+                component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
+                component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
             });
         } else {
             image.getComponentNameToComponentMap().forEach((componentName, component) -> {
