@@ -676,8 +676,9 @@ public class CelleryUtils {
         // create output directory if it doesn't exist
         if (!dir.exists()) {
             boolean dirCreated = dir.mkdirs();
-            if (!dirCreated) {
+            if (!dirCreated && !dir.exists()) {
                 out.println("Failed to create directory " + dir);
+                throw new BallerinaException("Failed to create directory " + dir);
             }
         }
         //buffer for read and write data to file
@@ -690,9 +691,11 @@ public class CelleryUtils {
                         String fileName = zipEntry.getName();
                         File newFile = new File(destDir + File.separator + fileName);
                         //create directories for sub directories in zip
-                        boolean dirCreated = new File(newFile.getParent()).mkdirs();
-                        if (!dirCreated) {
-                            out.println("Failed to create directory " + dir);
+                        File subDir = new File(newFile.getParent());
+                        boolean dirCreated = subDir.mkdirs();
+                        if (!dirCreated && !subDir.exists()) {
+                            out.println("Failed to create sub directory " + subDir);
+                            throw new BallerinaException("Failed to create sub directory " + subDir);
                         }
                         try (FileOutputStream fileOutputStream = new FileOutputStream(newFile)) {
                             int len;
@@ -743,5 +746,18 @@ public class CelleryUtils {
         String content = new String(Files.readAllBytes(path), charset);
         content = content.replaceAll(oldString, newString);
         Files.write(path, content.getBytes(charset));
+    }
+
+    /**
+     * Get a list of files in a directory for a given extension.
+     *
+     * @param directory name of the directory
+     * @param extension name of the extension
+     * @return list of files
+     */
+    public static List<File> getFilesByExtension(String directory, String extension) {
+        File dir = new File(directory);
+        String[] extensions = new String[] {extension};
+        return new ArrayList<>(FileUtils.listFiles(dir, extensions, true));
     }
 }
