@@ -26,6 +26,11 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
+type origComponentData struct {
+	ComponentName  string `json:"componentName"`
+	ContainerPorts []int  `json:"containerPorts"`
+}
+
 func buildRoutesForCompositeTarget(srcInst string, targetInst kubectl.Composite,
 	dependencyInstance string, percentage int) (*kubectl.VirtualService, error) {
 	// get current dependency composite instance
@@ -114,7 +119,7 @@ func getModifiedCompositeTargetInstance(existingDependencyInstance string, targe
 	}
 	var originalDependencyCompositeServicesAnnotation string
 	if dependencyComposite.CompositeMetaData.Annotations.OriginalDependencyComponentServices != "" {
-		originalDependencyCompositeServicesAnnotation, err = AppendToDependencyCompositeServiceAnnotaion(existingDependencyInstance,
+		originalDependencyCompositeServicesAnnotation, err = appendToDependencyCompositeServiceAnnotaion(existingDependencyInstance,
 			dependencyComposite.CompositeMetaData.Annotations.OriginalDependencyComponentServices, &dependencyComposite)
 		if err != nil {
 			return nil, err
@@ -134,38 +139,56 @@ func getModifiedCompositeTargetInstance(existingDependencyInstance string, targe
 	return &targetComposite, nil
 }
 
-func AppendToDependencyCompositeServiceAnnotaion(instance string, existingValue string, composite *kubectl.Composite) (string, error) {
-	var serviceNames []string
-	err := json.Unmarshal([]byte(existingValue), serviceNames)
+func appendToDependencyCompositeServiceAnnotaion(instance string, existingValue string, composite *kubectl.Composite) (string, error) {
+	var origCompData []origComponentData
+	err := json.Unmarshal([]byte(existingValue), &origCompData)
 	if err != nil {
 		return "", err
 	}
 	for _, componentTemplate := range composite.CompositeSpec.ComponentTemplates {
-		compositeHost := getCompositeServiceHost(instance, componentTemplate.Metadata.Name)
-		for _, existingHost := range serviceNames {
-			if existingHost != compositeHost {
-				serviceNames = append(serviceNames, compositeHost)
+		var matchFound bool
+		compositeName := getCompositeName(instance, componentTemplate.Metadata.Name)
+		for _, compData := range origCompData {
+			if compData.ComponentName == compositeName {
+				matchFound = true
 				break
 			}
 		}
+		if !matchFound {
+			origCompData = append(origCompData, origComponentData{
+				ComponentName:  compositeName,
+				ContainerPorts: getPortsAsIntArray(&componentTemplate.Spec.Container.Ports),
+			})
+		}
 	}
-	svcNames, err := json.Marshal(serviceNames)
+	svcNames, err := json.Marshal(origCompData)
 	if err != nil {
 		return "", err
 	}
 	return string(svcNames), nil
 }
 
-func buildDependencyCompositeServiceAnnotaion(instance string, composite *kubectl.Composite) (string, error) {
-	var serviceNames []string
-	for _, componentTemplate := range composite.CompositeSpec.ComponentTemplates {
-		serviceNames = append(serviceNames, getCompositeServiceHost(instance, componentTemplate.Metadata.Name))
+func getPortsAsIntArray(ports *[]kubectl.Port) []int {
+	var intPorts []int
+	for _, port := range *ports {
+		intPorts = append(intPorts, port.ContainerPort)
 	}
-	svcNames, err := json.Marshal(serviceNames)
+	return intPorts
+}
+
+func buildDependencyCompositeServiceAnnotaion(instance string, composite *kubectl.Composite) (string, error) {
+	var origCompData []origComponentData
+	for _, componentTemplate := range composite.CompositeSpec.ComponentTemplates {
+		origCompData = append(origCompData, origComponentData{
+			ComponentName:  getCompositeName(instance, componentTemplate.Metadata.Name),
+			ContainerPorts: getPortsAsIntArray(&componentTemplate.Spec.Container.Ports),
+		})
+	}
+	data, err := json.Marshal(origCompData)
 	if err != nil {
 		return "", err
 	}
-	return string(svcNames), nil
+	return string(data), nil
 }
 
 func buildPercentageBasedHttpRoutesForCompositeInstance(dependencyInst string, targetInst string,

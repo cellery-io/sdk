@@ -37,3 +37,7 @@ func getVsName(instance string) string {
 func getCompositeServiceHost(instance string, component string) string {
 	return fmt.Sprintf("%s--%s-service", instance, component)
 }
+
+func getCompositeName(instance string, component string) string {
+	return fmt.Sprintf("%s--%s", instance, component)
+}
