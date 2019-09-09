@@ -316,7 +316,7 @@ public function createCellImage(CellImage image, ImageName iName) returns ( erro
 # + instances - The cell instance dependencies
 # + startDependencies - Whether to start dependencies
 # + return - error optional
-public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances, boolean startDependencies) returns (error?) = external;
+public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances, boolean startDependencies) returns (CellImage[] | error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
