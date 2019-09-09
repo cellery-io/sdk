@@ -112,7 +112,8 @@ import static io.cellery.CelleryUtils.writeToFile;
                 @Argument(name = "instances", type = TypeKind.MAP),
                 @Argument(name = "startDependencies", type = TypeKind.BOOLEAN)
         },
-        returnType = {@ReturnType(type = TypeKind.ERROR)},
+        returnType = {@ReturnType(type = TypeKind.ERROR),
+                @ReturnType(type = TypeKind.ARRAY)},
         isPublic = true
 )
 public class CreateInstance extends BlockingNativeCallableUnit {
@@ -131,7 +132,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         bValueArray = new BValueArray(bArrayType);
         runCount = new AtomicLong(0L);
         String instanceArg;
-        boolean startDependencies =  ctx.getBooleanArgument(0);
+        boolean startDependencies = ctx.getBooleanArgument(0);
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(0);
         LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(1)).getMap();
         String cellName = ((BString) nameStruct.get("name")).stringValue();
@@ -447,7 +448,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     }
 
     /**
-     *  Generate dependency tree.
+     * Generate dependency tree.
      *
      * @param metadataJsonPath path to the metadata.json of the cell
      * @throws IOException if dependency tree generation fails
@@ -510,9 +511,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     /**
      * Start a cell instance.
      *
-     * @param org organization
-     * @param name cell name
-     * @param version cell version
+     * @param org              organization
+     * @param name             cell name
+     * @param version          cell version
      * @param cellInstanceName cell instance name
      * @throws Exception if cell start fails
      */
@@ -538,7 +539,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         Map<String, String> environment = new HashMap<>();
         environment.put(CELLERY_IMAGE_DIR_ENV_VAR, tempBalFileDir.toString());
         CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                environment, "ballerina", "run", tempBalFile, "run", image.toString(), "{}",  "false");
+                environment, "ballerina", "run", tempBalFile, "run", image.toString(), "{}", "false");
     }
 
     /**
@@ -568,7 +569,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      * Generate a random instance name.
      *
      * @param name cell name
-     * @param ver cell version
+     * @param ver  cell version
      * @return random instance name generated
      */
     private String generateRandomInstanceName(String name, String ver) {
@@ -700,10 +701,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     /**
      * Add the instance to started instances array.
      *
-     * @param ctx Context
-     * @param org organization name
-     * @param name cell name
-     * @param version cell version
+     * @param ctx          Context
+     * @param org          organization name
+     * @param name         cell name
+     * @param version      cell version
      * @param instanceName cell instance name
      */
     private void addToStartedInstances(Context ctx, String org, String name, String version, String instanceName) {
