@@ -73,22 +73,8 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 					var route Route
 					for _, dependency := range dependencies {
 						if dependency[instance] == currentTarget {
-							if dependency[dependencyKind] == compositeDependencyKind {
-								//	instancesDependingOnComposites = append(instancesDependingOnComposites, srcInst)
-								route = &CompositeToCompositeRoute{
-									Src:           srcInst,
-									CurrentTarget: currentTarget,
-									NewTarget:     newTarget,
-								}
-								routes = append(routes, route)
-								break
-							} else if dependency[dependencyKind] == cellDependencyKind {
-								//	instancesDependingOnCells = append(instancesDependingOnCells, srcInst)
-								route = &CompositeToCellRoute{
-									Src:           srcInst,
-									CurrentTarget: currentTarget,
-									NewTarget:     newTarget,
-								}
+							route = buildRouteForDependency(dependency, inst.CellMetaData.Name, currentTarget, newTarget)
+							if route != nil {
 								routes = append(routes, route)
 								break
 							}
@@ -105,22 +91,8 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 				var route Route
 				for _, dependency := range dependencies {
 					if dependency[instance] == currentTarget {
-						if dependency[dependencyKind] == compositeDependencyKind {
-							//	instancesDependingOnComposites = append(instancesDependingOnComposites, srcInst)
-							route = &CellToCompositeRoute{
-								Src:           srcInst,
-								CurrentTarget: currentTarget,
-								NewTarget:     newTarget,
-							}
-							routes = append(routes, route)
-							break
-						} else if dependency[dependencyKind] == cellDependencyKind {
-							//	instancesDependingOnCells = append(instancesDependingOnCells, srcInst)
-							route = &CellToCellRoute{
-								Src:           srcInst,
-								CurrentTarget: currentTarget,
-								NewTarget:     newTarget,
-							}
+						route = buildRouteForDependency(dependency, inst.CellMetaData.Name, currentTarget, newTarget)
+						if route != nil {
 							routes = append(routes, route)
 							break
 						}
@@ -142,22 +114,8 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 			var route Route
 			for _, dependency := range dependencies {
 				if dependency[instance] == currentTarget {
-					if dependency[dependencyKind] == compositeDependencyKind {
-						//	instancesDependingOnComposites = append(instancesDependingOnComposites, cellInst.CellMetaData.Name)
-						route = &CellToCompositeRoute{
-							Src:           cellInst.CellMetaData.Name,
-							CurrentTarget: currentTarget,
-							NewTarget:     newTarget,
-						}
-						routes = append(routes, route)
-						break
-					} else if dependency[dependencyKind] == cellDependencyKind {
-						//	instancesDependingOnCells = append(instancesDependingOnCells, cellInst.CellMetaData.Name)
-						route = &CellToCellRoute{
-							Src:           cellInst.CellMetaData.Name,
-							CurrentTarget: currentTarget,
-							NewTarget:     newTarget,
-						}
+					route = buildRouteForDependency(dependency, cellInst.CellMetaData.Name, currentTarget, newTarget)
+					if route != nil {
 						routes = append(routes, route)
 						break
 					}
@@ -177,22 +135,8 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 			}
 			for _, dependency := range dependencies {
 				if dependency[instance] == currentTarget {
-					if dependency[dependencyKind] == compositeDependencyKind {
-						//	instancesDependingOnComposites = append(instancesDependingOnComposites, compositeInst.CompositeMetaData.Name)
-						route = &CompositeToCompositeRoute{
-							Src:           compositeInst.CompositeMetaData.Name,
-							CurrentTarget: currentTarget,
-							NewTarget:     newTarget,
-						}
-						routes = append(routes, route)
-						break
-					} else if dependency[dependencyKind] == cellDependencyKind {
-						//	instancesDependingOnCells = append(instancesDependingOnCells, compositeInst.CompositeMetaData.Name)
-						route = &CellToCellRoute{
-							Src:           compositeInst.CompositeMetaData.Name,
-							CurrentTarget: currentTarget,
-							NewTarget:     newTarget,
-						}
+					route = buildRouteForDependency(dependency, compositeInst.CompositeMetaData.Name, currentTarget, newTarget)
+					if route != nil {
 						routes = append(routes, route)
 						break
 					}
@@ -201,4 +145,22 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 		}
 	}
 	return routes, nil
+}
+
+func buildRouteForDependency(dependency map[string]string, compositeSrcName string, currentTarget string, newTarget string) Route {
+	var route Route = nil
+	if dependency[dependencyKind] == compositeDependencyKind {
+		route = &CompositeToCompositeRoute{
+			Src:           compositeSrcName,
+			CurrentTarget: currentTarget,
+			NewTarget:     newTarget,
+		}
+	} else if dependency[dependencyKind] == cellDependencyKind {
+		route = &CellToCellRoute{
+			Src:           compositeSrcName,
+			CurrentTarget: currentTarget,
+			NewTarget:     newTarget,
+		}
+	}
+	return route
 }
