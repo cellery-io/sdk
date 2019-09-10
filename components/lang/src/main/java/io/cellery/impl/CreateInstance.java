@@ -78,6 +78,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.CELL;
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
+import static io.cellery.CelleryConstants.CENTRAL_REGISTRY_HOST;
 import static io.cellery.CelleryConstants.COMPONENTS;
 import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.INGRESSES;
@@ -87,6 +88,7 @@ import static io.cellery.CelleryConstants.POD_RESOURCES;
 import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.appendToFile;
+import static io.cellery.CelleryUtils.fileExists;
 import static io.cellery.CelleryUtils.getFilesByExtension;
 import static io.cellery.CelleryUtils.isCellInstanceRunning;
 import static io.cellery.CelleryUtils.printDebug;
@@ -520,6 +522,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private void startInstance(String org, String name, String version, String cellInstanceName) throws Exception {
         Path imageDir = Paths.get(System.getProperty("user.home"), ".cellery", "repo", org, name, version,
                 name + ".zip");
+        if (!fileExists(imageDir.toString())) {
+            pullImage(CENTRAL_REGISTRY_HOST, org, name, version);
+        }
         Path tempDir = Paths.get(System.getProperty("user.home"), ".cellery", "tmp");
         Path tempBalFileDir = Files.createTempDirectory(Paths.get(tempDir.toString()), "cellery-cell-image");
         unzip(imageDir.toString(), tempBalFileDir.toString());
@@ -713,5 +718,20 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 CelleryConstants.IMAGE_NAME_DEFINITION,
                 org, name, version, instanceName);
         bValueArray.add(runCount.getAndIncrement(), bmap);
+    }
+
+    /**
+     * Pull cell image.
+     *
+     * @param registry name of the registry from which the cell is being pulled from
+     * @param org cell organization
+     * @param name cell name
+     * @param version cell version
+     */
+    private void pullImage(String registry, String org, String name, String version) {
+        Map<String, String> environment = new HashMap<>();
+        CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
+                environment, "cellery", "pull", registry + File.separator + org + File.separator +
+                        name + ":" + version);
     }
 }
