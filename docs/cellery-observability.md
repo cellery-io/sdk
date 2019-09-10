@@ -133,6 +133,6 @@ filtered from [metrics view](#cell-component-pod-and-node-metrics), and a sepera
 ![Request Path](images/observability/dependency-diagram-tarce.png)
 
 ## What's Next?
-- [Cell update and advanced deployments](cell-update-and-adv-deployment.md) - update a components of running cell instance using a new cell image and create advanced deployments.
+- [Cell patch and advanced deployments](cell-patch-and-adv-deployment.md) - patch components of running instance and create advanced deployments.
 - [Scale up/down](docs/cell-scaling.md) - scalability of running cell instances with zero scaling and horizontal autoscaler.
 

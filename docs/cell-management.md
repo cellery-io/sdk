@@ -2,7 +2,7 @@
 Cells can be managed by,
  * [Observing cells](#observability)
  * [Scaling cells](#scaling-cells) 
- * [Updating cells](#updating-cells)
+ * [Patching cells/composites](#patching-cellcomposite-components-and-advanced-deployments)
  
  ## Observability 
 Cellery Observability brings along the capability to observe the Cells deployed on Cellery Mesh. It provides overview of 
@@ -20,8 +20,8 @@ zero scaling is powered by [Knative](https://knative.dev/v0.6-docs/). By default
 and zero scaling disabled in the runtime, and you can enable it by [modify commands](setup/modify-setup.md#enabledisable-autoscaling). 
 Find more details on scaling up/down cells [here.](cell-scaling.md)
 
-## Updating cell components and advanced deployments
-Cell instances are only allowed to be updated restrictively. Its possible to update components of cell instances, and this is a viable operation when there are no breaking changes to the components. 
-Further, as advanced deployment methods, Cellery supports both blue-green and canary deployment options. In that case, a new cell instance with updated 
+## Patching cell/composite components and advanced deployments
+Cell/Composite instances are only allowed to be updated restrictively. Its possible to patch components of cell/composite instances, and this is a viable operation when there are no breaking changes to the components. 
+Further, as advanced deployment methods, Cellery supports both blue-green and canary deployment options. In that case, a new instance with updated 
 version will be spawned along with the old cell instance, and the traffic can be routed to completely or partially to the new instance. 
-Find more details on updating cell components and advanced deployment patterns [here.](cell-update-and-adv-deployment.md)
+Find more details on updating cell components and advanced deployment patterns [here.](cell-patch-and-adv-deployment.md)

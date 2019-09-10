@@ -44,8 +44,8 @@ const k8sYamlContainer = "container"
 const k8sYamlImage = "image"
 const k8sYamlImageEnvVars = "env"
 
-func RunUpdateComponents(instance string, fqImage string) error {
-	spinner := util.StartNewSpinner(fmt.Sprintf("Updating components in instance %s", instance))
+func RunPatchComponents(instance string, fqImage string) error {
+	spinner := util.StartNewSpinner(fmt.Sprintf("Patching components in instance %s", instance))
 	// parse the fully qualified image name
 	parsedImage, err := img.ParseImageTag(fqImage)
 	imageDir, err := ExtractImage(parsedImage, true, spinner)
@@ -101,13 +101,13 @@ func RunUpdateComponents(instance string, fqImage string) error {
 	}()
 	// check whether this is actually a Cell or a Composite
 	if canBeComposite {
-		err := updateCompositeInstace(imageFileContent, instance, artifacttFile)
+		err := patchCompositeInstace(imageFileContent, instance, artifacttFile)
 		if err != nil {
 			spinner.Stop(false)
 			return err
 		}
 	} else {
-		err := updateCellInstance(imageFileContent, instance, artifacttFile)
+		err := patchCellInstance(imageFileContent, instance, artifacttFile)
 		if err != nil {
 			spinner.Stop(false)
 			return err
@@ -122,55 +122,55 @@ func RunUpdateComponents(instance string, fqImage string) error {
 	}
 
 	spinner.Stop(true)
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully updated the instance %s with new component images in %s", instance, fqImage))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully patched the instance %s with new component images in %s", instance, fqImage))
 	return nil
 }
 
-func updateCompositeInstace(imageFileContent []byte, instance string, artifactFile string) error {
+func patchCompositeInstace(imageFileContent []byte, instance string, artifactFile string) error {
 	image := &kubectl.Composite{}
 	err := yaml.Unmarshal(imageFileContent, image)
 	if err != nil {
 		return err
 	}
-	compositeInst, err := getUpdatedCompositeInstance(instance, image.CompositeSpec.ComponentTemplates)
+	compositeInst, err := getPatchedCompositeInstance(instance, image.CompositeSpec.ComponentTemplates)
 	if err != nil {
 		return err
 	}
 
-	updatedCompositeInstContents, err := yaml.Marshal(compositeInst)
+	patchedCompositeInstContents, err := yaml.Marshal(compositeInst)
 	if err != nil {
 		return err
 	}
-	err = writeToFile(updatedCompositeInstContents, artifactFile)
+	err = writeToFile(patchedCompositeInstContents, artifactFile)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func updateCellInstance(imageFileContent []byte, instance string, artifactFile string) error {
+func patchCellInstance(imageFileContent []byte, instance string, artifactFile string) error {
 	image := &kubectl.Cell{}
 	err := yaml.Unmarshal(imageFileContent, image)
 	if err != nil {
 		return err
 	}
-	cellInst, err := getUpdatedCellInstance(instance, image.CellSpec.ComponentTemplates)
+	cellInst, err := getPatchedCellInstance(instance, image.CellSpec.ComponentTemplates)
 	if err != nil {
 		return err
 	}
-	updatedCellInstContents, err := yaml.Marshal(cellInst)
+	patchedCellInstContents, err := yaml.Marshal(cellInst)
 	if err != nil {
 		return err
 	}
-	err = writeToFile(updatedCellInstContents, artifactFile)
+	err = writeToFile(patchedCellInstContents, artifactFile)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func RunUpdateForSingleComponent(instance string, component string, containerImage string, envVars []string) error {
-	spinner := util.StartNewSpinner(fmt.Sprintf("Updating component %s in instance %s", component, instance))
+func RunPatchForSingleComponent(instance string, component string, containerImage string, envVars []string) error {
+	spinner := util.StartNewSpinner(fmt.Sprintf("Patching component %s in instance %s", component, instance))
 	var canBeComposite bool
 	_, err := kubectl.GetCell(instance)
 	if err != nil {
@@ -188,13 +188,13 @@ func RunUpdateForSingleComponent(instance string, component string, containerIma
 	}()
 
 	if canBeComposite {
-		err := updateSingleComponentinComposite(instance, component, containerImage, envVars, artifactFile)
+		err := patchSingleComponentinComposite(instance, component, containerImage, envVars, artifactFile)
 		if err != nil {
 			spinner.Stop(false)
 			return err
 		}
 	} else {
-		err := updateSingleComponentinCell(instance, component, containerImage, envVars, artifactFile)
+		err := patchSingleComponentinCell(instance, component, containerImage, envVars, artifactFile)
 		if err != nil {
 			spinner.Stop(false)
 			return err
@@ -208,43 +208,43 @@ func RunUpdateForSingleComponent(instance string, component string, containerIma
 		return err
 	}
 	spinner.Stop(true)
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully updated the component %s in instance %s with container image %s", component, instance, containerImage))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully patched the component %s in instance %s with container image %s", component, instance, containerImage))
 	return nil
 }
 
-func updateSingleComponentinComposite(instance string, component string, containerImage string, envVars []string, artifactFile string) error {
-	compositeInst, err := getUpdatedCompositeInstanceForSingleComponent(instance, component, containerImage, envVars)
+func patchSingleComponentinComposite(instance string, component string, containerImage string, envVars []string, artifactFile string) error {
+	compositeInst, err := getPatchedCompositeInstanceForSingleComponent(instance, component, containerImage, envVars)
 	if err != nil {
 		return err
 	}
-	updatedCompInstContents, err := yaml.Marshal(compositeInst)
+	patchedCompInstContents, err := yaml.Marshal(compositeInst)
 	if err != nil {
 		return err
 	}
-	err = writeToFile(updatedCompInstContents, artifactFile)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func updateSingleComponentinCell(instance string, component string, containerImage string, envVars []string, artifactFile string) error {
-	cellInst, err := getUpdatedCellInstanceForSingleComponent(instance, component, containerImage, envVars)
-	if err != nil {
-		return err
-	}
-	updatedCellInstContents, err := yaml.Marshal(cellInst)
-	if err != nil {
-		return err
-	}
-	err = writeToFile(updatedCellInstContents, artifactFile)
+	err = writeToFile(patchedCompInstContents, artifactFile)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func getUpdatedCellInstanceForSingleComponent(instance string, componentName string, containerImage string, newEnvVars []string) (map[string]interface{}, error) {
+func patchSingleComponentinCell(instance string, component string, containerImage string, envVars []string, artifactFile string) error {
+	cellInst, err := getPatchededCellInstanceForSingleComponent(instance, component, containerImage, envVars)
+	if err != nil {
+		return err
+	}
+	patchedCellInstContents, err := yaml.Marshal(cellInst)
+	if err != nil {
+		return err
+	}
+	err = writeToFile(patchedCellInstContents, artifactFile)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getPatchededCellInstanceForSingleComponent(instance string, componentName string, containerImage string, newEnvVars []string) (map[string]interface{}, error) {
 	err := validateEnvVars(newEnvVars)
 	if err != nil {
 		return nil, err
@@ -258,7 +258,7 @@ func getUpdatedCellInstanceForSingleComponent(instance string, componentName str
 	return cellInstance, nil
 }
 
-func getUpdatedCompositeInstanceForSingleComponent(instance string, componentName string, containerImage string, newEnvVars []string) (map[string]interface{}, error) {
+func getPatchedCompositeInstanceForSingleComponent(instance string, componentName string, containerImage string, newEnvVars []string) (map[string]interface{}, error) {
 	err := validateEnvVars(newEnvVars)
 	if err != nil {
 		return nil, err
@@ -320,7 +320,7 @@ func getEnvVarKeyValue(tuple string) (string, string) {
 	return keyValue[0], keyValue[1]
 }
 
-func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
+func getPatchedCellInstance(instance string, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
 	cellInstance, err := kubectl.GetCellInstanceAsMapInterface(instance)
 	if err != nil {
 		return cellInstance, err
@@ -333,7 +333,7 @@ func getUpdatedCellInstance(instance string, newSvcTemplates []kubectl.Component
 	return cellInstance, nil
 }
 
-func getUpdatedCompositeInstance(instance string, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
+func getPatchedCompositeInstance(instance string, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
 	compositeInstance, err := kubectl.GetCompositeInstanceAsMapInterface(instance)
 	if err != nil {
 		return compositeInstance, err

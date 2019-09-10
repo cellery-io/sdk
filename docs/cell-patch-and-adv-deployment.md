@@ -1,31 +1,31 @@
-# Cell Component Updating and Advanced Deployment Patterns
+# Component Patching and Advanced Deployment Patterns
 
-Cellery supports updating components of running cells in place as well as advanced deployment patterns Blue-Green and Canary. 
+Cellery supports in-place patching of components in running cells/composites as well as advanced deployment patterns Blue-Green and Canary. 
 
 This README includes,
 
-- [Updating Cell Components](#updating-cell-components)
-- [Blue/Green Deployment of Cell Instances](#bluegreen-and-canary-deployment-of-cell-instances)
-- [Canary Deployment of Cell Instances](#bluegreen-and-canary-deployment-of-cell-instances)
+- [Patching Components](#patching-components)
+- [Blue/Green Deployment of Cell/Composite Instances](#bluegreen-and-canary-deployment-of-cell-instances)
+- [Canary Deployment of Cell/Composite Instances](#bluegreen-and-canary-deployment-of-cell-instances)
 
-## Updating Cell Components
-Components included in a running cell instance can be updated by this method. This will terminate the components one-by-one and apply changes to each component, and eventually all the components of the particuar cell instance will be updated. This is an in-place update mechanism.
+## Patching Components
+Components of a running cell/composite instance can be patched by this method. This will terminate the selected component and spin up a new updated component. This is an in-place update mechanism.
 
 #### Note:
 __This updating mechanism only considers changes done to docker images which are encapsulated in components.__
  
-Let us assume, there is a cell `pet-be` running in the current runtime, created from the cell image `wso2cellery/pet-be-cell:1.0.0`. 
+Let us assume, there is a cell/composite `pet-be` running in the current runtime, created from the cell image `wso2cellery/pet-be-cell:1.0.0`. 
 And now, some changes are made to the application source and hence the users will have to update the running instance with those changes.
-The new application binary is packed to a docker image which with a patch version change and a new cell image, `wso2cellery/pet-be-cell:1.0.1`, is built out of that. 
+The new application binary is packed to a docker image with a patch version. 
 
-As this operation simply updates the currently running instance, the client cells invoking this cell may not be aware of this. 
+As this operation simply updates the currently running instance, any client cells/composites invoking this instance may not be aware of this. 
 Therefore, this should be only permitted when there is no API changes. 
  
-Below steps should be followed to perform the cell update. 
+Below steps should be followed to perform the patch operation for a component in a running cell/composite. 
  
-1) Update the currently running `pet-be` instance with below command. This will update its components respectively.
+1) Update the component `controller` of the currently running `pet-be` instance with below command. This will update its components respectively.
 ```
-cellery update pet-be wso2cellery/pet-be-cell:1.0.1
+cellery update pet-be controller --container-image mycontainerorg/hello:1.0.1
 ```
 3) Now execute `kubectl get pods` and you can see the pods of the `pet-be` are getting initialized. And finally, older pods are getting terminated.
 ```
@@ -47,13 +47,13 @@ pet-fe--sts-deployment-59dbb995c7-g7tc7          3/3     Running           0    
 ```
 Refer to [CLI docs](cli-reference.md#cellery-update) for a complete guide on performing updates on cell instances.
 
-## Blue/Green and Canary Deployment of Cell Instances
-Blue-Green and Canary are advanced deployment patterns which can used to perform updates to running cell instances. 
-However, in contrast to the component update method described above, this update does not happen in place and a new cell instance needs to be used to re-route traffic explicitly. 
-The traffic can be either switched 100% (Blue-Green method) or partially (Canary method) to a cell instance created with a new cell image. 
+## Blue/Green and Canary Deployment of Cell/Composite Instances
+Blue-Green and Canary are advanced deployment patterns which can used to perform updates to running cell/composite instances. 
+However, in contrast to the component update method described above, this update does not happen in place and a new instance needs to be used to re-route traffic explicitly. 
+The traffic can be either switched 100% (Blue-Green method) or partially (Canary method) to a instance created with a new cell/composite image. 
 
 Let us assume that the `pet-be` is an instance of `wso2cellery/pet-be-cell:1.0.0`, and we are planning to switch traffic to a new cell instance created from the image ` wso2cellery/pet-be-cell:2.0.0`.
-Therefore, as a first step a new pet-be cell instance `pet-be-v2` should be started. Canary deployment can be achieved by having 50% traffic routed to the `pet-be` and `pet-be-v2` 
+Therefore, as a first step a new pet-be instance `pet-be-v2` should be started. Canary deployment can be achieved by having 50% traffic routed to the `pet-be` and `pet-be-v2` 
 cell instances. Then, we can  completely switch 100% traffic to `pet-be-v2` and still have the both cell instances running as per the blue-green deployment pattern. Finally, terminate `pet-be`.
 
 - Route the 50% of the traffic to the new `pet-be-v2` cell instance. 
@@ -65,7 +65,7 @@ $ cellery route-traffic pet-be -p pet-be-v2=50
 ```
 $ cellery route-traffic pet-be -p pet-be-v2=100
 ```
-- The old instance `pet-be` cell instance, and only have the `pet-be-v2` cell running. 
+- Terminate the old instance `pet-be` (once all clients have switched to the new instance), and only have the `pet-be-v2` cell running. 
 ```
 cellery terminate pet-be
 ```
@@ -73,7 +73,7 @@ cellery terminate pet-be
 An instance will be selected and will be propagated via the header `x-instance-id`. Its the cell component's responsibility to forward this header if this option is to be used.
 
 #### Note:
-The above commands will apply to all cell instances which has a dependency on `pet-be`. If required, route-traffic command can be applied to only a selected set of instances
+The above commands will apply to all cell/composite instances which has a dependency on `pet-be`. If required, route-traffic command can be applied to only a selected set of instances
 using the `-s/--source` option:
 ```
 $ cellery route-traffic -s pet-fe pet-be -p pet-be-v2=50

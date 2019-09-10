@@ -15,7 +15,7 @@
 * [logs](#cellery-logs) - display logs of one/all components of a cell instance.
 * [inspect](#cellery-inspect) - list the files included in a cell image. 
 * [extract-resources](#cellery-extract-resources) - extract packed resources in a cell image.
-* [update](#cellery-update) - perform a patch update on a particular cell instance.
+* [patch](#cellery-patch) - perform a patch update on a particular cell instance.
 * [route-traffic](#cellery-route-traffic) - route a percentage of traffic to a new cell instance.
 * [export-policy](#cellery-export-policy) - export a policy from cellery run time.
 * [apply-policy](#cellery-apply-policy) - apply a policy to a cellery instance.
@@ -326,18 +326,14 @@ Ex:
 
 [Back to Command List](#cellery-cli-commands)
 
-#### Cellery Update
+#### Cellery Patch
 
-Perform a patch update on a running cell instance, using the new cell image provided. This is done as a rolling update, hence only changes to docker images encapsulated within components will be applied.
+Perform a patch update on a running cell instance, targeting a particular component. This is done as a rolling update, hence only changes to docker images encapsulated within components will be applied.
 
 ###### Parameters:
 
-* _cell instance name: The name of a running cell instance, which should be updated._
-* _cell image name: The name of the new cell image, which will be used to perform a rolling update on the running instance's components._
-
-OR
-* _cell instance name: The name of a running cell instance, which should be updated._
-* _target component name: The name of the component of the running instance to update._
+* _cell instance name: The name of a running cell instance, which should be patched._
+* _target component name: The name of the component of the running instance to patch._
 
 ###### Flags (Mandatory):
 
@@ -349,7 +345,6 @@ OR
 
 Ex:
  ```
-   cellery update myhello cellery/sample-hello:1.0.3
    cellery update myhello controller --container-image mycellorg/hellocell:1.0.0
    cellery update myhello controller --container-image mycellorg/hellocell:1.0.0 --env foo=bar --env name=alice
  ```
