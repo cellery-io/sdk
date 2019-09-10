@@ -95,4 +95,6 @@ public class CelleryConstants {
     public static final String ANNOTATION_CELL_IMAGE_DEPENDENCIES = "mesh.cellery.io/cell-dependencies";
 
     public static final String SERVICE_TYPE_JOB = "Job";
+
+    public static final String CENTRAL_REGISTRY_HOST = "registry.hub.cellery.io";
 }
