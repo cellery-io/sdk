@@ -760,4 +760,15 @@ public class CelleryUtils {
         String[] extensions = new String[] {extension};
         return new ArrayList<>(FileUtils.listFiles(dir, extensions, true));
     }
+
+    /**
+     * Check if file exists.
+     *
+     * @param path Path to the file
+     * @return whether file exists or not
+     */
+    public static boolean fileExists(String path) {
+        File tmpDir = new File(path);
+        return tmpDir.exists();
+    }
 }
