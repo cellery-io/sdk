@@ -519,7 +519,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      * @param cellInstanceName cell instance name
      * @throws Exception if cell start fails
      */
-    private void startInstance(String org, String name, String version, String cellInstanceName) throws Exception {
+    private void startInstance(String org, String name, String version, String cellInstanceName, String dependentCells)
+            throws Exception {
         Path imageDir = Paths.get(System.getProperty("user.home"), ".cellery", "repo", org, name, version,
                 name + ".zip");
         if (!fileExists(imageDir.toString())) {
@@ -544,7 +545,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         Map<String, String> environment = new HashMap<>();
         environment.put(CELLERY_IMAGE_DIR_ENV_VAR, tempBalFileDir.toString());
         CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                environment, "ballerina", "run", tempBalFile, "run", image.toString(), "{}", "false");
+                environment, "ballerina", "run", tempBalFile, "run", image.toString(),
+                dependentCells, "false");
     }
 
     /**
@@ -564,7 +566,17 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             // Start the dependent cell instance if not already running
             if (!(dependencyTree.getRoot().equals(node)) && !isCellInstanceRunning(cellMetaInstanceName)) {
                 out.println("Starting instance " + cellMetaInstanceName);
-                startInstance(org, name, version, cellMetaInstanceName);
+                JSONObject dependentCellsMap = new JSONObject();
+                for (Map.Entry<String, CellMeta> dependentCell : cellMeta.getCellDependencies().entrySet()) {
+                    // Create a dependent cell image json object
+                    JSONObject dependentCellImage = new JSONObject();
+                    dependentCellImage.put("org", dependentCell.getValue().getOrg());
+                    dependentCellImage.put("name", dependentCell.getValue().getName());
+                    dependentCellImage.put("ver", dependentCell.getValue().getVer());
+                    dependentCellImage.put("instanceName", dependentCell.getValue().getInstanceName());
+                    dependentCellsMap.put(dependentCell.getKey(), dependentCellImage);
+                }
+                startInstance(org, name, version, cellMetaInstanceName, dependentCellsMap.toString());
                 addToStartedInstances(ctx, org, name, version, cellMetaInstanceName);
             }
         }
