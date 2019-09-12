@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
@@ -31,13 +32,13 @@ const k8sMetadata = "metadata"
 const k8sAnnotations = "annotations"
 const instanceIdHeaderName = "x-instance-id"
 
-func buildRoutesForCellTarget(targetCellInst kubectl.Cell, src string, dependency string, percentage int, isSessionAware bool) (*kubectl.VirtualService, error) {
+func buildRoutesForCellTarget(newTarget *kubectl.Cell, src string, currentTarget string, percentage int, isSessionAware bool) (*kubectl.VirtualService, error) {
 	vs, err := kubectl.GetVirtualService(getVsName(src))
 	if err != nil {
 		return nil, err
 	}
 	// modify the vs to include new route information.
-	modfiedVss, err := getModifiedVsForCellTarget(vs, dependency, targetCellInst.CellMetaData.Name, percentage,
+	modfiedVss, err := getModifiedVsForCellTarget(vs, currentTarget, newTarget.CellMetaData.Name, percentage,
 		isSessionAware)
 	if err != nil {
 		return nil, err
@@ -45,12 +46,12 @@ func buildRoutesForCellTarget(targetCellInst kubectl.Cell, src string, dependenc
 	return modfiedVss, nil
 }
 
-func getModifiedGateway(targetInstance string, dependencyInstance string) ([]byte, error) {
+func getModifiedGateway(newTarget string, currentTarget string) ([]byte, error) {
 	// check if the annotation for previous gw service name annotation exists in the gateway of the dependency instance.
 	// this means that this annotation has been set previously, when doing a full traffic shift to the dependency instance.
 	// if so, copy that and use it in the target instance's annotation. this is done because even if there are
 	// series of traffic shifts, the original hostname used in the client cell for the dependency cell is still the same.
-	depGw, err := kubectl.GetGatewayAsMapInterface(getGatewayName(dependencyInstance))
+	depGw, err := kubectl.GetGatewayAsMapInterface(getGatewayName(currentTarget))
 	if err != nil {
 		return nil, err
 	}
@@ -62,15 +63,15 @@ func getModifiedGateway(targetInstance string, dependencyInstance string) ([]byt
 	if annotations[cellOriginalGatewaySvcAnnKey] != "" {
 		originalGwAnnotation = annotations[cellOriginalGatewaySvcAnnKey]
 	} else {
-		originalGwAnnotation = getCellGatewayHost(dependencyInstance)
+		originalGwAnnotation = getCellGatewayHost(currentTarget)
 	}
 
-	targetGw, err := kubectl.GetGatewayAsMapInterface(getGatewayName(targetInstance))
+	targetGw, err := kubectl.GetGatewayAsMapInterface(getGatewayName(newTarget))
 	if err != nil {
 		return nil, err
 	}
 	if targetGw == nil {
-		return nil, fmt.Errorf("gateway of instance %s does not exist", targetInstance)
+		return nil, fmt.Errorf("gateway of instance %s does not exist", newTarget)
 	}
 	modifiedGw, err := addOriginalGwK8sServiceName(targetGw, originalGwAnnotation)
 	if err != nil {
@@ -145,19 +146,15 @@ func getAnnotations(ifs map[string]interface{}) (map[string]string, error) {
 	return annMap, nil
 }
 
-func getModifiedCellInstance(name string, existingDependency string, newDependency string, newCellImage string,
+func getModifiedCellInstance(cellInst *kubectl.Cell, currentTarget string, newTarget string, newCellImage string,
 	newVersion string, newOrg string, srcDependencyKind string) (*kubectl.Cell, error) {
-	cellInst, err := kubectl.GetCell(name)
-	if err != nil {
-		return nil, err
-	}
-	newDepStr, err := getModifiedDependencies(cellInst.CellMetaData.Annotations.Dependencies, existingDependency,
-		newDependency, newCellImage, newVersion, newOrg, srcDependencyKind)
+	newDepStr, err := getModifiedDependencies(cellInst.CellMetaData.Annotations.Dependencies, currentTarget,
+		newTarget, newCellImage, newVersion, newOrg, srcDependencyKind)
 	if err != nil {
 		return nil, err
 	}
 	cellInst.CellMetaData.Annotations.Dependencies = newDepStr
-	return &cellInst, nil
+	return cellInst, nil
 }
 
 func getModifiedVsForCellTarget(vs kubectl.VirtualService, dependencyInst string, targetInst string,
@@ -317,4 +314,31 @@ func buildTcpRoutes(dependencyInst string, targetInst string, port kubectl.TCPPo
 		routes = append(routes, newRoute)
 	}
 	return &routes
+}
+
+func checkForMatchingApis(currentTarget *kubectl.Cell, newTarget *kubectl.Cell) error {
+	currTargetApiVersion := currentTarget.CellMetaData.Annotations.ApiVersion
+	newTargetApiVersion := newTarget.CellMetaData.Annotations.ApiVersion
+
+outer:
+	for _, currTargetGwApi := range currentTarget.CellSpec.GateWayTemplate.GatewaySpec.HttpApis {
+		currTargetGwApi.Version = currTargetApiVersion
+		for _, newTargetGwApi := range newTarget.CellSpec.GateWayTemplate.GatewaySpec.HttpApis {
+			newTargetGwApi.Version = newTargetApiVersion
+			if doApisMatch(&newTargetGwApi, &currTargetGwApi) {
+				// if matches, continue the outer loop
+				continue outer
+			}
+		}
+		// no match, error
+		return errorpkg.CellGwApiVersionMismatchError{
+			currentTarget.CellMetaData.Name, newTarget.CellMetaData.Name,
+			currTargetGwApi.Context, currTargetGwApi.Version,
+		}
+	}
+	return nil
+}
+
+func doApisMatch(api1 *kubectl.GatewayHttpApi, api2 *kubectl.GatewayHttpApi) bool {
+	return (api1.Context == api2.Context) && (api1.Version == api2.Version)
 }

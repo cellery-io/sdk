@@ -35,6 +35,7 @@ const imageVersion = "version"
 const dependencyKind = "kind"
 
 type Route interface {
+	Check() error
 	Build(percentage int, isSessionAware bool, routesFile string) error
 }
 
@@ -53,8 +54,6 @@ func ExtractDependencies(depJson string) ([]map[string]string, error) {
 
 func GetRoutes(sourceInstances []string, currentTarget string, newTarget string) ([]Route, error) {
 	var routes []Route
-	//	var instancesDependingOnCells []string
-	//	var instancesDependingOnComposites []string
 	if len(sourceInstances) > 0 {
 		for _, srcInst := range sourceInstances {
 			var dependencies []map[string]string
@@ -73,7 +72,10 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 					var route Route
 					for _, dependency := range dependencies {
 						if dependency[instance] == currentTarget {
-							route = buildRouteForDependency(dependency, inst.CellMetaData.Name, currentTarget, newTarget)
+							route, err = buildRouteForDependencyOfAComposite(dependency, &compInst, currentTarget, newTarget)
+							if err != nil {
+								return nil, err
+							}
 							if route != nil {
 								routes = append(routes, route)
 								break
@@ -91,7 +93,10 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 				var route Route
 				for _, dependency := range dependencies {
 					if dependency[instance] == currentTarget {
-						route = buildRouteForDependency(dependency, inst.CellMetaData.Name, currentTarget, newTarget)
+						route, err = buildRouteForDependencyOfACell(dependency, &inst, currentTarget, newTarget)
+						if err != nil {
+							return nil, err
+						}
 						if route != nil {
 							routes = append(routes, route)
 							break
@@ -114,7 +119,10 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 			var route Route
 			for _, dependency := range dependencies {
 				if dependency[instance] == currentTarget {
-					route = buildRouteForDependency(dependency, cellInst.CellMetaData.Name, currentTarget, newTarget)
+					route, err = buildRouteForDependencyOfACell(dependency, &cellInst, currentTarget, newTarget)
+					if err != nil {
+						return nil, err
+					}
 					if route != nil {
 						routes = append(routes, route)
 						break
@@ -135,7 +143,10 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 			}
 			for _, dependency := range dependencies {
 				if dependency[instance] == currentTarget {
-					route = buildRouteForDependency(dependency, compositeInst.CompositeMetaData.Name, currentTarget, newTarget)
+					route, err = buildRouteForDependencyOfAComposite(dependency, &compositeInst, currentTarget, newTarget)
+					if err != nil {
+						return nil, err
+					}
 					if route != nil {
 						routes = append(routes, route)
 						break
@@ -147,20 +158,82 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 	return routes, nil
 }
 
-func buildRouteForDependency(dependency map[string]string, compositeSrcName string, currentTarget string, newTarget string) Route {
+func buildRouteForDependencyOfACell(dependency map[string]string, src *kubectl.Cell, currentTarget string, newTarget string) (Route, error) {
 	var route Route = nil
 	if dependency[dependencyKind] == compositeDependencyKind {
-		route = &CompositeToCompositeRoute{
-			Src:           compositeSrcName,
-			CurrentTarget: currentTarget,
-			NewTarget:     newTarget,
+		currentTargetComp, newTargetComp, err := getTargetComposites(currentTarget, newTarget)
+		if err != nil {
+			return nil, err
+		}
+		route = &CellToCompositeRoute{
+			Src:           *src,
+			CurrentTarget: *currentTargetComp,
+			NewTarget:     *newTargetComp,
 		}
 	} else if dependency[dependencyKind] == cellDependencyKind {
+		currentTargetCell, err := kubectl.GetCell(currentTarget)
+		if err != nil {
+			return nil, err
+		}
+		newTargetCell, err := kubectl.GetCell(newTarget)
+		if err != nil {
+			return nil, err
+		}
 		route = &CellToCellRoute{
-			Src:           compositeSrcName,
-			CurrentTarget: currentTarget,
-			NewTarget:     newTarget,
+			Src:           *src,
+			CurrentTarget: currentTargetCell,
+			NewTarget:     newTargetCell,
 		}
 	}
-	return route
+	return route, nil
+}
+
+func buildRouteForDependencyOfAComposite(dependency map[string]string, src *kubectl.Composite, currentTarget string, newTarget string) (Route, error) {
+	var route Route = nil
+	if dependency[dependencyKind] == compositeDependencyKind {
+		currentTargetComp, newTargetComp, err := getTargetComposites(currentTarget, newTarget)
+		if err != nil {
+			return nil, err
+		}
+		route = &CompositeToCompositeRoute{
+			Src:           *src,
+			CurrentTarget: *currentTargetComp,
+			NewTarget:     *newTargetComp,
+		}
+	} else if dependency[dependencyKind] == cellDependencyKind {
+		currentTargetCell, newTargetCell, err := getTargetCells(currentTarget, newTarget)
+		if err != nil {
+			return nil, err
+		}
+		route = &CompositeToCellRoute{
+			Src:           *src,
+			CurrentTarget: *currentTargetCell,
+			NewTarget:     *newTargetCell,
+		}
+	}
+	return route, nil
+}
+
+func getTargetComposites(currentTarget string, newTarget string) (*kubectl.Composite, *kubectl.Composite, error) {
+	currentTargetComp, err := kubectl.GetComposite(currentTarget)
+	if err != nil {
+		return nil, nil, err
+	}
+	newTargetComp, err := kubectl.GetComposite(newTarget)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &currentTargetComp, &newTargetComp, nil
+}
+
+func getTargetCells(currentTarget string, newTarget string) (*kubectl.Cell, *kubectl.Cell, error) {
+	currentTargetCell, err := kubectl.GetCell(currentTarget)
+	if err != nil {
+		return nil, nil, err
+	}
+	newTargetCell, err := kubectl.GetCell(newTarget)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &currentTargetCell, &newTargetCell, nil
 }

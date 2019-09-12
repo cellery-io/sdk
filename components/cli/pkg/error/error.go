@@ -35,3 +35,14 @@ func IsCellInstanceNotFoundError(srcInst string, cellErr error) (bool, error) {
 func buildCellInstanceNonExistErrorMatcher(name string) string {
 	return fmt.Sprintf("cell(.)+(%s)(.)+not found", name)
 }
+
+type CellGwApiVersionMismatchError struct {
+	CurrentTargetInstance   string
+	NewTargetInstance       string
+	CurrentTargetApiContext string
+	CurrentTargetApiVersion string
+}
+
+func (err CellGwApiVersionMismatchError) Error() string {
+	return fmt.Sprintf("Version mismatch between gateway APIs exposed in instances %s and %s", err.CurrentTargetInstance, err.NewTargetInstance)
+}

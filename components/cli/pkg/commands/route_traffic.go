@@ -24,6 +24,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/routing"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -53,7 +54,27 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 	}()
 	spinner.SetNewAction("Building modified rules")
 	for _, route := range routes {
-		err := route.Build(percentage, enableUserBasedSessionAwareness, artifactFile)
+		err := route.Check()
+		if err != nil {
+			// if this is a CellGwApiVersionMismatchError, need to print a warning and prompt user for action
+			if versionErr, match := err.(errorpkg.CellGwApiVersionMismatchError); match {
+				spinner.Pause()
+				canContinue, err := canContinueWithWarning(versionErr.CurrentTargetApiContext, versionErr.CurrentTargetApiVersion)
+				spinner.Resume()
+				if err != nil {
+					spinner.Stop(false)
+					return err
+				}
+				if !canContinue {
+					spinner.Stop(false)
+					return err
+				}
+			} else {
+				spinner.Stop(false)
+				return err
+			}
+		}
+		err = route.Build(percentage, enableUserBasedSessionAwareness, artifactFile)
 		if err != nil {
 			spinner.Stop(false)
 			return err
@@ -72,4 +93,13 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully routed %d%% of traffic to instance %s", percentage,
 		targetInstance))
 	return nil
+}
+
+func canContinueWithWarning(currCtxt string, currVersion string) (bool, error) {
+	util.PrintWarningMessage(fmt.Sprintf("No API with matching version found in target instance for context: %s, version: %s \n", currCtxt, currVersion))
+	canContinue, _, err := util.GetYesOrNoFromUser("Continue traffic routing", false)
+	if err != nil {
+		return false, err
+	}
+	return canContinue, nil
 }

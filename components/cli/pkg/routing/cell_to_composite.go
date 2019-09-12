@@ -27,18 +27,18 @@ import (
 )
 
 type CellToCompositeRoute struct {
-	Src           string
-	CurrentTarget string
-	NewTarget     string
+	Src           kubectl.Cell
+	CurrentTarget kubectl.Composite
+	NewTarget     kubectl.Composite
+}
+
+func (router *CellToCompositeRoute) Check() error {
+	return nil
 }
 
 func (router *CellToCompositeRoute) Build(percentage int, isSessionAware bool, routesFile string) error {
 
-	targetComposite, err := kubectl.GetComposite(router.NewTarget)
-	if err != nil {
-		return err
-	}
-	modfiedVs, err := buildRoutesForCompositeTarget(router.Src, targetComposite, router.CurrentTarget, percentage)
+	modfiedVs, err := buildRoutesForCompositeTarget(router.Src.CellMetaData.Name, &router.NewTarget, &router.CurrentTarget, percentage)
 	if err != nil {
 		return err
 	}
@@ -47,15 +47,15 @@ func (router *CellToCompositeRoute) Build(percentage int, isSessionAware bool, r
 	var modifiedTargetCompInst *kubectl.Composite
 	var modifiedSrcCellInst *kubectl.Cell
 	if percentage == 100 {
-		modifiedSrcCellInst, err = getModifiedCellInstance(router.Src, router.CurrentTarget, targetComposite.CompositeMetaData.Name,
-			targetComposite.CompositeMetaData.Annotations.Name, targetComposite.CompositeMetaData.Annotations.Version,
-			targetComposite.CompositeMetaData.Annotations.Organization, compositeDependencyKind)
+		modifiedSrcCellInst, err = getModifiedCellInstance(&router.Src, router.CurrentTarget.CompositeMetaData.Name, router.NewTarget.CompositeMetaData.Name,
+			router.NewTarget.CompositeMetaData.Annotations.Name, router.NewTarget.CompositeMetaData.Annotations.Version,
+			router.NewTarget.CompositeMetaData.Annotations.Organization, compositeDependencyKind)
 		if err != nil {
 			return err
 		}
 		// additionally, update the target composite with service names of the very first dependency.
 		// this is to re-create those from the controller side in case the relevant cell is deleted.
-		modifiedTargetCompInst, err = getModifiedCompositeTargetInstance(router.CurrentTarget, router.NewTarget)
+		modifiedTargetCompInst, err = getModifiedCompositeTargetInstance(&router.CurrentTarget, &router.NewTarget)
 		if err != nil {
 			return err
 		}

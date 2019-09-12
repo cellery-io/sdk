@@ -31,25 +31,20 @@ type origComponentData struct {
 	ContainerPorts []int  `json:"containerPorts"`
 }
 
-func buildRoutesForCompositeTarget(srcInst string, targetInst kubectl.Composite,
-	dependencyInstance string, percentage int) (*kubectl.VirtualService, error) {
-	// get current dependency composite instance
-	currentDepCompInst, err := kubectl.GetComposite(dependencyInstance)
-	if err != nil {
-		return nil, err
-	}
+func buildRoutesForCompositeTarget(src string, newTarget *kubectl.Composite, currentTarget *kubectl.Composite,
+	percentage int) (*kubectl.VirtualService, error) {
 	// check if components in previous dependency and this dependency matches
-	if !doComponentsMatch(&currentDepCompInst.CompositeSpec.ComponentTemplates,
-		&targetInst.CompositeSpec.ComponentTemplates) {
+	if !doComponentsMatch(&currentTarget.CompositeSpec.ComponentTemplates,
+		&newTarget.CompositeSpec.ComponentTemplates) {
 		return nil, fmt.Errorf("all components do not match in current and target composite instances")
 	}
-	vs, err := kubectl.GetVirtualService(getVsName(srcInst))
+	vs, err := kubectl.GetVirtualService(getVsName(src))
 	if err != nil {
 		return nil, err
 	}
 	// modify the vs to include new route information.
-	modifiedVs, err := getModifiedVsForCompositeTarget(&vs, dependencyInstance, targetInst.CompositeMetaData.Name, percentage,
-		&targetInst.CompositeSpec.ComponentTemplates)
+	modifiedVs, err := getModifiedVsForCompositeTarget(&vs, currentTarget.CompositeMetaData.Name,
+		newTarget.CompositeMetaData.Name, percentage, &newTarget.CompositeSpec.ComponentTemplates)
 	if err != nil {
 		return nil, err
 	}
@@ -96,50 +91,42 @@ func doComponentsMatch(currentDepComponents *[]kubectl.ComponentTemplate, newDep
 	return false
 }
 
-func getModifiedCompositeSrcInstance(name string, existingDependencyInstance string, targetInstance string, newCellImage string,
+func getModifiedCompositeSrcInstance(src *kubectl.Composite, currentTarget string, newTarget string, newCellImage string,
 	newVersion string, newOrg string, srcDependencyKind string) (*kubectl.Composite, error) {
-	compositeInst, err := kubectl.GetComposite(name)
+	newDepStr, err := getModifiedDependencies(src.CompositeMetaData.Annotations.Dependencies, currentTarget,
+		newTarget, newCellImage, newVersion, newOrg, srcDependencyKind)
 	if err != nil {
 		return nil, err
 	}
-	newDepStr, err := getModifiedDependencies(compositeInst.CompositeMetaData.Annotations.Dependencies, existingDependencyInstance,
-		targetInstance, newCellImage, newVersion, newOrg, srcDependencyKind)
-	if err != nil {
-		return nil, err
-	}
-	compositeInst.CompositeMetaData.Annotations.Dependencies = newDepStr
-	return &compositeInst, nil
+	src.CompositeMetaData.Annotations.Dependencies = newDepStr
+	return src, nil
 }
 
-func getModifiedCompositeTargetInstance(existingDependencyInstance string, targetInstance string) (*kubectl.Composite, error) {
+func getModifiedCompositeTargetInstance(currentTarget *kubectl.Composite,
+	newTarget *kubectl.Composite) (*kubectl.Composite, error) {
 	// set the original compositeInst service names as an annotation to the updated compositeInst instance
-	dependencyComposite, err := kubectl.GetComposite(existingDependencyInstance)
-	if err != nil {
-		return nil, err
-	}
 	var originalDependencyCompositeServicesAnnotation string
-	if dependencyComposite.CompositeMetaData.Annotations.OriginalDependencyComponentServices != "" {
-		originalDependencyCompositeServicesAnnotation, err = appendToDependencyCompositeServiceAnnotaion(existingDependencyInstance,
-			dependencyComposite.CompositeMetaData.Annotations.OriginalDependencyComponentServices, &dependencyComposite)
+	var err error
+	if currentTarget.CompositeMetaData.Annotations.OriginalDependencyComponentServices != "" {
+		originalDependencyCompositeServicesAnnotation, err =
+			appendToDependencyCompositeServiceAnnotaion(currentTarget.CompositeMetaData.Name,
+				currentTarget.CompositeMetaData.Annotations.OriginalDependencyComponentServices, currentTarget)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		originalDependencyCompositeServicesAnnotation, err = buildDependencyCompositeServiceAnnotaion(existingDependencyInstance, &dependencyComposite)
+		originalDependencyCompositeServicesAnnotation, err = buildDependencyCompositeServiceAnnotaion(currentTarget)
 		if err != nil {
 			return nil, err
 		}
 	}
-	targetComposite, err := kubectl.GetComposite(targetInstance)
-	if err != nil {
-		return nil, err
-	}
 	// set to annotations of the new composite instance
-	targetComposite.CompositeMetaData.Annotations.OriginalDependencyComponentServices = originalDependencyCompositeServicesAnnotation
-	return &targetComposite, nil
+	newTarget.CompositeMetaData.Annotations.OriginalDependencyComponentServices = originalDependencyCompositeServicesAnnotation
+	return newTarget, nil
 }
 
-func appendToDependencyCompositeServiceAnnotaion(instance string, existingValue string, composite *kubectl.Composite) (string, error) {
+func appendToDependencyCompositeServiceAnnotaion(instance string, existingValue string,
+	composite *kubectl.Composite) (string, error) {
 	var origCompData []origComponentData
 	err := json.Unmarshal([]byte(existingValue), &origCompData)
 	if err != nil {
@@ -176,11 +163,11 @@ func getPortsAsIntArray(ports *[]kubectl.Port) []int {
 	return intPorts
 }
 
-func buildDependencyCompositeServiceAnnotaion(instance string, composite *kubectl.Composite) (string, error) {
+func buildDependencyCompositeServiceAnnotaion(composite *kubectl.Composite) (string, error) {
 	var origCompData []origComponentData
 	for _, componentTemplate := range composite.CompositeSpec.ComponentTemplates {
 		origCompData = append(origCompData, origComponentData{
-			ComponentName:  getCompositeName(instance, componentTemplate.Metadata.Name),
+			ComponentName:  getCompositeName(composite.CompositeMetaData.Name, componentTemplate.Metadata.Name),
 			ContainerPorts: getPortsAsIntArray(&componentTemplate.Spec.Container.Ports),
 		})
 	}

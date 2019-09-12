@@ -28,25 +28,29 @@ import (
 )
 
 type CompositeToCellRoute struct {
-	Src           string
-	CurrentTarget string
-	NewTarget     string
+	Src           kubectl.Composite
+	CurrentTarget kubectl.Cell
+	NewTarget     kubectl.Cell
+}
+
+func (router *CompositeToCellRoute) Check() error {
+	// if the target instance has only TCP components exposed, will not work.
+	// TODO: remove this once TCP is supported
+	if len(router.NewTarget.CellSpec.GateWayTemplate.GatewaySpec.HttpApis) == 0 &&
+		len(router.NewTarget.CellSpec.GateWayTemplate.GatewaySpec.TcpApis) > 0 {
+		return fmt.Errorf("traffic switching to TCP cells not supported")
+	}
+	// TODO: uncomment when api versions are supported
+	//err := checkForMatchingApis(&router.CurrentTarget, &router.NewTarget)
+	//if err != nil {
+	//	return err
+	//}
+	return nil
 }
 
 func (router *CompositeToCellRoute) Build(percentage int, isSessionAware bool, routesFile string) error {
-	// check if the target instance exists
-	targetInst, err := kubectl.GetCell(router.NewTarget)
-	if err != nil {
-		return err
-	}
-	// if the target instance has only TCP components exposed, will not work.
-	// TODO: remove this once TCP is supported
-	if len(targetInst.CellSpec.GateWayTemplate.GatewaySpec.HttpApis) == 0 &&
-		len(targetInst.CellSpec.GateWayTemplate.GatewaySpec.TcpApis) > 0 {
-		return fmt.Errorf("traffic switching to TCP cells not supported")
-	}
-
-	modfiedVss, err := buildRoutesForCellTarget(targetInst, router.Src, router.CurrentTarget, percentage, isSessionAware)
+	modfiedVss, err := buildRoutesForCellTarget(&router.NewTarget, router.Src.CompositeMetaData.Name,
+		router.CurrentTarget.CellMetaData.Name, percentage, isSessionAware)
 	if err != nil {
 		return err
 	}
@@ -56,14 +60,15 @@ func (router *CompositeToCellRoute) Build(percentage int, isSessionAware bool, r
 	var modifiedSrcCompositeInst *kubectl.Composite
 	var gw []byte
 	if percentage == 100 {
-		modifiedSrcCompositeInst, err = getModifiedCompositeSrcInstance(router.Src, router.CurrentTarget, targetInst.CellMetaData.Name,
-			targetInst.CellMetaData.Annotations.Name, targetInst.CellMetaData.Annotations.Version,
-			targetInst.CellMetaData.Annotations.Organization, cellDependencyKind)
+		modifiedSrcCompositeInst, err = getModifiedCompositeSrcInstance(&router.Src,
+			router.CurrentTarget.CellMetaData.Name, router.NewTarget.CellMetaData.Name,
+			router.NewTarget.CellMetaData.Annotations.Name, router.NewTarget.CellMetaData.Annotations.Version,
+			router.NewTarget.CellMetaData.Annotations.Organization, cellDependencyKind)
 		if err != nil {
 			return err
 		}
 		// get the modified gw
-		gw, err = getModifiedGateway(router.NewTarget, router.CurrentTarget)
+		gw, err = getModifiedGateway(router.NewTarget.CellMetaData.Name, router.CurrentTarget.CellMetaData.Name)
 		if err != nil {
 			return err
 		}

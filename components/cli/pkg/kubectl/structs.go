@@ -117,6 +117,7 @@ type GatewaySpec struct {
 }
 
 type GatewayHttpApi struct {
+	Version     string              `json:"version,omitempty"`
 	Backend     string              `json:"backend"`
 	Context     string              `json:"context"`
 	Definitions []GatewayDefinition `json:"definitions"`
@@ -150,6 +151,7 @@ type CellAnnotations struct {
 	Name                                string `json:"mesh.cellery.io/cell-image-name"`
 	Version                             string `json:"mesh.cellery.io/cell-image-version"`
 	Dependencies                        string `json:"mesh.cellery.io/cell-dependencies"`
+	ApiVersion                          string `json:"mesh.cellery.io/apiVersion"`
 	OriginalDependencyComponentServices string `json:"mesh.cellery.io/original-component-svcs,omitempty"`
 }
 
