@@ -214,7 +214,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                         bValueArray.add(runCount.getAndIncrement(), bmap);
                     });
                     // Start the dependency tree
-                    startDependencyTree();
+                    startDependencyTree(dependencyTree.getRoot());
                 } catch (Exception e) {
                     String error = "Unable to start dependencies";
                     log.error(error, e);
@@ -613,43 +613,42 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     /**
      * Start the dependency tree.
      *
-     * @throws Exception if dependency tree starting fails
+     * @param node node which will be used to initiate the starting of the dependency tree
+     * @throws Exception if dependency tree start fails
      */
-    private void startDependencyTree() throws Exception {
-        PrintStream out = System.out;
-        out.println("Starting dependency tree");
-        for (Node node : dependencyTree.getTree()) {
-            CellMeta cellMeta = (CellMeta) node.getData();
-            String org = cellMeta.getOrg();
-            String name = cellMeta.getName();
-            String version = cellMeta.getVer();
-            String cellMetaInstanceName = cellMeta.getInstanceName();
-            // Start the cell instance if not already running
-            // This will not start root instance
-            if (!(dependencyTree.getRoot().equals(node)) && !isCellInstanceRunning(cellMetaInstanceName)) {
-                String cellImageName = org + "/" + name + ":" + version;
-                if (shareDependencies && runningInstances.containsKey(cellImageName)) {
-                    // org/name:version is unique to a cell
-                    // If a shared instance is running with the same cell image name (org/name:version) change the
-                    // instance name of the current cell to that cell's instance name
-                    ((CellMeta) node.getData()).setInstanceName(((CellMeta) ((Node) runningInstances.
-                            get(cellImageName)).getData()).getInstanceName());
-                } else {
-                    out.println("Starting instance " + cellMetaInstanceName);
-                    JSONObject dependentCellsMap = new JSONObject();
-                    for (Map.Entry<String, CellMeta> dependentCell : cellMeta.getCellDependencies().entrySet()) {
-                        // Create a dependent cell image json object
-                        JSONObject dependentCellImage = new JSONObject();
-                        dependentCellImage.put("org", dependentCell.getValue().getOrg());
-                        dependentCellImage.put("name", dependentCell.getValue().getName());
-                        dependentCellImage.put("ver", dependentCell.getValue().getVer());
-                        dependentCellImage.put("instanceName", dependentCell.getValue().getInstanceName());
-                        dependentCellsMap.put(dependentCell.getKey(), dependentCellImage);
-                    }
-                    startInstance(org, name, version, cellMetaInstanceName, dependentCellsMap.toString(),
-                            shareDependencies);
-                    runningInstances.put(cellImageName, node);
+    private void startDependencyTree(Node<CellMeta> node) throws Exception {
+        CellMeta cellMeta = node.getData();
+        for (Node<CellMeta> childNode : node.getChildren()) {
+            if (isCellInstanceRunning(childNode.getData().getInstanceName())) {
+                continue;
+            }
+            startDependencyTree(childNode);
+        }
+        // Once all dependent cells are started or there are no dependent cells, start the current instance
+        String cellMetaInstanceName = cellMeta.getInstanceName();
+        String cellImageName = cellMeta.getOrg() + "/" + cellMeta.getName() + ":" + cellMeta.getVer();
+        // Start the cell instance if not already running
+        // This will not start root instance
+        if (!dependencyTree.getRoot().equals(node)) {
+            if (shareDependencies && runningInstances.containsKey(cellImageName)) {
+                // If a shared instance is running with the same cell image name (org/name:version) change the
+                // instance name of the current cell to that cell's instance name
+                node.getData().setInstanceName(((CellMeta) ((Node) runningInstances.
+                        get(cellImageName)).getData()).getInstanceName());
+            } else {
+                JSONObject dependentCellsMap = new JSONObject();
+                for (Map.Entry<String, CellMeta> dependentCell : cellMeta.getCellDependencies().entrySet()) {
+                    // Create a dependent cell image json object
+                    JSONObject dependentCellImage = new JSONObject();
+                    dependentCellImage.put("org", dependentCell.getValue().getOrg());
+                    dependentCellImage.put("name", dependentCell.getValue().getName());
+                    dependentCellImage.put("ver", dependentCell.getValue().getVer());
+                    dependentCellImage.put("instanceName", dependentCell.getValue().getInstanceName());
+                    dependentCellsMap.put(dependentCell.getKey(), dependentCellImage);
                 }
+                startInstance(cellMeta.getOrg(), cellMeta.getName(), cellMeta.getVer(), cellMetaInstanceName,
+                        dependentCellsMap.toString(), shareDependencies);
+                runningInstances.put(cellImageName, node);
             }
         }
     }
@@ -673,17 +672,14 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void assignInstanceNames(Map<?, ?> dependencyLinks) {
         // Iterate the dependency tree
-        for (Node node : dependencyTree.getTree()) {
-            CellMeta cellMeta = (CellMeta) node.getData();
-            Map<String, CellMeta> dependentCells = cellMeta.getCellDependencies();
-            if (dependentCells.size() > 0) {
-                for (Map.Entry<String, CellMeta> dependentCell : dependentCells.entrySet()) {
-                    if (dependencyLinks.containsKey(dependentCell.getKey())) {
-                        // Check if there is a dependency Alias equal to the key of dependency cell
-                        // If there exists an alias assign its instance name as the dependent cell instance name
-                        dependentCell.getValue().setInstanceName(((BString) (((BMap) (dependencyLinks.get(
-                                dependentCell.getKey()))).getMap().get(INSTANCE_NAME))).stringValue());
-                    }
+        for (Node<CellMeta> node : dependencyTree.getTree()) {
+            CellMeta cellMeta = node.getData();
+            for (Map.Entry<String, CellMeta> dependentCell : cellMeta.getCellDependencies().entrySet()) {
+                if (dependencyLinks.containsKey(dependentCell.getKey())) {
+                    // Check if there is a dependency Alias equal to the key of dependency cell
+                    // If there exists an alias assign its instance name as the dependent cell instance name
+                    dependentCell.getValue().setInstanceName(((BString) (((BMap) (dependencyLinks.get(
+                            dependentCell.getKey()))).getMap().get(INSTANCE_NAME))).stringValue());
                 }
             }
         }
