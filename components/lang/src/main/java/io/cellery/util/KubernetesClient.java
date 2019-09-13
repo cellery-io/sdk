@@ -21,6 +21,9 @@ package io.cellery.util;
 
 import io.cellery.CelleryUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Cellery Utility methods.
  */
@@ -63,8 +66,9 @@ public class KubernetesClient {
         String expectedException = "not found";
         String output;
         try {
-            output =  CelleryUtils.executeShellCommand("kubectl get cells " + instance,
-                    null, msg -> { }, msg -> { });
+            Map<String, String> environment = new HashMap<>();
+            output = CelleryUtils.executeShellCommand(null, msg -> { }, msg -> { }, environment,
+                    "kubectl", "get", "cells", instance);
         } catch (Exception ex) {
             if (!ex.getMessage().contains(expectedException)) {
                 throw ex;
