@@ -17,8 +17,6 @@
  */
 package io.cellery;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.cellery.models.CellMeta;
@@ -775,29 +773,6 @@ public class CelleryUtils {
     public static boolean fileExists(String path) {
         File tmpDir = new File(path);
         return tmpDir.exists();
-    }
-
-    /**
-     *  Generate dependency tree.
-     *
-     * @param metadataJsonPath path to the metadata.json of the cell
-     * @throws IOException if dependency tree generation fails
-     */
-    public static void generateDependencyTree(String instanceName, String metadataJsonPath, Tree dependencyTree) throws
-            IOException {
-        //read json file data to String
-        byte[] jsonData = Files.readAllBytes(Paths.get(metadataJsonPath));
-        //create ObjectMapper instance
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        //convert json string to object
-        CellMeta rootCellMeta = objectMapper.readValue(jsonData, CellMeta.class);
-        Node<CellMeta> rootNode = new Node<>(rootCellMeta);
-        rootCellMeta.setInstanceName(instanceName);
-        // Set as root node
-        dependencyTree.setRoot(rootNode);
-        // Generating dependency tree
-        buildDependencyTree(rootNode, dependencyTree);
     }
 
     /**
