@@ -22,6 +22,7 @@ public type ImageName record {|
     string name;
     string ver;
     string instanceName?;
+    boolean isRoot?;
 |};
 
 public type Label record {
@@ -326,7 +327,8 @@ public function createCellImage(CellImage image, ImageName iName) returns ( erro
 # + instances - The cell instance dependencies
 # + startDependencies - Whether to start dependencies
 # + return - error optional
-public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances, boolean startDependencies) returns (InstanceState[]|error?) = external;
+public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances,
+boolean startDependencies, boolean shareDependencies) returns (InstanceState[]|error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #

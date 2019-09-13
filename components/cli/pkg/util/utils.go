@@ -454,8 +454,8 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 }`
 	} else if action == "run" {
 		ballerinaMain = `
-public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies) returns error? {
-	cellery:InstanceState[]|error? result = run(iName, instances, startDependencies);
+public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns error? {
+	cellery:InstanceState[]|error? result = run(iName, instances, startDependencies, shareDependencies);
     if (result is error?) {
 		return result;
 	}
