@@ -34,11 +34,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)
@@ -186,10 +186,10 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 
 	var mainNode *dependencyTreeNode
 	mainNode = &dependencyTreeNode{
-		Instance:     instanceName,
-		MetaData:     cellImageMetadata,
-		IsRunning:    false,
-		IsShared:     false,
+		Instance:  instanceName,
+		MetaData:  cellImageMetadata,
+		IsRunning: false,
+		IsShared:  false,
 	}
 
 	//rootNodeDependencies := map[string]*dependencyTreeNode{}
@@ -201,7 +201,8 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 	}
 
 	spinner.SetNewAction("Starting main instance " + util.Bold(instanceName))
-	err = startCellInstance(imageDir, instanceName, mainNode, instanceEnvVars[instanceName], startDependencies, rootNodeDependencies)
+	err = startCellInstance(imageDir, instanceName, mainNode, instanceEnvVars[instanceName], startDependencies,
+		rootNodeDependencies, shareDependencies)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to start Cell instance "+instanceName, err)
 	}
@@ -212,7 +213,8 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 }
 
 func startCellInstance(imageDir string, instanceName string, runningNode *dependencyTreeNode,
-	envVars []*environmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo) error {
+	envVars []*environmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo,
+	shareDependencies bool) error {
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
 		runningNode.MetaData.Version)
 	balFileName, err := util.GetSourceFileName(filepath.Join(imageDir, constants.ZIP_BALLERINA_SOURCE))
@@ -246,6 +248,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			Name:         runningNode.MetaData.Name,
 			Version:      runningNode.MetaData.Version,
 			InstanceName: instanceName,
+			IsRoot:       true,
 		}
 		iName, err := json.Marshal(imageNameStruct)
 		if err != nil {
@@ -255,7 +258,12 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		if startDependencies {
 			startDependenciesFlag = "true"
 		}
-		cmdArgs = append(cmdArgs, tempRunFileName, "run", string(iName), string(dependencyLinksJson), startDependenciesFlag)
+		var shareDependenciesFlag = "false"
+		if shareDependencies {
+			shareDependenciesFlag = "true"
+		}
+		cmdArgs = append(cmdArgs, tempRunFileName, "run", string(iName), string(dependencyLinksJson),
+			startDependenciesFlag, shareDependenciesFlag)
 
 		// Calling the run function
 		moduleMgr := &util.BLangManager{}
@@ -456,4 +464,5 @@ type dependencyInfo struct {
 	Name         string `json:"name"`
 	Version      string `json:"ver"`
 	InstanceName string `json:"instanceName"`
+	IsRoot       bool   `json:"isRoot"`
 }
