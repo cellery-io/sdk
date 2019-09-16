@@ -249,12 +249,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	testsRoot := filepath.Join(currentDir, "target")
 	testsTarget := filepath.Join(testsRoot, instanceName)
 	isTestDirExists, _ := util.IsExists(testsPath)
-	var telepresenceYamlPath string
-	if incell {
-		telepresenceYamlPath = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-deployment.yaml")
-	} else {
-		telepresenceYamlPath = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-cell.yaml")
-	}
+	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
 
 	if isTestDirExists {
 		if exePath == "" {
@@ -387,7 +382,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		if exePath != "" {
 			ballerinaArgs := []string{exePath + "ballerina"}
 			ballerinaArgs = append(ballerinaArgs, cmdArgs...)
-			RunTelepresenceTests(incell, cmd, ballerinaArgs, debug)
+			RunTelepresenceTests(incell, cmd, ballerinaArgs, imageDir, instanceName, debug)
 		} else {
 			//Retrieve the cellery cli docker instance status.
 			cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime="+version.BuildVersion(),
@@ -560,7 +555,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		}
 
 		cmdArgs := []string{exePath + "ballerina", "test"}
-		RunTelepresenceTests(incell, cmd, cmdArgs, debug)
+		RunTelepresenceTests(incell, cmd, cmdArgs, imageDir, instanceName, debug)
 	}
 	StopTelepresence(telepresenceYamlPath)
 
@@ -574,20 +569,31 @@ func StopTelepresence(filepath string) error {
 	return nil
 }
 
-func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, debug bool) {
-	var yamlFile string
+func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir string, instanceName string, debug bool) {
+	var srcYamlFile string
+	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
 	var deploymentName string
 	var stsDeploymentName string
 	if incell {
-		yamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-deployment.yaml")
-		deploymentName = "telepresence"
+		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-deployment.yaml")
+		err := util.CopyFile(srcYamlFile, dstYamlFile)
+		if err != nil {
+			util.ExitWithErrorMessage(fmt.Sprintf("error while copying telepresene k8s artifact to %s", imageDir), err)
+		}
+		util.ReplaceInFile(dstYamlFile, "{{cell}}", instanceName, -1)
+		deploymentName = instanceName + "--telepresence"
 	} else {
-		yamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-cell.yaml")
+		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-cell.yaml")
+		err := util.CopyFile(srcYamlFile, dstYamlFile)
+		if err != nil {
+			util.ExitWithErrorMessage(fmt.Sprintf("error while copying telepresene k8s artifact to %s", imageDir), err)
+		}
 		deploymentName = "telepresence--telepresence-deployment"
 		stsDeploymentName = "telepresence--sts-deployment"
 
 	}
-	kubectl.ApplyFile(yamlFile)
+
+	kubectl.ApplyFile(dstYamlFile)
 	kubectl.WaitForDeployment("available", 900, "deployment.extensions/"+deploymentName, "default")
 
 	if !incell {
@@ -608,12 +614,12 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, debug bo
 	cmd.Stderr = os.Stderr
 	err := cmd.Start()
 	if err != nil {
-		StopTelepresence(yamlFile)
+		StopTelepresence(dstYamlFile)
 		util.ExitWithErrorMessage("error occurred while running tests", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		StopTelepresence(yamlFile)
+		StopTelepresence(dstYamlFile)
 		util.ExitWithErrorMessage("error occurred while waiting for tests to complete", err)
 	}
 }
