@@ -17,6 +17,7 @@
  */
 package io.cellery.models;
 
+import io.cellery.models.internal.Dependency;
 import lombok.Data;
 
 import java.util.ArrayList;

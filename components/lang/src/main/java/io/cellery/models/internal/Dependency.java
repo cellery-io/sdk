@@ -15,17 +15,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.cellery.models;
+package io.cellery.models.internal;
 
 import lombok.Data;
 
 /**
- * Composite spec model.
+ * Dependency Model class.
  */
 @Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-public class CompositeSpec {
-//    private @Singular
-//    List<ServiceTemplate> servicesTemplates;
+public class Dependency {
+    String org;
+    String name;
+    String version;
+    String instance;
+    String alias;
+    String kind;
+
+    public Dependency(String org, String name, String version, String alias, String kind) {
+        this.org = org;
+        this.name = name;
+        this.version = version;
+        this.alias = alias;
+        this.kind = kind;
+    }
 }

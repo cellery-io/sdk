@@ -19,25 +19,37 @@
 package io.cellery.models;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Scale policy config model class.
+ * Ingress POJO.
  */
 @Data
-public class AutoScalingPolicy {
-    private long minReplicas;
-    private long maxReplicas;
-    private long concurrency;
-    private List<AutoScalingResourceMetric> metrics;
+public class Ingress {
+    private Extension extensions;
+    private List<API> http;
+    private List<GRPC> grpc;
+    private List<TCP> tcp;
 
-    public AutoScalingPolicy() {
-        metrics = new ArrayList<>();
+    public Ingress() {
+        http = new ArrayList<>();
+        grpc = new ArrayList<>();
+        tcp = new ArrayList<>();
     }
 
-    public void addAutoScalingResourceMetric(AutoScalingResourceMetric scalingResourceMetric) {
-        metrics.add(scalingResourceMetric);
+    public void addHttpAPI(List<API> apis) {
+        http.addAll(apis.stream().filter(a -> StringUtils.isNotEmpty(a.getContext())).collect(Collectors.toList()));
+    }
+
+    public void addTCP(List<TCP> tcpIngress) {
+        tcp.addAll(tcpIngress);
+    }
+
+    public void addGRPC(List<GRPC> grpcIngress) {
+        grpc.addAll(grpcIngress);
     }
 }

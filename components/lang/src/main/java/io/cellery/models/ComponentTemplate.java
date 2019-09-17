@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,18 +18,24 @@
 
 package io.cellery.models;
 
-import io.fabric8.kubernetes.api.model.ObjectMeta;
-import lombok.AllArgsConstructor;
+import io.fabric8.kubernetes.api.model.Container;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Service Template.
+ * ComponentTemplate POJO.
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ServiceTemplate {
-    private ObjectMeta metadata;
-    private ServiceTemplateSpec spec;
+public class ComponentTemplate {
+    private List<Container> containers;
+
+    public ComponentTemplate() {
+        containers = new ArrayList<>();
+    }
+
+    public void addContainer(Container container) {
+        containers.add(container);
+    }
 }

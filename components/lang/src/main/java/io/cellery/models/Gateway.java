@@ -28,6 +28,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GatewayTemplate {
+public class Gateway {
     private GatewaySpec spec;
 }

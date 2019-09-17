@@ -20,22 +20,11 @@ package io.cellery.models;
 import lombok.Data;
 
 /**
- * Dependency Model class.
+ * TLS data.
  */
 @Data
-public class Dependency {
-    String org;
-    String name;
-    String version;
-    String instance;
-    String alias;
-    String kind;
-
-    public Dependency(String org, String name, String version, String alias, String kind) {
-        this.org = org;
-        this.name = name;
-        this.version = version;
-        this.alias = alias;
-        this.kind = kind;
-    }
+public class TLS {
+    private String secret;
+    private String key;
+    private String cert;
 }

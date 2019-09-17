@@ -29,6 +29,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AutoScaling {
-    private AutoScalingPolicy policy;
+    private ScalingPolicy policy;
     private boolean overridable;
 }

@@ -20,12 +20,11 @@ package io.cellery.models;
 import lombok.Data;
 
 /**
- * Composite spec model.
+ * Global API publisher config.
  */
 @Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-public class CompositeSpec {
-//    private @Singular
-//    List<ServiceTemplate> servicesTemplates;
+public class GlobalApiPublisher {
+    private String context;
+    private boolean authenticate;
+    private String version;
 }

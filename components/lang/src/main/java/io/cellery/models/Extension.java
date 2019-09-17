@@ -15,17 +15,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.cellery.models;
 
 import lombok.Data;
 
 /**
- * Composite spec model.
+ * Extension POJO.
  */
 @Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-public class CompositeSpec {
-//    private @Singular
-//    List<ServiceTemplate> servicesTemplates;
+public class Extension {
+    private OIDC oidc;
+    private GlobalApiPublisher globalApiPublisher;
 }

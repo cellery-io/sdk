@@ -36,4 +36,5 @@ public class API {
     private String backend;
     private boolean global;
     private boolean authenticate;
+    private Destination destination;
 }

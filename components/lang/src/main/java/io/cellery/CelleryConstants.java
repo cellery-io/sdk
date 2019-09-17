@@ -23,7 +23,7 @@ import java.io.File;
  * Collected constants of Cellery.
  */
 public class CelleryConstants {
-    public static final String CELLERY_RESOURCE_VERSION = "mesh.cellery.io/v1alpha1";
+    public static final String CELLERY_RESOURCE_VERSION = "mesh.cellery.io/v1alpha2";
     public static final String CELLERY_PACKAGE = "celleryio/cellery:0.0.0";
     public static final String RESOURCE_DEFINITION = "ResourceDefinition";
     public static final String API_DEFINITION = "ApiDefinition";

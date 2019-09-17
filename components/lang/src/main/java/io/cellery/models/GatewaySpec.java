@@ -18,48 +18,16 @@
 
 package io.cellery.models;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Singular;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Gateway Spec.
  */
 @Data
-@AllArgsConstructor
 public class GatewaySpec {
     private String type;
     private String host;
     private String tlsSecret;
     private OIDC oidc;
-    private @Singular("http")
-    List<API> http;
-    private @Singular("tcp")
-    List<TCP> tcp;
-    private @Singular("grpc")
-    List<GRPC> grpc;
-
-    public GatewaySpec() {
-        http = new ArrayList<>();
-        tcp = new ArrayList<>();
-        grpc = new ArrayList<>();
-    }
-
-    public void addHttpAPI(List<API> apis) {
-        http.addAll(apis.stream().filter(a -> StringUtils.isNotEmpty(a.getContext())).collect(Collectors.toList()));
-    }
-
-    public void addTCP(List<TCP> tcpIngress) {
-        tcp.addAll(tcpIngress);
-    }
-
-    public void addGRPC(List<GRPC> grpcIngress) {
-        grpc.addAll(grpcIngress);
-    }
-
+    private Ingress ingress;
 }

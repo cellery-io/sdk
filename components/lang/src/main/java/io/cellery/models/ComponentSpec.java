@@ -15,17 +15,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.cellery.models;
 
 import lombok.Data;
 
+import java.util.List;
 /**
- * Composite spec model.
+ * Component Spec.
  */
 @Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-public class CompositeSpec {
-//    private @Singular
-//    List<ServiceTemplate> servicesTemplates;
+public class ComponentSpec {
+    private String type;
+    private ScalingPolicy scalingPolicy;
+    private ComponentTemplate template;
+    private List<Port> ports;
 }

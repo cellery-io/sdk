@@ -21,25 +21,23 @@ import com.google.gson.Gson;
 import io.cellery.models.API;
 import io.cellery.models.APIDefinition;
 import io.cellery.models.AutoScaling;
-import io.cellery.models.AutoScalingPolicy;
 import io.cellery.models.AutoScalingResourceMetric;
 import io.cellery.models.Cell;
 import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
-import io.cellery.models.Composite;
-import io.cellery.models.CompositeSpec;
-import io.cellery.models.Dependency;
+import io.cellery.models.ComponentSpec;
+import io.cellery.models.ComponentTemplate;
+import io.cellery.models.Extension;
 import io.cellery.models.GRPC;
+import io.cellery.models.Gateway;
 import io.cellery.models.GatewaySpec;
-import io.cellery.models.GatewayTemplate;
-import io.cellery.models.Image;
+import io.cellery.models.Ingress;
 import io.cellery.models.Resource;
-import io.cellery.models.STSTemplate;
-import io.cellery.models.STSTemplateSpec;
-import io.cellery.models.ServiceTemplate;
-import io.cellery.models.ServiceTemplateSpec;
+import io.cellery.models.ScalingPolicy;
 import io.cellery.models.TCP;
-import io.cellery.models.Web;
+import io.cellery.models.internal.Dependency;
+import io.cellery.models.internal.Image;
+import io.cellery.models.internal.ImageComponent;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
@@ -74,7 +72,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -96,7 +93,6 @@ import static io.cellery.CelleryConstants.CONCURRENCY_TARGET;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.DEPENDENCIES;
-import static io.cellery.CelleryConstants.ENVOY_GATEWAY;
 import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.EXPOSE;
 import static io.cellery.CelleryConstants.GATEWAY_PORT;
@@ -108,7 +104,6 @@ import static io.cellery.CelleryConstants.KIND;
 import static io.cellery.CelleryConstants.LABELS;
 import static io.cellery.CelleryConstants.MAX_REPLICAS;
 import static io.cellery.CelleryConstants.METADATA_FILE_NAME;
-import static io.cellery.CelleryConstants.MICRO_GATEWAY;
 import static io.cellery.CelleryConstants.NAME;
 import static io.cellery.CelleryConstants.ORG;
 import static io.cellery.CelleryConstants.POD_RESOURCES;
@@ -162,7 +157,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             generateCellReference();
             generateMetadataFile(components);
             if (image.isCompositeImage()) {
-                generateComposite(image);
+//                generateComposite(image);
             } else {
                 generateCell(image);
             }
@@ -173,7 +168,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
     private void processComponents(LinkedHashMap<?, ?> components) {
         components.forEach((componentKey, componentValue) -> {
-            Component component = new Component();
+            ImageComponent component = new ImageComponent();
             LinkedHashMap attributeMap = ((BMap) componentValue).getMap();
             // Set mandatory fields.
             component.setName(((BString) attributeMap.get("name")).stringValue());
@@ -205,7 +200,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         });
     }
 
-    private void processSource(Component component, LinkedHashMap attributeMap) {
+    private void processSource(ImageComponent component, LinkedHashMap attributeMap) {
         if ("ImageSource".equals(((BValue) attributeMap.get(IMAGE_SOURCE)).getType().getName())) {
             //Image Source
             component.setSource(((BString) ((BMap) attributeMap.get(IMAGE_SOURCE)).getMap()
@@ -232,7 +227,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
      * @param ingressMap list of ingresses defined
      * @param component  current component
      */
-    private void processIngress(LinkedHashMap<?, ?> ingressMap, Component component) {
+    private void processIngress(LinkedHashMap<?, ?> ingressMap, ImageComponent component) {
         ingressMap.forEach((key, ingressValues) -> {
             BMap ingressValueMap = ((BMap) ingressValues);
             LinkedHashMap attributeMap = ingressValueMap.getMap();
@@ -258,7 +253,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         });
     }
 
-    private void processGRPCIngress(Component component, LinkedHashMap attributeMap) {
+    private void processGRPCIngress(ImageComponent component, LinkedHashMap attributeMap) {
         GRPC grpc = new GRPC();
         if (attributeMap.containsKey(GATEWAY_PORT)) {
             grpc.setPort((int) ((BInteger) attributeMap.get(GATEWAY_PORT)).intValue());
@@ -276,7 +271,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         component.addGRPC(grpc);
     }
 
-    private void processTCPIngress(Component component, LinkedHashMap attributeMap) {
+    private void processTCPIngress(ImageComponent component, LinkedHashMap attributeMap) {
         TCP tcp = new TCP();
         if (attributeMap.containsKey(GATEWAY_PORT)) {
             tcp.setPort((int) ((BInteger) attributeMap.get(GATEWAY_PORT)).intValue());
@@ -288,7 +283,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         component.addTCP(tcp);
     }
 
-    private void processHttpIngress(Component component, LinkedHashMap attributeMap) {
+    private void processHttpIngress(ImageComponent component, LinkedHashMap attributeMap) {
         API httpAPI = getApi(component, attributeMap);
         component.setProtocol(DEFAULT_GATEWAY_PROTOCOL);
         // Process optional attributes
@@ -338,46 +333,46 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
      * @param scalePolicy Scale policy to be processed
      * @param component   current component
      */
-    private void processAutoScalePolicy(BMap<?, ?> scalePolicy, Component component) {
-        AutoScalingPolicy autoScalingPolicy = new AutoScalingPolicy();
+    private void processAutoScalePolicy(BMap<?, ?> scalePolicy, ImageComponent component) {
+        ScalingPolicy scalingPolicy = new ScalingPolicy();
         LinkedHashMap bScalePolicy = scalePolicy.getMap();
         boolean bOverridable = false;
         if ("AutoScalingPolicy".equals(scalePolicy.getType().getName())) {
             // Autoscaling
             image.setAutoScaling(true);
-            autoScalingPolicy.setMinReplicas(((BInteger) (bScalePolicy.get("minReplicas"))).intValue());
-            autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
+            scalingPolicy.setMinReplicas(((BInteger) (bScalePolicy.get("minReplicas"))).intValue());
+            scalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
             bOverridable = ((BBoolean) bScalePolicy.get("overridable")).booleanValue();
             LinkedHashMap metricsMap = ((BMap) bScalePolicy.get("metrics")).getMap();
             if (metricsMap.containsKey(AUTO_SCALING_METRIC_RESOURCE_CPU)) {
-                extractMetrics(autoScalingPolicy, metricsMap, AUTO_SCALING_METRIC_RESOURCE_CPU);
+                extractMetrics(scalingPolicy, metricsMap, AUTO_SCALING_METRIC_RESOURCE_CPU);
             }
             if (metricsMap.containsKey(AUTO_SCALING_METRIC_RESOURCE_MEMORY)) {
-                extractMetrics(autoScalingPolicy, metricsMap, AUTO_SCALING_METRIC_RESOURCE_MEMORY);
+                extractMetrics(scalingPolicy, metricsMap, AUTO_SCALING_METRIC_RESOURCE_MEMORY);
             }
 
         } else {
             //Zero Scaling
             image.setZeroScaling(true);
-            autoScalingPolicy.setMinReplicas(0);
+            scalingPolicy.setMinReplicas(0);
             if (bScalePolicy.containsKey(MAX_REPLICAS)) {
-                autoScalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
+                scalingPolicy.setMaxReplicas(((BInteger) bScalePolicy.get(MAX_REPLICAS)).intValue());
             }
             if (bScalePolicy.containsKey(CONCURRENCY_TARGET)) {
-                autoScalingPolicy.setConcurrency(((BInteger) bScalePolicy.get(CONCURRENCY_TARGET)).intValue());
+                scalingPolicy.setConcurrency(((BInteger) bScalePolicy.get(CONCURRENCY_TARGET)).intValue());
             }
         }
-        component.setAutoscaling(new AutoScaling(autoScalingPolicy, bOverridable));
+        component.setAutoscaling(new AutoScaling(scalingPolicy, bOverridable));
     }
 
-    private void extractMetrics(AutoScalingPolicy autoScalingPolicy, LinkedHashMap metricsMap,
+    private void extractMetrics(ScalingPolicy scalingPolicy, LinkedHashMap metricsMap,
                                 String autoScalingMetricResourceMemory) {
         AutoScalingResourceMetric scalingResourceMetric = new AutoScalingResourceMetric();
         scalingResourceMetric.setType(AUTO_SCALING_METRIC_RESOURCE);
         Resource resource = new Resource();
         resource.setName(autoScalingMetricResourceMemory);
         scalingResourceMetric.setResource(resource);
-        autoScalingPolicy.addAutoScalingResourceMetric(scalingResourceMetric);
+        scalingPolicy.addAutoScalingResourceMetric(scalingResourceMetric);
         final BValue bValue = (BValue) ((BMap) metricsMap.get(autoScalingMetricResourceMemory)).getMap()
                 .get("threshold");
         if (BTYPE_STRING.equals(bValue.getType().getName())) {
@@ -387,76 +382,97 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         }
     }
 
-    private void generateComposite(Image image) {
-        List<Component> components =
-                new ArrayList<>(image.getComponentNameToComponentMap().values());
-        List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
-        for (Component component : components) {
-            ServiceTemplateSpec templateSpec = getServiceTemplateSpec(new GatewaySpec(), component);
-            buildTemplateSpec(serviceTemplateList, component, templateSpec);
-        }
+//    private void generateComposite(Image image) {
+//        List<ImageComponent> components =
+//                new ArrayList<>(image.getComponentNameToComponentMap().values());
+//        List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
+//        for (ImageComponent component : components) {
+//            ServiceTemplateSpec templateSpec = getServiceTemplateSpec(new GatewaySpec(), component);
+//            buildTemplateSpec(serviceTemplateList, component, templateSpec);
+//        }
+//
+//        CompositeSpec compositeSpec = new CompositeSpec();
+//        compositeSpec.setServicesTemplates(serviceTemplateList);
+//        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(image.getCellName()))
+//                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, image.getOrgName())
+//                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, image.getCellName())
+//                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, image.getCellVersion())
+//                .addToAnnotations(ANNOTATION_CELL_IMAGE_DEPENDENCIES, new Gson().toJson(image.getDependencies()))
+//                .build();
+//        Composite composite = new Composite(objectMeta, compositeSpec);
+//        String targetPath =
+//                OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + image.getCellName() + YAML;
+//        try {
+//            writeToFile(toYaml(composite), targetPath);
+//        } catch (IOException e) {
+//            String errMsg = "Error occurred while writing composite yaml " + targetPath;
+//            log.error(errMsg, e);
+//            throw new BallerinaException(errMsg);
+//        }
+//    }
 
-        CompositeSpec compositeSpec = new CompositeSpec();
-        compositeSpec.setServicesTemplates(serviceTemplateList);
-        ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(image.getCellName()))
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, image.getOrgName())
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, image.getCellName())
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_VERSION, image.getCellVersion())
-                .addToAnnotations(ANNOTATION_CELL_IMAGE_DEPENDENCIES, new Gson().toJson(image.getDependencies()))
-                .build();
-        Composite composite = new Composite(objectMeta, compositeSpec);
-        String targetPath =
-                OUTPUT_DIRECTORY + File.separator + "cellery" + File.separator + image.getCellName() + YAML;
-        try {
-            writeToFile(toYaml(composite), targetPath);
-        } catch (IOException e) {
-            String errMsg = "Error occurred while writing composite yaml " + targetPath;
-            log.error(errMsg, e);
-            throw new BallerinaException(errMsg);
-        }
-    }
-
-    private void buildTemplateSpec(List<ServiceTemplate> serviceTemplateList, Component component,
-                                   ServiceTemplateSpec templateSpec) {
-        templateSpec.setReplicas(component.getReplicas());
-        templateSpec.setProtocol(component.getProtocol());
-        List<EnvVar> envVarList = getEnvVars(component);
-        templateSpec.setContainer(getContainer(component, envVarList));
-        AutoScaling autoScaling = component.getAutoscaling();
-        if (autoScaling != null) {
-            templateSpec.setAutoscaling(autoScaling);
-        }
-        ServiceTemplate serviceTemplate = new ServiceTemplate();
-        serviceTemplate.setMetadata(new ObjectMetaBuilder()
-                .withName(component.getService())
-                .withLabels(component.getLabels())
-                .build());
-        serviceTemplate.setSpec(templateSpec);
-        serviceTemplateList.add(serviceTemplate);
-    }
+//    private void buildTemplateSpec(List<ServiceTemplate> serviceTemplateList, ImageComponent component,
+//                                   ServiceTemplateSpec templateSpec) {
+//        templateSpec.setReplicas(component.getReplicas());
+//        templateSpec.setProtocol(component.getProtocol());
+//        List<EnvVar> envVarList = getEnvVars(component);
+//        templateSpec.setContainer(getContainer(component, envVarList));
+//        AutoScaling autoScaling = component.getAutoscaling();
+//        if (autoScaling != null) {
+//            templateSpec.setAutoscaling(autoScaling);
+//        }
+//        ServiceTemplate serviceTemplate = new ServiceTemplate();
+//        serviceTemplate.setMetadata(new ObjectMetaBuilder()
+//                .withName(component.getService())
+//                .withLabels(component.getLabels())
+//                .build());
+//        serviceTemplate.setSpec(templateSpec);
+//        serviceTemplateList.add(serviceTemplate);
+//    }
 
     private void generateCell(Image image) {
-        List<Component> components =
+        List<ImageComponent> components =
                 new ArrayList<>(image.getComponentNameToComponentMap().values());
-        GatewaySpec gatewaySpec = new GatewaySpec();
-        List<ServiceTemplate> serviceTemplateList = new ArrayList<>();
-        List<String> unsecuredPaths = new ArrayList<>();
-        STSTemplate stsTemplate = new STSTemplate();
-        STSTemplateSpec stsTemplateSpec = new STSTemplateSpec();
-        for (Component component : components) {
-            ServiceTemplateSpec templateSpec = getServiceTemplateSpec(gatewaySpec, component);
-            unsecuredPaths.addAll(component.getUnsecuredPaths());
-            buildTemplateSpec(serviceTemplateList, component, templateSpec);
-        }
-        stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
-        stsTemplate.setSpec(stsTemplateSpec);
-        GatewayTemplate gatewayTemplate = new GatewayTemplate();
-        gatewayTemplate.setSpec(gatewaySpec);
-
+//        List<String> unsecuredPaths = new ArrayList<>();
+//        STSTemplate stsTemplate = new STSTemplate();
+//        STSTemplateSpec stsTemplateSpec = new STSTemplateSpec();
+        Ingress ingress = new Ingress();
+        Extension extension = new Extension();
         CellSpec cellSpec = new CellSpec();
-        cellSpec.setGatewayTemplate(gatewayTemplate);
-        cellSpec.setServicesTemplates(serviceTemplateList);
-        cellSpec.setStsTemplate(stsTemplate);
+        components.forEach(imageComponent -> {
+            ingress.addHttpAPI(imageComponent.getApis());
+            ingress.addGRPC(imageComponent.getGrpcList());
+            ingress.addTCP(imageComponent.getTcpList());
+            if (imageComponent.getWebList().size() > 0) {
+                extension.setOidc(imageComponent.getWebList().get(0).getOidc());
+            }
+            Component component = new Component();
+            component.setMetadata(new ObjectMetaBuilder().withName(imageComponent.getName()).build());
+            ComponentTemplate componentTemplate = new ComponentTemplate();
+            componentTemplate.addContainer(getContainer(imageComponent, getEnvVars(imageComponent)));
+            ComponentSpec componentSpec = new ComponentSpec();
+            componentSpec.setTemplate(componentTemplate);
+            component.setSpec(componentSpec);
+            cellSpec.addComponent(component);
+        });
+
+        Gateway gateway = new Gateway();
+        GatewaySpec gatewaySpec = new GatewaySpec();
+        gatewaySpec.setIngress(ingress);
+        gateway.setSpec(gatewaySpec);
+
+        ingress.setExtensions(extension);
+        cellSpec.setGateway(gateway);
+
+//        stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
+//        stsTemplate.setSpec(stsTemplateSpec);
+//        Gateway gateway = new Gateway();
+//        gateway.setSpec(gatewaySpec);
+//
+//        CellSpec cellSpec = new CellSpec();
+//        cellSpec.setGateway(gateway);
+//        cellSpec.setServicesTemplates(serviceTemplateList);
+//        cellSpec.setStsTemplate(stsTemplate);
         ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(image.getCellName()))
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, image.getOrgName())
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, image.getCellName())
@@ -475,7 +491,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         }
     }
 
-    private Container getContainer(Component component, List<EnvVar> envVarList) {
+    private Container getContainer(ImageComponent component, List<EnvVar> envVarList) {
         ContainerBuilder containerBuilder = new ContainerBuilder()
                 .withImage(component.getSource())
                 .withEnv(envVarList)
@@ -489,7 +505,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         return containerBuilder.build();
     }
 
-    private List<EnvVar> getEnvVars(Component component) {
+    private List<EnvVar> getEnvVars(ImageComponent component) {
         List<EnvVar> envVarList = new ArrayList<>();
         component.getEnvVars().forEach((key, value) -> {
             if (StringUtils.isEmpty(value)) {
@@ -500,39 +516,39 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         return envVarList;
     }
 
-    private ServiceTemplateSpec getServiceTemplateSpec(GatewaySpec gatewaySpec, Component component) {
-        ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
-        if (component.getWebList().size() > 0) {
-            templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
-            gatewaySpec.setType(ENVOY_GATEWAY);
-            // Only Single web ingress is supported for 0.2.0
-            // Therefore we only process the 0th element
-            Web webIngress = component.getWebList().get(0);
-            gatewaySpec.addHttpAPI(Collections.singletonList(webIngress.getHttpAPI()));
-            gatewaySpec.setHost(webIngress.getVhost());
-            gatewaySpec.setOidc(webIngress.getOidc());
-        } else if (component.getApis().size() > 0) {
-            // HTTP ingress
-            templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
-            gatewaySpec.setType(MICRO_GATEWAY);
-            gatewaySpec.addHttpAPI(component.getApis());
-        } else if (component.getTcpList().size() > 0) {
-            // Only Single TCP ingress is supported for 0.2.0
-            // Therefore we only process the 0th element
-            gatewaySpec.setType(ENVOY_GATEWAY);
-            if (component.getTcpList().get(0).getPort() != 0) {
-                gatewaySpec.addTCP(component.getTcpList());
-            }
-            templateSpec.setServicePort(component.getTcpList().get(0).getBackendPort());
-        } else if (component.getGrpcList().size() > 0) {
-            gatewaySpec.setType(ENVOY_GATEWAY);
-            templateSpec.setServicePort(component.getGrpcList().get(0).getBackendPort());
-            if (component.getGrpcList().get(0).getPort() != 0) {
-                gatewaySpec.addGRPC(component.getGrpcList());
-            }
-        }
-        return templateSpec;
-    }
+//    private ServiceTemplateSpec getServiceTemplateSpec(GatewaySpec gatewaySpec, ImageComponent component) {
+//        ServiceTemplateSpec templateSpec = new ServiceTemplateSpec();
+//        if (component.getWebList().size() > 0) {
+//            templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
+//            gatewaySpec.setType(ENVOY_GATEWAY);
+//            // Only Single web ingress is supported for 0.2.0
+//            // Therefore we only process the 0th element
+//            Web webIngress = component.getWebList().get(0);
+//            gatewaySpec.addHttpAPI(Collections.singletonList(webIngress.getHttpAPI()));
+//            gatewaySpec.setHost(webIngress.getVhost());
+//            gatewaySpec.setOidc(webIngress.getOidc());
+//        } else if (component.getApis().size() > 0) {
+//            // HTTP ingress
+//            templateSpec.setServicePort(DEFAULT_GATEWAY_PORT);
+//            gatewaySpec.setType(MICRO_GATEWAY);
+//            gatewaySpec.addHttpAPI(component.getApis());
+//        } else if (component.getTcpList().size() > 0) {
+//            // Only Single TCP ingress is supported for 0.2.0
+//            // Therefore we only process the 0th element
+//            gatewaySpec.setType(ENVOY_GATEWAY);
+//            if (component.getTcpList().get(0).getPort() != 0) {
+//                gatewaySpec.addTCP(component.getTcpList());
+//            }
+//            templateSpec.setServicePort(component.getTcpList().get(0).getBackendPort());
+//        } else if (component.getGrpcList().size() > 0) {
+//            gatewaySpec.setType(ENVOY_GATEWAY);
+//            templateSpec.setServicePort(component.getGrpcList().get(0).getBackendPort());
+//            if (component.getGrpcList().get(0).getPort() != 0) {
+//                gatewaySpec.addGRPC(component.getGrpcList());
+//            }
+//        }
+//        return templateSpec;
+//    }
 
     /**
      * Generate a Cell Reference that can be used by other cells.

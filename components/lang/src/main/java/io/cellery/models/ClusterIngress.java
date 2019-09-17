@@ -20,12 +20,10 @@ package io.cellery.models;
 import lombok.Data;
 
 /**
- * Composite spec model.
+ * Cluster Ingress model.
  */
 @Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-public class CompositeSpec {
-//    private @Singular
-//    List<ServiceTemplate> servicesTemplates;
+public class ClusterIngress {
+    private String host;
+    private TLS tls;
 }

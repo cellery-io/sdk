@@ -19,7 +19,7 @@ package io.cellery.impl;
 
 import io.cellery.CelleryConstants;
 import io.cellery.CelleryUtils;
-import io.cellery.models.Image;
+import io.cellery.models.internal.Image;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.connector.api.BLangConnectorSPIUtil;

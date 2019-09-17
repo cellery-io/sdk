@@ -15,17 +15,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.cellery.models;
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Composite spec model.
+ * Scale policy config model class.
  */
 @Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-public class CompositeSpec {
-//    private @Singular
-//    List<ServiceTemplate> servicesTemplates;
+public class ScalingPolicy {
+    private long replicas;
+    private long minReplicas;
+    private long maxReplicas;
+    private long concurrency;
+    private List<AutoScalingResourceMetric> metrics;
+
+    public ScalingPolicy() {
+        metrics = new ArrayList<>();
+    }
+
+    public void addAutoScalingResourceMetric(AutoScalingResourceMetric scalingResourceMetric) {
+        metrics.add(scalingResourceMetric);
+    }
 }

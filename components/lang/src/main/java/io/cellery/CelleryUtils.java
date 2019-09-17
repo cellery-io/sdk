@@ -19,11 +19,11 @@ package io.cellery;
 
 import io.cellery.models.API;
 import io.cellery.models.Cell;
-import io.cellery.models.Component;
 import io.cellery.models.Composite;
 import io.cellery.models.OIDC;
 import io.cellery.models.Test;
 import io.cellery.models.Web;
+import io.cellery.models.internal.ImageComponent;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.HTTPHeader;
 import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
@@ -111,7 +111,7 @@ public class CelleryUtils {
      * @param component    Component
      * @param attributeMap WebIngress properties
      */
-    public static void processWebIngress(Component component, LinkedHashMap attributeMap) {
+    public static void processWebIngress(ImageComponent component, LinkedHashMap attributeMap) {
         Web webIngress = new Web();
         LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
         API httpAPI = getApi(component, attributeMap);
@@ -146,7 +146,7 @@ public class CelleryUtils {
      * @param attributeMap API attribute map
      * @return API object
      */
-    public static API getApi(Component component, LinkedHashMap attributeMap) {
+    public static API getApi(ImageComponent component, LinkedHashMap attributeMap) {
         API httpAPI = new API();
         int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
         // Validate the container port is same for all the ingresses.
@@ -164,7 +164,7 @@ public class CelleryUtils {
      * @param probes    Scale policy to be processed
      * @param component current component
      */
-    public static void processProbes(LinkedHashMap<?, ?> probes, Component component) {
+    public static void processProbes(LinkedHashMap<?, ?> probes, ImageComponent component) {
         if (probes.containsKey(LIVENESS)) {
             LinkedHashMap livenessConf = ((BMap) probes.get(LIVENESS)).getMap();
             component.setLivenessProbe(getProbe(livenessConf));
@@ -181,7 +181,7 @@ public class CelleryUtils {
      * @param resources Resource to be processed
      * @param component current component
      */
-    public static void processResources(LinkedHashMap<?, ?> resources, Component component) {
+    public static void processResources(LinkedHashMap<?, ?> resources, ImageComponent component) {
         ResourceRequirements resourceRequirements = new ResourceRequirements();
         if (resources.containsKey(LIMITS)) {
             LinkedHashMap limitsConf = ((BMap) resources.get(LIMITS)).getMap();
@@ -277,7 +277,7 @@ public class CelleryUtils {
      * @param envVars   Map of EnvVars
      * @param component targetComponent
      */
-    public static void processEnvVars(LinkedHashMap<?, ?> envVars, Component component) {
+    public static void processEnvVars(LinkedHashMap<?, ?> envVars, ImageComponent component) {
         envVars.forEach((k, v) -> {
             if (((BMap) v).getMap().get("value").toString().isEmpty()) {
                 //value is empty for envVar

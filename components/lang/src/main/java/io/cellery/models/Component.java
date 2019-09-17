@@ -1,76 +1,31 @@
+/*
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package io.cellery.models;
 
-import io.fabric8.kubernetes.api.model.Probe;
-import io.fabric8.kubernetes.api.model.ResourceRequirements;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * Cell component.
+ * Component POJO.
  */
 @Data
 public class Component {
-    private String name;
-    private int replicas;
-    private String gatewayType;
-    private String type;
-    private Map<String, String> envVars;
-    private Map<String, String> labels;
-    private List<API> apis;
-    private List<TCP> tcpList;
-    private List<GRPC> grpcList;
-    private List<Web> webList;
-    private String source;
-    private boolean isDockerPushRequired;
-    private String service;
-    private String protocol;
-    private int containerPort;
-    private AutoScaling autoscaling;
-    private List<String> unsecuredPaths;
-    private Probe readinessProbe;
-    private Probe livenessProbe;
-    private ResourceRequirements resources;
-
-    public Component() {
-        envVars = new HashMap<>();
-        labels = new HashMap<>();
-        apis = new ArrayList<>();
-        tcpList = new ArrayList<>();
-        grpcList = new ArrayList<>();
-        webList = new ArrayList<>();
-        unsecuredPaths = new ArrayList<>();
-        replicas = 1;
-    }
-
-    public void addApi(API api) {
-        this.apis.add(api);
-    }
-
-    public void addTCP(TCP tcp) {
-        this.tcpList.add(tcp);
-    }
-
-    public void addGRPC(GRPC grpc) {
-        this.grpcList.add(grpc);
-    }
-
-    public void addWeb(Web webIngress) {
-        this.webList.add(webIngress);
-    }
-
-    public void addEnv(String key, String value) {
-        this.envVars.put(key, value);
-    }
-
-    public void addLabel(String key, String value) {
-        this.labels.put(key, value);
-    }
-
-    public void addUnsecuredPaths(String context) {
-        this.unsecuredPaths.add(context);
-    }
+    private ObjectMeta metadata;
+    private ComponentSpec spec;
 }
