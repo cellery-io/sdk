@@ -23,6 +23,8 @@ import (
 	"log"
 	"regexp"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"github.com/spf13/cobra"
@@ -34,30 +36,73 @@ import (
 func newExportAutoscalePolicies() *cobra.Command {
 	var file string
 	cmd := &cobra.Command{
-		Use:   "autoscale <cell_instance_name>",
+		Use:   "autoscale <command>",
+		Short: "Export autocale policies for a cell/composite instance",
+	}
+	cmd.PersistentFlags().StringVarP(&file, "file", "f", "", "output file for autoscale policy")
+	cmd.AddCommand(
+		newExportCellAutoscalePolicies(),
+		newExportCompositeAutoscalePolicies(),
+	)
+	return cmd
+}
+
+func newExportCellAutoscalePolicies() *cobra.Command {
+	var file string
+	cmd := &cobra.Command{
+		Use:   "cell <cell_instance_name>",
 		Short: "Export autocale policies for a cell instance",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.MinimumNArgs(1)(cmd, args)
 			if err != nil {
 				return err
 			}
-			isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
+			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
 			if err != nil {
 				log.Fatal(err)
 			}
-			if !isCellInstValid {
+			if !valid {
 				return fmt.Errorf("expects a valid cell instance name, received %s", args[0])
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunExportAutoscalePoliciesOfCell(args[0], file)
+			err := commands.RunExportAutoscalePolicies(kubectl.InstanceKindCell, args[0], file)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to export autoscale policies from instance %s", args[0]), err)
 			}
 		},
-		Example: "  cellery export-policy autoscale mytestcell1 -f myscalepolicy.yaml",
+		Example: "  cellery export-policy autoscale cell mytestcell1 -f myscalepolicy.yaml",
 	}
-	cmd.Flags().StringVarP(&file, "file", "f", "", "output file for autoscale policy")
+	return cmd
+}
+
+func newExportCompositeAutoscalePolicies() *cobra.Command {
+	var file string
+	cmd := &cobra.Command{
+		Use:   "composite <cell_instance_name>",
+		Short: "Export autocale policies for a composite instance",
+		Args: func(cmd *cobra.Command, args []string) error {
+			err := cobra.MinimumNArgs(1)(cmd, args)
+			if err != nil {
+				return err
+			}
+			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !valid {
+				return fmt.Errorf("expects a valid composite instance name, received %s", args[0])
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			err := commands.RunExportAutoscalePolicies(kubectl.InstanceKindComposite, args[0], file)
+			if err != nil {
+				util.ExitWithErrorMessage(fmt.Sprintf("Unable to export autoscale policies from instance %s", args[0]), err)
+			}
+		},
+		Example: "  cellery export-policy autoscale composite mytestcell1 -f myscalepolicy.yaml",
+	}
 	return cmd
 }

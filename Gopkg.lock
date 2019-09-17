@@ -269,6 +269,14 @@
   version = "v0.3.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:fc2b04b0069d6b10bdef96d278fe20c345794009685ed3c8c7f1a6dc023eefec"
+  name = "github.com/mattbaird/jsonpatch"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "81af80346b1a01caae0cbc27fd3c1ba5b11e189f"
+
+[[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -601,6 +609,7 @@
     "github.com/fatih/color",
     "github.com/ghodss/yaml",
     "github.com/manifoldco/promptui",
+    "github.com/mattbaird/jsonpatch",
     "github.com/nokia/docker-registry-client/registry",
     "github.com/olekukonko/tablewriter",
     "github.com/opencontainers/go-digest",

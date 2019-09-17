@@ -24,67 +24,42 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/ghodss/yaml"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-	"github.com/cellery-io/sdk/components/cli/pkg/policies"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error {
-	aPolicy := policies.CellPolicy{
-		Rules: []policies.Rule{},
-		Type:  policies.PolicyTypeAutoscale,
-	}
-	// set autoscale policy for gw
-	gwSpinner := util.StartNewSpinner("Retrieving Gateway autoscale policy")
-	err := populateGatewayPolicy(instance, &aPolicy)
-	if err != nil {
-		if err, ok := err.(policies.PolicyNotFoundError); ok {
-			// since this is a not found error, continue and see if components included in the cell has autoscale policies.
-			gwSpinner.Stop(false)
-			// log.Printf("Gateway autoscaling policy for instance %s not found \n", instance)
-		} else {
-			gwSpinner.Stop(false)
-			return err
-		}
-	}
-	gwSpinner.Stop(true)
-	// TODO: get autoscale policy for STS
-	// set autoscale policies for all components
-	aCell, err := kubectl.GetCell(instance)
-	if err != nil {
-		return err
-	}
-	for _, csvc := range aCell.CellSpec.ComponentTemplates {
-		currentCompSpinner := util.StartNewSpinner(fmt.Sprintf("Retrieving autoscale policy for component %s", csvc.Metadata.Name))
-		err := populateComponentPolicy(instance, csvc.Metadata.Name, &aPolicy)
-		if err != nil {
-			if err, ok := err.(policies.PolicyNotFoundError); ok {
-				// since this is a not found error, continue and see if other components included in the cell has autoscale policies.
-				currentCompSpinner.Stop(false)
-				// log.Printf("Autoscaling policy for instance %s, component %s not found \n", instance, csvc.Metadata.Name)
-			} else {
-				currentCompSpinner.Stop(false)
-				return err
-			}
-		}
-		currentCompSpinner.Stop(true)
-	}
-	// check if any autoscaling policies are returned, else return
-	if len(aPolicy.Rules) == 0 {
-		return fmt.Errorf("No autoscale policies found for instance %s ", instance)
-	}
-
-	polExportSpinner := util.StartNewSpinner("Combining and exporting autoscale policies")
-	bytes, err := json.Marshal(aPolicy)
+func RunExportAutoscalePolicies(kind kubectl.InstanceKind, instance string, outputfile string) error {
+	polExportSpinner := util.StartNewSpinner("Exporting autoscale policies")
+	ik := string(kind)
+	data, err := kubectl.GetInstanceBytes(ik, instance)
 	if err != nil {
 		polExportSpinner.Stop(false)
 		return err
 	}
-	yamlBytes, err := yaml.JSONToYAML(bytes)
+	originalResource := &kubectl.CompositeResource{}
+	err = json.Unmarshal(data, originalResource)
+	if err != nil {
+		polExportSpinner.Stop(false)
+		return err
+	}
+	sp := &kubectl.AutoScalingPolicy{}
+
+	for _, v := range originalResource.Spec.Components {
+		sp.Components = append(sp.Components, kubectl.ComponentScalePolicy{
+			Name:          v.Metadata.Name,
+			ScalingPolicy: v.Spec.ScalingPolicy,
+		})
+	}
+
+	spData, err := json.Marshal(sp)
+	if err != nil {
+		polExportSpinner.Stop(false)
+		return err
+	}
+	yamlBytes, err := yaml.JSONToYAML(spData)
 	if err != nil {
 		polExportSpinner.Stop(false)
 		return err
@@ -92,7 +67,11 @@ func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error 
 	// write to a file
 	file := outputfile
 	if file == "" {
-		file = filepath.Join("./", instance+"-autoscalepolicy.yaml")
+		if kind == kubectl.InstanceKindCell {
+			file = filepath.Join("./", fmt.Sprintf("%s-%s-autoscalepolicy.yaml", "cell", instance))
+		} else {
+			file = filepath.Join("./", fmt.Sprintf("%s-%s-autoscalepolicy.yaml", "composite", instance))
+		}
 	} else {
 		err := ensureDir(file)
 		if err != nil {
@@ -107,80 +86,6 @@ func RunExportAutoscalePoliciesOfCell(instance string, outputfile string) error 
 	polExportSpinner.Stop(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully exported autoscale policies for instance %s to %s", instance, file))
 	return nil
-}
-
-func getScalePolicySpec(name string) (*kubectl.AutoscalePolicySpec, error) {
-	autoscalePolicy, err := kubectl.GetAutoscalePolicy(name)
-	if err != nil {
-		if match, matchErr := regexp.MatchString(policies.BuildAutoscalePolicyNonExistErrorMatcher(name), err.Error()); matchErr == nil {
-			if match {
-				// return a specific not found error
-				return nil, policies.PolicyNotFoundError{}
-			} else {
-				return nil, err
-			}
-		} else {
-			return nil, matchErr
-		}
-	}
-	return &autoscalePolicy.Spec, nil
-}
-
-func populateGatewayPolicy(instance string, policy *policies.CellPolicy) error {
-	gwPolSpec, err := getScalePolicySpec(policies.GetGatewayAutoscalePolicyName(instance))
-	if err != nil {
-		return err
-	}
-	gwRule := policies.Rule{
-		Overridable: gwPolSpec.Overridable,
-		Target: policies.Target{
-			Type: policies.CellGatewayTargetType,
-		},
-		Policy: policies.Policy{
-			MinReplicas: gwPolSpec.Policy.MinReplicas,
-			MaxReplicas: gwPolSpec.Policy.MaxReplicas,
-			Metrics:     getMetricsFromPolicySpec(gwPolSpec),
-		},
-	}
-	policy.Rules = append(policy.Rules, gwRule)
-	return nil
-}
-
-func populateComponentPolicy(instance string, component string, policy *policies.CellPolicy) error {
-	compPolSpec, err := getScalePolicySpec(policies.GetComponentAutoscalePolicyName(instance, component))
-	if err != nil {
-		return err
-	}
-	compRule := policies.Rule{
-		Overridable: compPolSpec.Overridable,
-		Target: policies.Target{
-			Type: policies.CellComponentTargetType,
-			Name: component,
-		},
-		Policy: policies.Policy{
-			MinReplicas: compPolSpec.Policy.MinReplicas,
-			MaxReplicas: compPolSpec.Policy.MaxReplicas,
-			Metrics:     getMetricsFromPolicySpec(compPolSpec),
-		},
-	}
-	policy.Rules = append(policy.Rules, compRule)
-	return nil
-}
-
-func getMetricsFromPolicySpec(policySpec *kubectl.AutoscalePolicySpec) []policies.Metric {
-	var specMetrics []policies.Metric
-	for _, metric := range policySpec.Policy.Metrics {
-		specMetric := policies.Metric{
-			Type: metric.Type,
-			Resource: policies.Resource{
-				Name:                     metric.Resource.Name,
-				TargetAverageUtilization: metric.Resource.TargetAverageUtilization,
-				TargetAverageValue:       metric.Resource.TargetAverageValue,
-			},
-		}
-		specMetrics = append(specMetrics, specMetric)
-	}
-	return specMetrics
 }
 
 func ensureDir(path string) error {

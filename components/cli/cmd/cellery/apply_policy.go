@@ -23,7 +23,7 @@ import "github.com/spf13/cobra"
 func newApplyPolicyCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "apply-policy <command>",
-		Short: "apply policies for a cell instance",
+		Short: "apply policies for a cell/composite instance",
 	}
 
 	cmd.AddCommand(

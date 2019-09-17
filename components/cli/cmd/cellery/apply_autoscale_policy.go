@@ -23,6 +23,8 @@ import (
 	"log"
 	"regexp"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 
 	"github.com/spf13/cobra"
@@ -32,43 +34,71 @@ import (
 )
 
 func newApplyAutoscalePolicyCommand() *cobra.Command {
-	var components string
-	var isGw bool
 	cmd := &cobra.Command{
-		Use:   "autoscale <file> <instance>",
+		Use:   "autoscale <command>",
+		Short: "apply autoscale policies for a cell/composite instance",
+	}
+	cmd.AddCommand(
+		newApplyCellAutoscalePolicyCommand(),
+		newApplyCompositeAutoscalePolicyCommand(),
+	)
+	return cmd
+}
+
+func newApplyCellAutoscalePolicyCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cell <instance> <file>",
 		Short: "apply autoscale policies for a cell instance",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.MinimumNArgs(2)(cmd, args)
 			if err != nil {
 				return err
 			}
-			isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[1])
+			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
 			if err != nil {
 				log.Fatal(err)
 			}
-			if !isCellInstValid {
+			if !valid {
 				return fmt.Errorf("expects a valid cell instance name, received %s", args[1])
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			var err error
-			if components == "" {
-				if isGw {
-					err = commands.RunApplyAutoscalePolicyToCellGw(args[0], args[1])
-				} else {
-					err = commands.RunApplyAutoscalePolicies(args[0], args[1])
-				}
-			} else {
-				err = commands.RunApplyAutoscalePolicyToComponents(args[0], args[1], components)
-			}
+			err := commands.RunApplyAutoscalePolicies(kubectl.InstanceKindCell, args[0], args[1])
 			if err != nil {
-				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to instance %s", args[1]), err)
+				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to cell instance %s", args[0]), err)
 			}
 		},
-		Example: "  cellery apply-policy autoscale myscalepolicy.yaml myinstance --components comp1,comp2",
+		Example: "  cellery apply-policy autoscale cell myinstance myscalepolicy.yaml",
 	}
-	cmd.Flags().StringVarP(&components, "components", "c", "", "comma separated components list")
-	cmd.Flags().BoolVarP(&isGw, "gateway", "g", false, "apply to cell gateway only")
+	return cmd
+}
+
+func newApplyCompositeAutoscalePolicyCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "composite <instance> <file>",
+		Short: "apply autoscale policies for a composite instance",
+		Args: func(cmd *cobra.Command, args []string) error {
+			err := cobra.MinimumNArgs(2)(cmd, args)
+			if err != nil {
+				return err
+			}
+			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[1])
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !valid {
+				return fmt.Errorf("expects a valid composite instance name, received %s", args[1])
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			err := commands.RunApplyAutoscalePolicies(kubectl.InstanceKindComposite, args[0], args[1])
+			if err != nil {
+				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to composite instance %s", args[0]), err)
+			}
+		},
+		Example: "  cellery apply-policy autoscale composite myinstance myscalepolicy.yaml",
+	}
 	return cmd
 }

@@ -16,18 +16,26 @@
  * under the License.
  */
 
-package main
+package kubectl
 
-import "github.com/spf13/cobra"
+import (
+	"os"
+	"os/exec"
 
-func newExportPolicyCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "export-policy <command>",
-		Short: "export policies for a cell/composite instance",
-	}
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+)
 
-	cmd.AddCommand(
-		newExportAutoscalePolicies(),
+func JsonPatch(kind, instance, jsonPatch string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"patch",
+		"--type=json",
+		kind,
+		instance,
+		"-p",
+		jsonPatch,
 	)
-	return cmd
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

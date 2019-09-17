@@ -322,3 +322,38 @@ type Resource struct {
 	TargetAverageUtilization int    `json:"targetAverageUtilization,omitempty"`
 	TargetAverageValue       string `json:"targetAverageValue,omitempty"`
 }
+
+// This type is only used for extracting scaling information from receiving JSON
+type CompositeResource struct {
+	Spec struct {
+		Components []struct {
+			Metadata struct {
+				Name string `json:"name,omitempty"`
+			} `json:"metadata,omitempty"`
+			Spec struct {
+				ScalingPolicy interface{} `json:"scalingPolicy,omitempty"`
+			} `json:"spec,omitempty"`
+		} `json:"components,omitempty"`
+	} `json:"spec,omitempty"`
+}
+
+type CellResource struct {
+	// Todo: add gateway scaling
+	CompositeResource
+}
+
+type AutoScalingPolicy struct {
+	Components []ComponentScalePolicy `json:"components,omitempty"`
+}
+
+type ComponentScalePolicy struct {
+	Name          string      `json:"name,omitempty"`
+	ScalingPolicy interface{} `json:"scalingPolicy,omitempty"`
+}
+
+type InstanceKind string
+
+const (
+	InstanceKindCell      InstanceKind = "cells.mesh.cellery.io"
+	InstanceKindComposite InstanceKind = "composites.mesh.cellery.io"
+)
