@@ -343,6 +343,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		} else {
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 			cmd.Env = append(cmd.Env, fmt.Sprintf("DEBUG_MODE=%s", verboseMode))
+			cmd.Env = append(cmd.Env, fmt.Sprintf("INCELL=%s", strconv.FormatBool(incell)))
 			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_ORG=%s", runningNode.MetaData.Organization))
 			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s", runningNode.MetaData.Name))
 			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_VERSION=%s", runningNode.MetaData.Version))
@@ -553,8 +554,12 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				return fmt.Errorf("Cell testing aborted")
 			}
 		}
-
-		cmdArgs := []string{exePath + "ballerina", "test"}
+		var cmdArgs []string
+		if incell {
+			cmdArgs = []string{exePath + "ballerina", "test", "--groups", "incell"}
+		} else {
+			cmdArgs = []string{exePath + "ballerina", "test", "--disable-groups", "incell"}
+		}
 		RunTelepresenceTests(incell, cmd, cmdArgs, imageDir, instanceName, debug)
 	}
 	StopTelepresence(telepresenceYamlPath)
