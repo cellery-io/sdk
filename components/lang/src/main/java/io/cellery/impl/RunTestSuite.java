@@ -223,8 +223,15 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
                     CelleryUtils::printWarning);
         }
-        CelleryUtils.executeShellCommand("ballerina test " + test.getSource(), workingDir, CelleryUtils::printInfo,
-                CelleryUtils::printWarning);
+
+        String cmdArgs;
+        if ("true".equalsIgnoreCase(System.getenv("INCELL"))) {
+            cmdArgs = "--groups incell ";
+        } else {
+            cmdArgs = "--disable-groups incell ";
+        }
+        CelleryUtils.executeShellCommand("ballerina test " + cmdArgs + test.getSource(), workingDir,
+                CelleryUtils::printInfo, CelleryUtils::printWarning);
     }
 
     private Cell generateTestCell(Test test, LinkedHashMap nameStruct) {
