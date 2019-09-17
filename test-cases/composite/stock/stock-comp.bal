@@ -20,4 +20,7 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(stockComposite, untaint iName);
 }
 
-
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
+    cellery:Composite stockComposite = check cellery:constructImage(untaint iName);
+    return cellery:createInstance(stockComposite, iName, instances, startDependencies, shareDependencies);
+}
