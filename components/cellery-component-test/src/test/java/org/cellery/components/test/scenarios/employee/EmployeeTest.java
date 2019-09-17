@@ -97,7 +97,7 @@ public class EmployeeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        final List<API> http = cell.getSpec().getGatewayTemplate().getSpec().getHttp();
+        final List<API> http = cell.getSpec().getGateway().getSpec().getHttp();
         Assert.assertEquals(http.get(0).getBackend(), "employee");
         Assert.assertEquals(http.get(0).getContext(), "employee");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -106,7 +106,7 @@ public class EmployeeTest {
         Assert.assertEquals(http.get(1).getContext(), "payroll");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "build")
@@ -164,7 +164,7 @@ public class EmployeeTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        final List<API> http = runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp();
+        final List<API> http = runtimeCell.getSpec().getGateway().getSpec().getHttp();
         Assert.assertEquals(http.get(0).getBackend(), "employee");
         Assert.assertEquals(http.get(0).getContext(), "employee");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -173,7 +173,7 @@ public class EmployeeTest {
         Assert.assertEquals(http.get(1).getContext(), "payroll");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "run")

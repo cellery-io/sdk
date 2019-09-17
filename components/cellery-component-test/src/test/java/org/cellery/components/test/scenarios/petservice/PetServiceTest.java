@@ -19,8 +19,8 @@
 package org.cellery.components.test.scenarios.petservice;
 
 import io.cellery.CelleryUtils;
-import io.cellery.models.AutoScalingPolicy;
 import io.cellery.models.Cell;
+import io.cellery.models.ScalingPolicy;
 import io.cellery.models.ServiceTemplateSpec;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
@@ -89,9 +89,9 @@ public class PetServiceTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "petsvc");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "build")
@@ -102,7 +102,7 @@ public class PetServiceTest {
         Assert.assertEquals(debugSpec.getContainer().getPorts().size(), 0);
         Assert.assertEquals(debugSpec.getReplicas(), 1);
         Assert.assertTrue(debugSpec.getAutoscaling().isOverridable());
-        final AutoScalingPolicy autoscalePolicy = debugSpec.getAutoscaling().getPolicy();
+        final ScalingPolicy autoscalePolicy = debugSpec.getAutoscaling().getPolicy();
         Assert.assertEquals(autoscalePolicy.getMaxReplicas(), 10);
         Assert.assertEquals(autoscalePolicy.getMinReplicas(), 1);
         Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getType(), "Resource");
@@ -121,7 +121,7 @@ public class PetServiceTest {
         Assert.assertEquals(petSpec.getReplicas(), 1);
         Assert.assertEquals(petSpec.getServicePort(), 80);
         Assert.assertFalse(petSpec.getAutoscaling().isOverridable());
-        final AutoScalingPolicy zeroScalePolicy = petSpec.getAutoscaling().getPolicy();
+        final ScalingPolicy zeroScalePolicy = petSpec.getAutoscaling().getPolicy();
         Assert.assertEquals(zeroScalePolicy.getMaxReplicas(), 10);
         Assert.assertEquals(zeroScalePolicy.getConcurrency(), 25);
         Assert.assertEquals(zeroScalePolicy.getMinReplicas(), 0);

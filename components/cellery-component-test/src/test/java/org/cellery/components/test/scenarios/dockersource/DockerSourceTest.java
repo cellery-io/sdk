@@ -93,27 +93,27 @@ public class DockerSourceTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "hello");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "/hello");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0)
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions().get(0)
                 .getPath(), "/sayHello");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0)
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions().get(0)
                         .getMethod(),
                 "GET");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
 
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getBackend(),
                 "hellox");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getContext(),
                 "/hellox");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions().get(0)
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions().get(0)
                 .getPath(), "/sayHellox");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions().get(0)
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions().get(0)
                 .getMethod(), "GET");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).isGlobal());
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(1).isGlobal());
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "build")
@@ -174,31 +174,31 @@ public class DockerSourceTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend()
                 , "hello");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getContext()
                 , "/hello");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
                 .get(0)
                 .getPath(), "/sayHello");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
                         .get(0)
                         .getMethod(),
                 "GET");
-        Assert.assertTrue(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
 
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getBackend()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getBackend()
                 , "hellox");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getContext()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getContext()
                 , "/hellox");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions()
                 .get(0)
                 .getPath(), "/sayHellox");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions()
                 .get(0)
                 .getMethod(), "GET");
-        Assert.assertTrue(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).isGlobal());
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).isGlobal());
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "run")

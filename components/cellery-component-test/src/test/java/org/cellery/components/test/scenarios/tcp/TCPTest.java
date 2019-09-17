@@ -81,7 +81,7 @@ public class TCPTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        final GatewaySpec spec = cell.getSpec().getGatewayTemplate().getSpec();
+        final GatewaySpec spec = cell.getSpec().getGateway().getSpec();
         Assert.assertEquals(spec.getType(), "Envoy");
         Assert.assertEquals(spec.getTcp().get(0).getBackendPort(), 3306);
         Assert.assertEquals(spec.getTcp().get(0).getPort(), 31406);

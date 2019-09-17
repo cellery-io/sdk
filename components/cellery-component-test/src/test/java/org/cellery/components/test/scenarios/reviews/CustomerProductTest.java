@@ -90,34 +90,34 @@ public class CustomerProductTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getGrpc().get(0).getBackendHost(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getGrpc().get(0).getBackendHost(),
                 "categories");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getGrpc().get(0).getBackendPort(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getGrpc().get(0).getBackendPort(),
                 8000);
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getGrpc().get(0).getPort(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getGrpc().get(0).getPort(),
                 8000);
 
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "customers");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "customers-1");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions().get(0).
                 getMethod(), "GET");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions().get(0).
                 getPath(), "/*");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isAuthenticate());
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(0).isAuthenticate());
 
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getBackend(),
                 "products");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getContext(),
                 "products-1");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions().get(0).
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions().get(0).
                 getMethod(), "GET");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions().get(0).
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions().get(0).
                 getPath(), "/*");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isAuthenticate());
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(0).isAuthenticate());
 
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "build")
@@ -204,34 +204,34 @@ public class CustomerProductTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getGrpc().get(0).getBackendHost(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getGrpc().get(0).getBackendHost(),
                 "categories");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getGrpc().get(0).getBackendPort(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getGrpc().get(0).getBackendPort(),
                 8000);
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getGrpc().get(0).getPort(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getGrpc().get(0).getPort(),
                 8000);
 
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "customers");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "customers-1");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
                 .get(0).getMethod(), "GET");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
                 .get(0).getPath(), "/*");
-        Assert.assertTrue(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isAuthenticate());
+        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).isAuthenticate());
 
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getBackend(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getBackend(),
                 "products");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getContext(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getContext(),
                 "products-1");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions()
                 .get(0).getMethod(), "GET");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(1).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions()
                 .get(0).getPath(), "/*");
-        Assert.assertTrue(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isAuthenticate());
+        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).isAuthenticate());
 
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "run")

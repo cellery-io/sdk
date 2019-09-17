@@ -94,7 +94,7 @@ public class ReviewsTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        GatewaySpec cellGatewaySpec = cell.getSpec().getGatewayTemplate().getSpec();
+        GatewaySpec cellGatewaySpec = cell.getSpec().getGateway().getSpec();
         Assert.assertEquals(cellGatewaySpec.getHttp().get(0).getBackend(), "reviews");
         Assert.assertEquals(cellGatewaySpec.getHttp().get(0).getContext(), "reviews-1");
         Assert.assertEquals(cellGatewaySpec.getHttp().get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -256,7 +256,7 @@ public class ReviewsTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        GatewaySpec runtimeGatewaySpec = runtimeCell.getSpec().getGatewayTemplate().getSpec();
+        GatewaySpec runtimeGatewaySpec = runtimeCell.getSpec().getGateway().getSpec();
         Assert.assertEquals(runtimeGatewaySpec.getHttp().get(0).getBackend(), "reviews");
         Assert.assertEquals(runtimeGatewaySpec.getHttp().get(0).getContext(), "reviews-1");
         Assert.assertEquals(runtimeGatewaySpec.getHttp().get(0).getDefinitions().get(0).getMethod(), "GET");

@@ -89,16 +89,16 @@ public class HRTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "hr");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "hr");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions().get(0).
                 getMethod(), "GET");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions().get(0).
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions().get(0).
                 getPath(), "/");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "build")
@@ -167,18 +167,18 @@ public class HRTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend()
                 , "hr");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getContext()
                 , "hr");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
                 .get(0).
                         getMethod(), "GET");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
                 .get(0).
                         getPath(), "/");
-        Assert.assertTrue(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "run")

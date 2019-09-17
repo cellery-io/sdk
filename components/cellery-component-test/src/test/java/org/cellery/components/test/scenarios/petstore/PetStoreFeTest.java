@@ -94,28 +94,28 @@ public class PetStoreFeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHost(), "pet-store.com");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHost(), "pet-store.com");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "portal");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "/");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getBaseUrl(), "http" +
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getOidc().getBaseUrl(), "http" +
                 "://pet-store.com/");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getClientId(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getOidc().getClientId(),
                 "petstoreapplication");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrPassword(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getOidc().getDcrPassword(),
                 "admin");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrUser(), "admin");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getOidc().getDcrUser(), "admin");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getOidc().
                 getNonSecurePaths().iterator().next(), "/app/*");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getProviderUrl(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getOidc().getProviderUrl(),
                 "https://idp.cellery-system/oauth2/token");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getRedirectUrl(), "http" +
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getOidc().getRedirectUrl(), "http" +
                 "://pet-store.com/_auth/callback");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getOidc().getSubjectClaim(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getOidc().getSubjectClaim(),
                 "given_name");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "Envoy");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "Envoy");
     }
 
     @Test(groups = "build")
@@ -192,32 +192,32 @@ public class PetStoreFeTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHost(), "pet-store.com");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHost(), "pet-store.com");
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "portal");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "/");
-        Assert.assertTrue(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getOidc().getBaseUrl(),
+        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getOidc().getBaseUrl(),
                 "http://pet-store" +
                         ".com/");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getOidc().getClientId(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getOidc().getClientId(),
                 "petstoreapplication");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrPassword()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getOidc().getDcrPassword()
                 , "admin");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getOidc().getDcrUser(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getOidc().getDcrUser(),
                 "admin");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getOidc().
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getOidc().
                 getNonSecurePaths().iterator().next(), "/app/*");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getOidc().getProviderUrl()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getOidc().getProviderUrl()
                 , "https://idp" +
                         ".cellery-system/oauth2/token");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getOidc().getRedirectUrl()
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getOidc().getRedirectUrl()
                 , "http://pet" +
                         "-store.com/_auth/callback");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getOidc().getSubjectClaim(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getOidc().getSubjectClaim(),
                 "given_name");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "Envoy");
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "Envoy");
     }
 
     @Test(groups = "run")

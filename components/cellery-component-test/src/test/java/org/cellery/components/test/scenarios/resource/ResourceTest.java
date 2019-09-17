@@ -93,7 +93,7 @@ public class ResourceTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        final API api = cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0);
+        final API api = cell.getSpec().getGateway().getSpec().getHttp().get(0);
         Assert.assertEquals(api.getBackend(), "stock");
         Assert.assertEquals(api.getContext(), "stock");
         Assert.assertEquals(api.getDefinitions().get(0).getMethod(), "GET");

@@ -89,7 +89,7 @@ public class ProbesTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        final List<API> httpAPI = cell.getSpec().getGatewayTemplate().getSpec().getHttp();
+        final List<API> httpAPI = cell.getSpec().getGateway().getSpec().getHttp();
         Assert.assertEquals(httpAPI.get(0).getBackend(), "employee");
         Assert.assertEquals(httpAPI.get(0).getContext(), "employee");
         Assert.assertEquals(httpAPI.get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -98,7 +98,7 @@ public class ProbesTest {
         Assert.assertEquals(httpAPI.get(1).getContext(), "payroll");
         Assert.assertEquals(httpAPI.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(httpAPI.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "build")
@@ -198,7 +198,7 @@ public class ProbesTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        final List<API> httpList = runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp();
+        final List<API> httpList = runtimeCell.getSpec().getGateway().getSpec().getHttp();
         Assert.assertEquals(httpList.get(0).getBackend(), "employee");
         Assert.assertEquals(httpList.get(0).getContext(), "employee");
         Assert.assertEquals(httpList.get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -207,7 +207,7 @@ public class ProbesTest {
         Assert.assertEquals(httpList.get(1).getContext(), "payroll");
         Assert.assertEquals(httpList.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(httpList.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "MicroGateway");
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "run")

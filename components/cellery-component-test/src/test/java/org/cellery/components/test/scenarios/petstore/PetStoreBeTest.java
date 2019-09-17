@@ -97,7 +97,7 @@ public class PetStoreBeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        GatewaySpec gatewaySpec = cell.getSpec().getGatewayTemplate().getSpec();
+        GatewaySpec gatewaySpec = cell.getSpec().getGateway().getSpec();
         Assert.assertEquals(gatewaySpec.getHttp().get(0).getBackend(), "controller");
         Assert.assertEquals(gatewaySpec.getHttp().get(0).getContext(), "controller");
         Assert.assertFalse(gatewaySpec.getHttp().get(0).isGlobal());
@@ -210,7 +210,7 @@ public class PetStoreBeTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        GatewaySpec gatewaySpec = runtimeCell.getSpec().getGatewayTemplate().getSpec();
+        GatewaySpec gatewaySpec = runtimeCell.getSpec().getGateway().getSpec();
         Assert.assertEquals(gatewaySpec.getHttp().get(0).getBackend(), "controller");
         Assert.assertEquals(gatewaySpec.getHttp().get(0).getContext(), "controller");
         Assert.assertFalse(gatewaySpec.getHttp().get(0).isGlobal());

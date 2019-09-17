@@ -86,14 +86,14 @@ public class StockTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "stock");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "stock");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
                 .get(0).
                         getMethod(), "GET");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getDefinitions()
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
                 .get(0).
                         getPath(), "/options");
     }

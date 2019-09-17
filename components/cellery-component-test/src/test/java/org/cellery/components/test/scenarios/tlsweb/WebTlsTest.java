@@ -94,12 +94,12 @@ public class WebTlsTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHost(), "hello.com");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHost(), "hello.com");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "web-ui");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(), "/");
-        Assert.assertTrue(cell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "Envoy");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(), "/");
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "Envoy");
     }
 
     @Test(groups = "build")
@@ -153,13 +153,13 @@ public class WebTlsTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHost(), "hello.com");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHost(), "hello.com");
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
                 "web-ui");
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
                 "/");
-        Assert.assertTrue(runtimeCell.getSpec().getGatewayTemplate().getSpec().getHttp().get(0).isGlobal());
-        Assert.assertEquals(runtimeCell.getSpec().getGatewayTemplate().getSpec().getType(), "Envoy");
+        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "Envoy");
     }
 
     @Test(groups = "run")

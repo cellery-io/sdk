@@ -85,9 +85,9 @@ public class DatabaseTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getType(), "Envoy");
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getTcp().get(0).getBackendPort(), 3306);
-        Assert.assertEquals(cell.getSpec().getGatewayTemplate().getSpec().getTcp().get(0).getPort(), 31406);
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "Envoy");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getTcp().get(0).getBackendPort(), 3306);
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getTcp().get(0).getPort(), 31406);
     }
 
     @Test(groups = "build")
