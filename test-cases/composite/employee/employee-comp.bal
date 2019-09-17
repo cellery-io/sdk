@@ -51,9 +51,7 @@ public function build(cellery:ImageName iName) returns error? {
       return cellery:createImage(employeeComposite, untaint iName);
 }
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     cellery:Composite employeeComposite = check cellery:constructImage(untaint iName);
-    return cellery:createInstance(employeeComposite, iName, instances);
+    return cellery:createInstance(employeeComposite, iName, instances, startDependencies, shareDependencies);
 }
-
-

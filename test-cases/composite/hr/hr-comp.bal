@@ -48,9 +48,9 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(hrComposite, untaint iName);// this will create an image with type = composite
 }
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     cellery:Composite hrComposite = check cellery:constructImage(untaint iName);
-    return cellery:createInstance(hrComposite, untaint iName, instances);
+    return cellery:createInstance(hrComposite, iName, instances, startDependencies, shareDependencies);
 }
 
 

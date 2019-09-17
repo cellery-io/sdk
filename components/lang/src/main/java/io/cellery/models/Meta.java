@@ -26,7 +26,7 @@ import java.util.Map;
  * Cell Meta data model Class.
  */
 @Data
-public class CellMeta {
+public class Meta {
     private String org;
     private String name;
     private String ver;
@@ -34,7 +34,7 @@ public class CellMeta {
     private Map<String, ComponentMeta> components;
     private boolean isRootNode;
 
-    public CellMeta() {
+    public Meta() {
         components = new HashMap<>();
     }
 
@@ -43,15 +43,21 @@ public class CellMeta {
      *
      * @return Map of dependent cells
      */
-    public Map<String, CellMeta> getCellDependencies() {
-        Map<String, CellMeta> dependentCells = new HashMap<>();
+    public Map<String, Meta> getCellDependencies() {
+        Map<String, Meta> dependencies = new HashMap<>();
         // Iterate the map of components
         for (Map.Entry<String, ComponentMeta> component : components.entrySet()) {
-            for (Map.Entry<String, CellMeta> dependentCell : component.getValue().getDependencies().getCells()
+            // Iterate cell dependencies
+            for (Map.Entry<String, Meta> dependentCell : component.getValue().getDependencies().getCells()
                     .entrySet()) {
-                dependentCells.put(dependentCell.getKey(), dependentCell.getValue());
+                dependencies.put(dependentCell.getKey(), dependentCell.getValue());
+            }
+            // Iterate composite dependencies
+            for (Map.Entry<String, Meta> dependentComponent : component.getValue().getDependencies().getComposites()
+                    .entrySet()) {
+                dependencies.put(dependentComponent.getKey(), dependentComponent.getValue());
             }
         }
-        return dependentCells;
+        return dependencies;
     }
 }

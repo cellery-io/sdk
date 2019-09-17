@@ -28,7 +28,8 @@ import java.util.Map;
  */
 @Data
 public class DependencyMeta {
-    private Map<String, CellMeta> cells;
+    private Map<String, Meta> cells;
+    private Map<String, Meta> composites;
     private ArrayList components;
 
     public DependencyMeta() {
