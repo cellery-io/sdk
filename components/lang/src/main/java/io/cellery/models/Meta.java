@@ -31,8 +31,10 @@ public class Meta {
     private String name;
     private String ver;
     private String instanceName;
+    private String alias;
+    private String kind;
+    private boolean isRunning;
     private Map<String, ComponentMeta> components;
-    private boolean isRootNode;
 
     public Meta() {
         components = new HashMap<>();
@@ -43,7 +45,7 @@ public class Meta {
      *
      * @return Map of dependent cells
      */
-    public Map<String, Meta> getCellDependencies() {
+    public Map<String, Meta> getDependencies() {
         Map<String, Meta> dependencies = new HashMap<>();
         // Iterate the map of components
         for (Map.Entry<String, ComponentMeta> component : components.entrySet()) {
