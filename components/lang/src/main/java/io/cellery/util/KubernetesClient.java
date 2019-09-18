@@ -57,18 +57,19 @@ public class KubernetesClient {
     }
 
     /**
-     * Get details of a cell.
+     * Get kubernetes resource.
      *
-     * @param instance cell instance name
-     * @return output of the command
+     * @param type type of resource
+     * @param name name of resource
+     * @return resource
      */
-    public static String getCells(String instance) {
+    private static String getResource(String type, String name) {
         String expectedException = "not found";
         String output;
         try {
             Map<String, String> environment = new HashMap<>();
             output = CelleryUtils.executeShellCommand(null, msg -> { }, msg -> { }, environment,
-                    "kubectl", "get", "cells", instance);
+                    "kubectl", "get", type, name, "-o", "json");
         } catch (Exception ex) {
             if (!ex.getMessage().contains(expectedException)) {
                 throw ex;
@@ -77,5 +78,25 @@ public class KubernetesClient {
             }
         }
         return output;
+    }
+
+    /**
+     * Get cells.
+     *
+     * @param instance instance name.
+     * @return cells
+     */
+    public static String getCells(String instance) {
+        return getResource("cells", instance);
+    }
+
+    /**
+     * Get composites.
+     *
+     * @param instance instance name
+     * @return composites
+     */
+    public static String getComposites(String instance) {
+        return getResource("composites", instance);
     }
 }
