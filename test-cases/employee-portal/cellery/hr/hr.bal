@@ -49,9 +49,9 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(hrCell, untaint iName);
 }
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     cellery:CellImage hrCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(hrCell, iName, instances, startDependencies);
+    return cellery:createInstance(hrCell, iName, instances, startDependencies, shareDependencies);
 }
 
 // cellery test command will facilitate all flags as cellery run
