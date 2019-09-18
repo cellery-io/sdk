@@ -85,13 +85,16 @@ import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
+import static io.cellery.CelleryConstants.KIND;
 import static io.cellery.CelleryConstants.POD_RESOURCES;
 import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.appendToFile;
 import static io.cellery.CelleryUtils.fileExists;
+import static io.cellery.CelleryUtils.getDependentInstanceName;
 import static io.cellery.CelleryUtils.getFilesByExtension;
-import static io.cellery.CelleryUtils.isCellInstanceRunning;
+import static io.cellery.CelleryUtils.getInstanceImageName;
+import static io.cellery.CelleryUtils.isInstanceRunning;
 import static io.cellery.CelleryUtils.printDebug;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
@@ -154,7 +157,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             instanceName = generateRandomInstanceName(((BString) nameStruct.get("name")).stringValue(),
                     ((BString) nameStruct.get("ver")).stringValue());
         }
-        validateMainInstance(instanceName);
         String destinationPath = System.getenv(CELLERY_IMAGE_DIR_ENV_VAR) + File.separator +
                 "artifacts" + File.separator + "cellery";
         Map userDependencyLinks = ((BMap) ctx.getNullableRefArgument(2)).getMap();
@@ -174,7 +176,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             try {
                 generateDependencyTree(destinationPath + File.separator + "metadata.json");
                 if (!startDependencies) {
-                    if (((Meta) dependencyTree.getRoot().getData()).getCellDependencies().size() > 0) {
+                    if (((Meta) dependencyTree.getRoot().getData()).getDependencies().size() > 0) {
                         validateRootDependencyLinks(userDependencyLinks);
                     }
                 }
@@ -182,13 +184,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 String error = "Unable to generate dependency tree";
                 log.error(error, e);
             }
+            validateMainInstance(instanceName, ((Meta) dependencyTree.getRoot().getData()).getKind());
             // Validate dependencies provided by user
             validateDependencyLinksAliasNames(userDependencyLinks);
-            validateDependencyLinksInstances(userDependencyLinks);
             // Assign user defined instance names to dependent cells
-            assignInstanceNames(userDependencyLinks);
-            // Assign randomly generated instance names to instances user has not defined names for
-            assignRandomInstanceNames();
+            assignInstanceNames(dependencyTree.getRoot(), userDependencyLinks);
             Meta rootMeta = (Meta) dependencyTree.getRoot().getData();
             BMap<String, BValue> rootCellInfo = new BMap<>(new BArrayType(BTypes.typeString));
             rootCellInfo.put("org", new BString(rootMeta.getOrg()));
@@ -198,7 +198,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             bmap = BLangConnectorSPIUtil.createBStruct(ctx,
                     CelleryConstants.CELLERY_PACKAGE,
                     CelleryConstants.INSTANCE_STATE_DEFINITION,
-                    rootCellInfo, isCellInstanceRunning(rootMeta.getInstanceName()));
+                    rootCellInfo, isInstanceRunning(rootMeta.getInstanceName(), rootMeta.getKind()));
             bValueArray.add(runCount.getAndIncrement(), bmap);
             dependencyInfo = generateDependencyInfo();
             if (startDependencies) {
@@ -207,10 +207,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     displayDependentCellTable();
                     dependencyInfo.forEach((alias, info) -> {
                         String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
+                        String depKind = ((BString) ((BMap) info).getMap().get(KIND)).stringValue();
                         bmap = BLangConnectorSPIUtil.createBStruct(ctx,
                                 CelleryConstants.CELLERY_PACKAGE,
                                 CelleryConstants.INSTANCE_STATE_DEFINITION,
-                                info, isCellInstanceRunning(depInstanceName), alias);
+                                info, isInstanceRunning(depInstanceName, depKind), alias);
                         bValueArray.add(runCount.getAndIncrement(), bmap);
                     });
                     // Start the dependency tree
@@ -476,7 +477,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private Map generateDependencyInfo() {
         BMap<String, BValue> dependencyInfoMap = new BMap<>(new BMapType(new BArrayType(BTypes.typeString)));
         for (Map.Entry<String, Meta> dependentCell :
-                ((Meta) dependencyTree.getRoot().getData()).getCellDependencies().entrySet()) {
+                ((Meta) dependencyTree.getRoot().getData()).getDependencies().entrySet()) {
             BMap<String, BValue> dependentCellMap = new BMap<>(new BArrayType(BTypes.typeString));
             dependentCellMap.put("org", new BString(dependentCell.getValue().getOrg()));
             dependentCellMap.put("name", new BString(dependentCell.getValue().getName()));
@@ -516,9 +517,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void buildDependencyTree(Node<Meta> node) {
         Meta cell = node.getData();
-        Map<String, Meta> dependentCells = cell.getCellDependencies();
+        Map<String, Meta> dependentCells = cell.getDependencies();
         if (dependentCells.size() > 0) {
             for (Map.Entry<String, Meta> dependentCell : dependentCells.entrySet()) {
+                dependentCell.getValue().setAlias(dependentCell.getKey());
                 Node<Meta> childNode = node.addChild(dependentCell.getValue());
                 buildDependencyTree(childNode);
             }
@@ -553,7 +555,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             Meta meta = (Meta) node.getData();
             String image = meta.getOrg() + File.separator + meta.getName() + ":" + meta.getVer();
             String availability = "To be Created";
-            if (isCellInstanceRunning(meta.getInstanceName())) {
+            if (isInstanceRunning(meta.getInstanceName(), meta.getKind())) {
                 availability = "Available in Runtime";
             }
             out.format("%-20s %-30s %-20s", meta.getInstanceName(), image, availability);
@@ -619,9 +621,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private void startDependencyTree(Node<Meta> node) throws Exception {
         Meta meta = node.getData();
         for (Node<Meta> childNode : node.getChildren()) {
-            if (isCellInstanceRunning(childNode.getData().getInstanceName())) {
-                continue;
-            }
             startDependencyTree(childNode);
         }
         // Once all dependent cells are started or there are no dependent cells, start the current instance
@@ -637,7 +636,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                         get(cellImageName)).getData()).getInstanceName());
             } else {
                 JSONObject dependentCellsMap = new JSONObject();
-                for (Map.Entry<String, Meta> dependentCell : meta.getCellDependencies().entrySet()) {
+                for (Map.Entry<String, Meta> dependentCell : meta.getDependencies().entrySet()) {
                     // Create a dependent cell image json object
                     JSONObject dependentCellImage = new JSONObject();
                     dependentCellImage.put("org", dependentCell.getValue().getOrg());
@@ -654,6 +653,49 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     }
 
     /**
+     * Assign names to dependent cells of a cell instance.
+     *
+     * @param dependencyLinks links to the dependent cells
+     */
+    private void assignInstanceNames(Node<Meta> node, Map<?, ?> dependencyLinks) {
+        // Instance names should be assigned from top to bottom
+        if (node.equals(dependencyTree.getRoot())) {
+            node.getData().setInstanceName(instanceName);
+        } else if (node.getParent().getData().isRunning()) {
+            // Even if the user has not given link to this instance, if the link of parent instance is given and it
+            // is running that means the child instance is also running. Therefore get the child instance name using
+            // the parent instance.
+            node.getData().setInstanceName(getDependentInstanceName(node.getParent().getData().getInstanceName(),
+                    node.getData().getOrg(), node.getData().getName(), node.getData().getVer(), node.getData().
+                            getKind()));
+        } else if (dependencyLinks.containsKey(node.getData().getAlias())) {
+            // Check if there is a dependency Alias equal to the key of dependency cell
+            // If there exists an alias assign its instance name as the dependent cell instance name
+            String instanceName = ((BString) (((BMap) (dependencyLinks.get(node.getData().getAlias()))).getMap().
+                    get(INSTANCE_NAME))).stringValue();
+            String kind = node.getData().getKind();
+            node.getData().setInstanceName(instanceName);
+            if (isInstanceRunning(instanceName, kind)) {
+                if (!getInstanceImageName(instanceName, node.getData().getKind()).equals(node.getData().getOrg() +
+                        File.separator + node.getData().getName() + ":" + node.getData().getVer())) {
+                    String errMsg = "Cell dependency validation failed. There already exists a cell instance with " +
+                            "the instance name " + instanceName + "and cell image name " +
+                            getInstanceImageName(instanceName, node.getData().getKind());
+                    throw new BallerinaException(errMsg);
+                }
+                node.getData().setRunning(true);
+            }
+        } else {
+            // Assign a random instance name if user has not defined an instance name
+            node.getData().setInstanceName(generateRandomInstanceName(node.getData().getName(), node.getData().
+                    getVer()));
+        }
+        for (Node<Meta> childNode : node.getChildren()) {
+            assignInstanceNames(childNode, dependencyLinks);
+        }
+    }
+
+    /**
      * Generate a random instance name.
      *
      * @param name cell name
@@ -663,59 +705,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private String generateRandomInstanceName(String name, String ver) {
         String instanceName = name + ver + randomString(4);
         return instanceName.replace(".", "");
-    }
-
-    /**
-     * Assign names to dependent cells of a cell instance.
-     *
-     * @param dependencyLinks links to the dependent cells
-     */
-    private void assignInstanceNames(Map<?, ?> dependencyLinks) {
-        // Iterate the dependency tree
-        for (Node<Meta> node : dependencyTree.getTree()) {
-            for (Map.Entry<String, Meta> dependentCell : node.getData().getCellDependencies().entrySet()) {
-                if (dependencyLinks.containsKey(dependentCell.getKey())) {
-                    // Check if there is a dependency Alias equal to the key of dependency cell
-                    // If there exists an alias assign its instance name as the dependent cell instance name
-                    dependentCell.getValue().setInstanceName(((BString) (((BMap) (dependencyLinks.get(
-                            dependentCell.getKey()))).getMap().get(INSTANCE_NAME))).stringValue());
-                }
-            }
-        }
-    }
-
-    /**
-     * Assign random instance names for dependent cells which do not have an instance name.
-     */
-    private void assignRandomInstanceNames() {
-        for (Node<Meta> node : dependencyTree.getTree()) {
-            if (!dependencyTree.getRoot().equals(node)) {
-                if ((node.getData().getInstanceName() == null) || node.getData().getInstanceName().isEmpty()) {
-                    node.getData().setInstanceName(generateRandomInstanceName(node.getData().getName(),
-                            node.getData().getVer()));
-                }
-            }
-        }
-    }
-
-    /**
-     * Validate whether dependent cells with links given are running.
-     *
-     * @param dependencyLinks links to the dependent cells
-     */
-    private void validateDependencyLinksInstances(Map<?, ?> dependencyLinks) {
-        ArrayList<String> invalidInstances = new ArrayList<>();
-        dependencyLinks.forEach((alias, info) -> {
-            String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
-            if (!isCellInstanceRunning(depInstanceName)) {
-                invalidInstances.add(depInstanceName);
-            }
-        });
-        if (invalidInstances.size() > 0) {
-            String errMsg = "Cell dependency validation failed. Instances " + String.join(", ", invalidInstances)
-                    + " not running";
-            throw new BallerinaException(errMsg);
-        }
     }
 
     /**
@@ -729,7 +718,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             boolean invalidAlias = true;
             // Iterate the dependency tree to check if the user given alias name exists
             for (Node<Meta> node : dependencyTree.getTree()) {
-                if (node.getData().getCellDependencies().size() > 0 && node.getData().getCellDependencies().containsKey
+                if (node.getData().getDependencies().size() > 0 && node.getData().getDependencies().containsKey
                         (alias.toString())) {
                     invalidAlias = false;
                 }
@@ -754,7 +743,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         ArrayList<String> missingAliases = new ArrayList<>();
         // Iterate the dependency tree
         for (Node<Meta> node : dependencyTree.getTree()) {
-            Map<String, Meta> dependentCells = node.getData().getCellDependencies();
+            Map<String, Meta> dependentCells = node.getData().getDependencies();
             for (Map.Entry<String, Meta> dependentCell : dependentCells.entrySet()) {
                 if (!dependencyLinks.containsKey(dependentCell.getKey())) {
                     missingAliases.add(dependentCell.getKey());
@@ -774,8 +763,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      *
      * @param instanceName cell instance name
      */
-    private void validateMainInstance(String instanceName) {
-        if (isCellInstanceRunning(instanceName)) {
+    private void validateMainInstance(String instanceName, String kind) {
+        if (isInstanceRunning(instanceName, kind)) {
             String errMsg = "instance to be created should not be present in the runtime, instance " + instanceName +
                     " is already available in the runtime";
             throw new BallerinaException(errMsg);

@@ -31,7 +31,7 @@ import java.util.List;
 public class Node<T> {
     private T data;
     private List<Node<T>> children;
-    private Node parent;
+    private Node<T> parent;
 
     public Node(T data) {
         this.data = data;

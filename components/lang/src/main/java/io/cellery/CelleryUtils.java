@@ -17,6 +17,11 @@
  */
 package io.cellery;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.cellery.models.Component;
@@ -659,8 +664,70 @@ public class CelleryUtils {
      * @param instance name of the instance
      * @return whether cell instance is running or note
      */
-    public static boolean isCellInstanceRunning(String instance) {
-        return !(KubernetesClient.getCells(instance).contains("not found"));
+    public static boolean isInstanceRunning(String instance, String kind) {
+        if (kind.equals("cells")) {
+            return !(KubernetesClient.getCells(instance).contains("not found"));
+        } else {
+            return !(KubernetesClient.getComposites(instance).contains("not found"));
+        }
+    }
+
+    /**
+     * Get the fully qualified image name of an instance.
+     *
+     * @param instance instance name
+     * @param kind instance kind
+     * @return image name
+     */
+    public static String getInstanceImageName(String instance, String kind) {
+        String image;
+        if (kind.equals("cells")) {
+            image = KubernetesClient.getCells(instance);
+        } else {
+            image = KubernetesClient.getComposites(instance);
+        }
+
+        JsonObject imageJson = new Gson().fromJson(image, JsonObject.class);
+        JsonObject cellAnnotations = imageJson.get("metadata").getAsJsonObject().get("annotations").
+                getAsJsonObject();
+        return cellAnnotations.get("mesh.cellery.io/cell-image-org").getAsString() + File.separator +
+                cellAnnotations.get("mesh.cellery.io/cell-image-name").getAsString() + ":" + cellAnnotations.
+                get("mesh.cellery.io/cell-image-version").getAsString();
+    }
+
+    /**
+     * Get dependent instance name using its image name.
+     *
+     * @param parentInstance parent instance name
+     * @param dependentOrg dependent instance org
+     * @param dependentName dependent instance name
+     * @param dependentVersion dependent instance version
+     * @param dependentKind dependent instance kind
+     * @return dependent instance name
+     */
+    public static String getDependentInstanceName(String parentInstance, String dependentOrg, String dependentName,
+                                                  String dependentVersion, String dependentKind) {
+        String instanceName = "";
+        String cellImage;
+        if (dependentKind.equals("cells")) {
+            cellImage = KubernetesClient.getCells(parentInstance);
+        } else {
+            cellImage = KubernetesClient.getComposites(parentInstance);
+        }
+        JsonObject imageJson = new Gson().fromJson(cellImage, JsonObject.class);
+        String cellDependenciesJson = imageJson.get("metadata").getAsJsonObject().get("annotations").
+                getAsJsonObject().get("mesh.cellery.io/cell-dependencies").getAsString();
+
+        JsonArray cellDependencies = new JsonParser().parse(cellDependenciesJson).getAsJsonArray();
+
+        for (JsonElement cellDependency : cellDependencies) {
+            if (cellDependency.getAsJsonObject().get("org").getAsString().equals(dependentOrg) &&
+                    cellDependency.getAsJsonObject().get("name").getAsString().equals(dependentName) &&
+                    cellDependency.getAsJsonObject().get("version").getAsString().equals(dependentVersion)) {
+                instanceName = cellDependency.getAsJsonObject().get("instance").getAsString();
+            }
+        }
+        return instanceName;
     }
 
     /**
