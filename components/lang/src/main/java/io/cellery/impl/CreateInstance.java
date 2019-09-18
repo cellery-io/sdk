@@ -23,12 +23,12 @@ import com.google.gson.Gson;
 import io.cellery.CelleryConstants;
 import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
-import io.cellery.models.Meta;
 import io.cellery.models.Component;
 import io.cellery.models.Composite;
 import io.cellery.models.Dependency;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.Image;
+import io.cellery.models.Meta;
 import io.cellery.models.Node;
 import io.cellery.models.OIDC;
 import io.cellery.models.ServiceTemplate;
@@ -673,8 +673,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private void assignInstanceNames(Map<?, ?> dependencyLinks) {
         // Iterate the dependency tree
         for (Node<Meta> node : dependencyTree.getTree()) {
-            Meta meta = node.getData();
-            for (Map.Entry<String, Meta> dependentCell : meta.getCellDependencies().entrySet()) {
+            for (Map.Entry<String, Meta> dependentCell : node.getData().getCellDependencies().entrySet()) {
                 if (dependencyLinks.containsKey(dependentCell.getKey())) {
                     // Check if there is a dependency Alias equal to the key of dependency cell
                     // If there exists an alias assign its instance name as the dependent cell instance name
@@ -689,11 +688,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      * Assign random instance names for dependent cells which do not have an instance name.
      */
     private void assignRandomInstanceNames() {
-        for (Node node : dependencyTree.getTree()) {
-            Meta meta = (Meta) node.getData();
+        for (Node<Meta> node : dependencyTree.getTree()) {
             if (!dependencyTree.getRoot().equals(node)) {
-                if ((meta.getInstanceName() == null) || meta.getInstanceName().isEmpty()) {
-                    meta.setInstanceName(generateRandomInstanceName(meta.getName(), meta.getVer()));
+                if ((node.getData().getInstanceName() == null) || node.getData().getInstanceName().isEmpty()) {
+                    node.getData().setInstanceName(generateRandomInstanceName(node.getData().getName(),
+                            node.getData().getVer()));
                 }
             }
         }
@@ -706,14 +705,12 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void validateDependencyLinksInstances(Map<?, ?> dependencyLinks) {
         ArrayList<String> invalidInstances = new ArrayList<>();
-        if (dependencyLinks.size() > 0) {
-            dependencyLinks.forEach((alias, info) -> {
-                String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
-                if (!isCellInstanceRunning(depInstanceName)) {
-                    invalidInstances.add(depInstanceName);
-                }
-            });
-        }
+        dependencyLinks.forEach((alias, info) -> {
+            String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
+            if (!isCellInstanceRunning(depInstanceName)) {
+                invalidInstances.add(depInstanceName);
+            }
+        });
         if (invalidInstances.size() > 0) {
             String errMsg = "Cell dependency validation failed. Instances " + String.join(", ", invalidInstances)
                     + " not running";
@@ -728,22 +725,19 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void validateDependencyLinksAliasNames(Map<?, ?> dependencyLinks) {
         ArrayList<String> invalidAliases = new ArrayList<>();
-        if (dependencyLinks.size() > 0) {
-            dependencyLinks.forEach((alias, info) -> {
-                boolean invalidAlias = true;
-                // Iterate the dependency tree to check if the user given alias name exists
-                for (Node node : dependencyTree.getTree()) {
-                    Meta meta = (Meta) node.getData();
-                    if (meta.getCellDependencies().size() > 0 && meta.getCellDependencies().containsKey
-                            (alias.toString())) {
-                        invalidAlias = false;
-                    }
+        dependencyLinks.forEach((alias, info) -> {
+            boolean invalidAlias = true;
+            // Iterate the dependency tree to check if the user given alias name exists
+            for (Node<Meta> node : dependencyTree.getTree()) {
+                if (node.getData().getCellDependencies().size() > 0 && node.getData().getCellDependencies().containsKey
+                        (alias.toString())) {
+                    invalidAlias = false;
                 }
-                if (invalidAlias) {
-                    invalidAliases.add(alias.toString());
-                }
-            });
-        }
+            }
+            if (invalidAlias) {
+                invalidAliases.add(alias.toString());
+            }
+        });
         if (invalidAliases.size() > 0) {
             String errMsg = "Cell dependency validation failed. Aliases " + String.join(", ", invalidAliases)
                     + " invalid";
@@ -759,14 +753,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private void validateRootDependencyLinks(Map<?, ?> dependencyLinks) {
         ArrayList<String> missingAliases = new ArrayList<>();
         // Iterate the dependency tree
-        for (Node node : dependencyTree.getTree()) {
-            Meta meta = (Meta) node.getData();
-            Map<String, Meta> dependentCells = meta.getCellDependencies();
-            if (dependentCells.size() > 0) {
-                for (Map.Entry<String, Meta> dependentCell : dependentCells.entrySet()) {
-                    if (!dependencyLinks.containsKey(dependentCell.getKey())) {
-                        missingAliases.add(dependentCell.getKey());
-                    }
+        for (Node<Meta> node : dependencyTree.getTree()) {
+            Map<String, Meta> dependentCells = node.getData().getCellDependencies();
+            for (Map.Entry<String, Meta> dependentCell : dependentCells.entrySet()) {
+                if (!dependencyLinks.containsKey(dependentCell.getKey())) {
+                    missingAliases.add(dependentCell.getKey());
                 }
             }
         }
