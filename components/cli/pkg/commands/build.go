@@ -89,19 +89,17 @@ func RunBuild(tag string, fileName string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to get executable path", err)
 	}
-
 	tempBuildFileName, err := util.CreateTempExecutableBalFile(fileName, "build")
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error executing ballerina file", err)
 	}
-
+	currentDir, err := os.Getwd()
 	cmd := &exec.Cmd{}
 
 	if exePath != "" {
 		cmd = exec.Command(exePath+"ballerina", "run", tempBuildFileName, "build", string(iName), "{}")
 	} else {
-		currentDir, err := os.Getwd()
 		if err != nil {
 			spinner.Stop(false)
 			util.ExitWithErrorMessage("Error in determining working directory", err)
@@ -250,13 +248,28 @@ func RunBuild(tag string, fileName string) {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred creating cell image", err)
 	}
-	isTestDirExists, _ := util.IsExists(constants.ZIP_TESTS)
-	var folders []string
-	if isTestDirExists {
-		folders = []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE, constants.ZIP_TESTS}
-	} else {
-		folders = []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE}
+	balTomlParent := filepath.Dir(filepath.Dir(filepath.Join(currentDir, fileName)))
+	balTomlfileExist, err := util.FileExists(balTomlParent)
+
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while checking if Ballerina.toml exists", err)
 	}
+	if balTomlfileExist {
+		fileCopyError = util.CopyFile(filepath.Join(balTomlParent, constants.BALLERINA_TOML),
+			filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_TOML))
+		if fileCopyError != nil {
+			util.ExitWithErrorMessage(fmt.Sprintf("error occured while copying the %s", constants.BALLERINA_TOML), fileCopyError)
+		}
+		fileCopyError = util.CopyDir(filepath.Join(balTomlParent, constants.BALLERINA_LOCAL_REPO),
+			filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_LOCAL_REPO))
+	}
+	isTestDirExists, _ := util.IsExists(constants.ZIP_TESTS)
+	folders := []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE}
+
+	if isTestDirExists {
+		folders = append(folders, constants.ZIP_TESTS)
+	}
+
 	output := parsedCellImage.ImageName + ".zip"
 	err = util.RecursiveZip(nil, folders, output)
 	if err != nil {
