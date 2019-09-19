@@ -256,7 +256,7 @@ public type TestSuite record {|
 public type InstanceState record {|
     ImageName iName;
     boolean isRunning;
-    string alias?;
+    string alias = "";
 |};
 
 # Build the cell artifacts and persist metadata
@@ -434,7 +434,7 @@ public function getReference(Component component, string dependencyAlias) return
 # + return - error optional
 public function runInstances(ImageName iName, map<ImageName> instances) returns ImageName[] = external;
 
-public function runTestSuite(ImageName iName, TestSuite testSuite) returns ( error?) = external;
+public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns ( error?) = external;
 
 # Terminate instances started for testing.
 #
@@ -449,12 +449,15 @@ public function getCellImage() returns (ImageName){
     string org = config:getAsString("IMAGE_ORG");
     string name = config:getAsString("IMAGE_NAME");
     string ver = config:getAsString("IMAGE_VERSION");
+    
     ImageName iName = {
         org: org, 
         name: name, 
-        ver: ver
+        ver: ver,
+        isRoot: true
     };
 
+    iName.instanceName = config:getAsString("INSTANCE_NAME");
     return iName;
 }
 

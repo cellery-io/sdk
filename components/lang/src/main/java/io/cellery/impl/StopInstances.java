@@ -24,12 +24,16 @@ import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BRefType;
+import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.natives.annotations.Argument;
 import org.ballerinalang.natives.annotations.BallerinaFunction;
 import org.ballerinalang.natives.annotations.ReturnType;
 
+import java.util.LinkedHashMap;
+
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
+import static io.cellery.CelleryUtils.printInfo;
 
 /**
  * Native function cellery:stopInstances.
@@ -46,18 +50,21 @@ public class StopInstances extends BlockingNativeCallableUnit {
     @Override
     public void execute(Context ctx) {
         BRefType<?>[] instanceList = ((BValueArray) ctx.getNullableRefArgument(0)).getValues();
+        BRefType<?> iNameRefType;
+        LinkedHashMap nameStruct = null;
         String instanceName;
         boolean wasRunning;
-        BRefType<?> iNameRefType;
+
         for (BRefType<?> refType: instanceList) {
-            if (((BMap) refType).getMap().get("iName") == null) {
+            iNameRefType = (BRefType<?>) ((BMap) refType).getMap().get("iName");
+            if (((BMap) iNameRefType).getMap().get(INSTANCE_NAME) == null) {
                 break;
             }
+            nameStruct = ((BMap) iNameRefType).getMap();
             wasRunning = ((BBoolean) ((BMap) refType).getMap().get("isRunning")).booleanValue();
             if (!wasRunning) {
-                iNameRefType = (BRefType<?>) ((BMap) refType).getMap().get("iName");
-                instanceName = ((BMap) iNameRefType).getMap().get(INSTANCE_NAME).toString();
-                CelleryUtils.printInfo("Deleting " + instanceName + " instance...");
+                instanceName = ((BString) nameStruct.get(INSTANCE_NAME)).stringValue();
+                printInfo("Deleting " + instanceName + " instance...");
                 CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
                         CelleryUtils::printDebug, CelleryUtils::printWarning);
             }

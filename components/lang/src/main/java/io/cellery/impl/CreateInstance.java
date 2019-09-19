@@ -62,8 +62,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -74,6 +77,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
@@ -96,6 +100,7 @@ import static io.cellery.CelleryUtils.getFilesByExtension;
 import static io.cellery.CelleryUtils.getInstanceImageName;
 import static io.cellery.CelleryUtils.isInstanceRunning;
 import static io.cellery.CelleryUtils.printDebug;
+import static io.cellery.CelleryUtils.printInfo;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.processProbes;
@@ -142,7 +147,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         dependencyTreeTable = new HashMap<String, Node>();
         BArrayType bArrayType =
                 new BArrayType(ctx.getProgramFile().getPackageInfo(CelleryConstants.CELLERY_PACKAGE).getTypeDefInfo(
-                        CelleryConstants.IMAGE_NAME_DEFINITION).typeInfo.getType());
+                        CelleryConstants.INSTANCE_STATE_DEFINITION).typeInfo.getType());
         bValueArray = new BValueArray(bArrayType);
         runCount = new AtomicLong(0L);
         String instanceArg;
@@ -184,7 +189,13 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 String error = "Unable to generate dependency tree";
                 log.error(error, e);
             }
-            validateMainInstance(instanceName, ((Meta) dependencyTree.getRoot().getData()).getKind());
+            try {
+                validateMainInstance(instanceName, ((Meta) dependencyTree.getRoot().getData()).getKind());
+            } catch (BallerinaException e) {
+                printInfo(instanceName + " instance is already available in the runtime.");
+                ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
+                return;
+            }
             // Validate dependencies provided by user
             validateDependencyLinksAliasNames(userDependencyLinks);
             // Assign user defined instance names to dependent cells
@@ -199,8 +210,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     CelleryConstants.CELLERY_PACKAGE,
                     CelleryConstants.INSTANCE_STATE_DEFINITION,
                     rootCellInfo, isInstanceRunning(rootMeta.getInstanceName(), rootMeta.getKind()));
+
             bValueArray.add(runCount.getAndIncrement(), bmap);
             dependencyInfo = generateDependencyInfo();
+
             if (startDependencies) {
                 try {
                     // Display the dependency tree info table
@@ -607,9 +620,16 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         if (shareDependencies) {
             shareDependenciesFlag = "true";
         }
-        CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                environment, "ballerina", "run", tempBalFile, "run", image.toString(),
-                dependentCells, "false", shareDependenciesFlag);
+        Path workingDir = Paths.get(System.getProperty("user.dir"));
+        if (Files.exists(workingDir.resolve(CelleryConstants.BALLERINA_TOML))) {
+            CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
+                    environment, "ballerina", "run", instanceName, "run", image.toString(),
+                    dependentCells, "false", shareDependenciesFlag);
+        } else {
+            CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
+                    environment, "ballerina", "run", tempBalFile, "run", image.toString(),
+                    dependentCells, "false", shareDependenciesFlag);
+        }
     }
 
     /**
@@ -704,7 +724,28 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private String generateRandomInstanceName(String name, String ver) {
         String instanceName = name + ver + randomString(4);
-        return instanceName.replace(".", "");
+        instanceName = instanceName.replace(".", "");
+
+        Properties properties = new Properties();
+        properties.setProperty(CelleryConstants.INSTANCE_NAME_ENV_VAR, "\"" + instanceName + "\"");
+
+        try (OutputStream output = new FileOutputStream(Paths.get(System.getProperty("user.dir"),
+                CelleryConstants.BALLERINA_CONF).toString())) {
+            properties.store(output, null);
+
+        } catch (IOException e) {
+            throw new BallerinaException("Error occurred while creating " + CelleryConstants.BALLERINA_CONF);
+        }
+        try {
+            Map<String, String> env = System.getenv();
+            Field field = env.getClass().getDeclaredField("m");
+            field.setAccessible(true);
+            ((Map<String, String>) field.get(env)).put(CelleryConstants.INSTANCE_NAME_ENV_VAR, instanceName);
+            field.setAccessible(false);
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            throw new BallerinaException("Error occurred while creating " + CelleryConstants.BALLERINA_CONF);
+        }
+        return instanceName;
     }
 
     /**
