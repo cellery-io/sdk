@@ -41,6 +41,7 @@ public class CelleryConstants {
     public static final String NAME = "name";
     public static final String VERSION = "ver";
     public static final String INSTANCE_NAME = "instanceName";
+    public static final String TEMP_TEST_MODULE = "tmp";
     public static final String BTYPE_STRING = "string";
     public static final String MAX_REPLICAS = "maxReplicas";
     public static final String CONCURRENCY_TARGET = "concurrencyTarget";
@@ -85,6 +86,7 @@ public class CelleryConstants {
     public static final int DEFAULT_GATEWAY_PORT = 80;
     public static final String DEFAULT_PARAMETER_VALUE = "";
     public static final String CELLERY_IMAGE_DIR_ENV_VAR = "CELLERY_IMAGE_DIR";
+    public static final String INSTANCE_NAME_ENV_VAR = "INSTANCE_NAME";
     public static final String GATEWAY_SERVICE = "--gateway-service";
     public static final String INSTANCE_NAME_PLACEHOLDER = "{{instance_name}}";
     public static final String REFERENCE_FILE_NAME = "reference.json";
@@ -98,4 +100,7 @@ public class CelleryConstants {
     public static final String SERVICE_TYPE_JOB = "Job";
 
     public static final String CENTRAL_REGISTRY_HOST = "registry.hub.cellery.io";
+    public static final String BALLERINA_TOML = "Ballerina.toml";
+    public static final String BALLERINA_CONF = "ballerina.conf";
+
 }

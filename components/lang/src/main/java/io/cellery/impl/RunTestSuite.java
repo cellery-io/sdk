@@ -17,6 +17,7 @@
  */
 package io.cellery.impl;
 
+import io.cellery.CelleryConstants;
 import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
 import io.cellery.models.CellSpec;
@@ -60,6 +61,7 @@ import java.util.List;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
+import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.NAME;
 import static io.cellery.CelleryConstants.ORG;
 import static io.cellery.CelleryConstants.SERVICE_TYPE_JOB;
@@ -77,7 +79,7 @@ import static io.cellery.CelleryUtils.toYaml;
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
         functionName = "runTestSuite",
-        args = {@Argument(name = "iName", type = TypeKind.RECORD),
+        args = {@Argument(name = "instanceList", type = TypeKind.ARRAY),
                 @Argument(name = "testSuite", type = TypeKind.RECORD)},
         returnType = {@ReturnType(type = TypeKind.ERROR)},
         isPublic = true
@@ -88,12 +90,28 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
 
     @Override
     public void execute(Context ctx) {
-        LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(0)).getMap();
+        LinkedHashMap nameStruct = null;
+        BRefType<?>[] instanceList = ((BValueArray) ctx.getNullableRefArgument(0)).getValues();
+        BRefType<?> iNameRefType;
+
+        for (BRefType<?> refType: instanceList) {
+            iNameRefType = (BRefType<?>) ((BMap) refType).getMap().get("iName");
+            if (((BMap) iNameRefType).getMap().get(INSTANCE_NAME) == null) {
+                break;
+            }
+            String alias = ((BMap) refType).getMap().get("alias").toString();
+            if (!"".equals(alias)) {
+                break;
+            }
+            nameStruct = ((BMap) iNameRefType).getMap();
+        }
         final BMap refArgument = (BMap) ctx.getNullableRefArgument(1);
         BRefType<?>[] tests = ((BValueArray) refArgument.getMap().get("tests")).getValues();
         try {
-            executeTests(tests, nameStruct);
-        } catch (BallerinaException e) {
+            if (nameStruct != null) {
+                executeTests(tests, nameStruct);
+            }
+        } catch (Exception e) {
             ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
         }
     }
@@ -101,6 +119,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
     private void executeTests(BRefType<?>[] tests, LinkedHashMap nameStruct) {
         for (BRefType<?> refType : tests) {
             String name = ((BMap) refType).getMap().get(NAME).toString();
+            String instanceName = ((BString) nameStruct.get(INSTANCE_NAME)).stringValue();
             if (name.isEmpty()) {
                 break;
             }
@@ -110,7 +129,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             LinkedHashMap sourceMap = ((BMap) ((BMap) refType).getMap().get("source")).getMap();
             if (sourceMap.get("image") == null) {
                 test.setSource(sourceMap.get("filepath").toString());
-                runInlineTest(test);
+                runInlineTest(instanceName);
             } else {
                 test.setSource(sourceMap.get("image").toString());
                 LinkedHashMap envMap = ((BMap) ((BMap) refType).getMap().get("envVars")).getMap();
@@ -217,11 +236,15 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                 CelleryUtils::printDebug, CelleryUtils::printWarning);
     }
 
-    private void runInlineTest(Test test) {
+    private void runInlineTest(String module) {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
         if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
             CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
                     CelleryUtils::printWarning);
+        }
+
+        if (Files.exists(workingDir.resolve(CelleryConstants.TEMP_TEST_MODULE))) {
+            module = CelleryConstants.TEMP_TEST_MODULE;
         }
 
         String cmdArgs;
@@ -230,7 +253,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         } else {
             cmdArgs = "--disable-groups incell ";
         }
-        CelleryUtils.executeShellCommand("ballerina test " + cmdArgs + test.getSource(), workingDir,
+        CelleryUtils.executeShellCommand("ballerina test " + cmdArgs + module, workingDir,
                 CelleryUtils::printInfo, CelleryUtils::printWarning);
     }
 

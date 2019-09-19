@@ -246,6 +246,21 @@ func CleanOrCreateDir(dirPath string) error {
 	return nil
 }
 
+func CleanAndCreateDir(dirPath string) error {
+	dirExist, _ := FileExists(dirPath)
+	if dirExist {
+		err := os.RemoveAll(dirPath)
+		if err != nil {
+			return err
+		}
+	}
+	err := os.MkdirAll(dirPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func FileExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {

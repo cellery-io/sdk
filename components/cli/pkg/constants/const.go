@@ -103,6 +103,9 @@ const BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-0.991.0"
 const BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-0.991.0"
 const BALLERINA_EXECUTABLE_PATH = "/bin/"
 const BALLERINA_CONF = "ballerina.conf"
+const BALLERINA_TOML = "Ballerina.toml"
+const BALLERINA_LOCAL_REPO = ".ballerina/"
+const TEMP_TEST_MODULE = "tmp"
 
 const DOCKER_CLI_BALLERINA_EXECUTABLE_PATH = "/usr/lib/ballerina/ballerina-0.991.0/bin/ballerina"
 
