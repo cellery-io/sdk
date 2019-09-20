@@ -27,9 +27,9 @@ const DEPENDENCY_LINK_PATTERN = "(" + CELLERY_ID_PATTERN + "\\.)?" + CELLERY_ALI
 
 const CLI_ARG_ENV_VAR_KEY_PATTERN = "(?P<key>[^:]+)"
 const CLI_ARG_ENV_VAR_VALUE_PATTERN = "(?P<value>.+)"
-const CLI_ARG_ENV_VAR_PATTERN = "((?P<instance>" + CELLERY_ID_PATTERN + "):" +
+const CLI_ARG_ENV_VAR_PATTERN = "(((?P<instance>" + CELLERY_ID_PATTERN + "):" +
 	CLI_ARG_ENV_VAR_KEY_PATTERN + "=" + CLI_ARG_ENV_VAR_VALUE_PATTERN + ")|(" +
-	CLI_ARG_ENV_VAR_KEY_PATTERN + "=" + CLI_ARG_ENV_VAR_VALUE_PATTERN + ")"
+	CLI_ARG_ENV_VAR_KEY_PATTERN + "=" + CLI_ARG_ENV_VAR_VALUE_PATTERN + "))"
 
 const GROUP_NAME = "mesh.cellery.io"
 

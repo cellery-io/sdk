@@ -36,7 +36,6 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
@@ -44,6 +43,9 @@ import (
 // RunRun starts Cell instance (along with dependency instances if specified by the user)
 // This also support linking instances to parts of the dependency tree
 // This command also strictly validates whether the requested Cell (and the dependencies are valid)
+
+const celleryEnvVar = "cellery_env_"
+
 func RunRun(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string, assumeYes bool) {
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
@@ -81,7 +83,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 	var parsedDependencyLinks []*dependencyAliasLink
 	if len(dependencyLinks) > 0 {
 		// Parsing the dependency links list
-		spinner.SetNewAction("Validating dependency links")
+		spinner.SetNewAction("Parsing dependency links")
 		for _, link := range dependencyLinks {
 			var dependencyLink *dependencyAliasLink
 			linkSplit := strings.Split(link, ":")
@@ -98,30 +100,14 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 					DependencyInstance: linkSplit[1],
 				}
 			}
-			cellInstance, err := kubectl.GetCell(dependencyLink.DependencyInstance)
-			if err != nil && !strings.Contains(err.Error(), "not found") {
-				spinner.Stop(false)
-				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
-			} else {
-				dependencyLink.IsRunning = err == nil && cellInstance.CellStatus.Status == "Ready"
-				parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
-				continue
-			}
-			compositeInstance, err := kubectl.GetComposite(dependencyLink.DependencyInstance)
-			if err != nil && !strings.Contains(err.Error(), "not found") {
-				spinner.Stop(false)
-				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
-			} else {
-				dependencyLink.IsRunning = err == nil && compositeInstance.CompositeStatus.Status == "Ready"
-				parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
-			}
+			parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
 		}
 	}
 
-	instanceEnvVars := map[string][]*environmentVariable{}
+	var instanceEnvVars []*environmentVariable
 	if len(envVars) > 0 {
 		// Parsing environment variables
-		spinner.SetNewAction("Validating environment variables")
+		spinner.SetNewAction("Parsing environment variables")
 		for _, envVar := range envVars {
 			var targetInstance string
 			var envVarKey string
@@ -148,18 +134,17 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 				targetInstance = instanceName
 			}
 			parsedEnvVar := &environmentVariable{
-				Key:   envVarKey,
-				Value: envVarValue,
+				InstanceName: targetInstance,
+				Key:          envVarKey,
+				Value:        envVarValue,
 			}
 
 			// Validating whether the instance of the environment var is provided as an instance of a link
 			if targetInstance != instanceName {
 				isInstanceProvided := false
-				isInstanceToBeStarted := false
 				for _, link := range parsedDependencyLinks {
 					if targetInstance == link.DependencyInstance {
 						isInstanceProvided = true
-						isInstanceToBeStarted = !link.IsRunning
 						break
 					}
 				}
@@ -169,18 +154,9 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 						fmt.Errorf("the instance of the environment variables should be provided as a "+
 							"dependency link, instance %s of the environment variable %s not found", targetInstance,
 							parsedEnvVar.Key))
-				} else if !isInstanceToBeStarted {
-					spinner.Stop(false)
-					util.ExitWithErrorMessage("Invalid environment variable",
-						fmt.Errorf("the instance of the environment should be an instance to be "+
-							"created, instance %s is already available in the runtime", targetInstance))
 				}
 			}
-
-			if _, hasKey := instanceEnvVars[targetInstance]; !hasKey {
-				instanceEnvVars[targetInstance] = []*environmentVariable{}
-			}
-			instanceEnvVars[targetInstance] = append(instanceEnvVars[targetInstance], parsedEnvVar)
+			instanceEnvVars = append(instanceEnvVars, parsedEnvVar)
 		}
 	}
 
@@ -192,7 +168,6 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 		IsShared:  false,
 	}
 
-	//rootNodeDependencies := map[string]*dependencyTreeNode{}
 	rootNodeDependencies := map[string]*dependencyInfo{}
 	for _, link := range parsedDependencyLinks {
 		rootNodeDependencies[link.DependencyAlias] = &dependencyInfo{
@@ -201,7 +176,7 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 	}
 
 	spinner.SetNewAction("Starting main instance " + util.Bold(instanceName))
-	err = startCellInstance(imageDir, instanceName, mainNode, instanceEnvVars[instanceName], startDependencies,
+	err = startCellInstance(imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
 		rootNodeDependencies, shareDependencies)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to start Cell instance "+instanceName, err)
@@ -241,7 +216,10 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		// Preparing the run command arguments
 		cmdArgs := []string{"run"}
 		for _, envVar := range envVars {
-			cmdArgs = append(cmdArgs, "-e", envVar.Key+"="+envVar.Value)
+			// Setting root instance environment variables
+			if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
+				cmdArgs = append(cmdArgs, "-e", envVar.Key+"="+envVar.Value)
+			}
 		}
 		var imageNameStruct = &dependencyInfo{
 			Organization: runningNode.MetaData.Organization,
@@ -350,7 +328,9 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			// This will override any env vars with identical names (prefixed with 'CELLERY') set previously.
 			if len(envVars) != 0 {
 				for _, envVar := range envVars {
-					cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+					if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
+						cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+					}
 				}
 			}
 			cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", exeUid,
@@ -360,6 +340,12 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		defer os.Remove(imageDir)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
+		// Export environment variables defined by user for dependent instances
+		for _, envVar := range envVars {
+			if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
+				cmd.Env = append(cmd.Env, celleryEnvVar+envVar.InstanceName+"."+envVar.Key+"="+envVar.Value)
+			}
+		}
 		stdoutReader, _ := cmd.StdoutPipe()
 		stdoutScanner := bufio.NewScanner(stdoutReader)
 		go func() {
@@ -383,6 +369,8 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			return fmt.Errorf("failed to execute run method in Cell instance %s due to %v", instanceName, err)
 		}
 		_ = os.Remove(tempRunFileName)
+	} else {
+		return fmt.Errorf("run function does not exist in Image %s", imageTag)
 	}
 	return nil
 }
@@ -444,8 +432,9 @@ type dependencyAliasLink struct {
 
 // environmentVariable is used to store the environment variables to be passed to the instances
 type environmentVariable struct {
-	Key   string
-	Value string
+	InstanceName string
+	Key          string
+	Value        string
 }
 
 // dependencyTreeNode is used as a node of the dependency tree

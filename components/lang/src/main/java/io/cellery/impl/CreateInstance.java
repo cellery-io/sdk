@@ -82,6 +82,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.CELL;
+import static io.cellery.CelleryConstants.CELLERY_ENV_VARIABLE;
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.CENTRAL_REGISTRY_HOST;
 import static io.cellery.CelleryConstants.COMPONENTS;
@@ -107,6 +108,7 @@ import static io.cellery.CelleryUtils.processProbes;
 import static io.cellery.CelleryUtils.processResources;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.randomString;
+import static io.cellery.CelleryUtils.removePrefix;
 import static io.cellery.CelleryUtils.replaceInFile;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.unzip;
@@ -200,6 +202,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             validateDependencyLinksAliasNames(userDependencyLinks);
             // Assign user defined instance names to dependent cells
             assignInstanceNames(dependencyTree.getRoot(), userDependencyLinks);
+            // Assign environment variables to dependent instances
+            assignEnvironmentVariables(dependencyTree.getRoot());
             Meta rootMeta = (Meta) dependencyTree.getRoot().getData();
             BMap<String, BValue> rootCellInfo = new BMap<>(new BArrayType(BTypes.typeString));
             rootCellInfo.put("org", new BString(rootMeta.getOrg()));
@@ -496,6 +500,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             dependentCellMap.put("name", new BString(dependentCell.getValue().getName()));
             dependentCellMap.put("ver", new BString(dependentCell.getValue().getVer()));
             dependentCellMap.put("instanceName", new BString(dependentCell.getValue().getInstanceName()));
+            dependentCellMap.put("kind", new BString(dependentCell.getValue().getKind()));
             dependencyInfoMap.put(dependentCell.getKey(), dependentCellMap);
         }
         return ((BMap) dependencyInfoMap).getMap();
@@ -568,7 +573,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             Meta meta = (Meta) node.getData();
             String image = meta.getOrg() + File.separator + meta.getName() + ":" + meta.getVer();
             String availability = "To be Created";
-            if (isInstanceRunning(meta.getInstanceName(), meta.getKind())) {
+            if (((Meta) node.getData()).isRunning()) {
                 availability = "Available in Runtime";
             }
             out.format("%-20s %-30s %-20s", meta.getInstanceName(), image, availability);
@@ -587,7 +592,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      * @throws Exception if cell start fails
      */
     private void startInstance(String org, String name, String version, String cellInstanceName, String dependentCells,
-                               boolean shareDependencies)
+                               boolean shareDependencies, Map<String, String> environmentVariables)
             throws Exception {
         Path imageDir = Paths.get(System.getProperty("user.home"), ".cellery", "repo", org, name, version,
                 name + ".zip");
@@ -620,15 +625,18 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         if (shareDependencies) {
             shareDependenciesFlag = "true";
         }
+        for (Map.Entry<String, String> environmentVariable : environmentVariables.entrySet()) {
+            environment.put(environmentVariable.getKey(), environmentVariable.getValue());
+        }
         Path workingDir = Paths.get(System.getProperty("user.dir"));
         if (Files.exists(workingDir.resolve(CelleryConstants.BALLERINA_TOML))) {
             CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                    environment, "ballerina", "run", instanceName, "run", image.toString(),
-                    dependentCells, "false", shareDependenciesFlag);
+                    environment, "ballerina", "run", instanceName, "run", image.toString(), dependentCells,
+                    "false", shareDependenciesFlag);
         } else {
             CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                    environment, "ballerina", "run", tempBalFile, "run", image.toString(),
-                    dependentCells, "false", shareDependenciesFlag);
+                    environment, "ballerina", "run", tempBalFile, "run", image.toString(), dependentCells,
+                    "false", shareDependenciesFlag);
         }
     }
 
@@ -648,7 +656,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         String cellImageName = meta.getOrg() + "/" + meta.getName() + ":" + meta.getVer();
         // Start the cell instance if not already running
         // This will not start root instance
-        if (!dependencyTree.getRoot().equals(node)) {
+        if (!dependencyTree.getRoot().equals(node) && !node.getData().isRunning()) {
             if (shareDependencies && runningInstances.containsKey(cellImageName)) {
                 // If a shared instance is running with the same cell image name (org/name:version) change the
                 // instance name of the current cell to that cell's instance name
@@ -666,7 +674,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     dependentCellsMap.put(dependentCell.getKey(), dependentCellImage);
                 }
                 startInstance(meta.getOrg(), meta.getName(), meta.getVer(), cellMetaInstanceName,
-                        dependentCellsMap.toString(), shareDependencies);
+                        dependentCellsMap.toString(), shareDependencies, meta.getEnvironmentVariables());
                 runningInstances.put(cellImageName, node);
             }
         }
@@ -688,6 +696,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             node.getData().setInstanceName(getDependentInstanceName(node.getParent().getData().getInstanceName(),
                     node.getData().getOrg(), node.getData().getName(), node.getData().getVer(), node.getData().
                             getKind()));
+            if (isInstanceRunning(node.getData().getInstanceName(), node.getData().getKind())) {
+                node.getData().setRunning(true);
+            }
         } else if (dependencyLinks.containsKey(node.getData().getAlias())) {
             // Check if there is a dependency Alias equal to the key of dependency cell
             // If there exists an alias assign its instance name as the dependent cell instance name
@@ -712,6 +723,32 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         }
         for (Node<Meta> childNode : node.getChildren()) {
             assignInstanceNames(childNode, dependencyLinks);
+        }
+    }
+
+    /**
+     * Assign environment variables to dependent instances.
+     *
+     * @param node tree node
+     */
+    private void assignEnvironmentVariables(Node<Meta> node) {
+        for (Map.Entry<String, String> environmentVariable : System.getenv().entrySet()) {
+            if (environmentVariable.getKey().startsWith(CELLERY_ENV_VARIABLE + node.getData().getInstanceName() +
+                    ".")) {
+                if (node.getData().isRunning()) {
+                    String errMsg = "Invalid environment variable, the instance of the environment should be an " +
+                            "instance to be created, instance " + node.getData().getInstanceName() + " is already " +
+                            "available in the runtime";
+                    throw new BallerinaException(errMsg);
+                } else {
+                    node.getData().getEnvironmentVariables().put(removePrefix(environmentVariable.getKey(),
+                            CELLERY_ENV_VARIABLE + node.getData().getInstanceName() + "."), environmentVariable.
+                            getValue());
+                }
+            }
+        }
+        for (Node<Meta> childNode : node.getChildren()) {
+            assignEnvironmentVariables(childNode);
         }
     }
 
@@ -782,13 +819,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void validateRootDependencyLinks(Map<?, ?> dependencyLinks) {
         ArrayList<String> missingAliases = new ArrayList<>();
-        // Iterate the dependency tree
-        for (Node<Meta> node : dependencyTree.getTree()) {
-            Map<String, Meta> dependentCells = node.getData().getDependencies();
-            for (Map.Entry<String, Meta> dependentCell : dependentCells.entrySet()) {
-                if (!dependencyLinks.containsKey(dependentCell.getKey())) {
-                    missingAliases.add(dependentCell.getKey());
-                }
+        for (Map.Entry<String, Meta> dependentCell : ((Meta) dependencyTree.getRoot().getData()).
+                getDependencies().entrySet()) {
+            if (!dependencyLinks.containsKey(dependentCell.getKey())) {
+                missingAliases.add(dependentCell.getKey());
             }
         }
         if (missingAliases.size() > 0) {

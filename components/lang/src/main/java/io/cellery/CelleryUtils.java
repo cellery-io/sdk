@@ -839,4 +839,15 @@ public class CelleryUtils {
         File tmpDir = new File(path);
         return tmpDir.exists();
     }
+
+    /**
+     * Remove prefix from a string.
+     *
+     * @param s string
+     * @param prefix prefix
+     * @return prefix removed string
+     */
+    public static String removePrefix(String s, String prefix) {
+        return StringUtils.removeStart(s, prefix);
+    }
 }
