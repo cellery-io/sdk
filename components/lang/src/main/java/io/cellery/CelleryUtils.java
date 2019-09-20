@@ -80,6 +80,7 @@ import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static io.cellery.CelleryConstants.CELL;
 import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.KIND;
 import static io.cellery.CelleryConstants.LIMITS;
@@ -665,7 +666,7 @@ public class CelleryUtils {
      * @return whether cell instance is running or note
      */
     public static boolean isInstanceRunning(String instance, String kind) {
-        if (kind.equals("cells")) {
+        if (kind.equals(CELL)) {
             return !(KubernetesClient.getCells(instance).contains("not found"));
         } else {
             return !(KubernetesClient.getComposites(instance).contains("not found"));
@@ -681,7 +682,7 @@ public class CelleryUtils {
      */
     public static String getInstanceImageName(String instance, String kind) {
         String image;
-        if (kind.equals("cells")) {
+        if (kind.equals("CELL")) {
             image = KubernetesClient.getCells(instance);
         } else {
             image = KubernetesClient.getComposites(instance);
@@ -709,7 +710,7 @@ public class CelleryUtils {
                                                   String dependentVersion, String dependentKind) {
         String instanceName = "";
         String cellImage;
-        if (dependentKind.equals("cells")) {
+        if (dependentKind.equals(CELL)) {
             cellImage = KubernetesClient.getCells(parentInstance);
         } else {
             cellImage = KubernetesClient.getComposites(parentInstance);
