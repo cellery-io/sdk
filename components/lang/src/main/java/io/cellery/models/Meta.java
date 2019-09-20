@@ -35,9 +35,11 @@ public class Meta {
     private String kind;
     private boolean isRunning;
     private Map<String, ComponentMeta> components;
+    private Map<String, String> environmentVariables;
 
     public Meta() {
         components = new HashMap<>();
+        environmentVariables = new HashMap<>();
     }
 
     /**

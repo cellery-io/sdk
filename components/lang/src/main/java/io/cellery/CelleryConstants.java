@@ -103,4 +103,5 @@ public class CelleryConstants {
     public static final String BALLERINA_TOML = "Ballerina.toml";
     public static final String BALLERINA_CONF = "ballerina.conf";
 
+    public static final String CELLERY_ENV_VARIABLE = "cellery_env_";
 }
