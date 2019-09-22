@@ -456,30 +456,24 @@ public function getCellImage() returns (ImageName){
         ver: ver,
         isRoot: true
     };
-
-    iName.instanceName = config:getAsString("INSTANCE_NAME");
+    iName.instanceName = config:getAsString("INSTANCE_NAME", defaultValue = "");
     return iName;
 }
 
 # Returns cell gateway URL of the started cell
 #
-# + alias - dependency alias/"self" for instance
+# + iNameList - list of InstanceState
+# + alias - (optional) dependency alias of instance 
 # + return - URL of the cell gateway
 public function getGatewayHost(InstanceState[] iNameList, string alias = "") returns (string|error) {
     string instanceName;
-    ImageName? iName = ();
-    if (alias == "") {
-        iName = <ImageName>getCellImage();
-        iName.instanceName = config:getAsString("INSTANCE_NAME");
-    } else {
-        foreach var inst in iNameList {
-            if (inst.alias == alias) {
-                iName = inst.iName;
-                break;
-            }
+    ImageName iName = {org: "", name:"", ver:""};
+    foreach var inst in iNameList {
+        if (inst.alias == alias) {
+            iName = inst.iName;
+            break;
         }
     }
-    
     Reference | error? ref = resolveReference(<ImageName>iName);
     Reference tempRef = <Reference> ref;
     return <string>tempRef.gateway_host;

@@ -62,8 +62,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
@@ -86,6 +88,7 @@ import static io.cellery.CelleryConstants.CELLERY_ENV_VARIABLE;
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.CENTRAL_REGISTRY_HOST;
 import static io.cellery.CelleryConstants.COMPONENTS;
+import static io.cellery.CelleryConstants.DEBUG_BALLERINA_CONF;
 import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
@@ -164,7 +167,17 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             instanceName = generateRandomInstanceName(((BString) nameStruct.get("name")).stringValue(),
                     ((BString) nameStruct.get("ver")).stringValue());
         }
-        String destinationPath = System.getenv(CELLERY_IMAGE_DIR_ENV_VAR) + File.separator +
+        String cellImageDir = System.getenv(CELLERY_IMAGE_DIR_ENV_VAR);
+        if (cellImageDir == null) {
+            try (InputStream inputStream = new FileInputStream(DEBUG_BALLERINA_CONF)) {
+                Properties properties = new Properties();
+                properties.load(inputStream);
+                cellImageDir = properties.getProperty(CELLERY_IMAGE_DIR_ENV_VAR).replaceAll("\"", "");
+            } catch (IOException e) {
+                throw new BallerinaException("Unable to read " + DEBUG_BALLERINA_CONF, e);
+            }
+        }
+        String destinationPath = cellImageDir + File.separator +
                 "artifacts" + File.separator + "cellery";
         Map userDependencyLinks = ((BMap) ctx.getNullableRefArgument(2)).getMap();
 
@@ -234,8 +247,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     // Start the dependency tree
                     startDependencyTree(dependencyTree.getRoot());
                 } catch (Exception e) {
-                    String error = "Unable to start dependencies";
-                    log.error(error, e);
+                    printWarning("Unable to start dependencies. " + e);
                 }
             } else {
                 dependencyInfo.forEach((alias, info) -> {
