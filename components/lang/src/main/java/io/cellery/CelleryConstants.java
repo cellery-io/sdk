@@ -17,7 +17,7 @@
  */
 package io.cellery;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 /**
  * Collected constants of Cellery.
@@ -30,8 +30,8 @@ public class CelleryConstants {
     public static final String REFERENCE_DEFINITION = "Reference";
     public static final String IMAGE_NAME_DEFINITION = "ImageName";
     public static final String INSTANCE_STATE_DEFINITION = "InstanceState";
-    public static final String CELLERY_REPO_PATH =
-            System.getProperty("user.home") + File.separator + ".cellery" + File.separator + "repo";
+    public static final String CELLERY_HOME_PATH = Paths.get(System.getProperty("user.home"), ".cellery").toString();
+    public static final String CELLERY_REPO_PATH = Paths.get(CELLERY_HOME_PATH , "repo").toString();
 
     public static final String IMAGE_SOURCE = "source";
     public static final String AUTO_SCALING_METRIC_RESOURCE = "Resource";
@@ -102,6 +102,7 @@ public class CelleryConstants {
     public static final String CENTRAL_REGISTRY_HOST = "registry.hub.cellery.io";
     public static final String BALLERINA_TOML = "Ballerina.toml";
     public static final String BALLERINA_CONF = "ballerina.conf";
+    public static final String DEBUG_BALLERINA_CONF = Paths.get(CELLERY_HOME_PATH, "tmp", BALLERINA_CONF).toString();
 
     public static final String CELLERY_ENV_VARIABLE = "cellery_env_";
 }

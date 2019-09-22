@@ -337,6 +337,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", runningNode.MetaData.Name))
 			content = append(content, fmt.Sprintf("IMAGE_VERSION=\"%s\"\n", runningNode.MetaData.Version))
 			content = append(content, fmt.Sprintf("INSTANCE_NAME=\"%s\"\n", instanceName))
+			content = append(content, fmt.Sprintf(constants.CELLERY_IMAGE_DIR_ENV_VAR+"=\"%s\"\n", imageDir))
 			for _, envVar := range envVars {
 				content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
 			}
@@ -369,11 +370,17 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 					util.ExitWithErrorMessage("error while writing properties to "+ballerinaConf, err)
 				}
 			}
-
+			var launchStr string
+			if incell {
+				launchStr = ", \"--groups\", \"incell\""
+			} else {
+				launchStr = ", \"--disable-groups\", \"incell\""
+			}
 			util.PrintSuccessMessage("Note that the following configuration should be added to the launch configuration " +
 				"before starting the debug session\n" +
 				fmt.Sprintf("--------------------------------------------------------\n\n") +
-				fmt.Sprintf("\"commandOptions\": [\"--config\", \"%s\"],\n\n", ballerinaConf) +
+				fmt.Sprintf("\"commandOptions\": [\"--config\", \"%s],\n\n", ballerinaConf +
+				launchStr) +
 				fmt.Sprintln("--------------------------------------------------------"))
 		} else {
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
@@ -533,6 +540,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", runningNode.MetaData.Name))
 			content = append(content, fmt.Sprintf("IMAGE_VERSION=\"%s\"\n", runningNode.MetaData.Version))
 			content = append(content, fmt.Sprintf("INSTANCE_NAME=\"%s\"\n", instanceName))
+			content = append(content, fmt.Sprintf(constants.CELLERY_IMAGE_DIR_ENV_VAR+"=\"%s\"\n", imageDir))
 			for _, envVar := range envVars {
 				content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
 			}
