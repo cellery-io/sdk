@@ -20,7 +20,7 @@ package org.cellery.components.test.scenarios.probes;
 import io.cellery.CelleryUtils;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
-import io.cellery.models.ServiceTemplate;
+import io.cellery.models.Component;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Probe;
@@ -89,7 +89,7 @@ public class ProbesTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        final List<API> httpAPI = cell.getSpec().getGateway().getSpec().getHttp();
+        final List<API> httpAPI = cell.getSpec().getGateway().getSpec().getIngress().getHttp();
         Assert.assertEquals(httpAPI.get(0).getBackend(), "employee");
         Assert.assertEquals(httpAPI.get(0).getContext(), "employee");
         Assert.assertEquals(httpAPI.get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -98,32 +98,29 @@ public class ProbesTest {
         Assert.assertEquals(httpAPI.get(1).getContext(), "payroll");
         Assert.assertEquals(httpAPI.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(httpAPI.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        final List<ServiceTemplate> servicesTemplates = cell.getSpec().getServicesTemplates();
-        Assert.assertEquals(servicesTemplates.get(0).getMetadata().getName(), "employee");
-        final Container container = servicesTemplates.get(0).getSpec().getContainer();
+        final List<Component> components = cell.getSpec().getComponents();
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "employee");
+        final Container container = components.get(0).getSpec().getTemplate().getContainers().get(0);
         Assert.assertEquals(container.getEnv().get(0).getName(), "SALARY_HOST");
         Assert.assertEquals(container.getEnv().get(0).getValue(), "{{instance_name}}--salary-service");
         Assert.assertEquals(container.getImage(), "docker.io/celleryio/sampleapp-employee");
         Assert.assertEquals(container.getPorts().get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getServicePort(), 80);
-        Assert.assertEquals(servicesTemplates.get(1).getMetadata().getName(), "salary");
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getContainer().getPorts()
-                .get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getReplicas(), 1);
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getServicePort(), 80);
+        Assert.assertEquals(components.get(0).getSpec().getPorts().get(0).getPort(), 80);
+        Assert.assertEquals(components.get(1).getMetadata().getName(), "salary");
+        Assert.assertEquals(components.get(1).getSpec().getPorts().get(0).getTargetPort(), 8080);
+        Assert.assertEquals(components.get(1).getSpec().getPorts().get(0).getPort(), 80);
+        Assert.assertEquals(components.get(1).getSpec().getPorts().get(0).getProtocol(), "http");
     }
 
     @Test(groups = "build")
     public void validateBuildTimeProbes() {
-        final List<ServiceTemplate> servicesTemplates = cell.getSpec().getServicesTemplates();
+        final List<Component> servicesTemplates = cell.getSpec().getComponents();
         Assert.assertEquals(servicesTemplates.get(0).getMetadata().getName(), "employee");
-        final Container empContainer = servicesTemplates.get(0).getSpec().getContainer();
+        final Container empContainer = servicesTemplates.get(0).getSpec().getTemplate().getContainers().get(0);
         final Probe livenessProbe = empContainer.getLivenessProbe();
         Assert.assertNotNull(livenessProbe);
         Assert.assertEquals(livenessProbe.getPeriodSeconds(), new Integer(10));
@@ -142,7 +139,7 @@ public class ProbesTest {
         Assert.assertEquals(readinessProbe.getFailureThreshold(), new Integer(3));
         Assert.assertEquals(readinessProbe.getExec().getCommand().size(), 3);
 
-        final Container salaryContainer = servicesTemplates.get(1).getSpec().getContainer();
+        final Container salaryContainer = servicesTemplates.get(1).getSpec().getTemplate().getContainers().get(0);
         final Probe livenessProbeSalary = salaryContainer.getLivenessProbe();
         Assert.assertNotNull(livenessProbeSalary);
         Assert.assertEquals(livenessProbeSalary.getPeriodSeconds(), new Integer(10));
@@ -198,7 +195,7 @@ public class ProbesTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        final List<API> httpList = runtimeCell.getSpec().getGateway().getSpec().getHttp();
+        final List<API> httpList = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp();
         Assert.assertEquals(httpList.get(0).getBackend(), "employee");
         Assert.assertEquals(httpList.get(0).getContext(), "employee");
         Assert.assertEquals(httpList.get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -207,33 +204,29 @@ public class ProbesTest {
         Assert.assertEquals(httpList.get(1).getContext(), "payroll");
         Assert.assertEquals(httpList.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(httpList.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
-        final List<ServiceTemplate> servicesTemplates = runtimeCell.getSpec().getServicesTemplates();
+        final List<Component> servicesTemplates = runtimeCell.getSpec().getComponents();
         Assert.assertEquals(servicesTemplates.get(0).getMetadata().getName(), "employee");
-        final Container container = servicesTemplates.get(0).getSpec().getContainer();
+        final Container container = servicesTemplates.get(0).getSpec().getTemplate().getContainers().get(0);
         Assert.assertEquals(container.getEnv().get(0).getName(), "SALARY_HOST");
         Assert.assertEquals(container.getEnv().get(0).getValue(), "probe-inst--salary-service");
         Assert.assertEquals(container.getImage(), "docker.io/celleryio/sampleapp-employee");
         Assert.assertEquals(container.getPorts().get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getServicePort(), 80);
+        Assert.assertEquals(servicesTemplates.get(0).getSpec().getPorts().get(0).getPort(), 80);
         Assert.assertEquals(servicesTemplates.get(1).getMetadata().getName(), "salary");
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getContainer().getPorts()
+        Assert.assertEquals(servicesTemplates.get(1).getSpec().getTemplate().getContainers().get(0).getPorts()
                 .get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getReplicas(), 1);
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getServicePort(), 80);
     }
 
 
     @Test(groups = "run")
     public void validateRuntimeProbes() {
-        final List<ServiceTemplate> servicesTemplates = runtimeCell.getSpec().getServicesTemplates();
-        Assert.assertEquals(servicesTemplates.get(0).getMetadata().getName(), "employee");
-        final Container empContainer = servicesTemplates.get(0).getSpec().getContainer();
+        final List<Component> components = runtimeCell.getSpec().getComponents();
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "employee");
+        final Container empContainer = components.get(0).getSpec().getTemplate().getContainers().get(0);
         final Probe livenessProbe = empContainer.getLivenessProbe();
         Assert.assertNotNull(livenessProbe);
         Assert.assertEquals(livenessProbe.getPeriodSeconds(), new Integer(10));
@@ -252,7 +245,7 @@ public class ProbesTest {
         Assert.assertEquals(readinessProbe.getFailureThreshold(), new Integer(3));
         Assert.assertEquals(readinessProbe.getExec().getCommand().size(), 3);
 
-        final Container salaryContainer = servicesTemplates.get(1).getSpec().getContainer();
+        final Container salaryContainer = components.get(1).getSpec().getTemplate().getContainers().get(0);
         final Probe livenessProbeSalary = salaryContainer.getLivenessProbe();
         Assert.assertNotNull(livenessProbeSalary);
         Assert.assertEquals(livenessProbeSalary.getPeriodSeconds(), new Integer(10));

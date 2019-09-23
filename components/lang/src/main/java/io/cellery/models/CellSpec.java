@@ -18,28 +18,14 @@
 
 package io.cellery.models;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Cell Spec.
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-@AllArgsConstructor
 public class CellSpec extends CompositeSpec {
     private Gateway gateway;
-    private List<Component> components;
-
-    public CellSpec() {
-        components = new ArrayList<>();
-    }
-
-    public void addComponent(Component component) {
-        this.components.add(component);
-    }
 }

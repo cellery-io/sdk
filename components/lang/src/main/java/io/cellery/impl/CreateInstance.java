@@ -20,17 +20,22 @@ package io.cellery.impl;
 import com.google.gson.Gson;
 import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
+import io.cellery.models.Component;
 import io.cellery.models.Composite;
 import io.cellery.models.GatewaySpec;
 import io.cellery.models.OIDC;
+import io.cellery.models.Web;
 import io.cellery.models.internal.Dependency;
 import io.cellery.models.internal.Image;
 import io.cellery.models.internal.ImageComponent;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
+import org.ballerinalang.bre.bvm.BLangVMErrors;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.model.values.BMap;
@@ -46,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -53,12 +59,15 @@ import java.util.Map;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES;
 import static io.cellery.CelleryConstants.CELL;
 import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
+import static io.cellery.CelleryConstants.COMPONENTS;
 import static io.cellery.CelleryConstants.ENV_VARS;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
+import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
 import static io.cellery.CelleryConstants.POD_RESOURCES;
 import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.YAML;
+import static io.cellery.CelleryUtils.printDebug;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.processProbes;
@@ -99,32 +108,29 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         } else {
             composite = CelleryUtils.readCompositeYaml(cellYAMLPath);
         }
-//        updateDependencyAnnotations(composite, dependencyInfo);
-//        try {
-//            processComponents((BMap) refArgument.getMap().get(COMPONENTS));
-//            composite.getSpec().getServicesTemplates().forEach(serviceTemplate -> {
-//                String componentName = serviceTemplate.getMetadata().getName();
-//                ImageComponent updatedComponent = this.image.getComponentNameToComponentMap().get(componentName);
-        //Replace env values defined in the YAML.
-//                updateEnvVar(instanceName, serviceTemplate, updatedComponent, dependencyInfo);
-//
-//                // Update Gateway Config
-//                if (composite instanceof Cell) {
-////                    updateGatewayConfig(instanceName, destinationPath, (Cell) composite, updatedComponent);
-//                }
-//
-//                // Update liveness and readiness probe
-//                updateProbes(serviceTemplate, updatedComponent);
-//
-//                // Update resource limit and requests
-//                updateResources(serviceTemplate, updatedComponent);
-//            });
-//            writeToFile(toYaml(composite), cellYAMLPath);
-//        } catch (IOException | BallerinaException e) {
-//            String error = "Unable to persist updated composite yaml " + destinationPath;
-//            log.error(error, e);
-//            ctx.setReturnValues(BLangVMErrors.createError(ctx, error + ". " + e.getMessage()));
-//        }
+        updateDependencyAnnotations(composite, dependencyInfo);
+        try {
+            processComponents((BMap) refArgument.getMap().get(COMPONENTS));
+            composite.getSpec().getComponents().forEach(component -> {
+                String componentName = component.getMetadata().getName();
+                ImageComponent updatedComponent = this.image.getComponentNameToComponentMap().get(componentName);
+                //Replace env values defined in the YAML.
+                updateEnvVar(instanceName, component, updatedComponent, dependencyInfo);
+                // Update Gateway Config
+                if (composite instanceof Cell) {
+                    updateGatewayConfig(instanceName, destinationPath, (Cell) composite, updatedComponent);
+                }
+                // Update liveness and readiness probe
+                updateProbes(component, updatedComponent);
+                // Update resource limit and requests
+                updateResources(component, updatedComponent);
+            });
+            writeToFile(toYaml(composite), cellYAMLPath);
+        } catch (IOException | BallerinaException e) {
+            String error = "Unable to persist updated composite yaml " + destinationPath;
+            log.error(error, e);
+            ctx.setReturnValues(BLangVMErrors.createError(ctx, error + ". " + e.getMessage()));
+        }
     }
 
     /**
@@ -138,7 +144,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private void updateGatewayConfig(String instanceName, String destinationPath, Cell cell,
                                      ImageComponent updatedComponent) {
         GatewaySpec gatewaySpec = cell.getSpec().getGateway().getSpec();
-        updatedComponent.getWebList().forEach(web -> {
+        Web web = updatedComponent.getWeb();
+        if (web != null) {
             // Create TLS secret yaml and set the name
             if (StringUtils.isNoneEmpty(web.getTlsKey())) {
                 Map<String, String> tlsMap = new HashMap<>();
@@ -148,7 +155,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                         Base64.encodeBase64String(web.getTlsCert().getBytes(StandardCharsets.UTF_8)));
                 String tlsSecretName = instanceName + "--tls-secret";
                 createSecret(tlsSecretName, tlsMap, destinationPath + File.separator + tlsSecretName + ".yaml");
-                gatewaySpec.setTlsSecret(tlsSecretName);
+                gatewaySpec.getIngress().getExtensions().getClusterIngress().getTls().setSecret(tlsSecretName);
             }
             // Set OIDC values
             if (web.getOidc() != null) {
@@ -156,94 +163,105 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 if (StringUtils.isBlank(oidc.getClientSecret()) && StringUtils.isBlank(oidc.getDcrPassword())) {
                     printWarning("OIDC client secret and DCR password are empty.");
                 }
-                gatewaySpec.setOidc(oidc);
+                gatewaySpec.getIngress().getExtensions().setOidc(oidc);
             }
-            gatewaySpec.setHost(web.getVhost());
-//            gatewaySpec.addHttpAPI(Collections.singletonList(web.getHttpAPI()));
-        });
+        }
+        if (web != null) {
+            gatewaySpec.getIngress().getExtensions().getClusterIngress().setHost(web.getVhost());
+            gatewaySpec.getIngress().addHttpAPI((Collections.singletonList(web.getHttpAPI())));
+        }
+
     }
 
     /**
      * Update Probe configurations.
      *
-     * @param serviceTemplate  service Template object
+     * @param component        service Template object
      * @param updatedComponent updated component to process env var
      */
-//    private void updateProbes(ServiceTemplate serviceTemplate, ImageComponent updatedComponent) {
-//        Probe livenessProbe = updatedComponent.getLivenessProbe();
-//        // Override values with updated values
-//        if (livenessProbe != null) {
-//            Probe probe = serviceTemplate.getSpec().getContainer().getLivenessProbe();
-//            probe.setInitialDelaySeconds(livenessProbe.getInitialDelaySeconds());
-//            probe.setFailureThreshold(livenessProbe.getFailureThreshold());
-//            probe.setPeriodSeconds(livenessProbe.getPeriodSeconds());
-//            probe.setSuccessThreshold(livenessProbe.getSuccessThreshold());
-//            probe.setTimeoutSeconds(livenessProbe.getTimeoutSeconds());
-//            serviceTemplate.getSpec().getContainer().setLivenessProbe(probe);
-//        }
-//
-//        Probe readinessProbe = updatedComponent.getReadinessProbe();
-//        // Override values with updated values
-//        if (readinessProbe != null) {
-//            Probe probe = serviceTemplate.getSpec().getContainer().getReadinessProbe();
-//            probe.setInitialDelaySeconds(readinessProbe.getInitialDelaySeconds());
-//            probe.setFailureThreshold(readinessProbe.getFailureThreshold());
-//            probe.setPeriodSeconds(readinessProbe.getPeriodSeconds());
-//            probe.setSuccessThreshold(readinessProbe.getSuccessThreshold());
-//            probe.setTimeoutSeconds(readinessProbe.getTimeoutSeconds());
-//            serviceTemplate.getSpec().getContainer().setReadinessProbe(probe);
-//        }
-//    }
-//
-//    /**
-//     * Update Resource configurations.
-//     *
-//     * @param serviceTemplate  service Template object
-//     * @param updatedComponent updated component to process env var
-//     */
-//    private void updateResources(ServiceTemplate serviceTemplate, ImageComponent updatedComponent) {
-//        ResourceRequirements resourceRequirement = updatedComponent.getResources();
-//        serviceTemplate.getSpec().getContainer().setResources(resourceRequirement);
-//    }
+    private void updateProbes(Component component, ImageComponent updatedComponent) {
+        Probe livenessProbe = updatedComponent.getLivenessProbe();
+        // Override values with updated values
+        component.getSpec().getTemplate().getContainers().forEach(container -> {
+            if (container.getName().equals(updatedComponent.getName())) {
+                if (livenessProbe != null) {
+                    Probe probe = container.getLivenessProbe();
+                    probe.setInitialDelaySeconds(livenessProbe.getInitialDelaySeconds());
+                    probe.setFailureThreshold(livenessProbe.getFailureThreshold());
+                    probe.setPeriodSeconds(livenessProbe.getPeriodSeconds());
+                    probe.setSuccessThreshold(livenessProbe.getSuccessThreshold());
+                    probe.setTimeoutSeconds(livenessProbe.getTimeoutSeconds());
+                    container.setLivenessProbe(probe);
+                }
+
+                Probe readinessProbe = updatedComponent.getReadinessProbe();
+                // Override values with updated values
+                if (readinessProbe != null) {
+                    Probe probe = container.getReadinessProbe();
+                    probe.setInitialDelaySeconds(readinessProbe.getInitialDelaySeconds());
+                    probe.setFailureThreshold(readinessProbe.getFailureThreshold());
+                    probe.setPeriodSeconds(readinessProbe.getPeriodSeconds());
+                    probe.setSuccessThreshold(readinessProbe.getSuccessThreshold());
+                    probe.setTimeoutSeconds(readinessProbe.getTimeoutSeconds());
+                    container.setReadinessProbe(probe);
+                }
+            }
+        });
+
+    }
+
+    /**
+     * Update Resource configurations.
+     *
+     * @param component        component object from YAML
+     * @param updatedComponent updated component to process env var
+     */
+    private void updateResources(Component component, ImageComponent updatedComponent) {
+        ResourceRequirements resourceRequirement = updatedComponent.getResources();
+        component.getSpec().getTemplate().getContainers().forEach(container -> {
+            if (container.getName().equals(updatedComponent.getName())) {
+                container.setResources(resourceRequirement);
+            }
+        });
+
+    }
 
     /**
      * Update Environment variables.
      *
      * @param instanceName     Instance Name
-     * @param serviceTemplate  service Template object
+     * @param component        component object from YAML
      * @param updatedComponent updated component to process env var
      */
-//    private void updateEnvVar(String instanceName, ServiceTemplate serviceTemplate, ImageComponent updatedComponent,
-//                              Map<?, ?> dependencyInfo) {
-//        printDebug("[" + instanceName + "] cell instance [" + updatedComponent.getName() + "] component environment
-//        " +
-//                "variables:");
-//        Map<String, String> updatedParams = updatedComponent.getEnvVars();
-//        // Override values with updated values
-//        serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
-//            if (updatedParams.containsKey(envVar.getName()) && !updatedParams.get(envVar.getName()).isEmpty()) {
-//                envVar.setValue(updatedParams.get(envVar.getName()));
-//            }
-//        });
-//
-//        // Validate and replace dependency instance names
-//        serviceTemplate.getSpec().getContainer().getEnv().forEach(envVar -> {
-//            String value = envVar.getValue();
-//            if (value.isEmpty()) {
-//                printWarning("Value is empty for environment variable \"" + envVar.getName() + "\"");
-//                return;
-//            }
-//            envVar.setValue(value.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
-//            dependencyInfo.forEach((alias, info) -> {
-//                String aliasPlaceHolder = "{{" + alias + "}}";
-//                String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
-//                if (value.contains(aliasPlaceHolder)) {
-//                    envVar.setValue(value.replace(aliasPlaceHolder, depInstanceName));
-//                }
-//            });
-//            printDebug("\t" + envVar.getName() + "=" + envVar.getValue());
-//        });
-//    }
+    private void updateEnvVar(String instanceName, Component component, ImageComponent updatedComponent,
+                              Map<?, ?> dependencyInfo) {
+        printDebug("[" + instanceName + "] cell instance [" + updatedComponent.getName() + "] component environment " +
+                "variables:");
+        Map<String, String> updatedParams = updatedComponent.getEnvVars();
+        // Override values with updated values
+        component.getSpec().getTemplate().getContainers().forEach(container -> {
+            container.getEnv().forEach(envVar -> {
+                if (updatedParams.containsKey(envVar.getName()) && !updatedParams.get(envVar.getName()).isEmpty()) {
+                    envVar.setValue(updatedParams.get(envVar.getName()));
+                }
+                String value = envVar.getValue();
+                if (value.isEmpty()) {
+                    printWarning("Value is empty for environment variable \"" + envVar.getName() + "\"");
+                    return;
+                }
+                // Validate and replace dependency instance names
+                envVar.setValue(value.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+                dependencyInfo.forEach((alias, info) -> {
+                    String aliasPlaceHolder = "{{" + alias + "}}";
+                    String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
+                    if (value.contains(aliasPlaceHolder)) {
+                        envVar.setValue(value.replace(aliasPlaceHolder, depInstanceName));
+                    }
+                });
+                printDebug("\t" + envVar.getName() + "=" + envVar.getValue());
+            });
+        });
+    }
 
     /**
      * Update the dependencies annotation with dependent instance names.

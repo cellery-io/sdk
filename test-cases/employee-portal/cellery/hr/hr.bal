@@ -12,6 +12,7 @@ public function build(cellery:ImageName iName) returns error? {
             "hr": <cellery:HttpApiIngress>{
                 port: 8080,
                 context: "hr",
+                apiVersion:"local",
                 definition: {
                     resources: [
                         {
@@ -24,24 +25,36 @@ public function build(cellery:ImageName iName) returns error? {
             }
         },
         envVars: {
-            employee_api_url: { value: "" },
-            stock_api_url: { value: "" }
+            employee_api_url: {
+                value: ""
+            },
+            stock_api_url: {
+                value: ""
+            }
         },
         dependencies: {
             cells: {
-                employeeCellDep: "myorg/employee:1.0.0", //  fully qualified dependency image name as a string
-                stockCellDep: <cellery:ImageName>{ org: "myorg", name: "stock", ver: "1.0.0" } // dependency as a struct
+                employeeCellDep: "myorg/employee:1.0.0",                //  fully qualified dependency image name as a string
+                stockCellDep: <cellery:ImageName>{ org: "myorg", name: "stock", ver: "1.0.0" }            // dependency as a struct
             }
         }
     };
 
     hrComponent.envVars = {
-        employee_api_url: { value: <string>cellery:getReference(hrComponent, "employeeCellDep").employee_api_url },
-        stock_api_url: { value: <string>cellery:getReference(hrComponent, "stockCellDep").stock_api_url }
+        employee_api_url: {
+            value: <string>cellery:getReference(hrComponent, "employeeCellDep").employee_api_url
+        },
+        stock_api_url: {
+            value: <string>cellery:getReference(hrComponent, "stockCellDep").stock_api_url
+        }
     };
 
     // Cell Initialization
     cellery:CellImage hrCell = {
+        globalPublisher: {
+            apiVersion: "1.0.1",
+            context: "myorg"
+        },
         components: {
             hrComp: hrComponent
         }
@@ -55,16 +68,22 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
 }
 
 // cellery test command will facilitate all flags as cellery run
-public function test(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {    
+public function test(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
     cellery:Test employeeExternalTest1 = {
         name: "hr-test1",
         source: {
             image: "docker.io/celleryio/sampleapp-test-hr"
         },
         envVars: {
-            HR_CELL_URL: { value: <string>cellery:resolveReference(iName).hr_api_url },
-            EMP_CELL_URL: { value: <string>cellery:resolveReference(instances.employeeCellDep).employee_api_url },
-            STOCK_CELL_URL: { value: <string>cellery:resolveReference(instances.stockCellDep).stock_api_url }
+            HR_CELL_URL: {
+                value: <string>cellery:resolveReference(iName).hr_api_url
+            },
+            EMP_CELL_URL: {
+                value: <string>cellery:resolveReference(instances.employeeCellDep).employee_api_url
+            },
+            STOCK_CELL_URL: {
+                value: <string>cellery:resolveReference(instances.stockCellDep).stock_api_url
+            }
         }
     };
 
@@ -74,7 +93,9 @@ public function test(cellery:ImageName iName, map<cellery:ImageName> instances) 
             image: "docker.io/celleryio/sampleapp-test2-hr"
         },
         envVars: {
-            EMP_CELL_URL: { value: <string>cellery:resolveReference(instances.employeeCellDep).employee_api_url }
+            EMP_CELL_URL: {
+                value: <string>cellery:resolveReference(instances.employeeCellDep).employee_api_url
+            }
         }
     };
 

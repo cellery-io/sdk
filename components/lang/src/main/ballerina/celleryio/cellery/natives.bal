@@ -158,6 +158,7 @@ public type HttpApiIngress record {|
     int port;
     string context?;
     ApiDefinition definition?;
+    string apiVersion?;    // version is a keyword in Ballerina.
     Expose expose?;
     boolean authenticate = true;
 |};
@@ -223,8 +224,14 @@ public type Secret record {|
     boolean readOnly;
 |};
 
+public type GlobalApiPublisher record {|
+    string context?;
+    string apiVersion?;
+|};
+
 public type CellImage record {|
     ImageType kind = "Cell";
+    GlobalApiPublisher globalPublisher?;
     map<Component> components;
 |};
 
@@ -278,8 +285,8 @@ function validateCell(CellImage image) {
         } else if (image.kind == "Composite") {
             //TODO: Fix this when multiple ingress support is added.
             var ingress = component.ingresses[component.ingresses.keys()[0]];
-            if(ingress is HttpApiIngress || ingress is WebIngress) {
-                string errMsg = "Invalid ingress type in component "+component.name + ". Composites doesn't support HttpApiIngress and WebIngress.";
+            if (ingress is HttpApiIngress || ingress is WebIngress) {
+                string errMsg = "Invalid ingress type in component " + component.name + ". Composites doesn't support HttpApiIngress and WebIngress.";
                 error e = error(errMsg);
                 log:printError("Invalid ingress found ", err = e);
                 panic e;

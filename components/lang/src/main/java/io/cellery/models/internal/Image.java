@@ -17,6 +17,7 @@
  */
 package io.cellery.models.internal;
 
+import io.cellery.models.GlobalApiPublisher;
 import io.cellery.models.Test;
 import lombok.Data;
 import org.ballerinalang.util.exceptions.BallerinaException;
@@ -39,6 +40,7 @@ public class Image {
     private boolean zeroScaling;
     private boolean autoScaling;
     private boolean compositeImage;
+    private GlobalApiPublisher globalApiPublisher;
     private Test test;
 
     public Image() {

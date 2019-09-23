@@ -24,7 +24,7 @@ import com.google.gson.JsonParser;
 import io.cellery.CelleryUtils;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
-import io.cellery.models.ServiceTemplate;
+import io.cellery.models.Component;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -97,7 +97,7 @@ public class EmployeeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        final List<API> http = cell.getSpec().getGateway().getSpec().getHttp();
+        final List<API> http = cell.getSpec().getGateway().getSpec().getIngress().getHttp();
         Assert.assertEquals(http.get(0).getBackend(), "employee");
         Assert.assertEquals(http.get(0).getContext(), "employee");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -106,30 +106,26 @@ public class EmployeeTest {
         Assert.assertEquals(http.get(1).getContext(), "payroll");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        final List<ServiceTemplate> servicesTemplates = cell.getSpec().getServicesTemplates();
-        Assert.assertEquals(servicesTemplates.get(0).getMetadata().getName(), "employee");
-        Assert.assertEquals(servicesTemplates.get(0).getMetadata().getLabels().get("team"), "HR");
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(0).getName(), "SALARY_HOST");
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(0).getValue(),
+        final List<Component> components = cell.getSpec().getComponents();
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "employee");
+        Assert.assertEquals(components.get(0).getMetadata().getLabels().get("team"), "HR");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getName(),
+                "SALARY_HOST");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getValue(),
                 "{{instance_name}}--salary-service");
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getImage(), "wso2cellery/sampleapp" +
-                "-employee:0.3.0");
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getPorts().get(0)
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getImage(), "wso2cellery" +
+                "/sampleapp-employee:0.3.0");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getPorts().get(0)
                 .getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getServicePort(), 80);
-        Assert.assertEquals(servicesTemplates.get(1).getMetadata().getName(), "salary");
-        Assert.assertEquals(servicesTemplates.get(1).getMetadata().getLabels().get("owner"), "Alice");
-        Assert.assertEquals(servicesTemplates.get(1).getMetadata().getLabels().get("team"), "Finance");
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getContainer().getPorts().get(0)
+        Assert.assertEquals(components.get(1).getMetadata().getName(), "salary");
+        Assert.assertEquals(components.get(1).getMetadata().getLabels().get("owner"), "Alice");
+        Assert.assertEquals(components.get(1).getMetadata().getLabels().get("team"), "Finance");
+        Assert.assertEquals(components.get(1).getSpec().getTemplate().getContainers().get(0).getPorts().get(0)
                 .getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getReplicas(), 1);
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getServicePort(), 80);
     }
 
     @Test(groups = "run")
@@ -164,7 +160,7 @@ public class EmployeeTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        final List<API> http = runtimeCell.getSpec().getGateway().getSpec().getHttp();
+        final List<API> http = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp();
         Assert.assertEquals(http.get(0).getBackend(), "employee");
         Assert.assertEquals(http.get(0).getContext(), "employee");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
@@ -173,30 +169,27 @@ public class EmployeeTest {
         Assert.assertEquals(http.get(1).getContext(), "payroll");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
     }
 
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
-        final List<ServiceTemplate> servicesTemplates = runtimeCell.getSpec().getServicesTemplates();
-        Assert.assertEquals(servicesTemplates.get(0).getMetadata().getName(), "employee");
-        Assert.assertEquals(servicesTemplates.get(0).getMetadata().getLabels().get("team"), "HR");
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(0).getName(), "SALARY_HOST");
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getEnv().get(0).getValue(), "emp-inst" +
-                "--salary-service");
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getImage(), "wso2cellery/sampleapp" +
-                "-employee:0.3.0");
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getContainer().getPorts().get(0)
+        final List<Component> components = runtimeCell.getSpec().getComponents();
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "employee");
+        Assert.assertEquals(components.get(0).getMetadata().getLabels().get("team"), "HR");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getName(),
+                "SALARY_HOST");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getValue(),
+                "emp-inst--salary-service");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getImage(),
+                "wso2cellery/sampleapp" +
+                        "-employee:0.3.0");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getPorts().get(0)
                 .getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getServicePort(), 80);
-        Assert.assertEquals(servicesTemplates.get(1).getMetadata().getName(), "salary");
-        Assert.assertEquals(servicesTemplates.get(1).getMetadata().getLabels().get("owner"), "Alice");
-        Assert.assertEquals(servicesTemplates.get(1).getMetadata().getLabels().get("team"), "Finance");
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getContainer().getPorts().get(0)
+        Assert.assertEquals(components.get(1).getMetadata().getName(), "salary");
+        Assert.assertEquals(components.get(1).getMetadata().getLabels().get("owner"), "Alice");
+        Assert.assertEquals(components.get(1).getMetadata().getLabels().get("team"), "Finance");
+        Assert.assertEquals(components.get(1).getSpec().getTemplate().getContainers().get(0).getPorts().get(0)
                 .getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getReplicas(), 1);
-        Assert.assertEquals(servicesTemplates.get(1).getSpec().getServicePort(), 80);
     }
 
     @Test(groups = "build")

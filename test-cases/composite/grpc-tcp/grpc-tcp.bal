@@ -22,8 +22,7 @@ public function build(cellery:ImageName iName) returns error? {
         },
         ingresses: {
             mysqlIngress: <cellery:TCPIngress>{
-                backendPort: 3306,
-                gatewayPort: 31406
+                backendPort: 3306
             }
         },
         envVars: {

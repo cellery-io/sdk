@@ -18,17 +18,15 @@
 
 package io.cellery.models;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * Auto Scaling model class.
+ * KPA model class.
  */
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class AutoScaling {
-    private ScalingPolicy policy;
-    private boolean overridable;
+public class KPA {
+    private long minReplicas;
+    private long maxReplicas;
+    private long concurrency;
+
 }

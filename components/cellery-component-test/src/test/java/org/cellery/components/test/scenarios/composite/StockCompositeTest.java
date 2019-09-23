@@ -19,6 +19,7 @@
 package org.cellery.components.test.scenarios.composite;
 
 import io.cellery.CelleryUtils;
+import io.cellery.models.ComponentSpec;
 import io.cellery.models.Composite;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
@@ -66,7 +67,7 @@ public class StockCompositeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeAPIVersion() {
-        Assert.assertEquals(composite.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(composite.getApiVersion(), "mesh.cellery.io/v1alpha2");
     }
 
     @Test(groups = "build")
@@ -82,13 +83,15 @@ public class StockCompositeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "stock");
-        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
+        Assert.assertEquals(composite.getSpec().getComponents().get(0).getMetadata().getName(), "stock");
+        final ComponentSpec spec = composite.getSpec().getComponents().get(0).getSpec();
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getImage(),
                 "wso2cellery/sampleapp-stock:0.3.0");
-        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts()
-                .get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 80);
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getPorts().get(0).getContainerPort().intValue(),
+                8080);
+        Assert.assertEquals(spec.getPorts().get(0).getPort(), 80);
+        Assert.assertEquals(spec.getPorts().get(0).getName(), "stock");
+        Assert.assertEquals(spec.getPorts().get(0).getTargetPort(), 8080);
     }
 
     @AfterClass

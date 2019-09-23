@@ -19,8 +19,8 @@
 package org.cellery.components.test.scenarios.composite;
 
 import io.cellery.CelleryUtils;
+import io.cellery.models.ComponentSpec;
 import io.cellery.models.Composite;
-import io.cellery.models.ServiceTemplateSpec;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -87,14 +87,13 @@ public class HRCompositeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        Assert.assertEquals(composite.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "hr");
-        final ServiceTemplateSpec spec = composite.getSpec().getServicesTemplates().get(0).getSpec();
-        Assert.assertEquals(spec.getContainer().getEnv().get(0).getName(), "stock_api_url");
-        Assert.assertEquals(spec.getContainer().getEnv().get(1).getName(), "employee_api_url");
-        Assert.assertEquals(spec.getContainer().getImage(), "wso2cellery/sampleapp-hr:0.3.0");
-        Assert.assertEquals(spec.getContainer().getPorts().get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(spec.getReplicas(), 1);
-        Assert.assertEquals(spec.getServicePort(), 80);
+        Assert.assertEquals(composite.getSpec().getComponents().get(0).getMetadata().getName(), "hr");
+        final ComponentSpec spec = composite.getSpec().getComponents().get(0).getSpec();
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getName(), "stock_api_url");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(1).getName(), "employee_api_url");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getImage(), "wso2cellery/sampleapp-hr:0.3.0");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getPorts().get(0).getContainerPort().intValue()
+                , 8080);
     }
 
     @Test(groups = "run")
@@ -148,16 +147,17 @@ public class HRCompositeTest {
 
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
-        Assert.assertEquals(runtimeComposite.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "hr");
-        final ServiceTemplateSpec spec = runtimeComposite.getSpec().getServicesTemplates().get(0).getSpec();
-        Assert.assertEquals(spec.getContainer().getEnv().get(0).getName(), "stock_api_url");
-        Assert.assertEquals(spec.getContainer().getEnv().get(0).getValue(), "http://stock-inst--stock-service:80");
-        Assert.assertEquals(spec.getContainer().getEnv().get(1).getName(), "employee_api_url");
-        Assert.assertEquals(spec.getContainer().getEnv().get(1).getValue(), "http://emp-inst--employee-service:80");
-        Assert.assertEquals(spec.getContainer().getImage(), "wso2cellery/sampleapp-hr:0.3.0");
-        Assert.assertEquals(spec.getContainer().getPorts().get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(spec.getReplicas(), 1);
-        Assert.assertEquals(spec.getServicePort(), 80);
+        Assert.assertEquals(runtimeComposite.getSpec().getComponents().get(0).getMetadata().getName(), "hr");
+        final ComponentSpec spec = runtimeComposite.getSpec().getComponents().get(0).getSpec();
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getName(), "stock_api_url");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getValue(), "http://stock-inst" +
+                "--stock-service:80");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(1).getName(), "employee_api_url");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(1).getValue(), "http://emp-inst" +
+                "--employee-service:80");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getImage(), "wso2cellery/sampleapp-hr:0.3.0");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getPorts().get(0).getContainerPort().intValue()
+                , 8080);
     }
 
     @AfterClass

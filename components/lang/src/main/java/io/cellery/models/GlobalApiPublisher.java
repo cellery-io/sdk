@@ -25,6 +25,5 @@ import lombok.Data;
 @Data
 public class GlobalApiPublisher {
     private String context;
-    private boolean authenticate;
     private String version;
 }

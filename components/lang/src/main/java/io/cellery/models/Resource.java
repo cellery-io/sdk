@@ -19,15 +19,19 @@
 package io.cellery.models;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Autoscaling Resource Model.
  */
 @Data
-@NoArgsConstructor
 public class Resource {
     private String name;
-    private int targetAverageUtilization;
-    private String targetAverageValue;
+    private Map target;
+
+    public Resource() {
+        target = new HashMap<>();
+    }
 }

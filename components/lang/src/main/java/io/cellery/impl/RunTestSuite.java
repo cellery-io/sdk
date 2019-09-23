@@ -44,8 +44,6 @@ import static io.cellery.CelleryConstants.NAME;
 import static io.cellery.CelleryConstants.ORG;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.VERSION;
-import static io.cellery.CelleryUtils.printInfo;
-import static io.cellery.CelleryUtils.printWarning;
 
 /**
  * Native function cellery:runTestSuite.
@@ -188,99 +186,100 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
 //        }
 //    }
 
-    /**
-     * Poll periodically for 10 minutes till the Pod reaches Running state.
-     *
-     * @param podName      name of the pod
-     * @param podInfo      pod info string from shell command output
-     * @param instanceName test cell name
-     * @throws InterruptedException thrown if error occurs in Thread.sleep
-     */
-    private boolean waitForPodRunning(String podName, String podInfo, String instanceName) throws
-            InterruptedException {
-        int min = 10;
-        for (int i = 0; i < 12 * min; i++) {
-            if (podName.isEmpty()) {
-                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep " + instanceName + "--" +
-                                instanceName + "-job",
-                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
-                podName = podInfo.substring(0, podInfo.indexOf(' '));
-            }
-            if (!podInfo.contains("Running") && !podInfo.contains("Error") && !podInfo.contains("Completed")) {
-                Thread.sleep(5000);
-                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
-                                + instanceName + "--" + instanceName + "-job",
-                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
-            } else {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Poll periodically for 1 minute till the job reaches Complete or Failed state.
-     *
-     * @param jobName      name of the job
-     * @param podName      name of the pod
-     * @param instanceName test cell name
-     * @throws InterruptedException thrown if error occurs in Thread.sleep
-     */
-    private void waitForJobCompletion(String jobName, String podName, String instanceName) throws InterruptedException {
-        printInfo("Waiting for test job to complete...");
-        String jobStatus = "";
-        int min = 1;
-        for (int i = 0; i < 12 * min; i++) {
-            jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
-                            "-o jsonpath='{.status.conditions[?(@.type==\"Complete\")].status}'\n", null,
-                    CelleryUtils::printDebug, CelleryUtils::printWarning);
-
-            if (!"True".equalsIgnoreCase(jobStatus)) {
-                jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
-                                "-o jsonpath='{.status.conditions[?(@.type==\"Failed\")].status}'\n", null,
-                        CelleryUtils::printDebug, CelleryUtils::printWarning);
-            }
-            if ("True".equalsIgnoreCase(jobStatus)) {
-                break;
-            }
-            Thread.sleep(5000);
-        }
-        if (!"True".equalsIgnoreCase(jobStatus)) {
-            printWarning("Error getting status of job " + jobName + ". Skipping collection of logs.");
-        } else {
-            printInfo("Test execution completed. Collecting logs to logs/" +
-                    instanceName + ".log");
-            CelleryUtils.executeShellCommand(
-                    "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
-                    CelleryUtils::printDebug, CelleryUtils::printWarning);
-        }
-    }
-
-    private String getPodName(String podInfo, String instanceName) throws InterruptedException {
-        String podName;
-        int min = 1;
-        for (int i = 0; i < 12 * min; i++) {
-            if (podInfo.length() > 0) {
-                podName = podInfo.substring(0, podInfo.indexOf(' '));
-                return podName;
-            } else {
-                Thread.sleep(5000);
-                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
-                                + instanceName + "--" + instanceName + "-job",
-                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Deletes the test cell.
-     *
-     * @param instanceName test cell name
-     */
-    private void deleteTestCell(String instanceName) {
-        printInfo("Deleting test cell " + instanceName);
-        CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
-                CelleryUtils::printDebug, CelleryUtils::printWarning);
-    }
+//    /**
+//     * Poll periodically for 10 minutes till the Pod reaches Running state.
+//     *
+//     * @param podName      name of the pod
+//     * @param podInfo      pod info string from shell command output
+//     * @param instanceName test cell name
+//     * @throws InterruptedException thrown if error occurs in Thread.sleep
+//     */
+//    private boolean waitForPodRunning(String podName, String podInfo, String instanceName) throws
+//            InterruptedException {
+//        int min = 10;
+//        for (int i = 0; i < 12 * min; i++) {
+//            if (podName.isEmpty()) {
+//                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep " + instanceName + "--" +
+//                                instanceName + "-job",
+//                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
+//                podName = podInfo.substring(0, podInfo.indexOf(' '));
+//            }
+//            if (!podInfo.contains("Running") && !podInfo.contains("Error") && !podInfo.contains("Completed")) {
+//                Thread.sleep(5000);
+//                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
+//                                + instanceName + "--" + instanceName + "-job",
+//                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
+//            } else {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Poll periodically for 1 minute till the job reaches Complete or Failed state.
+//     *
+//     * @param jobName      name of the job
+//     * @param podName      name of the pod
+//     * @param instanceName test cell name
+//     * @throws InterruptedException thrown if error occurs in Thread.sleep
+//     */
+//    private void waitForJobCompletion(String jobName, String podName, String instanceName) throws
+//    InterruptedException {
+//        printInfo("Waiting for test job to complete...");
+//        String jobStatus = "";
+//        int min = 1;
+//        for (int i = 0; i < 12 * min; i++) {
+//            jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
+//                            "-o jsonpath='{.status.conditions[?(@.type==\"Complete\")].status}'\n", null,
+//                    CelleryUtils::printDebug, CelleryUtils::printWarning);
+//
+//            if (!"True".equalsIgnoreCase(jobStatus)) {
+//                jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
+//                                "-o jsonpath='{.status.conditions[?(@.type==\"Failed\")].status}'\n", null,
+//                        CelleryUtils::printDebug, CelleryUtils::printWarning);
+//            }
+//            if ("True".equalsIgnoreCase(jobStatus)) {
+//                break;
+//            }
+//            Thread.sleep(5000);
+//        }
+//        if (!"True".equalsIgnoreCase(jobStatus)) {
+//            printWarning("Error getting status of job " + jobName + ". Skipping collection of logs.");
+//        } else {
+//            printInfo("Test execution completed. Collecting logs to logs/" +
+//                    instanceName + ".log");
+//            CelleryUtils.executeShellCommand(
+//                    "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
+//                    CelleryUtils::printDebug, CelleryUtils::printWarning);
+//        }
+//    }
+//
+//    private String getPodName(String podInfo, String instanceName) throws InterruptedException {
+//        String podName;
+//        int min = 1;
+//        for (int i = 0; i < 12 * min; i++) {
+//            if (podInfo.length() > 0) {
+//                podName = podInfo.substring(0, podInfo.indexOf(' '));
+//                return podName;
+//            } else {
+//                Thread.sleep(5000);
+//                podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep "
+//                                + instanceName + "--" + instanceName + "-job",
+//                        null, CelleryUtils::printDebug, CelleryUtils::printWarning);
+//            }
+//        }
+//        return null;
+//    }
+//
+//    /**
+//     * Deletes the test cell.
+//     *
+//     * @param instanceName test cell name
+//     */
+//    private void deleteTestCell(String instanceName) {
+//        printInfo("Deleting test cell " + instanceName);
+//        CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
+//                CelleryUtils::printDebug, CelleryUtils::printWarning);
+//    }
 }

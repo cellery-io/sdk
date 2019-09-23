@@ -18,6 +18,7 @@
 
 package io.cellery.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 /**
@@ -25,6 +26,10 @@ import lombok.Data;
  */
 @Data
 public class Extension {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private OIDC oidc;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private GlobalApiPublisher globalApiPublisher;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private ClusterIngress clusterIngress;
 }

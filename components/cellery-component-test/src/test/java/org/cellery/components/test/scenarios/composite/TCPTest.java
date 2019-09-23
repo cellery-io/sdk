@@ -20,7 +20,7 @@ package org.cellery.components.test.scenarios.composite;
 
 import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
-import io.cellery.models.ServiceTemplateSpec;
+import io.cellery.models.ComponentSpec;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -39,6 +39,7 @@ import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
+import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_MESH_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
@@ -67,7 +68,7 @@ public class TCPTest {
 
     @Test(groups = "build")
     public void validateBuildTimeAPIVersion() {
-        Assert.assertEquals(cell.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(cell.getApiVersion(), CELLERY_MESH_VERSION);
     }
 
     @Test(groups = "build")
@@ -80,23 +81,24 @@ public class TCPTest {
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "mysql");
-        final ServiceTemplateSpec spec = cell.getSpec().getServicesTemplates().get(0).getSpec();
-        Assert.assertEquals(spec.getContainer().getEnv().get(0).getName(), "MYSQL_ROOT_PASSWORD");
-        Assert.assertEquals(spec.getContainer().getEnv().get(0).getValue(), "root");
-        Assert.assertEquals(spec.getContainer().getImage(), "mirage20/samples-productreview-mysql");
-        Assert.assertEquals(spec.getContainer().getPorts().get(0).getContainerPort().intValue(), 3306);
-        Assert.assertEquals(spec.getProtocol(), "TCP");
-        Assert.assertEquals(spec.getReplicas(), 1);
-        Assert.assertEquals(spec.getServicePort(), 3306);
+        Assert.assertEquals(cell.getSpec().getComponents().get(0).getMetadata().getName(), "mysql");
+        final ComponentSpec spec = cell.getSpec().getComponents().get(0).getSpec();
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getName(), "MYSQL_ROOT_PASSWORD");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getValue(), "root");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getImage(), "mirage20/samples-productreview" +
+                "-mysql");
+        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getPorts().get(0).getContainerPort().intValue()
+                , 3306);
+        Assert.assertEquals(spec.getPorts().get(0).getProtocol(), "TCP");
+        Assert.assertEquals(spec.getPorts().get(0).getTargetPort(), 3306);
 
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "grpc");
-        final ServiceTemplateSpec grpcCompSpec = cell.getSpec().getServicesTemplates().get(1).getSpec();
-        Assert.assertEquals(grpcCompSpec.getContainer().getImage(), "mirage20/samples-productreview-mysql");
-        Assert.assertEquals(grpcCompSpec.getContainer().getPorts().get(0).getContainerPort().intValue(), 4406);
-        Assert.assertEquals(grpcCompSpec.getProtocol(), "GRPC");
-        Assert.assertEquals(grpcCompSpec.getReplicas(), 1);
-        Assert.assertEquals(grpcCompSpec.getServicePort(), 4406);
+        Assert.assertEquals(cell.getSpec().getComponents().get(1).getMetadata().getName(), "grpc");
+        final ComponentSpec grpcCompSpec = cell.getSpec().getComponents().get(1).getSpec();
+        Assert.assertEquals(grpcCompSpec.getTemplate().getContainers().get(0).getImage(), "mirage20/samples" +
+                "-productreview-mysql");
+        Assert.assertEquals(grpcCompSpec.getTemplate().getContainers().get(0).getPorts()
+                .get(0).getContainerPort().intValue(), 4406);
+        Assert.assertEquals(grpcCompSpec.getPorts().get(0).getPort(), 4406);
     }
 
     @AfterClass

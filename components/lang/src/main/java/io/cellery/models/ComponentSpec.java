@@ -18,16 +18,25 @@
 
 package io.cellery.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
+
 /**
  * Component Spec.
  */
 @Data
 public class ComponentSpec {
     private String type;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private ScalingPolicy scalingPolicy;
     private ComponentTemplate template;
     private List<Port> ports;
+
+    public ComponentSpec() {
+        ports = new ArrayList<>();
+    }
 }

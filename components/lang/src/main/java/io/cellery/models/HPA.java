@@ -15,20 +15,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package io.cellery.models;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * GRPC ingress model.
+ * Horizontal Pod Autoscaler customized.
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class GRPC {
-    private int port;
-    private Destination destination;
+public class HPA {
+    private List<AutoScalingResourceMetric> metrics;
+    private long minReplicas;
+    private long maxReplicas;
+
+    public HPA() {
+        metrics = new ArrayList<>();
+    }
+
+    public void addMetric(AutoScalingResourceMetric resourceMetric) {
+        metrics.add(resourceMetric);
+    }
 }

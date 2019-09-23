@@ -19,6 +19,9 @@ package io.cellery.models;
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Composite spec model.
  */
@@ -26,6 +29,13 @@ import lombok.Data;
 //@NoArgsConstructor
 //@AllArgsConstructor
 public class CompositeSpec {
-//    private @Singular
-//    List<ServiceTemplate> servicesTemplates;
+    private List<Component> components;
+
+    public CompositeSpec() {
+        components = new ArrayList<>();
+    }
+
+    public void addComponent(Component component) {
+        this.components.add(component);
+    }
 }

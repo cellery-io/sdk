@@ -18,6 +18,7 @@
 
 package io.cellery.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,9 +32,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class API {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<APIDefinition> definitions;
+    private int port;
     private String context;
-    private String backend;
     private boolean global;
     private boolean authenticate;
     private Destination destination;

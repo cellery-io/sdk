@@ -25,7 +25,9 @@ import lombok.Data;
  */
 @Data
 public class Port {
+    private String name;
     private int port;
     private String protocol;
+    private String targetContainer;
     private int targetPort;
 }

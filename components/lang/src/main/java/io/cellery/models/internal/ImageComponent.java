@@ -19,8 +19,9 @@
 package io.cellery.models.internal;
 
 import io.cellery.models.API;
-import io.cellery.models.AutoScaling;
 import io.cellery.models.GRPC;
+import io.cellery.models.Port;
+import io.cellery.models.ScalingPolicy;
 import io.cellery.models.TCP;
 import io.cellery.models.Web;
 import io.fabric8.kubernetes.api.model.Probe;
@@ -46,25 +47,26 @@ public class ImageComponent {
     private List<API> apis;
     private List<TCP> tcpList;
     private List<GRPC> grpcList;
-    private List<Web> webList;
+    private Web web;
     private String source;
     private boolean isDockerPushRequired;
     private String service;
     private String protocol;
+    private List<Port> ports;
     private int containerPort;
-    private AutoScaling autoscaling;
+    private ScalingPolicy scalingPolicy;
     private List<String> unsecuredPaths;
     private Probe readinessProbe;
     private Probe livenessProbe;
     private ResourceRequirements resources;
 
     public ImageComponent() {
+        ports = new ArrayList<>();
         envVars = new HashMap<>();
         labels = new HashMap<>();
         apis = new ArrayList<>();
         tcpList = new ArrayList<>();
         grpcList = new ArrayList<>();
-        webList = new ArrayList<>();
         unsecuredPaths = new ArrayList<>();
         replicas = 1;
     }
@@ -81,10 +83,6 @@ public class ImageComponent {
         this.grpcList.add(grpc);
     }
 
-    public void addWeb(Web webIngress) {
-        this.webList.add(webIngress);
-    }
-
     public void addEnv(String key, String value) {
         this.envVars.put(key, value);
     }
@@ -95,5 +93,9 @@ public class ImageComponent {
 
     public void addUnsecuredPaths(String context) {
         this.unsecuredPaths.add(context);
+    }
+
+    public void addPort(Port port) {
+        this.ports.add(port);
     }
 }

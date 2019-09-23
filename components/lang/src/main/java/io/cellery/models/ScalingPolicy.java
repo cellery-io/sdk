@@ -20,25 +20,13 @@ package io.cellery.models;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Scale policy config model class.
+ * Scaling Policy Model.
  */
 @Data
 public class ScalingPolicy {
+    boolean overridable;
     private long replicas;
-    private long minReplicas;
-    private long maxReplicas;
-    private long concurrency;
-    private List<AutoScalingResourceMetric> metrics;
-
-    public ScalingPolicy() {
-        metrics = new ArrayList<>();
-    }
-
-    public void addAutoScalingResourceMetric(AutoScalingResourceMetric scalingResourceMetric) {
-        metrics.add(scalingResourceMetric);
-    }
+    private HPA hpa;
+    private KPA kpa;
 }

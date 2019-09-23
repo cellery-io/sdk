@@ -40,7 +40,7 @@ public class CelleryTestConstants {
     public static final String CELLERY_IMAGE_ORG = "mesh.cellery.io/cell-image-org";
     public static final String CELLERY_IMAGE_NAME = "mesh.cellery.io/cell-image-name";
     public static final String CELLERY_IMAGE_VERSION = "mesh.cellery.io/cell-image-version";
-    public static final String CELLERY_MESH_VERSION = "mesh.cellery.io/v1alpha1";
+    public static final String CELLERY_MESH_VERSION = "mesh.cellery.io/v1alpha2";
     public static final String YAML = ".yaml";
     public static final String BAL = ".bal";
     public static final String JSON = ".json";

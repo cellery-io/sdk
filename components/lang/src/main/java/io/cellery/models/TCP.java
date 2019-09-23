@@ -30,6 +30,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TCP {
     private int port;
-    private int backendPort;
-    private String backendHost;
+    private Destination destination;
 }

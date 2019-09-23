@@ -20,7 +20,9 @@ package io.cellery;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.cellery.models.Composite;
+import io.cellery.models.Destination;
 import io.cellery.models.OIDC;
+import io.cellery.models.Port;
 import io.cellery.models.Test;
 import io.cellery.models.Web;
 import io.cellery.models.internal.ImageComponent;
@@ -67,6 +69,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
+import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
 import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.KIND;
 import static io.cellery.CelleryConstants.LIMITS;
@@ -116,9 +120,20 @@ public class CelleryUtils {
         LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
         API httpAPI = getApi(component, attributeMap);
         httpAPI.setGlobal(true);
-        httpAPI.setBackend(component.getService());
+        httpAPI.setPort(DEFAULT_GATEWAY_PORT);
         httpAPI.setContext(((BString) gatewayConfig.get("context")).stringValue());
-        webIngress.setHttpAPI(httpAPI);
+        Destination destination = new Destination();
+        destination.setHost(component.getName());
+        destination.setPort(DEFAULT_GATEWAY_PORT);
+        httpAPI.setDestination(destination);
+        Port port = new Port();
+        port.setName(component.getName());
+        port.setPort(DEFAULT_GATEWAY_PORT);
+        port.setProtocol(DEFAULT_GATEWAY_PROTOCOL);
+        port.setTargetContainer(component.getName());
+        port.setTargetPort(component.getContainerPort());
+        component.addPort(port);
+        component.addApi(httpAPI);
         webIngress.setVhost(((BString) gatewayConfig.get("vhost")).stringValue());
         if (gatewayConfig.containsKey("tls")) {
             // TLS enabled
@@ -136,7 +151,8 @@ public class CelleryUtils {
             // OIDC enabled
             webIngress.setOidc(processOidc(((BMap) gatewayConfig.get("oidc")).getMap()));
         }
-        component.addWeb(webIngress);
+        webIngress.setHttpAPI(httpAPI);
+        component.setWeb(webIngress);
     }
 
     /**

@@ -19,7 +19,9 @@
 package org.cellery.components.test.scenarios.dockersource;
 
 import io.cellery.CelleryUtils;
+import io.cellery.models.API;
 import io.cellery.models.Cell;
+import io.cellery.models.Component;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.ARTIFACTS;
@@ -41,6 +44,7 @@ import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
+import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_MESH_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.DOCKER_SOURCE;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
@@ -72,7 +76,7 @@ public class DockerSourceTest {
 
     @Test(groups = "build")
     public void validateBuildTimeAPIVersion() {
-        Assert.assertEquals(cell.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(cell.getApiVersion(), CELLERY_MESH_VERSION);
     }
 
     @Test(groups = "build")
@@ -93,46 +97,42 @@ public class DockerSourceTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getBackend(),
                 "hello");
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getContext(),
                 "/hello");
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions().get(0)
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getDefinitions().get(0)
                 .getPath(), "/sayHello");
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions().get(0)
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getDefinitions().get(0)
                         .getMethod(),
                 "GET");
-        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).isGlobal());
 
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getBackend(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getBackend(),
                 "hellox");
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getContext(),
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getContext(),
                 "/hellox");
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions().get(0)
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getDefinitions().get(0)
                 .getPath(), "/sayHellox");
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions().get(0)
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getDefinitions().get(0)
                 .getMethod(), "GET");
-        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getHttp().get(1).isGlobal());
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
+        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).isGlobal());
     }
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getMetadata().getName(), "hello");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
+        final List<Component> components = cell.getSpec().getComponents();
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "hello");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getImage(),
                 cellImageInfo.getOrg() + "/sampleapp-hello");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts().get(0).
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getPorts().get(0).
                 getContainerPort().intValue(), 9090);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(), 80);
 
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getMetadata().getName(), "hellox");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getImage(),
+        Assert.assertEquals(components.get(1).getMetadata().getName(), "hellox");
+        Assert.assertEquals(components.get(1).getSpec().getTemplate().getContainers().get(0).getImage(),
                 cellImageInfo.getOrg() + "/sampleapp-hellox");
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getPorts().get(0).
+        Assert.assertEquals(components.get(1).getSpec().getTemplate().getContainers().get(0).getPorts().get(0).
                 getContainerPort().intValue(), 9090);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getReplicas(), 1);
-        Assert.assertEquals(cell.getSpec().getServicesTemplates().get(1).getSpec().getServicePort(), 80);
     }
 
     @Test(groups = "run")
@@ -153,7 +153,7 @@ public class DockerSourceTest {
 
     @Test(groups = "run")
     public void validateRunTimeAPIVersion() {
-        Assert.assertEquals(runtimeCell.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(runtimeCell.getApiVersion(), CELLERY_MESH_VERSION);
     }
 
     @Test(groups = "run")
@@ -174,56 +174,34 @@ public class DockerSourceTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getBackend()
-                , "hello");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getContext()
-                , "/hello");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
-                .get(0)
-                .getPath(), "/sayHello");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).getDefinitions()
-                        .get(0)
-                        .getMethod(),
-                "GET");
-        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(0).isGlobal());
-
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getBackend()
-                , "hellox");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getContext()
-                , "/hellox");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions()
-                .get(0)
-                .getPath(), "/sayHellox");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).getDefinitions()
-                .get(0)
-                .getMethod(), "GET");
-        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getHttp().get(1).isGlobal());
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getType(), "MicroGateway");
+        final API api = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0);
+        Assert.assertEquals(api.getBackend(), "hello");
+        Assert.assertEquals(api.getContext(), "/hello");
+        Assert.assertEquals(api.getDefinitions().get(0).getPath(), "/sayHello");
+        Assert.assertEquals(api.getDefinitions().get(0).getMethod(), "GET");
+        Assert.assertTrue(api.isGlobal());
+        final API api1 = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1);
+        Assert.assertEquals(api1.getBackend(), "hellox");
+        Assert.assertEquals(api1.getContext(), "/hellox");
+        Assert.assertEquals(api1.getDefinitions().get(0).getPath(), "/sayHellox");
+        Assert.assertEquals(api1.getDefinitions().get(0).getMethod(), "GET");
+        Assert.assertTrue(api1.isGlobal());
     }
 
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getMetadata().getName(),
-                "hello");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getImage(),
+        final List<Component> components = runtimeCell.getSpec().getComponents();
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "hello");
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getImage(),
                 cellImageInfo.getOrg() + "/sampleapp-hello");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getContainer().getPorts()
-                .get(0).
-                        getContainerPort().intValue(), 9090);
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getReplicas(), 1);
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(0).getSpec().getServicePort(),
-                80);
-
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(1).getMetadata().getName(),
-                "hellox");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getImage(),
+        Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getPorts()
+                .get(0).getContainerPort().intValue(), 9090);
+        Assert.assertEquals(components.get(1).getMetadata().getName(), "hellox");
+        Assert.assertEquals(components.get(1).getSpec().getTemplate().getContainers().get(0).getImage(),
                 cellImageInfo.getOrg() + "/sampleapp-hellox");
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(1).getSpec().getContainer().getPorts()
-                .get(0).
-                        getContainerPort().intValue(), 9090);
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(1).getSpec().getReplicas(), 1);
-        Assert.assertEquals(runtimeCell.getSpec().getServicesTemplates().get(1).getSpec().getServicePort(),
-                80);
+        Assert.assertEquals(components.get(1).getSpec().getTemplate().getContainers().get(0).getPorts()
+                .get(0).getContainerPort().intValue(), 9090);
+
     }
 
     @AfterClass
