@@ -168,6 +168,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             instanceName = generateRandomInstanceName(((BString) nameStruct.get("name")).stringValue(),
                     ((BString) nameStruct.get("ver")).stringValue());
         }
+        printInfo("starting instance " + instanceName);
         String cellImageDir = System.getenv(CELLERY_IMAGE_DIR_ENV_VAR);
         if (cellImageDir == null) {
             try (InputStream inputStream = new FileInputStream(DEBUG_BALLERINA_CONF)) {
@@ -175,7 +176,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 properties.load(inputStream);
                 cellImageDir = properties.getProperty(CELLERY_IMAGE_DIR_ENV_VAR).replaceAll("\"", "");
             } catch (IOException e) {
-                throw new BallerinaException("Unable to read " + DEBUG_BALLERINA_CONF, e);
+                ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
+                return;
             }
         }
         String destinationPath = cellImageDir + File.separator +
@@ -198,22 +200,29 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 generateDependencyTree(destinationPath + File.separator + "metadata.json");
                 if (!startDependencies) {
                     if (((Meta) dependencyTree.getRoot().getData()).getDependencies().size() > 0) {
-                        validateRootDependencyLinks(userDependencyLinks);
+                        if (!validateRootDependencyLinks(userDependencyLinks, ctx)) {
+                            return;
+                        }
                     }
                 }
             } catch (IOException e) {
-                String error = "Unable to generate dependency tree";
-                log.error(error, e);
+                ctx.setReturnValues(BLangVMErrors.createError(ctx, "Unable to generate dependency tree. " +
+                        e.getMessage()));
+                return;
             }
             try {
-                validateMainInstance(instanceName, ((Meta) dependencyTree.getRoot().getData()).getKind());
+                if (!validateMainInstance(instanceName, ((Meta) dependencyTree.getRoot().getData()).getKind(), ctx)) {
+                    return;
+                }
             } catch (BallerinaException e) {
-                printInfo(instanceName + " instance is already available in the runtime.");
-                ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
+                ctx.setReturnValues(BLangVMErrors.createError(ctx, "Failed to validate main instance. " +
+                        e.getMessage()));
                 return;
             }
             // Validate dependencies provided by user
-            validateDependencyLinksAliasNames(userDependencyLinks);
+            if (!validateDependencyLinksAliasNames(userDependencyLinks, ctx)) {
+                return;
+            }
             // Assign user defined instance names to dependent cells
             assignInstanceNames(dependencyTree.getRoot(), userDependencyLinks);
             // Assign environment variables to dependent instances
@@ -248,7 +257,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     // Start the dependency tree
                     startDependencyTree(dependencyTree.getRoot());
                 } catch (Exception e) {
-                    printWarning("Unable to start dependencies. " + e);
+                    ctx.setReturnValues(BLangVMErrors.createError(ctx, "Unable to start dependencies. " +
+                            e.getMessage()));
+                    return;
                 }
             } else {
                 dependencyInfo.forEach((alias, info) -> {
@@ -295,6 +306,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         } catch (Exception e) {
             String error = "Unable to apply composite yaml " + destinationPath;
             log.error(error, e);
+            ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
         }
     }
 
@@ -626,7 +638,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 "\t}\n" +
                 "}";
         appendToFile(ballerinaMain, tempBalFile);
-        createTempDirForDependency(tempBalFile, System.getProperty("user.dir"), cellInstanceName);
         // Create a cell image json object
         JSONObject image = new JSONObject();
         image.put("org", org);
@@ -644,6 +655,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         }
         Path workingDir = Paths.get(System.getProperty("user.dir"));
         if (Files.exists(workingDir.resolve(CelleryConstants.BALLERINA_TOML))) {
+            createTempDirForDependency(tempBalFile, System.getProperty("user.dir"), cellInstanceName);
             CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
                     environment, "ballerina", "run", cellInstanceName, "run", image.toString(), dependentCells,
                     "false", shareDependenciesFlag);
@@ -706,7 +718,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      *
      * @param dependencyLinks links to the dependent cells
      */
-    private void assignInstanceNames(Node<Meta> node, Map<?, ?> dependencyLinks) {
+    private void assignInstanceNames(Node<Meta> node, Map<?, ?> dependencyLinks) throws BallerinaException {
         // Instance names should be assigned from top to bottom
         if (node.equals(dependencyTree.getRoot())) {
             node.getData().setInstanceName(instanceName);
@@ -811,7 +823,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      *
      * @param dependencyLinks links to the dependent cells
      */
-    private void validateDependencyLinksAliasNames(Map<?, ?> dependencyLinks) {
+    private boolean validateDependencyLinksAliasNames(Map<?, ?> dependencyLinks, Context ctx) {
         ArrayList<String> invalidAliases = new ArrayList<>();
         dependencyLinks.forEach((alias, info) -> {
             boolean invalidAlias = true;
@@ -829,8 +841,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         if (invalidAliases.size() > 0) {
             String errMsg = "Cell dependency validation failed. Aliases " + String.join(", ", invalidAliases)
                     + " invalid";
-            throw new BallerinaException(errMsg);
+            ctx.setReturnValues(BLangVMErrors.createError(ctx, errMsg));
+            return false;
         }
+        return true;
     }
 
     /**
@@ -838,7 +852,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      *
      * @param dependencyLinks links to the dependent cells
      */
-    private void validateRootDependencyLinks(Map<?, ?> dependencyLinks) {
+    private boolean validateRootDependencyLinks(Map<?, ?> dependencyLinks, Context ctx) {
         ArrayList<String> missingAliases = new ArrayList<>();
         for (Map.Entry<String, Meta> dependentCell : ((Meta) dependencyTree.getRoot().getData()).
                 getDependencies().entrySet()) {
@@ -850,8 +864,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             String errMsg = "Cell dependency validation failed. All links to dependent cells should be defined when " +
                     "running instance without starting dependencies. Missing dependency aliases: " +
                     String.join(", ", missingAliases);
-            throw new BallerinaException(errMsg);
+            ctx.setReturnValues(BLangVMErrors.createError(ctx, errMsg));
+            return false;
         }
+        return true;
     }
 
     /**
@@ -859,12 +875,14 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      *
      * @param instanceName cell instance name
      */
-    private void validateMainInstance(String instanceName, String kind) {
+    private boolean validateMainInstance(String instanceName, String kind, Context ctx) {
         if (isInstanceRunning(instanceName, kind)) {
             String errMsg = "instance to be created should not be present in the runtime, instance " + instanceName +
                     " is already available in the runtime";
-            throw new BallerinaException(errMsg);
+            ctx.setReturnValues(BLangVMErrors.createError(ctx, errMsg));
+            return false;
         }
+        return true;
     }
 
     /**

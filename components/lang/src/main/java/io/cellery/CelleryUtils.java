@@ -85,6 +85,7 @@ import static io.cellery.CelleryConstants.DEFAULT_PARAMETER_VALUE;
 import static io.cellery.CelleryConstants.KIND;
 import static io.cellery.CelleryConstants.LIMITS;
 import static io.cellery.CelleryConstants.LIVENESS;
+import static io.cellery.CelleryConstants.MESH_CELLERY_IO;
 import static io.cellery.CelleryConstants.READINESS;
 import static io.cellery.CelleryConstants.REQUESTS;
 import static io.cellery.CelleryConstants.RESOURCES;
@@ -691,9 +692,9 @@ public class CelleryUtils {
         JsonObject imageJson = new Gson().fromJson(image, JsonObject.class);
         JsonObject cellAnnotations = imageJson.get("metadata").getAsJsonObject().get("annotations").
                 getAsJsonObject();
-        return cellAnnotations.get("mesh.cellery.io/cell-image-org").getAsString() + File.separator +
-                cellAnnotations.get("mesh.cellery.io/cell-image-name").getAsString() + ":" + cellAnnotations.
-                get("mesh.cellery.io/cell-image-version").getAsString();
+        return cellAnnotations.get(MESH_CELLERY_IO + "/cell-image-org").getAsString() + File.separator +
+                cellAnnotations.get(MESH_CELLERY_IO + "/cell-image-name").getAsString() + ":" + cellAnnotations.
+                get(MESH_CELLERY_IO + "/cell-image-version").getAsString();
     }
 
     /**
@@ -717,7 +718,7 @@ public class CelleryUtils {
         }
         JsonObject imageJson = new Gson().fromJson(cellImage, JsonObject.class);
         String cellDependenciesJson = imageJson.get("metadata").getAsJsonObject().get("annotations").
-                getAsJsonObject().get("mesh.cellery.io/cell-dependencies").getAsString();
+                getAsJsonObject().get(MESH_CELLERY_IO + "/cell-dependencies").getAsString();
 
         JsonArray cellDependencies = new JsonParser().parse(cellDependenciesJson).getAsJsonArray();
 
