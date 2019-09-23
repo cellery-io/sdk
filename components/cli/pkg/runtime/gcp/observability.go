@@ -52,7 +52,7 @@ func buildObservabilityConfigMaps() []ConfigMap {
 
 func AddObservability() error {
 	for _, v := range buildObservabilityYamlPaths() {
-		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
+		err := kubectl.ApplyFile(v)
 		if err != nil {
 			return err
 		}

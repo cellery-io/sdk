@@ -28,7 +28,7 @@ import (
 
 func addObservability(artifactsPath string) error {
 	for _, v := range buildObservabilityYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
+		err := kubectl.ApplyFile(v)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func addObservability(artifactsPath string) error {
 
 func deleteObservability(artifactsPath string) error {
 	for _, v := range buildObservabilityYamlPaths(artifactsPath) {
-		err := kubectl.DeleteFileWithNamespace(v, "cellery-system")
+		err := kubectl.DeleteFile(v)
 		if err != nil {
 			return err
 		}
