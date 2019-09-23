@@ -33,12 +33,14 @@ import (
 )
 
 const k8sYamlSpec = "spec"
-const k8sYamlServicetemplates = "servicesTemplates"
+const k8sYamlComponents = "components"
 const k8sYamlMetadata = "metadata"
 const k8sYamlName = "name"
-const k8sYamlContainer = "container"
+const k8sYamlContainers = "containers"
 const k8sYamlImage = "image"
 const k8sYamlImageEnvVars = "env"
+const k8sYamlContainerName = "name"
+const k8sContainerTemplate = "template"
 
 // TODO: remove
 //func RunPatchComponents(instance string, fqImage string) error {
@@ -248,9 +250,12 @@ func getPatchededCellInstanceForSingleComponent(instance string, componentName s
 	}
 	cellInstance, err := kubectl.GetCellInstanceAsMapInterface(instance)
 	if err != nil {
-		return cellInstance, err
+		return nil, err
 	}
 	cellSpec, err := getModifiedSpecForComponent(cellInstance, componentName, containerImage, containerName, newEnvVars)
+	if err != nil {
+		return nil, err
+	}
 	cellInstance[k8sYamlSpec] = cellSpec
 	return cellInstance, nil
 }
@@ -262,9 +267,12 @@ func getPatchedCompositeInstanceForSingleComponent(instance string, componentNam
 	}
 	compositeInst, err := kubectl.GetCompositeInstanceAsMapInterface(instance)
 	if err != nil {
-		return compositeInst, err
+		return nil, err
 	}
 	compSpec, err := getModifiedSpecForComponent(compositeInst, componentName, containerImage, containerName, newEnvVars)
+	if err != nil {
+		return nil, err
+	}
 	compositeInst[k8sYamlSpec] = compSpec
 	return compositeInst, nil
 }
@@ -290,10 +298,19 @@ func validateEnvVars(envVars []string) error {
 	return nil
 }
 
-func getMergedEnvVars(existingEnvVars []kubectl.Env, newEnvVars []kubectl.Env) []kubectl.Env {
+func getMergedEnvVars(currentContainerSpec interface{}, newEnvVars []kubectl.Env) ([]kubectl.Env, error) {
 	mergedEnvVarsMap := make(map[string]string)
+	envVarBytes, err := yaml.Marshal(currentContainerSpec)
+	if err != nil {
+		return nil, err
+	}
+	var envVars []kubectl.Env
+	err = yaml.Unmarshal(envVarBytes, &envVars)
+	if err != nil {
+		return nil, err
+	}
 	// add existing env vars
-	for _, value := range existingEnvVars {
+	for _, value := range envVars {
 		mergedEnvVarsMap[value.Name] = value.Value
 	}
 	// add new vars
@@ -309,7 +326,7 @@ func getMergedEnvVars(existingEnvVars []kubectl.Env, newEnvVars []kubectl.Env) [
 			Value: mapVal,
 		})
 	}
-	return mergedEnvVars
+	return mergedEnvVars, nil
 }
 
 func getEnvVarKeyValue(tuple string) (string, string) {
@@ -343,85 +360,170 @@ func getEnvVarKeyValue(tuple string) (string, string) {
 //	return compositeInstance, nil
 //}
 
-func getModifiedSpecForComponent(instance map[string]interface{}, componentName string, containerImage string, containerName string,
-	newEnvVars []string) (map[string]interface{}, error) {
+func getModifiedSpecForComponent(instance map[string]interface{}, componentName string, containerImage string,
+	containerName string, newEnvVars []string) (map[string]interface{}, error) {
 	cellSpecByteArr, err := yaml.Marshal(instance[k8sYamlSpec])
 	if err != nil {
-		return instance, err
+		return nil, err
 	}
 	var cellSpec map[string]interface{}
 	err = yaml.Unmarshal(cellSpecByteArr, &cellSpec)
 	if err != nil {
-		return instance, err
+		return nil, err
 	}
-	svcTempalateBytes, err := yaml.Marshal(cellSpec[k8sYamlServicetemplates])
+	components, err := getComponentSpecs(cellSpec)
 	if err != nil {
-		return instance, err
+		return nil, err
 	}
-	var svcTemplates []map[string]interface{}
-	err = yaml.Unmarshal(svcTempalateBytes, &svcTemplates)
-	if err != nil {
-		return instance, err
-	}
-
-	var matchFound bool
-	for i, svcTemplate := range svcTemplates {
+	var componentFound bool
+	for _, component := range components {
 		// metadata
-		svcTemplateMetadataBytes, err := yaml.Marshal(svcTemplate[k8sYamlMetadata])
+		compMetadata, err := getComponentMetadate(component)
 		if err != nil {
-			return instance, err
-		}
-		var svcTemplateMetadata map[string]string
-		err = yaml.Unmarshal(svcTemplateMetadataBytes, &svcTemplateMetadata)
-		if err != nil {
-			return instance, err
+			return nil, err
 		}
 		// if the component name matches, update the container
-		if componentName == svcTemplateMetadata[k8sYamlName] {
-			matchFound = true
-			svcTemplateSpecBytes, err := yaml.Marshal(svcTemplate[k8sYamlSpec])
+		if componentName == compMetadata[k8sYamlName] {
+			componentFound = true
+			componentSpec, err := getComponentSpec(component)
 			if err != nil {
-				return instance, err
+				return nil, err
 			}
-			var svcTemplateSpec map[string]interface{}
-			err = yaml.Unmarshal(svcTemplateSpecBytes, &svcTemplateSpec)
+			template, err := getTemplate(componentSpec)
 			if err != nil {
-				return instance, err
+				return nil, err
 			}
-			containerSpecBytes, err := yaml.Marshal(svcTemplateSpec[k8sYamlContainer])
+			containerSpecs, err := getContainerSpecs(template)
 			if err != nil {
-				return instance, err
+				return nil, err
 			}
-			var containerSpecs []map[string]interface{}
-			err = yaml.Unmarshal(containerSpecBytes, &containerSpecs)
-			if err != nil {
-				return instance, err
+			if containerName == "" {
+				// container name not provided, use the first container and update it.
+				if len(newEnvVars) > 0 {
+					mergedEnvVars, err := getMergedEnvVars(containerSpecs[0][k8sYamlImageEnvVars], convertToPodSpecEnvVars(newEnvVars))
+					if err != nil {
+						return nil, err
+					}
+					containerSpecs[0][k8sYamlImageEnvVars] = mergedEnvVars
+				}
+				containerSpecs[0][k8sYamlImage] = containerImage
+			} else {
+				containerFound := false
+				for i, spec := range containerSpecs {
+					containerSpec, err := getContainerSpec(spec)
+					if err != nil {
+						return nil, err
+					}
+					if containerName == containerSpec[k8sYamlContainerName] {
+						containerFound = true
+						if len(newEnvVars) > 0 {
+							mergedEnvVars, err := getMergedEnvVars(containerSpec[k8sYamlImageEnvVars], convertToPodSpecEnvVars(newEnvVars))
+							if err != nil {
+								return nil, err
+							}
+							containerSpec[k8sYamlImageEnvVars] = mergedEnvVars
+						}
+						containerSpec[k8sYamlImage] = containerImage
+						containerSpecs[i] = containerSpec
+						break
+					}
+				}
+				if !containerFound {
+					return nil, fmt.Errorf("No container with name %s found in component %s", containerName, componentName)
+				}
 			}
-			// TODO: fix
-			//if len(newEnvVars) > 0 {
-			//	envVarBytes, err := yaml.Marshal(containerSpecs[k8sYamlImageEnvVars])
-			//	if err != nil {
-			//		return instance, err
-			//	}
-			//	var envVars []kubectl.Env
-			//	err = yaml.Unmarshal(envVarBytes, &envVars)
-			//	if err != nil {
-			//		return instance, err
-			//	}
-			//	containerSpecs[k8sYamlImageEnvVars] = getMergedEnvVars(envVars, convertToPodSpecEnvVars(newEnvVars))
-			//}
-			//containerSpecs[k8sYamlImage] = containerImage
-			svcTemplateSpec[k8sYamlContainer] = containerSpecs
-			svcTemplate[k8sYamlSpec] = svcTemplateSpec
-			svcTemplates[i] = svcTemplate
+
+			template[k8sYamlContainers] = containerSpecs
+			componentSpec[k8sContainerTemplate] = template
+			component[k8sYamlSpec] = componentSpec
+			//components[i] = component
 			break
 		}
 	}
-	if !matchFound {
+	if !componentFound {
 		return instance, fmt.Errorf("no component with name %s found in instance %s", componentName, instance)
 	}
-	cellSpec[k8sYamlServicetemplates] = svcTemplates
+	cellSpec[k8sYamlComponents] = components
 	return cellSpec, nil
+}
+
+func getComponentSpecs(cellSpec map[string]interface{}) ([]map[string]interface{}, error) {
+
+	componentBytes, err := yaml.Marshal(cellSpec[k8sYamlComponents])
+	if err != nil {
+		return nil, err
+	}
+	var components []map[string]interface{}
+	err = yaml.Unmarshal(componentBytes, &components)
+	if err != nil {
+		return nil, err
+	}
+	return components, nil
+}
+
+func getComponentSpec(component map[string]interface{}) (map[string]interface{}, error) {
+	compSpecBytes, err := yaml.Marshal(component[k8sYamlSpec])
+	if err != nil {
+		return nil, err
+	}
+	var componentSpec map[string]interface{}
+	err = yaml.Unmarshal(compSpecBytes, &componentSpec)
+	if err != nil {
+		return nil, err
+	}
+	return componentSpec, nil
+}
+
+func getContainerSpecs(template map[string]interface{}) ([]map[string]interface{}, error) {
+	containerSpecBytes, err := yaml.Marshal(template[k8sYamlContainers])
+	if err != nil {
+		return nil, err
+	}
+	var containerSpecs []map[string]interface{}
+	err = yaml.Unmarshal(containerSpecBytes, &containerSpecs)
+	if err != nil {
+		return nil, err
+	}
+	return containerSpecs, nil
+}
+
+func getContainerSpec(o interface{}) (map[string]interface{}, error) {
+	var containerSpec map[string]interface{}
+	containerYamlBytes, err := yaml.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	err = yaml.Unmarshal(containerYamlBytes, &containerSpec)
+	if err != nil {
+		return nil, err
+	}
+	return containerSpec, err
+}
+
+func getComponentMetadate(component map[string]interface{}) (map[string]string, error) {
+	compMetadataBytes, err := yaml.Marshal(component[k8sYamlMetadata])
+	if err != nil {
+		return nil, err
+	}
+	var compMetadata map[string]string
+	err = yaml.Unmarshal(compMetadataBytes, &compMetadata)
+	if err != nil {
+		return nil, err
+	}
+	return compMetadata, nil
+}
+
+func getTemplate(componentSpec map[string]interface{}) (map[string]interface{}, error) {
+	templateBytes, err := yaml.Marshal(componentSpec[k8sContainerTemplate])
+	if err != nil {
+		return nil, err
+	}
+	var template map[string]interface{}
+	err = yaml.Unmarshal(templateBytes, &template)
+	if err != nil {
+		return nil, err
+	}
+	return template, nil
 }
 
 //func getModifedSpec(instance map[string]interface{}, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {

@@ -35,7 +35,6 @@ func newPatchComponentsCommand() *cobra.Command {
 	var envVars []string
 	cmd := &cobra.Command{
 		Use: "patch <instance name> <component name> --container-image mycontainerorg/hello:1.0.0 \n" +
-			"patch <instance name> <component name> --container_name hr --container-image mycontainerorg/hello:1.0.0 \n" +
 			"  	  patch <instance name> <component name> --container-image mycontainerorg/hello:1.0.0 --env foo=bar --env bob=alice",
 		Short: "patch a particular component of a cell/composite instance with a new container image",
 		Args: func(cmd *cobra.Command, args []string) error {
