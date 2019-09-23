@@ -22,6 +22,7 @@ import io.cellery.CelleryUtils;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.cellery.models.GRPC;
+import io.cellery.models.Ingress;
 import io.fabric8.kubernetes.api.model.Container;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
@@ -120,7 +121,8 @@ public class CustomerProductTest {
     public void validateBuildTimeServiceTemplates() {
         Assert.assertEquals(cell.getSpec().getComponents().get(0).getMetadata().getName(),
                 "customers");
-        final Container container = cell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0);
+        final Container container =
+                cell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0);
         Assert.assertEquals(container.getEnv().get(0).getName(), "PORT");
         Assert.assertEquals(container.getEnv().get(0).getValue(), "8080");
         Assert.assertEquals(container.getImage(), "celleryio/samples-productreview-customers");
@@ -128,7 +130,8 @@ public class CustomerProductTest {
 
         Assert.assertEquals(cell.getSpec().getComponents().get(1).getMetadata().getName(),
                 "categories");
-        final List<Container> containers = cell.getSpec().getComponents().get(1).getSpec().getTemplate().getContainers();
+        final List<Container> containers =
+                cell.getSpec().getComponents().get(1).getSpec().getTemplate().getContainers();
         Assert.assertEquals(containers.get(0).getEnv().get(0).getName(), "PORT");
         Assert.assertEquals(containers.get(0).getEnv().get(0).getValue(), "8000");
         Assert.assertEquals(containers.get(0).getImage(), "celleryio/samples-productreview-categories");
@@ -181,77 +184,57 @@ public class CustomerProductTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getGrpc().get(0).getDestination().getHost(),
-                "categories");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getGrpc().get(0).getDestination().getPort(),
-                8000);
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getGrpc().get(0).getPort(),
-                8000);
+        final Ingress ingress = runtimeCell.getSpec().getGateway().getSpec().getIngress();
+        Assert.assertEquals(ingress.getGrpc().get(0).getDestination().getHost(), "categories");
+        Assert.assertEquals(ingress.getGrpc().get(0).getDestination().getPort(), 8000);
+        Assert.assertEquals(ingress.getGrpc().get(0).getPort(), 8000);
 
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getDestination().getHost(),
-                "customers");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getContext(),
-                "customers-1");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getDefinitions()
-                .get(0).getMethod(), "GET");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getDefinitions()
-                .get(0).getPath(), "/*");
-        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).isAuthenticate());
+        Assert.assertEquals(ingress.getHttp().get(0).getDestination().getHost(), "customers");
+        Assert.assertEquals(ingress.getHttp().get(0).getContext(), "customers-1");
+        Assert.assertEquals(ingress.getHttp().get(0).getDefinitions().get(0).getMethod(), "GET");
+        Assert.assertEquals(ingress.getHttp().get(0).getDefinitions().get(0).getPath(), "/*");
+        Assert.assertTrue(ingress.getHttp().get(0).isAuthenticate());
 
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getDestination().getHost(),
-                "products");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getContext(),
-                "products-1");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getDefinitions()
-                .get(0).getMethod(), "GET");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getDefinitions()
-                .get(0).getPath(), "/*");
-        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).isAuthenticate());
-        
+        Assert.assertEquals(ingress.getHttp().get(1).getDestination().getHost(), "products");
+        Assert.assertEquals(ingress.getHttp().get(1).getContext(), "products-1");
+        Assert.assertEquals(ingress.getHttp().get(1).getDefinitions().get(0).getMethod(), "GET");
+        Assert.assertEquals(ingress.getHttp().get(1).getDefinitions().get(0).getPath(), "/*");
+        Assert.assertTrue(ingress.getHttp().get(0).isAuthenticate());
+
     }
 
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
         Assert.assertEquals(runtimeCell.getSpec().getComponents().get(0).getMetadata().getName(),
                 "customers");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(0).getName(), "PORT");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(0).getValue(), "8080");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0).getImage(),
-                "celleryio/samples-productreview-customers");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0).getPorts()
-                .get(0).getContainerPort().intValue(), 8080);
+        final List<Container> containers =
+                runtimeCell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers();
+        Assert.assertEquals(containers.get(0).getEnv().get(0).getName(), "PORT");
+        Assert.assertEquals(containers.get(0).getEnv().get(0).getValue(), "8080");
+        Assert.assertEquals(containers.get(0).getImage(), "celleryio/samples-productreview-customers");
+        Assert.assertEquals(containers.get(0).getPorts().get(0).getContainerPort().intValue(), 8080);
 
         Assert.assertEquals(runtimeCell.getSpec().getComponents().get(1).getMetadata().getName(),
                 "categories");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(1).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(0).getName(), "PORT");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(1).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(0).getValue(), "8000");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(1).getSpec().getTemplate().getContainers().get(0).getImage(),
-                "celleryio/samples-productreview-categories");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(1).getSpec().getTemplate().getContainers().get(0).getPorts()
-                .get(0).getContainerPort().intValue(), 8000);
+        final List<Container> containers1 =
+                runtimeCell.getSpec().getComponents().get(1).getSpec().getTemplate().getContainers();
+        Assert.assertEquals(containers1.get(0).getEnv().get(0).getName(), "PORT");
+        Assert.assertEquals(containers1.get(0).getEnv().get(0).getValue(), "8000");
+        Assert.assertEquals(containers1.get(0).getImage(), "celleryio/samples-productreview-categories");
+        Assert.assertEquals(containers1.get(0).getPorts().get(0).getContainerPort().intValue(), 8000);
 
         Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getMetadata().getName(),
                 "products");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(0).getName(), "CATEGORIES_PORT");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(0).getValue(), "8000");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(1).getName(), "PORT");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(1).getValue(), "8080");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(2).getName(), "CATEGORIES_HOST");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers().get(0).getEnv()
-                .get(2).getValue(), "cust-inst--categories-service");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers().get(0).getImage(),
-                "celleryio/samples-productreview-products");
-        Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers().get(0).getPorts()
-                .get(0).getContainerPort().intValue(), 8080);
+        final List<Container> containers2 =
+                runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers();
+        Assert.assertEquals(containers2.get(0).getEnv().get(0).getName(), "CATEGORIES_PORT");
+        Assert.assertEquals(containers2.get(0).getEnv().get(0).getValue(), "8000");
+        Assert.assertEquals(containers2.get(0).getEnv().get(1).getName(), "PORT");
+        Assert.assertEquals(containers2.get(0).getEnv().get(1).getValue(), "8080");
+        Assert.assertEquals(containers2.get(0).getEnv().get(2).getName(), "CATEGORIES_HOST");
+        Assert.assertEquals(containers2.get(0).getEnv().get(2).getValue(), "cust-inst--categories-service");
+        Assert.assertEquals(containers2.get(0).getImage(), "celleryio/samples-productreview-products");
+        Assert.assertEquals(containers2.get(0).getPorts().get(0).getContainerPort().intValue(), 8080);
     }
 
     @AfterClass

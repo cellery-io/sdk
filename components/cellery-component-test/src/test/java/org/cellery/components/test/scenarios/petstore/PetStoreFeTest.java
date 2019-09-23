@@ -181,14 +181,12 @@ public class PetStoreFeTest {
 
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getExtensions()
-                .getClusterIngress().getHost(), "pet-store.com");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getDestination().getHost(),
-                "portal");
-        Assert.assertEquals(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getContext(),
-                "/");
-        Assert.assertTrue(runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).isGlobal());
-        final OIDC oidc = runtimeCell.getSpec().getGateway().getSpec().getIngress().getExtensions().getOidc();
+        final Ingress ingress = runtimeCell.getSpec().getGateway().getSpec().getIngress();
+        Assert.assertEquals(ingress.getExtensions().getClusterIngress().getHost(), "pet-store.com");
+        Assert.assertEquals(ingress.getHttp().get(0).getDestination().getHost(), "portal");
+        Assert.assertEquals(ingress.getHttp().get(0).getContext(), "/");
+        Assert.assertTrue(ingress.getHttp().get(0).isGlobal());
+        final OIDC oidc = ingress.getExtensions().getOidc();
         Assert.assertEquals(oidc.getBaseUrl(), "http://pet-store.com/");
         Assert.assertEquals(oidc.getClientId(), "petstoreapplication");
         Assert.assertEquals(oidc.getDcrPassword(), "admin");

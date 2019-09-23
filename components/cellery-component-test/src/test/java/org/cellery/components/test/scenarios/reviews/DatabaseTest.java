@@ -20,6 +20,8 @@ package org.cellery.components.test.scenarios.reviews;
 
 import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
+import io.cellery.models.TCP;
+import io.fabric8.kubernetes.api.model.Container;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -32,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
@@ -86,22 +89,20 @@ public class DatabaseTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getTcp().get(0).getDestination().getPort()
-                , 3306);
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getTcp().get(0).getPort(), 31406);
+        final TCP tcp = cell.getSpec().getGateway().getSpec().getIngress().getTcp().get(0);
+        Assert.assertEquals(tcp.getDestination().getPort(), 3306);
+        Assert.assertEquals(tcp.getPort(), 31406);
     }
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
         Assert.assertEquals(cell.getSpec().getComponents().get(0).getMetadata().getName(), "mysql");
-        Assert.assertEquals(cell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).
-                getName(), "MYSQL_ROOT_PASSWORD");
-        Assert.assertEquals(cell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).
-                getValue(), "root");
-        Assert.assertEquals(cell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0).getImage(),
-                "mirage20/samples-productreview-mysql");
-        Assert.assertEquals(cell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers().get(0).getPorts().get(0).
-                getContainerPort().intValue(), 3306);
+        final List<Container> containers =
+                cell.getSpec().getComponents().get(0).getSpec().getTemplate().getContainers();
+        Assert.assertEquals(containers.get(0).getEnv().get(0).getName(), "MYSQL_ROOT_PASSWORD");
+        Assert.assertEquals(containers.get(0).getEnv().get(0).getValue(), "root");
+        Assert.assertEquals(containers.get(0).getImage(), "mirage20/samples-productreview-mysql");
+        Assert.assertEquals(containers.get(0).getPorts().get(0).getContainerPort().intValue(), 3306);
     }
 
     @AfterClass

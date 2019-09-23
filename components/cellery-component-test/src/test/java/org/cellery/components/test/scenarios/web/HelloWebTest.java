@@ -97,7 +97,7 @@ public class HelloWebTest {
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
         final Ingress ingress = cell.getSpec().getGateway().getSpec().getIngress();
-        Assert.assertEquals(ingress.getExtensions().getClusterIngress().getHost(),"hello-world.com");
+        Assert.assertEquals(ingress.getExtensions().getClusterIngress().getHost(), "hello-world.com");
         Assert.assertEquals(ingress.getHttp().get(0).getDestination().getHost(), "hello");
         Assert.assertEquals(ingress.getHttp().get(0).getContext(), "/");
         Assert.assertTrue(ingress.getHttp().get(0).isGlobal());

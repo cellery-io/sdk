@@ -22,6 +22,7 @@ import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
 import io.cellery.models.ComponentSpec;
 import io.cellery.models.GatewaySpec;
+import io.fabric8.kubernetes.api.model.Container;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -34,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static org.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
@@ -101,9 +103,10 @@ public class TCPTest {
 
         Assert.assertEquals(cell.getSpec().getComponents().get(1).getMetadata().getName(), "grpc");
         final ComponentSpec grpcCompSpec = cell.getSpec().getComponents().get(1).getSpec();
-        Assert.assertEquals(grpcCompSpec.getTemplate().getContainers().get(0).getImage(), "mirage20/samples" +
+        final List<Container> containers = grpcCompSpec.getTemplate().getContainers();
+        Assert.assertEquals(containers.get(0).getImage(), "mirage20/samples" +
                 "-productreview-mysql");
-        Assert.assertEquals(grpcCompSpec.getTemplate().getContainers().get(0).getPorts().get(0).getContainerPort().intValue(), 4406);
+        Assert.assertEquals(containers.get(0).getPorts().get(0).getContainerPort().intValue(), 4406);
     }
 
     @AfterClass

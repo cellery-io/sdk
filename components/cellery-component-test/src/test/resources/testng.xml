@@ -25,25 +25,25 @@
             </dependencies>
         </groups>
         <classes>
-<!--            <class name="org.cellery.components.test.scenarios.employee.StockTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.employee.EmployeeTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.employee.HRTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.web.HelloWebTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.petstore.PetStoreBeTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.petstore.PetStoreFeTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.petservice.PetServiceTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.tlsweb.WebTlsTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.dockersource.DockerSourceTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.reviews.DatabaseTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.reviews.CustomerProductTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.reviews.ReviewsTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.probes.ProbesTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.resource.ResourceTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.tcp.TCPTest"/>-->
+            <class name="org.cellery.components.test.scenarios.employee.StockTest"/>
+            <class name="org.cellery.components.test.scenarios.employee.EmployeeTest"/>
+            <class name="org.cellery.components.test.scenarios.employee.HRTest"/>
+            <class name="org.cellery.components.test.scenarios.web.HelloWebTest"/>
+            <class name="org.cellery.components.test.scenarios.petstore.PetStoreBeTest"/>
+            <class name="org.cellery.components.test.scenarios.petstore.PetStoreFeTest"/>
+            <class name="org.cellery.components.test.scenarios.petservice.PetServiceTest"/>
+            <class name="org.cellery.components.test.scenarios.tlsweb.WebTlsTest"/>
+            <class name="org.cellery.components.test.scenarios.dockersource.DockerSourceTest"/>
+            <class name="org.cellery.components.test.scenarios.reviews.DatabaseTest"/>
+            <class name="org.cellery.components.test.scenarios.reviews.CustomerProductTest"/>
+            <class name="org.cellery.components.test.scenarios.reviews.ReviewsTest"/>
+            <class name="org.cellery.components.test.scenarios.probes.ProbesTest"/>
+            <class name="org.cellery.components.test.scenarios.resource.ResourceTest"/>
+            <class name="org.cellery.components.test.scenarios.tcp.TCPTest"/>
             <class name="org.cellery.components.test.scenarios.composite.StockCompositeTest"/>
             <class name="org.cellery.components.test.scenarios.composite.EmployeeCompositeTest"/>
-<!--            <class name="org.cellery.components.test.scenarios.composite.HRCompositeTest"/>-->
-<!--            <class name="org.cellery.components.test.scenarios.composite.TCPTest"/>-->
+            <class name="org.cellery.components.test.scenarios.composite.HRCompositeTest"/>
+            <class name="org.cellery.components.test.scenarios.composite.TCPTest"/>
         </classes>
     </test>
 </suite>
