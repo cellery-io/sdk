@@ -682,7 +682,7 @@ public class CelleryUtils {
      */
     public static String getInstanceImageName(String instance, String kind) {
         String image;
-        if (kind.equals("CELL")) {
+        if (kind.equals(CELL)) {
             image = KubernetesClient.getCells(instance);
         } else {
             image = KubernetesClient.getComposites(instance);

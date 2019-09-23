@@ -73,6 +73,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -625,6 +626,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 "\t}\n" +
                 "}";
         appendToFile(ballerinaMain, tempBalFile);
+        createTempDirForDependency(tempBalFile, System.getProperty("user.dir"), cellInstanceName);
         // Create a cell image json object
         JSONObject image = new JSONObject();
         image.put("org", org);
@@ -643,13 +645,20 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
         if (Files.exists(workingDir.resolve(CelleryConstants.BALLERINA_TOML))) {
             CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                    environment, "ballerina", "run", instanceName, "run", image.toString(), dependentCells,
+                    environment, "ballerina", "run", cellInstanceName, "run", image.toString(), dependentCells,
                     "false", shareDependenciesFlag);
         } else {
             CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
                     environment, "ballerina", "run", tempBalFile, "run", image.toString(), dependentCells,
                     "false", shareDependenciesFlag);
         }
+    }
+
+    private void createTempDirForDependency(String tempBalFile, String workingDir, String instanceName)
+            throws IOException {
+        Path sourceFilePath = Paths.get(tempBalFile);
+        Path module = Files.createDirectory(Paths.get(workingDir).resolve(instanceName));
+        Files.copy(sourceFilePath, module.resolve(sourceFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**
