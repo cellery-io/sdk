@@ -97,8 +97,8 @@ public class DockerSourceTest {
 
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getBackend(),
-                "hello");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0)
+                .getDestination().getHost(), "hello");
         Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getContext(),
                 "/hello");
         Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getDefinitions().get(0)
@@ -108,8 +108,8 @@ public class DockerSourceTest {
                 "GET");
         Assert.assertTrue(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).isGlobal());
 
-        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getBackend(),
-                "hellox");
+        Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1)
+                .getDestination().getHost(), "hellox");
         Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getContext(),
                 "/hellox");
         Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1).getDefinitions().get(0)
@@ -175,13 +175,13 @@ public class DockerSourceTest {
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
         final API api = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0);
-        Assert.assertEquals(api.getBackend(), "hello");
+        Assert.assertEquals(api.getDestination().getHost(), "hello");
         Assert.assertEquals(api.getContext(), "/hello");
         Assert.assertEquals(api.getDefinitions().get(0).getPath(), "/sayHello");
         Assert.assertEquals(api.getDefinitions().get(0).getMethod(), "GET");
         Assert.assertTrue(api.isGlobal());
         final API api1 = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1);
-        Assert.assertEquals(api1.getBackend(), "hellox");
+        Assert.assertEquals(api1.getDestination().getHost(), "hellox");
         Assert.assertEquals(api1.getContext(), "/hellox");
         Assert.assertEquals(api1.getDefinitions().get(0).getPath(), "/sayHellox");
         Assert.assertEquals(api1.getDefinitions().get(0).getMethod(), "GET");

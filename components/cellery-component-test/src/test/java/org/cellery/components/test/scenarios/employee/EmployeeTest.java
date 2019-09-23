@@ -84,7 +84,7 @@ public class EmployeeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeAPIVersion() {
-        Assert.assertEquals(cell.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(cell.getApiVersion(), CELLERY_MESH_VERSION);
     }
 
     @Test(groups = "build")
@@ -98,11 +98,11 @@ public class EmployeeTest {
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
         final List<API> http = cell.getSpec().getGateway().getSpec().getIngress().getHttp();
-        Assert.assertEquals(http.get(0).getBackend(), "employee");
+        Assert.assertEquals(http.get(0).getDestination().getHost(), "employee");
         Assert.assertEquals(http.get(0).getContext(), "employee");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getPath(), "/details");
-        Assert.assertEquals(http.get(1).getBackend(), "salary");
+        Assert.assertEquals(http.get(1).getDestination().getHost(), "salary");
         Assert.assertEquals(http.get(1).getContext(), "payroll");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
@@ -161,11 +161,11 @@ public class EmployeeTest {
     @Test(groups = "run")
     public void validateRunTimeGatewayTemplate() {
         final List<API> http = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp();
-        Assert.assertEquals(http.get(0).getBackend(), "employee");
+        Assert.assertEquals(http.get(0).getDestination().getHost(), "employee");
         Assert.assertEquals(http.get(0).getContext(), "employee");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getPath(), "/details");
-        Assert.assertEquals(http.get(1).getBackend(), "salary");
+        Assert.assertEquals(http.get(1).getDestination().getHost(), "salary");
         Assert.assertEquals(http.get(1).getContext(), "payroll");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");

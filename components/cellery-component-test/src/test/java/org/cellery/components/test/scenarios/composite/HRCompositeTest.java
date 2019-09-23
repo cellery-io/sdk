@@ -42,6 +42,7 @@ import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
 import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
+import static org.cellery.components.test.utils.CelleryTestConstants.CELLERY_MESH_VERSION;
 import static org.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static org.cellery.components.test.utils.CelleryTestConstants.YAML;
 
@@ -72,7 +73,7 @@ public class HRCompositeTest {
 
     @Test(groups = "build")
     public void validateBuildTimeAPIVersion() {
-        Assert.assertEquals(composite.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(composite.getApiVersion(), CELLERY_MESH_VERSION);
     }
 
     @Test(groups = "build")
@@ -131,7 +132,7 @@ public class HRCompositeTest {
 
     @Test(groups = "run")
     public void validateRunTimeAPIVersion() {
-        Assert.assertEquals(runtimeComposite.getApiVersion(), "mesh.cellery.io/v1alpha1");
+        Assert.assertEquals(runtimeComposite.getApiVersion(), CELLERY_MESH_VERSION);
     }
 
     @Test(groups = "run")
