@@ -78,7 +78,7 @@ public function build(cellery:ImageName iName) returns error? {
 // iName - The Image name
 // instances - The map dependency instances of the Cell instance to be created
 // return - The Cell instance
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     cellery:CellImage petStoreFrontendCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(petStoreFrontendCell, iName, instances);
+    return cellery:createInstance(petStoreFrontendCell, iName, instances, startDependencies, shareDependencies);
 }
