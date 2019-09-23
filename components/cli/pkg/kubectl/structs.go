@@ -75,7 +75,7 @@ type CellSpec struct {
 }
 
 type CompositeSpec struct {
-	ComponentTemplates []ComponentTemplate `json:"servicesTemplates"`
+	ComponentTemplates []ComponentTemplate `json:"components"`
 }
 
 type ComponentTemplate struct {
@@ -87,14 +87,19 @@ type ComponentTemplateMetadata struct {
 	Name string `json:"name"`
 }
 
+type PodTemplate struct {
+	Containers []ContainerTemplate `json:"containers"`
+}
+
 type ComponentTemplateSpec struct {
-	Container ContainerTemplate `json:"container"`
+	PodTemplate PodTemplate `json:"template"`
+	Ports       []Port      `json:"ports"`
 }
 
 type ContainerTemplate struct {
 	Env   []Env  `json:"env,omitempty"`
 	Image string `json:"image"`
-	Ports []Port `json:"ports"`
+	Name  string `json:"name"`
 }
 
 type Env struct {
@@ -103,7 +108,11 @@ type Env struct {
 }
 
 type Port struct {
-	ContainerPort int `json:"containerPort"`
+	Name            string `json:"name,omitempty"`
+	Protocol        string `json:"protocol"`
+	Port            int32  `json:"port"`
+	TargetContainer string `json:"targetContainer,omitempty"`
+	TargetPort      int32  `json:"targetPort"`
 }
 
 type Gateway struct {

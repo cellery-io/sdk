@@ -31,9 +31,11 @@ import (
 
 func newPatchComponentsCommand() *cobra.Command {
 	var containerImage string
+	var containerName string
 	var envVars []string
 	cmd := &cobra.Command{
 		Use: "patch <instance name> <component name> --container-image mycontainerorg/hello:1.0.0 \n" +
+			"patch <instance name> <component name> --container_name hr --container-image mycontainerorg/hello:1.0.0 \n" +
 			"  	  patch <instance name> <component name> --container-image mycontainerorg/hello:1.0.0 --env foo=bar --env bob=alice",
 		Short: "patch a particular component of a cell/composite instance with a new container image",
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -50,19 +52,20 @@ func newPatchComponentsCommand() *cobra.Command {
 			}
 			// if the container image is empty we consider the 2nd argument as a image, hence validate
 			if containerImage == "" {
-				return fmt.Errorf("expects a valid container image name, received none")
+				return fmt.Errorf("expects a valid container image, received none")
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunPatchForSingleComponent(args[0], args[1], containerImage, envVars)
+			err := commands.RunPatchForSingleComponent(args[0], args[1], containerImage, containerName, envVars)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to patch cell component %s in instance %s", args[1], args[0]), err)
 			}
 		},
 		Example: "  cellery patch myhello hellocomponent --container-image mycontainerorg/hello:1.0.1 --env foo=bar",
 	}
-	cmd.Flags().StringVarP(&containerImage, "container-image", "i", "", "container image name")
+	cmd.Flags().StringVarP(&containerImage, "container-image", "i", "", "container image")
+	cmd.Flags().StringVarP(&containerImage, "container-name", "n", "", "container name")
 	cmd.Flags().StringArrayVarP(&envVars, "env", "e", []string{}, "environment variables")
 	return cmd
 }

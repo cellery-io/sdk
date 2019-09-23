@@ -27,8 +27,8 @@ import (
 )
 
 type origComponentData struct {
-	ComponentName  string `json:"componentName"`
-	ContainerPorts []int  `json:"containerPorts"`
+	ComponentName  string  `json:"componentName"`
+	ContainerPorts []int32 `json:"containerPorts"`
 }
 
 func buildRoutesForCompositeTarget(src string, newTarget *kubectl.Composite, currentTarget *kubectl.Composite,
@@ -144,7 +144,7 @@ func appendToDependencyCompositeServiceAnnotaion(instance string, existingValue 
 		if !matchFound {
 			origCompData = append(origCompData, origComponentData{
 				ComponentName:  compositeName,
-				ContainerPorts: getPortsAsIntArray(&componentTemplate.Spec.Container.Ports),
+				ContainerPorts: getPortsAsIntArray(&componentTemplate.Spec.Ports),
 			})
 		}
 	}
@@ -155,11 +155,12 @@ func appendToDependencyCompositeServiceAnnotaion(instance string, existingValue 
 	return string(svcNames), nil
 }
 
-func getPortsAsIntArray(ports *[]kubectl.Port) []int {
-	var intPorts []int
+func getPortsAsIntArray(ports *[]kubectl.Port) []int32 {
+	var intPorts []int32
 	for _, port := range *ports {
-		intPorts = append(intPorts, port.ContainerPort)
+		intPorts = append(intPorts, port.Port)
 	}
+
 	return intPorts
 }
 
@@ -168,7 +169,7 @@ func buildDependencyCompositeServiceAnnotaion(composite *kubectl.Composite) (str
 	for _, componentTemplate := range composite.CompositeSpec.ComponentTemplates {
 		origCompData = append(origCompData, origComponentData{
 			ComponentName:  getCompositeName(composite.CompositeMetaData.Name, componentTemplate.Metadata.Name),
-			ContainerPorts: getPortsAsIntArray(&componentTemplate.Spec.Container.Ports),
+			ContainerPorts: getPortsAsIntArray(&componentTemplate.Spec.Ports),
 		})
 	}
 	data, err := json.Marshal(origCompData)
