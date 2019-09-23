@@ -48,7 +48,6 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
@@ -65,7 +64,6 @@ import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.NAME;
 import static io.cellery.CelleryConstants.ORG;
 import static io.cellery.CelleryConstants.SERVICE_TYPE_JOB;
-import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.VERSION;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.getValidName;
@@ -85,8 +83,8 @@ import static io.cellery.CelleryUtils.toYaml;
         isPublic = true
 )
 public class RunTestSuite extends BlockingNativeCallableUnit {
-    private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir") + File.separator + TARGET;
-    private static final Logger log = LoggerFactory.getLogger(CreateCellImage.class);
+    private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir");
+    private static final Logger log = LoggerFactory.getLogger(RunTestSuite.class);
 
     @Override
     public void execute(Context ctx) {
@@ -341,7 +339,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                         PrintStream out = System.out;
                         out.println("Log: " + msg);
                     }, CelleryUtils::printWarning);
-
+            
             waitForJobCompletion(jobName, podName, testName);
             deleteTestCell(testName);
         } catch (IOException e) {

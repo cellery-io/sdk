@@ -493,18 +493,6 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 	return targetFilePath, nil
 }
 
-// returns if the given file or directory exists
-func IsExists(filepath string) (bool, error) {
-	_, err := os.Stat(filepath)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return true, err
-}
-
 func ConvertToAlphanumeric(input, replacement string) string {
 	reg, err := regexp.Compile("[^A-Za-z0-9]+")
 	if err != nil {

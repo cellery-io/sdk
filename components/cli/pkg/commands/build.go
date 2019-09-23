@@ -263,7 +263,7 @@ func RunBuild(tag string, fileName string) {
 		fileCopyError = util.CopyDir(filepath.Join(balTomlParent, constants.BALLERINA_LOCAL_REPO),
 			filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_LOCAL_REPO))
 	}
-	isTestDirExists, _ := util.IsExists(constants.ZIP_TESTS)
+	isTestDirExists, _ := util.FileExists(constants.ZIP_TESTS)
 	folders := []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE}
 
 	if isTestDirExists {

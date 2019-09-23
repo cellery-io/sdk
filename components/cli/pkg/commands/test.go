@@ -257,7 +257,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	} else {
 		balModule = filepath.Join(testsRoot, constants.TEMP_TEST_MODULE)
 	}
-	isTestDirExists, _ := util.IsExists(testsPath)
+	isTestDirExists, _ := util.FileExists(testsPath)
 	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
 	var isBallerinaProject bool
 
@@ -270,7 +270,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			util.ExitWithErrorMessage("Error occurred while creating the cell image", err)
 		}
 
-		isBallerinaProject, err = util.IsExists(balTomlPath)
+		isBallerinaProject, err = util.FileExists(balTomlPath)
 		if isBallerinaProject  {
 			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BALLERINA_TOML))
 			if fileCopyError != nil {
@@ -326,7 +326,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		} else {
 			cmdArgs = append(cmdArgs, tempTestFileName, "test", string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
 		}
-		os.Mkdir(currentDir+string(os.PathSeparator)+"logs", 0777)
+		util.CleanAndCreateDir(filepath.Join(currentDir,"target","logs"))
 		defer os.Remove(imageDir)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
@@ -343,7 +343,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			}
 
 			ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BALLERINA_CONF)
-			isExistsBalConf, err := util.IsExists(ballerinaConf)
+			isExistsBalConf, err := util.FileExists(ballerinaConf)
 			if err != nil {
 				util.ExitWithErrorMessage("error while checking if "+ballerinaConf+" exists", err)
 			}
@@ -546,7 +546,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			}
 
 			ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BALLERINA_CONF)
-			isExistsBalConf, err := util.IsExists(ballerinaConf)
+			isExistsBalConf, err := util.FileExists(ballerinaConf)
 			if err != nil {
 				util.ExitWithErrorMessage("error while checking if "+ballerinaConf+" exists", err)
 			}
