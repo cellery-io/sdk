@@ -105,4 +105,5 @@ public class CelleryConstants {
     public static final String DEBUG_BALLERINA_CONF = Paths.get(CELLERY_HOME_PATH, "tmp", BALLERINA_CONF).toString();
 
     public static final String CELLERY_ENV_VARIABLE = "cellery_env_";
+    public static final String MESH_CELLERY_IO = "mesh.cellery.io";
 }
