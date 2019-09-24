@@ -41,6 +41,8 @@ import io.cellery.models.Ingress;
 import io.cellery.models.KPA;
 import io.cellery.models.Port;
 import io.cellery.models.Resource;
+import io.cellery.models.STSTemplate;
+import io.cellery.models.STSTemplateSpec;
 import io.cellery.models.ScalingPolicy;
 import io.cellery.models.TCP;
 import io.cellery.models.TLS;
@@ -495,7 +497,9 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         Extension extension = new Extension();
         extension.setGlobalApiPublisher(image.getGlobalApiPublisher());
         CellSpec cellSpec = new CellSpec();
+        List<String> unsecuredPaths = new ArrayList<>();
         components.forEach(imageComponent -> {
+            unsecuredPaths.addAll(imageComponent.getUnsecuredPaths());
             ingress.addHttpAPI(imageComponent.getApis());
             ingress.addGRPC(imageComponent.getGrpcList().stream()
                     .filter(a -> a.getPort() > 0).collect(Collectors.toList()));
@@ -518,7 +522,10 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             component.setSpec(componentSpec);
             cellSpec.addComponent(component);
         });
-
+        STSTemplate stsTemplate = new STSTemplate();
+        STSTemplateSpec stsTemplateSpec = new STSTemplateSpec();
+        stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
+        stsTemplate.setSpec(stsTemplateSpec);
         Gateway gateway = new Gateway();
         GatewaySpec gatewaySpec = new GatewaySpec();
         gatewaySpec.setIngress(ingress);
@@ -526,6 +533,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
 
         ingress.setExtensions(extension);
         cellSpec.setGateway(gateway);
+        cellSpec.setSts(stsTemplate);
         ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(image.getCellName()))
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, image.getOrgName())
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, image.getCellName())
