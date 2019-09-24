@@ -51,7 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -168,7 +167,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         }
         if (web != null) {
             gatewaySpec.getIngress().getExtensions().getClusterIngress().setHost(web.getVhost());
-            gatewaySpec.getIngress().addHttpAPI((Collections.singletonList(web.getHttpAPI())));
         }
 
     }

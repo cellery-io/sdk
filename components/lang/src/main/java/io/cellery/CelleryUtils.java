@@ -133,7 +133,7 @@ public class CelleryUtils {
         port.setTargetContainer(component.getName());
         port.setTargetPort(component.getContainerPort());
         component.addPort(port);
-        component.addApi(httpAPI);
+        webIngress.setHttpAPI(httpAPI);
         webIngress.setVhost(((BString) gatewayConfig.get("vhost")).stringValue());
         if (gatewayConfig.containsKey("tls")) {
             // TLS enabled
@@ -151,7 +151,6 @@ public class CelleryUtils {
             // OIDC enabled
             webIngress.setOidc(processOidc(((BMap) gatewayConfig.get("oidc")).getMap()));
         }
-        webIngress.setHttpAPI(httpAPI);
         component.setWeb(webIngress);
     }
 

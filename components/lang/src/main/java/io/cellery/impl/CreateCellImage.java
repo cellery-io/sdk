@@ -82,6 +82,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -510,6 +511,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 clusterIngress.setHost(web.getVhost());
                 extension.setOidc(web.getOidc());
                 extension.setClusterIngress(clusterIngress);
+                ingress.addHttpAPI((Collections.singletonList(web.getHttpAPI())));
             }
             Component component = new Component();
             ComponentSpec componentSpec = getSpec(imageComponent, component);

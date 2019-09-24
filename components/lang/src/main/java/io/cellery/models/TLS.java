@@ -17,6 +17,7 @@
  */
 package io.cellery.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 /**
@@ -24,7 +25,10 @@ import lombok.Data;
  */
 @Data
 public class TLS {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String secret;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String key;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String cert;
 }
