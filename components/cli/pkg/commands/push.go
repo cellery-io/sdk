@@ -31,6 +31,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
@@ -131,7 +132,11 @@ func RunPush(cellImage string, username string, password string) {
 						log.Printf("Finished reading done channel from main goroutine")
 					}
 				}
-				if strings.HasSuffix(parsedCellImage.Registry, constants.CENTRAL_REGISTRY_HOST) {
+				regex, err := regexp.Compile(constants.CENTRAL_REGISTRY_HOST_REGX)
+				if err != nil {
+					util.ExitWithErrorMessage("Error occurred while compiling the registry regex", err)
+				}
+				if regex.MatchString(parsedCellImage.Registry) {
 					isAuthorized = make(chan bool)
 					done = make(chan bool)
 					registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(username,

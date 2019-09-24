@@ -20,6 +20,7 @@ package commands
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -151,8 +152,11 @@ func requestCredentialsFromUser(registryCredentials *credentials.RegistryCredent
 	var isAuthorized chan bool
 	var done chan bool
 	var err error
-	if registryCredentials.Username == "" &&
-		strings.HasSuffix(registryCredentials.Registry, constants.CENTRAL_REGISTRY_HOST) {
+	regex, err := regexp.Compile(constants.CENTRAL_REGISTRY_HOST_REGX)
+	if err != nil {
+		return nil, nil, err
+	}
+	if registryCredentials.Username == "" && regex.MatchString(registryCredentials.Registry) {
 		isAuthorized = make(chan bool)
 		done = make(chan bool)
 		registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(
@@ -170,10 +174,14 @@ func requestCredentialsFromUser(registryCredentials *credentials.RegistryCredent
 // validateCredentialsWithRegistry initiates a connection to Cellery Registry to validate credentials
 func validateCredentialsWithRegistry(registryCredentials *credentials.RegistryCredentials) error {
 	registryPassword := registryCredentials.Password
-	if strings.HasSuffix(registryCredentials.Registry, constants.CENTRAL_REGISTRY_HOST) {
+	regex, err := regexp.Compile(constants.CENTRAL_REGISTRY_HOST_REGX)
+	if err != nil {
+		return err
+	}
+	if regex.MatchString(registryCredentials.Registry) {
 		registryPassword = registryPassword + ":ping"
 	}
-	_, err := registry.New("https://"+registryCredentials.Registry, registryCredentials.Username, registryPassword)
+	_, err = registry.New("https://"+registryCredentials.Registry, registryCredentials.Username, registryPassword)
 	if err != nil {
 		return err
 	}
