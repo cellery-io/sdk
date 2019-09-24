@@ -168,7 +168,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             instanceName = generateRandomInstanceName(((BString) nameStruct.get("name")).stringValue(),
                     ((BString) nameStruct.get("ver")).stringValue());
         }
-        printInfo("starting instance " + instanceName);
+        if (!isRoot) {
+            printInfo("starting instance " + instanceName);
+        }
         String cellImageDir = System.getenv(CELLERY_IMAGE_DIR_ENV_VAR);
         if (cellImageDir == null) {
             try (InputStream inputStream = new FileInputStream(DEBUG_BALLERINA_CONF)) {
@@ -223,8 +225,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 dependencyInfo = generateDependencyInfo();
 
                 if (startDependencies) {
-                    // If starting dependent instances
-                    // Display the dependency tree info table
+                    printInfo("Dependency tree structure\n");
+                    printDependencyTree();
+                    printInfo("Instances information");
                     displayDependentCellTable();
                     dependencyInfo.forEach((alias, info) -> {
                         String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
@@ -876,14 +879,55 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      * Pull cell image.
      *
      * @param registry name of the registry from which the cell is being pulled from
-     * @param org cell organization
-     * @param name cell name
-     * @param version cell version
+     * @param org      cell organization
+     * @param name     cell name
+     * @param version  cell version
      */
     private void pullImage(String registry, String org, String name, String version) {
         Map<String, String> environment = new HashMap<>();
         CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
                 environment, "cellery", "pull", registry + File.separator + org + File.separator +
                         name + ":" + version);
+    }
+
+    /**
+     * Print dependency tree node.
+     *
+     * @param buffer string buffer
+     * @param prefix prefix
+     * @param childrenPrefix child prefix
+     * @param node tree node
+     */
+    private void printDependencyTreeNode(StringBuilder buffer, String prefix, String childrenPrefix, Node<Meta> node) {
+        buffer.append(prefix);
+        buffer.append(node.getData().getInstanceName());
+        buffer.append('\n');
+        int index = 0;
+        for (Node<Meta> child : node.getChildren()) {
+            if (child.getChildren().size() > 0) {
+                if (index == (node.getChildren().size() - 1)) {
+                    printDependencyTreeNode(buffer, childrenPrefix + "├─── ", childrenPrefix + "     ", child);
+                } else {
+                    printDependencyTreeNode(buffer, childrenPrefix + "├─── ", childrenPrefix + "│    ", child);
+                }
+            } else {
+                if (index == (node.getChildren().size() - 1)) {
+                    printDependencyTreeNode(buffer, childrenPrefix + "└─── ", childrenPrefix + "     ", child);
+                } else {
+                    printDependencyTreeNode(buffer, childrenPrefix + "├─── ", childrenPrefix + "     ", child);
+                }
+            }
+            index++;
+        }
+    }
+
+    /**
+     * Print dependency tree.
+     */
+    public void printDependencyTree() {
+        PrintStream out = System.out;
+        StringBuilder buffer = new StringBuilder(50);
+        printDependencyTreeNode(buffer, "", "", dependencyTree.getRoot());
+        out.println(buffer.toString());
     }
 }
