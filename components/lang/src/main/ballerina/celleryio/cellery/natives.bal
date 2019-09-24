@@ -255,6 +255,24 @@ public type TestSuite record {|
     Test[] tests = [];
 |};
 
+public type K8sSharedPersistence record {|
+    string name;
+|};
+
+public type Mode "Filesystem" | "Filesystem";
+
+public type StorageClass "null" | "" | "slow" | "fast";
+
+public type AccessMode "ReadWriteOnce" | "ReadOnlyMany" | "ReadWriteMany";
+
+public type K8sNonSharedPersistence record {|
+    string name;    // Name will be prefixed with instance and //component  name eg: hrInst-hrComp-bar-<instance-id>
+    Mode mode?;
+    StorageClass storageClass?;
+    AccessMode accessMode?;
+    string request;
+|};
+
 # Build the cell artifacts and persist metadata
 #
 # + image - The cell/composite image definition
