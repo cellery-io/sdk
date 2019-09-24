@@ -24,8 +24,6 @@ import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
 import io.cellery.models.ComponentSpec;
 import io.cellery.models.ComponentTemplate;
-import io.cellery.models.STSTemplate;
-import io.cellery.models.STSTemplateSpec;
 import io.cellery.models.Test;
 import io.cellery.models.internal.Image;
 import io.cellery.util.KubernetesClient;
@@ -265,12 +263,6 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         cellImage.setCellVersion(((BString) nameStruct.get(VERSION)).stringValue());
 
         List<Component> componentList = new ArrayList<>();
-        List<String> unsecuredPaths = new ArrayList<>();
-        STSTemplate stsTemplate = new STSTemplate();
-        STSTemplateSpec stsTemplateSpec = new STSTemplateSpec();
-
-        ComponentSpec componentSpec = new ComponentSpec();
-        componentSpec.setType(SERVICE_TYPE_JOB);
 
         List<EnvVar> envVarList = new ArrayList<>();
         cellImage.getTest().getEnvVars().forEach((key, value) -> {
@@ -281,7 +273,11 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         });
         ComponentTemplate componentTemplate = new ComponentTemplate();
         componentTemplate.addContainer(new ContainerBuilder().withImage(cellImage.getTest().getSource()).withEnv
-                (envVarList).build());
+                (envVarList).withName(cellImage.getTest().getName()).build());
+
+        ComponentSpec componentSpec = new ComponentSpec();
+        componentSpec.setType(SERVICE_TYPE_JOB);
+        componentSpec.setTemplate(componentTemplate);
 
         Component component = new Component();
         component.setMetadata(new ObjectMetaBuilder()
@@ -289,14 +285,10 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                 .withLabels(cellImage.getTest().getLabels())
                 .build());
         component.setSpec(componentSpec);
-
         componentList.add(component);
-        stsTemplateSpec.setUnsecuredPaths(unsecuredPaths);
-        stsTemplate.setSpec(stsTemplateSpec);
 
         CellSpec cellSpec = new CellSpec();
         cellSpec.setComponents(componentList);
-        cellSpec.setSts(stsTemplate);
         ObjectMeta objectMeta = new ObjectMetaBuilder().withName(getValidName(cellImage.getCellName()))
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_ORG, cellImage.getOrgName())
                 .addToAnnotations(ANNOTATION_CELL_IMAGE_NAME, cellImage.getCellName())
