@@ -42,10 +42,10 @@ public function build(cellery:ImageName iName) returns error? {
 
     hrComponent.envVars = {
         employee_api_url: {
-            value: <string>cellery:getReference(hrComponent, "employeeCellDep").employee_api_url
+            value: <string>cellery:getReference(hrComponent, "employeeCellDep").employee_employee_api_url
         },
         stock_api_url: {
-            value: <string>cellery:getReference(hrComponent, "stockCellDep").stock_api_url
+            value: <string>cellery:getReference(hrComponent, "stockCellDep").stock_stock_api_url
         }
     };
 
@@ -79,10 +79,10 @@ public function test(cellery:ImageName iName, map<cellery:ImageName> instances) 
                 value: <string>cellery:resolveReference(iName).hr_api_url
             },
             EMP_CELL_URL: {
-                value: <string>cellery:resolveReference(instances.employeeCellDep).employee_api_url
+                value: <string>cellery:resolveReference(instances.employeeCellDep).employee_employee_api_url
             },
             STOCK_CELL_URL: {
-                value: <string>cellery:resolveReference(instances.stockCellDep).stock_api_url
+                value: <string>cellery:resolveReference(instances.stockCellDep).stock_stock_api_url
             }
         }
     };
@@ -94,7 +94,7 @@ public function test(cellery:ImageName iName, map<cellery:ImageName> instances) 
         },
         envVars: {
             EMP_CELL_URL: {
-                value: <string>cellery:resolveReference(instances.employeeCellDep).employee_api_url
+                value: <string>cellery:resolveReference(instances.employeeCellDep).employee_employee_api_url
             }
         }
     };

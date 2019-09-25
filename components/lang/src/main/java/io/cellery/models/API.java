@@ -18,6 +18,7 @@
 
 package io.cellery.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,8 @@ import java.util.List;
 public class API {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<APIDefinition> definitions;
+    @JsonIgnore
+    private String name;
     private int port;
     private String context;
     private boolean global;

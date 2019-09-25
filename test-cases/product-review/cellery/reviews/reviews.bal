@@ -86,12 +86,12 @@ public function build(cellery:ImageName iName) returns error? {
     };
 
     cellery:Reference customerProductRef = cellery:getReference(reviewsComponent, "customerProduct");
-    ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers-1_api_url"]);
+    ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers_customerapi_api_url"]);
     reviewsComponent.envVars.CUSTOMERS_HOST.value = customerComp.url;
     reviewsComponent.envVars.CUSTOMERS_PORT.value = customerComp.port;
     reviewsComponent.envVars.CUSTOMERS_CONTEXT.value = customerComp.path;
 
-    ComponentApi productComp = parseApiUrl(<string>customerProductRef["products-1_api_url"]);
+    ComponentApi productComp = parseApiUrl(<string>customerProductRef["products_productsapi_api_url"]);
     reviewsComponent.envVars.PRODUCTS_HOST.value = productComp.url;
     reviewsComponent.envVars.PRODUCTS_PORT.value = productComp.port;
     reviewsComponent.envVars.PRODUCTS_CONTEXT.value = productComp.path;

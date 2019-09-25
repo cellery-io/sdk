@@ -20,7 +20,7 @@ public function build(cellery:ImageName iName) returns error? {
             image: "celleryio/samples-productreview-categories"
         },
         ingresses: {
-            customerAPI: <cellery:GRPCIngress>{
+            categoriesAPI: <cellery:GRPCIngress>{
                 backendPort: 8000,
                 gatewayPort: 8000
             }
@@ -62,7 +62,7 @@ public function build(cellery:ImageName iName) returns error? {
             image: "celleryio/samples-productreview-products"
         },
         ingresses: {
-            customerAPI: <cellery:HttpApiIngress>{
+            productsAPI: <cellery:HttpApiIngress>{
                 port: 8080,
                 context: "products-1",
                 definition: {

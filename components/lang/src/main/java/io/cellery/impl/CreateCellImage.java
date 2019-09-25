@@ -88,6 +88,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -265,7 +266,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 case "HttpApiIngress":
                 case "HttpPortIngress":
                 case "HttpsPortIngress":
-                    processHttpIngress(component, attributeMap);
+                    processHttpIngress(component, attributeMap, key.toString());
                     break;
                 case "TCPIngress":
                     processTCPIngress(component, attributeMap);
@@ -330,8 +331,9 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         component.addTCP(tcp);
     }
 
-    private void processHttpIngress(ImageComponent component, LinkedHashMap attributeMap) {
+    private void processHttpIngress(ImageComponent component, LinkedHashMap attributeMap, String key) {
         API httpAPI = getApi(component, attributeMap);
+        httpAPI.setName(key);
         httpAPI.setPort(DEFAULT_GATEWAY_PORT);
         component.setProtocol(DEFAULT_GATEWAY_PROTOCOL);
         // Process optional attributes
@@ -584,7 +586,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
     private void generateCellReference() {
         JSONObject json = new JSONObject();
         if (image.isCompositeImage()) {
-            image.getComponentNameToComponentMap().forEach((componentName, component) -> {
+            image.getComponentNameToComponentMap().forEach((name, component) -> {
+                String componentName = getValidName(component.getName());
                 json.put(componentName + "_host", INSTANCE_NAME_PLACEHOLDER + "--" + componentName + "-service");
                 if (component.getApis().size() > 0) {
                     json.put(componentName + "_port", DEFAULT_GATEWAY_PORT);
@@ -594,21 +597,19 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             });
         } else {
             image.getComponentNameToComponentMap().forEach((componentName, component) -> {
+                String recordName = getValidRecordName(componentName);
                 component.getApis().forEach(api -> {
                     String context = api.getContext();
                     if (StringUtils.isNotEmpty(context)) {
                         String url =
                                 DEFAULT_GATEWAY_PROTOCOL + "://" + INSTANCE_NAME_PLACEHOLDER + GATEWAY_SERVICE + ":"
                                         + DEFAULT_GATEWAY_PORT + "/" + context;
-                        if ("/".equals(context)) {
-                            json.put(componentName + "_api_url", url.replaceAll("(?<!http:)//", "/"));
-                        } else {
-                            json.put(context + "_api_url", url.replaceAll("(?<!http:)//", "/"));
-                        }
+                        json.put(recordName + "_" + getValidRecordName(api.getName()) + "_api_url",
+                                url.replaceAll("(?<!http:)//", "/"));
                     }
                 });
-                component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
-                component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
+                component.getTcpList().forEach(tcp -> json.put(recordName + "_tcp_port", tcp.getPort()));
+                component.getGrpcList().forEach(grpc -> json.put(recordName + "_grpc_port", grpc.getPort()));
             });
             json.put("gateway_host", INSTANCE_NAME_PLACEHOLDER + GATEWAY_SERVICE);
         }
@@ -695,6 +696,10 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             log.error(errMsg, e);
             throw new BallerinaException(errMsg);
         }
+    }
+
+    private String getValidRecordName(String name) {
+        return name.toLowerCase(Locale.getDefault()).replaceAll("\\P{Alnum}", "");
     }
 
     private void extractDependencies(JSONObject dependenciesJsonObject, LinkedHashMap<?, ?> cellDependencies,

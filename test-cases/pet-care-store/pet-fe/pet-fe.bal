@@ -62,7 +62,7 @@ public function build(cellery:ImageName iName) returns error? {
     };
 
     portalComponent.envVars.PET_STORE_CELL_URL.value = <string>cellery:getReference(portalComponent, "petstorebackend").
-    controller_api_url;
+    controller_controller_api_url;
 
     // Cell Initialization
     cellery:CellImage petStoreFrontendCell = {
