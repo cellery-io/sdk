@@ -109,9 +109,9 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(reviewCell, untaint iName);
 }
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     cellery:CellImage reviewCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(reviewCell, iName, instances);
+    return cellery:createInstance(reviewCell, iName, instances, startDependencies, shareDependencies);
 }
 
 type ComponentApi record {

@@ -137,7 +137,7 @@ public class HRCompositeTest {
 
     @Test(groups = "run")
     public void validateRunTimeMetaData() {
-        Assert.assertEquals(runtimeComposite.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(runtimeComposite.getMetadata().getName(), cellImageInfo.getInstanceName());
         final Map<String, String> annotations = runtimeComposite.getMetadata().getAnnotations();
         Assert.assertEquals(annotations.get(CELLERY_IMAGE_ORG), cellImageInfo.getOrg());
         Assert.assertEquals(annotations.get(CELLERY_IMAGE_NAME), cellImageInfo.getName());

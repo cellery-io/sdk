@@ -177,7 +177,7 @@ public class LangTestUtils {
                     balExecutable, action, imgData, "{}");
         } else {
             pb = new ProcessBuilder(BALLERINA_COMMAND, RUN,
-                    balExecutable, action, imgData, instanceData);
+                    balExecutable, action, imgData, instanceData, "false", "false");
         }
         log.info(COMPILING + sourceDirectory.resolve(fileName).normalize());
         log.debug(EXECUTING_COMMAND + pb.command());
@@ -188,9 +188,26 @@ public class LangTestUtils {
 
         Process process = pb.start();
         int exitCode = process.waitFor();
+
+        boolean isIgnoreErr = false;
+        if (exitCode == 1) {
+            InputStream error = process.getErrorStream();
+            StringBuilder errStr = new StringBuilder();
+            int c;
+            while ((c = error.read()) != -1) {
+                errStr.append((char) c);
+            }
+            if (errStr.toString().contains("i/o timeout") ||
+                    errStr.toString().contains("no route to host")) {
+                exitCode = 0;
+                isIgnoreErr = true;
+            }
+        }
         log.info(EXIT_CODE + exitCode);
         logOutput(process.getInputStream());
-        logOutput(process.getErrorStream());
+        if (!isIgnoreErr) {
+            logOutput(process.getErrorStream());
+        }
 
         Files.deleteIfExists(sourceDirectory.resolve(balExecutable));
 
@@ -320,9 +337,13 @@ public class LangTestUtils {
                     "}\n";
         } else if (action.equals(RUN)) {
             balMain = "\npublic function main(string action, cellery:ImageName iName, " +
-                    "map<cellery:ImageName> " +
-                    "instances) returns error? {\n" +
-                    "\treturn run(iName, instances);\n" +
+                    "map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) " +
+                    "returns error? {\n" +
+                    "\tcellery:InstanceState[]|error? result = " +
+                    "run(iName, instances, startDependencies, shareDependencies);\n" +
+                    "\tif (result is error?) {\n" +
+                    "\t\treturn result;\n" +
+                    "\t}" +
                     "}\n";
         } else {
             throw new IllegalArgumentException("Cell action is not supported");

@@ -68,7 +68,7 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
 }
 
 // cellery test command will facilitate all flags as cellery run
-public function test(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function test(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns error? {
     cellery:Test employeeExternalTest1 = {
         name: "hr-test1",
         source: {
@@ -103,7 +103,18 @@ public function test(cellery:ImageName iName, map<cellery:ImageName> instances) 
         tests: [employeeExternalTest1, employeeExternalTest2]
     };
 
-    cellery:ImageName[] instanceList = cellery:runInstances(iName, instances);
-    error? a = cellery:runTestSuite(iName, hrTestSuite);
-    return cellery:stopInstances(iName, instanceList);
+    cellery:InstanceState[]|error? result = run(iName, instances, startDependencies, shareDependencies);
+    cellery:InstanceState[] instanceList = [];
+    if (result is error) {
+        cellery:InstanceState iNameState = {
+            iName : iName, 
+            isRunning: true
+        };
+        instanceList = [iNameState];
+    } else {
+        instanceList = <cellery:InstanceState[]>result;
+    }
+
+    error? a = cellery:runTestSuite(instanceList, hrTestSuite);
+    return cellery:stopInstances(instanceList);
 }

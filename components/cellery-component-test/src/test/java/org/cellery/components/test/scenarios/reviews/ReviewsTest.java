@@ -214,7 +214,7 @@ public class ReviewsTest {
 
     @Test(groups = "run")
     public void validateRunTimeMetaData() {
-        Assert.assertEquals(runtimeCell.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(runtimeCell.getMetadata().getName(), cellImageInfo.getInstanceName());
         Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
                 cellImageInfo.getOrg());
         Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),

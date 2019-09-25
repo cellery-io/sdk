@@ -101,9 +101,9 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     cellery:CellImage employeeCell = check cellery:constructCellImage(untaint iName);
     employeeCell.components.empComp.probes.liveness.failureThreshold = 5;
-    return cellery:createInstance(employeeCell, iName, instances);
+    return cellery:createInstance(employeeCell, iName, instances, startDependencies, shareDependencies);
 }
 
