@@ -116,7 +116,7 @@ public class EmployeeCompositeTest {
     }
 
     @Test(groups = "run")
-    public void compileCellRun() throws IOException, InterruptedException {
+    public void compileCellRun() throws IOException, InterruptedException  {
         String tmpDir = LangTestUtils.createTempImageDir(SOURCE_DIR_PATH, cellImageInfo.getName());
         Path tempPath = Paths.get(tmpDir);
         Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "employee-comp" + BAL,
@@ -138,7 +138,7 @@ public class EmployeeCompositeTest {
 
     @Test(groups = "run")
     public void validateRunTimeMetaData() {
-        Assert.assertEquals(runtimeComposite.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(runtimeComposite.getMetadata().getName(), cellImageInfo.getInstanceName());
         Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
                 cellImageInfo.getOrg());
         Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),

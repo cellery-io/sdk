@@ -45,11 +45,11 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(stockCell, untaint iName);
 }
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     cellery:CellImage stockCell = check cellery:constructCellImage(untaint iName);
     stockCell.components.stockComp.resources.requests= {
             memory: "256Mi",
             cpu: "256m"
         };
-    return cellery:createInstance(stockCell, iName, instances);
+    return cellery:createInstance(stockCell, iName, instances, startDependencies, shareDependencies);
 }

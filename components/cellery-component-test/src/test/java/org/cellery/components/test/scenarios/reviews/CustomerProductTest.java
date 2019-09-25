@@ -173,7 +173,7 @@ public class CustomerProductTest {
 
     @Test(groups = "run")
     public void validateRunTimeMetaData() {
-        Assert.assertEquals(runtimeCell.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(runtimeCell.getMetadata().getName(), cellImageInfo.getInstanceName());
         Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
                 cellImageInfo.getOrg());
         Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
@@ -224,7 +224,7 @@ public class CustomerProductTest {
         Assert.assertEquals(containers1.get(0).getPorts().get(0).getContainerPort().intValue(), 8000);
 
         Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getMetadata().getName(),
-                "products");
+                "cust-inst");
         final List<Container> containers2 =
                 runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers();
         Assert.assertEquals(containers2.get(0).getEnv().get(0).getName(), "CATEGORIES_PORT");

@@ -33,7 +33,7 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     //Read TLS key file path from ENV and get the value
     string tlsKey = readFile(config:getAsString("tls.key", defaultValue = "./certs/95749524_hello.com.key"));
     string tlsCert = readFile(config:getAsString("tls.cert", defaultValue = "./certs/95749524_hello.com.cert"));
@@ -43,7 +43,7 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances) r
     cellery:WebIngress webUI = <cellery:WebIngress>webCell.components.webComp.ingresses.webUI;
     webUI.gatewayConfig.tls.key = tlsKey;
     webUI.gatewayConfig.tls.cert = tlsCert;
-    return cellery:createInstance(webCell, iName, instances);
+    return cellery:createInstance(webCell, iName, instances, startDependencies, shareDependencies);
 }
 
 function readFile(string filePath) returns (string) {

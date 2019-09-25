@@ -214,7 +214,7 @@ public class ReviewsTest {
 
     @Test(groups = "run")
     public void validateRunTimeMetaData() {
-        Assert.assertEquals(runtimeCell.getMetadata().getName(), cellImageInfo.getName());
+        Assert.assertEquals(runtimeCell.getMetadata().getName(), cellImageInfo.getInstanceName());
         Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_ORG),
                 cellImageInfo.getOrg());
         Assert.assertEquals(runtimeCell.getMetadata().getAnnotations().get(CELLERY_IMAGE_NAME),
@@ -245,7 +245,7 @@ public class ReviewsTest {
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
         List<Component> components = runtimeCell.getSpec().getComponents();
-        Assert.assertEquals(components.get(0).getMetadata().getName(), "reviews");
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "review-inst");
 
         final Container container = components.get(0).getSpec().getTemplate().getContainers().get(0);
         Assert.assertEquals(container.getEnv().get(0).getName(), "PRODUCTS_HOST");

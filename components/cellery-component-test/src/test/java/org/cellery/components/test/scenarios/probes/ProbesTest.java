@@ -187,7 +187,7 @@ public class ProbesTest {
     @Test(groups = "run")
     public void validateRunTimeMetaData() {
         final ObjectMeta metadata = runtimeCell.getMetadata();
-        Assert.assertEquals(metadata.getName(), cellImageInfo.getName());
+        Assert.assertEquals(metadata.getName(), cellImageInfo.getInstanceName());
         Assert.assertEquals(metadata.getAnnotations().get(CELLERY_IMAGE_ORG), cellImageInfo.getOrg());
         Assert.assertEquals(metadata.getAnnotations().get(CELLERY_IMAGE_NAME), cellImageInfo.getName());
         Assert.assertEquals(metadata.getAnnotations().get(CELLERY_IMAGE_VERSION), cellImageInfo.getVer());
