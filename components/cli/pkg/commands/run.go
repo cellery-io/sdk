@@ -138,24 +138,6 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 				Key:          envVarKey,
 				Value:        envVarValue,
 			}
-
-			// Validating whether the instance of the environment var is provided as an instance of a link
-			if targetInstance != instanceName {
-				isInstanceProvided := false
-				for _, link := range parsedDependencyLinks {
-					if targetInstance == link.DependencyInstance {
-						isInstanceProvided = true
-						break
-					}
-				}
-				if !isInstanceProvided {
-					spinner.Stop(false)
-					util.ExitWithErrorMessage("Invalid environment variable",
-						fmt.Errorf("the instance of the environment variables should be provided as a "+
-							"dependency link, instance %s of the environment variable %s not found", targetInstance,
-							parsedEnvVar.Key))
-				}
-			}
 			instanceEnvVars = append(instanceEnvVars, parsedEnvVar)
 		}
 	}

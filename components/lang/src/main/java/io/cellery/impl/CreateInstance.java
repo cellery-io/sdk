@@ -198,16 +198,18 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         try {
             if (isRoot) {
                 generateDependencyTree(destinationPath + File.separator + "metadata.json");
-                if (!startDependencies) {
-                    // All links to immediate dependencies should be provided if not starting dependencies
-                    validateRootDependencyLinks(userDependencyLinks);
-                }
                 // Validate main instance
                 validateMainInstance(instanceName, ((Meta) dependencyTree.getRoot().getData()).getKind());
                 // Validate dependencies provided by user
                 validateDependencyLinksAliasNames(userDependencyLinks);
-                // Assign user defined instance names to dependent cells
+                // Assign user defined instance names to dependent cells and create the finalized dependency tree
                 assignInstanceNames(dependencyTree.getRoot(), userDependencyLinks);
+                if (!startDependencies) {
+                    // If not starting dependent instances, i.e all the dependent instances should be running
+                    // Validate immediate dependency links
+                    validateRootDependencyLinks(userDependencyLinks);
+                }
+                validateEnvironmentVariables();
                 // Assign environment variables to dependent instances
                 assignEnvironmentVariables(dependencyTree.getRoot());
                 Meta rootMeta = (Meta) dependencyTree.getRoot().getData();
@@ -241,7 +243,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     // Start the dependency tree
                     startDependencyTree(dependencyTree.getRoot());
                 } else {
-                    // If not starting dependent instances, i.e all the dependent instances are running
                     dependencyInfo.forEach((alias, info) -> {
                         bmap = BLangConnectorSPIUtil.createBStruct(ctx,
                                 CelleryConstants.CELLERY_PACKAGE,
@@ -764,20 +765,46 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         for (Map.Entry<String, String> environmentVariable : System.getenv().entrySet()) {
             if (environmentVariable.getKey().startsWith(CELLERY_ENV_VARIABLE + node.getData().getInstanceName() +
                     ".")) {
-                if (node.getData().isRunning()) {
-                    String errMsg = "Invalid environment variable, the instance of the environment should be an " +
-                            "instance to be created, instance " + node.getData().getInstanceName() + " is already " +
-                            "available in the runtime";
-                    throw new BallerinaException(errMsg);
-                } else {
-                    node.getData().getEnvironmentVariables().put(removePrefix(environmentVariable.getKey(),
-                            CELLERY_ENV_VARIABLE + node.getData().getInstanceName() + "."), environmentVariable.
-                            getValue());
-                }
+                node.getData().getEnvironmentVariables().put(removePrefix(environmentVariable.getKey(),
+                        CELLERY_ENV_VARIABLE + node.getData().getInstanceName() + "."), environmentVariable.
+                        getValue());
             }
         }
         for (Node<Meta> childNode : node.getChildren()) {
             assignEnvironmentVariables(childNode);
+        }
+    }
+
+    /**
+     * Validate environment variables of dependent instances.
+     */
+    private void validateEnvironmentVariables() {
+        for (Map.Entry<String, String> environmentVariable : System.getenv().entrySet()) {
+            if (environmentVariable.getKey().startsWith(CELLERY_ENV_VARIABLE)) {
+                boolean validInstance = false;
+                String instanceName = removePrefix(environmentVariable.getKey().split("\\.")[0],
+                        CELLERY_ENV_VARIABLE);
+                // Environment variable key itself could contain "."
+                String key = removePrefix(environmentVariable.getKey(), environmentVariable.getKey().
+                        split("\\.")[0]);
+                for (Node<Meta> node : dependencyTree.getTree()) {
+                    if (node.getData().getInstanceName().equals(instanceName)) {
+                        validInstance = true;
+                        if (node.getData().isRunning()) {
+                            String errMsg = "Invalid environment variable, the instance of the environment should be " +
+                                    "an instance to be created, instance " + node.getData().getInstanceName() + " is " +
+                                    "already available in the runtime";
+                            throw new BallerinaException(errMsg);
+                        }
+                    }
+                }
+                if (!validInstance) {
+                    String errMsg = "Invalid environment variable, the instances of the environment variables should " +
+                            "be provided as a dependency link, instance " + instanceName + " of the environment " +
+                            "variable " + key +  " not found";
+                    throw new BallerinaException(errMsg);
+                }
+            }
         }
     }
 
@@ -848,16 +875,26 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void validateRootDependencyLinks(Map<?, ?> dependencyLinks) {
         ArrayList<String> missingAliases = new ArrayList<>();
+        ArrayList<String> missingInstances = new ArrayList<>();
         for (Map.Entry<String, Meta> dependentCell : ((Meta) dependencyTree.getRoot().getData()).
                 getDependencies().entrySet()) {
             if (!dependencyLinks.containsKey(dependentCell.getKey())) {
                 missingAliases.add(dependentCell.getKey());
             }
+            if (!dependentCell.getValue().isRunning()) {
+                missingInstances.add(dependentCell.getValue().getInstanceName());
+            }
         }
         if (missingAliases.size() > 0) {
-            String errMsg = "Cell dependency validation failed. All links to dependent cells should be defined when " +
-                    "running instance without starting dependencies. Missing dependency aliases: " +
-                    String.join(", ", missingAliases);
+            String errMsg = "Cell dependency validation failed. All links to dependent cells of instance " +
+                    instanceName + " should be defined when running instance without starting dependencies. Missing " +
+                    "dependency aliases: " + String.join(", ", missingAliases);
+            throw new BallerinaException(errMsg);
+        }
+        if (missingInstances.size() > 0) {
+            String errMsg = "Cell dependency validation failed. All immediate dependencies of root instance " +
+                    instanceName + " should be available when running instance without starting dependencies. " +
+                    "Missing instances: " + String.join(", ", missingInstances);
             throw new BallerinaException(errMsg);
         }
     }
