@@ -76,25 +76,76 @@ The above component `pet-service` has an autoscaling policy with minimum replica
 Further, threshold values for cpu and memory is provided to decide upong scaling decisions. For detailed syntax, refer [here](cellery-syntax.md).
 
 ### Export policy
-Once the above component is wrapped into a cell and deployed in Cellery runtime, the build time auto scaling policy will be applied. 
+Once the above component is wrapped into a cell/composite and deployed in Cellery runtime, the build time auto scaling policy will be applied. 
 Often the build time autoscaling policy is not sufficient, and depends on the runtime environment and available resources, 
 the devops may require to re-evaluate the autoscaling policies. Therefore, the exporting policy will be helpful to understand the 
 current autoscaling policy that is applied to the component. This can be performed as shown below.
+
+For a cell:
 ```bash
-    cellery export-policy autoscale pet-be-instance -f pet-be-policy.yaml
+    cellery export-policy autoscale cell pet-be-instance -f pet-be-policy.yaml
 ```
+     
+For a composite:
+```bash
+    cellery export-policy autoscale composite pet-be-instance -f pet-be-policy.yaml
+```
+
+This will result in a yaml structured file similar to the following:
+
+```yaml
+components:
+- name: controller
+  scalingPolicy:
+    hpa:
+      maxReplicas: 5
+      metrics:
+      - resource:
+          name: cpu
+          target:
+            averageUtilization: 40
+            type: Utilization
+        type: Resource
+      minReplicas: 1
+- name: catalog
+  scalingPolicy:
+    replicas: 1
+- name: orders
+  scalingPolicy:
+    replicas: 1
+- name: customers
+  scalingPolicy:
+    hpa:
+      minReplicas: 1
+      maxReplicas: 3
+      metrics:
+        - resource:
+            name: memory
+            target:
+              averageUtilization: 50
+              type: Utilization
+          type: Resource
+gateway:
+  scalingPolicy:
+    replicas: 1
+```
+In this exported autoscale policy, the components `controller` and `customers` have autoscaling policies defined. 
+For the components `catalog` and `orders` do not have autoscaling policies, but only the replica count defined. 
+The gateway also has a flat scaling policy. 
+These autoscaling policies and fixed replica counts can be modified and re-applied using the [Apply Policy command](#apply-policy), which will get reflected in the running instances. 
   
 ### Apply policy
 Once the policy is [exported](#export-policy), the policy can be evaluated, and modified based on the requirement. The 
 modified policy can be applied to the running cell instance. Note, if the component is defined with scaling policy with 
 `override` parameter `false` as shown [syntax](#syntax), the policy cannot be applied in the runtime. 
-```bash
- cellery apply-policy autoscale pet-fe-modified.yaml pet-be
-```
 
-You also can selectively apply the autoscaling policy to selected components via below command. 
+For a cell:
 ```bash
- cellery apply-policy autoscale pet-fe-modified.yaml pet-be -c controller, catalog
+ cellery apply-policy autoscale cell petfe pet-fe-modified.yaml
+```
+For a composite:
+```bash
+ cellery apply-policy autoscale composite petfe pet-fe-modified.yaml
 ```
 
 ## Zero-scaling

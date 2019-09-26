@@ -388,6 +388,7 @@ Export a set of autoscale policies which is applicable to a given cell instance.
 
 ###### Parameters: 
 
+* _instance type: Whether the instance is a composite or a cell, denoted by either 'composite' or 'cell'._
 * _cell instance name: A valid cell instance name._
 
 ###### Flags (Optional):
@@ -397,8 +398,8 @@ Export a set of autoscale policies which is applicable to a given cell instance.
 
 Ex:
  ```
-   cellery export-policy autoscale mytestcell1 -f myscalepolicy.yaml
-   cellery export-policy autoscale mytestcell1
+   cellery export-policy autoscale cell mytestcell1 -f myscalepolicy.yaml
+   cellery export-policy autoscale composite mytestcell1
  ```
  
  [Back to Command List](#cellery-cli-commands)
@@ -413,55 +414,53 @@ Apply a policy/set of policies included in a file to the Cellery runtime targeti
  
  ###### Parameters: 
  
- * _autoscale policy file: A file containing a valid autoscale policy/set of autoscale policies._
+ * _instance type: Whether the instance is a composite or a cell, denoted by either 'composite' or 'cell'._
  * _instance name: The target instance to which the autoscale policies should be applied._
- 
- ###### Flags (Optional):
- 
- * _-c, --components: Comma separated list of components of the provided instance, to which the autoscale policy should be applied._
- * _-g, --gateway: Flag to indicate that the given autoscale policy should be applied to only the gateway of the target instance._
+ * _autoscale policy file: A file containing a valid autoscale policy/set of autoscale policies._
  
  Ex:
   ```
-    cellery apply-policy autoscale myscalepolicy.yaml myinstance --components comp1,comp2
-    cellery apply-policy autoscale myscalepolicy.yaml myinstance --gateway
-    cellery apply-policy autoscale myscalepolicy.yaml myinstance
+    cellery apply-policy autoscale cell myinstance myscalepolicy.yaml
+    cellery apply-policy autoscale composite myinstance myscalepolicy.yaml
   ```
   
  ###### Sample autoscale policy:
   ```yaml
-    type: AutoscalePolicy
-    rules:
-    - overridable: true
-      policy:
-        maxReplicas: 4
+  components:
+  - name: controller
+    scalingPolicy:
+      hpa:
+        maxReplicas: 5
         metrics:
         - resource:
             name: cpu
-            targetAverageUtilization: 40
+            target:
+              averageUtilization: 40
+              type: Utilization
           type: Resource
-        minReplicas: "1"
-      target:
-        name: controller
-        type: component
-    ---
-    type: AutoscalePolicy
-    rules:
-      - overridable: false
-        policy:
-          maxReplicas: 2
-          metrics:
-            - resource:
-                name: cpu
-                targetAverageUtilization: 50
-              type: Resource
-          minReplicas: "1"
-        target:
-          type: gateway
-    ---
+        minReplicas: 1
+  - name: catalog
+    scalingPolicy:
+      replicas: 1
+  - name: orders
+    scalingPolicy:
+      replicas: 1
+  - name: customers
+    scalingPolicy:
+      hpa:
+        minReplicas: 1
+        maxReplicas: 3
+        metrics:
+          - resource:
+              name: memory
+              target:
+                averageUtilization: 50
+                type: Utilization
+            type: Resource
+  gateway:
+    scalingPolicy:
+      replicas: 1
   ```
-  * If the target type is specified as 'component', that implies that the policy should be applied to the component denoted by the target name.
-  * If the target type is 'gateway' it should be applied to the gateway of the relevant cell instance.
   * The flag 'overridable' implies whether the existing policy can be overriden by the same command repeatedly. 
   
   [Back to Command List](#cellery-cli-commands)
