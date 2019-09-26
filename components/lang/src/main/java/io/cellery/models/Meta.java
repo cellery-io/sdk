@@ -34,12 +34,14 @@ public class Meta {
     private String alias;
     private String kind;
     private boolean isRunning;
+    private boolean shared;
     private Map<String, ComponentMeta> components;
     private Map<String, String> environmentVariables;
 
     public Meta() {
         components = new HashMap<>();
         environmentVariables = new HashMap<>();
+        alias = "";
     }
 
     /**
