@@ -52,8 +52,8 @@ func getCellImageCompoents(cellImage string) []string {
 	if err != nil {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)
 	}
-	for i := 0; i < len(cellImageContent.CellSpec.ComponentTemplates); i++ {
-		components = append(components, cellImageContent.CellSpec.ComponentTemplates[i].Metadata.Name)
+	for _, component := range cellImageContent.Spec.Components {
+		components = append(components, component.Metadata.Name)
 	}
 	return components
 }

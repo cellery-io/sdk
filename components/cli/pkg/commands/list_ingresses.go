@@ -118,24 +118,23 @@ func displayCellImageApisTable(cellImageName string) {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)
 	}
 	var tableData [][]string
-	for i := 0; i < len(cellImageContent.CellSpec.ComponentTemplates); i++ {
-		componentName := cellImageContent.CellSpec.ComponentTemplates[i].Metadata.Name
+	for _, component := range cellImageContent.Spec.Components {
+		componentName := component.Metadata.Name
 		// Iterate HTTP and Web ingresses
-		for j := 0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.HttpApis); j++ {
-			ingress := cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.HttpApis[j]
-			backend := ingress.Backend
-			var ingressType = "web"
+		for _, ingress := range cellImageContent.Spec.Gateway.Spec.Ingress.HTTP {
+			backend := ingress.Destination.Host
 			if componentName == backend {
 				var ingressData []string
 				ingressData = append(ingressData, componentName)
 
-				if len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.Host) == 0 {
-					ingressType = "HTTP"
+				var ingressType = "web"
+				if len(cellImageContent.Spec.Gateway.Spec.Ingress.Extensions.ClusterIngress.Host) == 0 {
+					ingressType = "http"
 				}
 				ingressData = append(ingressData, ingressType)
 				ingressData = append(ingressData, ingress.Context)
-				ingressData = append(ingressData, strconv.Itoa(80))
-				if ingress.Global {
+				ingressData = append(ingressData, strconv.Itoa(ingress.Port))
+				if ingressType == "web" || ingress.Global {
 					ingressData = append(ingressData, "True")
 				} else {
 					ingressData = append(ingressData, "False")
@@ -144,29 +143,27 @@ func displayCellImageApisTable(cellImageName string) {
 			}
 		}
 		// Iterate TCP ingresses
-		for j := 0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis); j++ {
-			ingress := cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis[j]
-			backend := ingress.Backend
+		for _, ingress := range cellImageContent.Spec.Gateway.Spec.Ingress.TCP {
+			backend := ingress.Destination.Host
 			if componentName == backend {
 				var ingressData []string
 				ingressData = append(ingressData, componentName)
 				ingressData = append(ingressData, "tcp")
 				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, strconv.Itoa(8080))
+				ingressData = append(ingressData, strconv.Itoa(ingress.Port))
 				ingressData = append(ingressData, "False")
 				tableData = append(tableData, ingressData)
 			}
 		}
 		// Iterate GRPC ingresses
-		for j := 0; j < len(cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis); j++ {
-			ingress := cellImageContent.CellSpec.GateWayTemplate.GatewaySpec.TcpApis[j]
-			backend := ingress.Backend
+		for _, ingress := range cellImageContent.Spec.Gateway.Spec.Ingress.GRPC {
+			backend := ingress.Destination.Host
 			if componentName == backend {
 				var ingressData []string
 				ingressData = append(ingressData, componentName)
 				ingressData = append(ingressData, "grpc")
 				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, strconv.Itoa(3550))
+				ingressData = append(ingressData, strconv.Itoa(ingress.Port))
 				ingressData = append(ingressData, "False")
 				tableData = append(tableData, ingressData)
 			}

@@ -20,10 +20,10 @@
 package image
 
 type Cell struct {
-	Kind         string       `json:"kind"`
-	CellMetaData CellMetaData `json:"metadata"`
-	CellSpec     CellSpec     `json:"spec"`
-	CellStatus   CellStatus   `json:"status"`
+	Kind     string       `json:"kind"`
+	MetaData CellMetaData `json:"metadata"`
+	Spec     CellSpec     `json:"spec"`
+	Status   CellStatus   `json:"status"`
 }
 
 type CellMetaData struct {
@@ -39,63 +39,75 @@ type CellAnnotations struct {
 }
 
 type CellSpec struct {
-	ComponentTemplates []ComponentTemplate `json:"servicesTemplates"`
-	GateWayTemplate    Gateway             `json:"gatewayTemplate"`
+	Components []Component `json:"components"`
+	Gateway    Gateway     `json:"gateway,omitempty"`
 }
 
-type ComponentTemplate struct {
-	Metadata ComponentTemplateMetadata `json:"metadata"`
-	Spec     ComponentTemplateSpec     `json:"spec"`
+type Component struct {
+	Metadata ComponentMetadata `json:"metadata"`
+	Spec     ComponentSpec     `json:"spec"`
 }
 
-type ComponentTemplateMetadata struct {
+type ComponentMetadata struct {
 	Name string `json:"name"`
 }
 
-type ComponentTemplateSpec struct {
+type ComponentSpec struct {
+	Ports []ComponentPort `json:"ports"`
+}
+
+type ComponentPort struct {
 	Protocol string `json:"protocol"`
 }
 
-type CellStatus struct {
-	Status       string `json:"status"`
-	Gateway      string `json:"gatewayHostname"`
-	ServiceCount int    `json:"serviceCount"`
-}
-
 type Gateway struct {
-	GatewaySpec GatewaySpec `json:"spec"`
+	Spec GatewaySpec `json:"spec"`
 }
 
 type GatewaySpec struct {
-	HttpApis []GatewayHttpApi `json:"http"`
-	TcpApis  []GatewayTcpApi  `json:"tcp"`
-	GrpcApis []GatewayGrpcApi `json:"grpc"`
-	Host     string           `json:"host"`
+	Ingress Ingress `json:"ingress"`
 }
 
-type GatewayHttpApi struct {
-	Backend      string              `json:"backend"`
-	Context      string              `json:"context"`
-	Definitions  []GatewayDefinition `json:"definitions"`
-	Global       bool                `json:"global"`
-	Authenticate string              `json:"authenticate"`
+type Ingress struct {
+	Extensions Extensions    `json:"extensions"`
+	HTTP       []HttpIngress `json:"http"`
+	GRPC       []GrpcIngress `json:"grpc"`
+	TCP        []TcpIngress  `json:"tcp"`
 }
 
-type GatewayTcpApi struct {
-	Backend     string `json:"backendHost"`
-	BackendPort uint16 `json:"backendPort"`
-	Port        uint16 `json:"port"`
+type Extensions struct {
+	ClusterIngress ClusterIngress `json:"clusterIngress"`
 }
 
-type GatewayGrpcApi struct {
-	Backend     string `json:"backendHost"`
-	BackendPort uint16 `json:"backendPort"`
-	Port        uint16 `json:"port"`
+type ClusterIngress struct {
+	Host string `json:"host"`
 }
 
-type GatewayDefinition struct {
-	Method string `json:"method"`
-	Path   string `json:"path"`
+type HttpIngress struct {
+	Context     string      `json:"context"`
+	Global      bool        `json:"global"`
+	Port        int         `json:"port"`
+	Destination Destination `json:"destination"`
+}
+
+type GrpcIngress struct {
+	Port        int         `json:"port"`
+	Destination Destination `json:"destination"`
+}
+
+type TcpIngress struct {
+	Port        int         `json:"port"`
+	Destination Destination `json:"destination"`
+}
+
+type Destination struct {
+	Host string `json:"host"`
+}
+
+type CellStatus struct {
+	Status         string `json:"status"`
+	Gateway        string `json:"gatewayServiceName"`
+	ComponentCount int    `json:"componentCount"`
 }
 
 type CellImage struct {

@@ -384,34 +384,37 @@ func generateMetaData(cellImage *image.CellImage, targetDir string, spinner *uti
 		return ingressTypesArray
 	}
 	if k8sCell.Kind == "Cell" {
-		for _, tcpApi := range k8sCell.CellSpec.GateWayTemplate.GatewaySpec.TcpApis {
-			metadata.Components[tcpApi.Backend].IngressTypes =
-				appendIfNotPresent(metadata.Components[tcpApi.Backend].IngressTypes, "TCP")
+		for _, tcpIngress := range k8sCell.Spec.Gateway.Spec.Ingress.TCP {
+			metadata.Components[tcpIngress.Destination.Host].IngressTypes =
+				appendIfNotPresent(metadata.Components[tcpIngress.Destination.Host].IngressTypes, "TCP")
 		}
-		for _, httpApi := range k8sCell.CellSpec.GateWayTemplate.GatewaySpec.HttpApis {
-			if k8sCell.CellSpec.GateWayTemplate.GatewaySpec.Host == "" {
-				metadata.Components[httpApi.Backend].IngressTypes =
-					appendIfNotPresent(metadata.Components[httpApi.Backend].IngressTypes, "HTTP")
+		for _, httpIngress := range k8sCell.Spec.Gateway.Spec.Ingress.HTTP {
+			var ingressType string
+			if k8sCell.Spec.Gateway.Spec.Ingress.Extensions.ClusterIngress.Host == "" {
+				ingressType = "HTTP"
 			} else {
-				metadata.Components[httpApi.Backend].IngressTypes =
-					appendIfNotPresent(metadata.Components[httpApi.Backend].IngressTypes, "WEB")
+				ingressType = "WEB"
 			}
+			metadata.Components[httpIngress.Destination.Host].IngressTypes =
+				appendIfNotPresent(metadata.Components[httpIngress.Destination.Host].IngressTypes, ingressType)
 		}
-		for _, grpcApi := range k8sCell.CellSpec.GateWayTemplate.GatewaySpec.GrpcApis {
-			metadata.Components[grpcApi.Backend].IngressTypes =
-				appendIfNotPresent(metadata.Components[grpcApi.Backend].IngressTypes, "GRPC")
+		for _, grpcIngress := range k8sCell.Spec.Gateway.Spec.Ingress.GRPC {
+			metadata.Components[grpcIngress.Destination.Host].IngressTypes =
+				appendIfNotPresent(metadata.Components[grpcIngress.Destination.Host].IngressTypes, "GRPC")
 		}
 	} else {
-		for _, componentTemplate := range k8sCell.CellSpec.ComponentTemplates {
-			if strings.ToUpper(componentTemplate.Spec.Protocol) == "HTTP" {
-				metadata.Components[componentTemplate.Metadata.Name].IngressTypes =
-					appendIfNotPresent(metadata.Components[componentTemplate.Metadata.Name].IngressTypes, "HTTP")
-			} else if strings.ToUpper(componentTemplate.Spec.Protocol) == "TCP" {
-				metadata.Components[componentTemplate.Metadata.Name].IngressTypes =
-					appendIfNotPresent(metadata.Components[componentTemplate.Metadata.Name].IngressTypes, "TCP")
-			} else if strings.ToUpper(componentTemplate.Spec.Protocol) == "GRPC" {
-				metadata.Components[componentTemplate.Metadata.Name].IngressTypes =
-					appendIfNotPresent(metadata.Components[componentTemplate.Metadata.Name].IngressTypes, "GRPC")
+		for _, component := range k8sCell.Spec.Components {
+			for _, port := range component.Spec.Ports {
+				if strings.ToUpper(port.Protocol) == "HTTP" {
+					metadata.Components[component.Metadata.Name].IngressTypes =
+						appendIfNotPresent(metadata.Components[component.Metadata.Name].IngressTypes, "HTTP")
+				} else if strings.ToUpper(port.Protocol) == "TCP" {
+					metadata.Components[component.Metadata.Name].IngressTypes =
+						appendIfNotPresent(metadata.Components[component.Metadata.Name].IngressTypes, "TCP")
+				} else if strings.ToUpper(port.Protocol) == "GRPC" {
+					metadata.Components[component.Metadata.Name].IngressTypes =
+						appendIfNotPresent(metadata.Components[component.Metadata.Name].IngressTypes, "GRPC")
+				}
 			}
 		}
 	}
