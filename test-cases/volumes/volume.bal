@@ -30,6 +30,7 @@ public function build(cellery:ImageName iName) returns error? {
             helloApi: <cellery:HttpApiIngress>{ port: 9090,
                 context: "hello",
                 authenticate: false,
+                apiVersion: "v1.0.0",
                 definition: {
                     resources: [
                         {
@@ -46,7 +47,7 @@ public function build(cellery:ImageName iName) returns error? {
                 path: "/tmp/secret/",
                 readOnly: false,
                 volume:<cellery:NonSharedSecret>{
-                    name:"my-secret",
+                    name:cellery:generateVolumeName("my-secret"),
                     data:{
                         username:"admin",
                         password:"admin"
@@ -90,8 +91,8 @@ public function build(cellery:ImageName iName) returns error? {
                 }
             },
             volumeClaimShared: {
-                path: "/tmp/pvc/",
-                readOnly: false,
+                path: "/tmp/pvc/shared",
+                readOnly: true,
                 volume:<cellery:K8sSharedPersistence>{
                     name:"pv2"
                 }
@@ -109,4 +110,9 @@ public function build(cellery:ImageName iName) returns error? {
 
     //Build Hello Cell
     return cellery:createImage(helloCell, untaint iName);
+}
+
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
+    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);
+    return cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);
 }

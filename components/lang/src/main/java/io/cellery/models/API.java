@@ -37,6 +37,8 @@ import java.util.List;
 public class API {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<APIDefinition> definitions;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String version;
     @JsonIgnore
     private String name;
     private int port;

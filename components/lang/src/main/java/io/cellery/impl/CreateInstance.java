@@ -136,10 +136,10 @@ import static io.cellery.CelleryUtils.writeToFile;
 )
 public class CreateInstance extends BlockingNativeCallableUnit {
     private static final Logger log = LoggerFactory.getLogger(CreateInstance.class);
+    private static Tree dependencyTree = new Tree();
     private Image image = new Image();
     private String instanceName;
     private Map dependencyInfo = new LinkedHashMap();
-    private static Tree dependencyTree = new Tree();
     private BValueArray bValueArray;
     private BMap<String, BValue> bmap;
     private AtomicLong runCount;
@@ -277,6 +277,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 updateProbes(component, updatedComponent);
                 // Update resource limit and requests
                 updateResources(component, updatedComponent);
+                //update volume Instance name
+                updateVolumeInstanceName(component, instanceName);
             });
             writeToFile(toYaml(composite), cellYAMLPath);
             // Update cell yaml with instance name
@@ -389,6 +391,40 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     }
 
     /**
+     * Update Volume configurations.
+     *
+     * @param instanceName cell instance name
+     * @param component    component object from YAML
+     */
+    private void updateVolumeInstanceName(Component component, String instanceName) {
+        component.getSpec().getConfigurations().forEach(configMap -> {
+            String name = configMap.getMetadata().getName();
+            configMap.getMetadata().setName(name.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+        });
+        component.getSpec().getVolumeClaims().forEach(volumeClaim -> {
+            String name = volumeClaim.getName();
+            volumeClaim.setName(name.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+            volumeClaim.getVolumeClaim().getMetadata().setName(name.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+        });
+        component.getSpec().getSecrets().forEach(secret -> {
+            String name = secret.getMetadata().getName();
+            secret.getMetadata().setName(name.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+        });
+        component.getSpec().getTemplate().getVolumes().forEach(volume -> {
+            String updatedName = volume.getName().replace(INSTANCE_NAME_PLACEHOLDER, instanceName);
+            volume.setName(updatedName);
+            if (volume.getConfigMap() != null) {
+                volume.getConfigMap().setName(updatedName);
+            } else if (volume.getSecret() != null) {
+                volume.getSecret().setSecretName(updatedName);
+            } else {
+                volume.getPersistentVolumeClaim().setClaimName(updatedName);
+            }
+        });
+
+    }
+
+    /**
      * Update Environment variables.
      *
      * @param instanceName     Instance Name
@@ -402,6 +438,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         Map<String, String> updatedParams = updatedComponent.getEnvVars();
         // Override values with updated values
         component.getSpec().getTemplate().getContainers().forEach(container -> {
+            container.getVolumeMounts().forEach(volumeMount -> {
+                String name = volumeMount.getName();
+                volumeMount.setName(name.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+            });
             container.getEnv().forEach(envVar -> {
                 if (updatedParams.containsKey(envVar.getName()) && !updatedParams.get(envVar.getName()).isEmpty()) {
                     envVar.setValue(updatedParams.get(envVar.getName()));
@@ -801,7 +841,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 if (!validInstance) {
                     String errMsg = "Invalid environment variable, the instances of the environment variables should " +
                             "be provided as a dependency link, instance " + instanceName + " of the environment " +
-                            "variable " + key +  " not found";
+                            "variable " + key + " not found";
                     throw new BallerinaException(errMsg);
                 }
             }
@@ -930,10 +970,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     /**
      * Print dependency tree node.
      *
-     * @param buffer string buffer
-     * @param prefix prefix
+     * @param buffer         string buffer
+     * @param prefix         prefix
      * @param childrenPrefix child prefix
-     * @param node tree node
+     * @param node           tree node
      */
     private void printDependencyTreeNode(StringBuilder buffer, String prefix, String childrenPrefix, Node<Meta> node) {
         buffer.append(prefix);

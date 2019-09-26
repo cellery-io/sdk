@@ -36,7 +36,7 @@ public type Expose "global" | "local";
 
 public type ImageType "Cell" | "Composite";
 
-public type ComponentType "Job" | "Deployment";
+public type ComponentType "Job" | "Deployment" | "StatefulSet";
 
 public type DockerSource record {|
     string dockerDir;
@@ -146,7 +146,7 @@ public type Component record {|
     AutoScalingPolicy | ZeroScalingPolicy scalingPolicy?;
     Probes probes?;
     Resources resources?;
-    ComponentType ^"type" = "Deployment";
+    ComponentType componentType = "Deployment";
     map<VolumeMount> volumes?;
 |};
 
@@ -252,7 +252,7 @@ public type Test record {|
 |};
 
 public type TestSuite record {|
-	Test?[] tests = [];
+    Test?[] tests = [];
 |};
 
 public type InstanceState record {|
@@ -361,7 +361,7 @@ function validateCell(CellImage image) {
 # + name - The volume mount name
 # + return - Name prefixed with instance name place Holder.
 public function generateVolumeName(string name) returns (string) {
-    return "{{instance_name}}" + name;
+    return "{{instance_name}}-" + name;
 }
 
 
@@ -380,7 +380,7 @@ public function createCellImage(CellImage image, ImageName iName) returns ( erro
 # + startDependencies - Whether to start dependencies
 # + return - error optional
 public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances,
-boolean startDependencies, boolean shareDependencies) returns (InstanceState[]|error?) = external;
+boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) = external;
 
 # Update the cell aritifacts with runtime changes
 #
@@ -497,14 +497,14 @@ public function stopInstances(InstanceState[] instances) returns ( error?) = ext
 # Returns the Image Name of the cell
 #
 # + return - ImageName
-public function getCellImage() returns (ImageName){
+public function getCellImage() returns (ImageName) {
     string org = config:getAsString("IMAGE_ORG");
     string name = config:getAsString("IMAGE_NAME");
     string ver = config:getAsString("IMAGE_VERSION");
-    
+
     ImageName iName = {
-        org: org, 
-        name: name, 
+        org: org,
+        name: name,
         ver: ver,
         isRoot: true
     };
@@ -517,9 +517,13 @@ public function getCellImage() returns (ImageName){
 # + iNameList - list of InstanceState
 # + alias - (optional) dependency alias of instance 
 # + return - URL of the cell gateway
-public function getGatewayHost(InstanceState[] iNameList, string alias = "") returns (string|error) {
+public function getGatewayHost(InstanceState[] iNameList, string alias = "") returns (string | error) {
     string instanceName;
-    ImageName iName = {org: "", name:"", ver:""};
+    ImageName iName = {
+        org: "",
+        name: "",
+        ver: ""
+    };
     foreach var inst in iNameList {
         if (inst.alias == alias) {
             iName = inst.iName;

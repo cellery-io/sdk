@@ -23,7 +23,6 @@ import io.cellery.models.Cell;
 import io.cellery.models.CellSpec;
 import io.cellery.models.Component;
 import io.cellery.models.ComponentSpec;
-import io.cellery.models.ComponentTemplate;
 import io.cellery.models.Test;
 import io.cellery.models.internal.Image;
 import io.cellery.util.KubernetesClient;
@@ -32,6 +31,7 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
+import io.fabric8.kubernetes.api.model.PodSpec;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
@@ -54,6 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -92,7 +93,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         BRefType<?>[] instanceList = ((BValueArray) ctx.getNullableRefArgument(0)).getValues();
         BRefType<?> iNameRefType;
 
-        for (BRefType<?> refType: instanceList) {
+        for (BRefType<?> refType : instanceList) {
             iNameRefType = (BRefType<?>) ((BMap) refType).getMap().get("iName");
             if (((BMap) iNameRefType).getMap().get(INSTANCE_NAME) == null) {
                 break;
@@ -271,9 +272,10 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             }
             envVarList.add(new EnvVarBuilder().withName(key).withValue(value).build());
         });
-        ComponentTemplate componentTemplate = new ComponentTemplate();
-        componentTemplate.addContainer(new ContainerBuilder().withImage(cellImage.getTest().getSource()).withEnv
-                (envVarList).withName(cellImage.getTest().getName()).build());
+        PodSpec componentTemplate = new PodSpec();
+        componentTemplate.setContainers(Collections.singletonList(new ContainerBuilder()
+                .withImage(cellImage.getTest().getSource()).withEnv(envVarList)
+                .withName(cellImage.getTest().getName()).build()));
 
         ComponentSpec componentSpec = new ComponentSpec();
         componentSpec.setType(SERVICE_TYPE_JOB);
@@ -333,7 +335,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                         PrintStream out = System.out;
                         out.println("Log: " + msg);
                     }, CelleryUtils::printWarning);
-            
+
             waitForJobCompletion(jobName, podName, testName);
             deleteTestCell(testName);
         } catch (IOException e) {

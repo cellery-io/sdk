@@ -18,24 +18,15 @@
 
 package io.cellery.models;
 
-import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * ComponentTemplate POJO.
+ * VolumeClaim model class.
  */
 @Data
-public class ComponentTemplate {
-    private List<Container> containers;
-
-    public ComponentTemplate() {
-        containers = new ArrayList<>();
-    }
-
-    public void addContainer(Container container) {
-        containers.add(container);
-    }
+public class VolumeClaim {
+    private String name;
+    private boolean shared;
+    private PersistentVolumeClaim volumeClaim;
 }

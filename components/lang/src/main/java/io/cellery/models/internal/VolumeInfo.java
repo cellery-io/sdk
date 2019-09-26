@@ -19,9 +19,7 @@
 
 package io.cellery.models.internal;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
-import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.KubernetesResource;
 import lombok.Data;
 
 /**
@@ -31,7 +29,6 @@ import lombok.Data;
 public class VolumeInfo {
     private String path;
     private boolean readOnly;
-    private ConfigMap configMap;
-    private Secret secret;
-    private PersistentVolumeClaim volumeClaim;
+    private boolean shared;
+    private KubernetesResource volume;
 }

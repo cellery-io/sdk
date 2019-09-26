@@ -32,14 +32,15 @@ import io.cellery.models.Test;
 import io.cellery.models.Web;
 import io.cellery.models.internal.ImageComponent;
 import io.cellery.models.internal.VolumeInfo;
+import io.cellery.util.KubernetesClient;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
-import io.cellery.util.KubernetesClient;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.HTTPHeader;
 import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaimSpecBuilder;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
@@ -83,6 +84,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -100,6 +102,7 @@ import static io.cellery.CelleryConstants.KIND;
 import static io.cellery.CelleryConstants.LIMITS;
 import static io.cellery.CelleryConstants.LIVENESS;
 import static io.cellery.CelleryConstants.MESH_CELLERY_IO;
+import static io.cellery.CelleryConstants.NAME;
 import static io.cellery.CelleryConstants.READINESS;
 import static io.cellery.CelleryConstants.REQUESTS;
 import static io.cellery.CelleryConstants.RESOURCES;
@@ -190,6 +193,9 @@ public class CelleryUtils {
      */
     public static API getApi(ImageComponent component, LinkedHashMap attributeMap) {
         API httpAPI = new API();
+        if (attributeMap.containsKey("apiVersion")) {
+            httpAPI.setVersion(((BString) attributeMap.get("apiVersion")).stringValue());
+        }
         int containerPort = (int) ((BInteger) attributeMap.get("port")).intValue();
         // Validate the container port is same for all the ingresses.
         if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
@@ -242,74 +248,90 @@ public class CelleryUtils {
             VolumeInfo volumeInfo = new VolumeInfo();
             volumeInfo.setPath(((BString) volumeAttributes.get("path")).stringValue());
             volumeInfo.setReadOnly(((BBoolean) volumeAttributes.get("readOnly")).booleanValue());
-            component.addVolumeInfo(volumeInfo);
             LinkedHashMap k8sVolume = ((BMap) volumeAttributes.get("volume")).getMap();
             switch (((BMap) volumeAttributes.get("volume")).getType().getName()) {
                 case "K8sNonSharedPersistence":
-                    Map<String, Quantity> requests = new HashMap<>();
-                    requests.put("storage", new QuantityBuilder()
-                            .withAmount(((BString) k8sVolume.get("request")).stringValue())
-                            .build());
-                    PersistentVolumeClaim volumeClaim =
-                            new PersistentVolumeClaimBuilder().withNewMetadata()
-                                    .withName(((BString) k8sVolume.get("name")).stringValue())
-                                    .endMetadata()
-                                    .withNewSpec()
-                                    .withNewResources()
-                                    .withRequests(requests)
-                                    .endResources()
-                                    .endSpec().build();
-                    volumeInfo.setVolumeClaim(volumeClaim);
+                    volumeInfo.setShared(false);
+                    PersistentVolumeClaim persistentVolumeClaim = getVolumeClaim(k8sVolume);
+                    volumeInfo.setVolume(persistentVolumeClaim);
                     break;
                 case "K8sSharedPersistence":
-                    PersistentVolumeClaim volumeClaimShared =
+                    volumeInfo.setShared(true);
+                    PersistentVolumeClaim pvShared =
                             new PersistentVolumeClaimBuilder().withNewMetadata()
-                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .withName(((BString) k8sVolume.get(NAME)).stringValue())
                                     .endMetadata()
                                     .build();
-                    volumeInfo.setVolumeClaim(volumeClaimShared);
+                    volumeInfo.setVolume(pvShared);
                     break;
                 case "NonSharedConfiguration":
+                    volumeInfo.setShared(false);
                     ConfigMap configMap =
                             new ConfigMapBuilder().withNewMetadata()
-                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .withName(((BString) k8sVolume.get(NAME)).stringValue())
                                     .endMetadata()
-                                    .withData(((LinkedHashMap<String, String>) ((BMap) k8sVolume.get("data")).getMap()))
+                                    .withData(getDataMap(((BMap) k8sVolume.get("data")).getMap()))
                                     .build();
-                    volumeInfo.setConfigMap(configMap);
+                    volumeInfo.setVolume(configMap);
                     break;
                 case "SharedConfiguration":
+                    volumeInfo.setShared(true);
                     ConfigMap configMapShred =
                             new ConfigMapBuilder().withNewMetadata()
-                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .withName(((BString) k8sVolume.get(NAME)).stringValue())
                                     .endMetadata()
                                     .build();
-                    volumeInfo.setConfigMap(configMapShred);
+                    volumeInfo.setVolume(configMapShred);
                     break;
                 case "SharedSecret":
+                    volumeInfo.setShared(true);
                     Secret secretShared =
                             new SecretBuilder().withNewMetadata()
-                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .withName(((BString) k8sVolume.get(NAME)).stringValue())
                                     .endMetadata()
                                     .build();
-                    volumeInfo.setSecret(secretShared);
+                    volumeInfo.setVolume(secretShared);
                     break;
                 case "NonSharedSecret":
+                    volumeInfo.setShared(false);
                     Secret secret =
                             new SecretBuilder().withNewMetadata()
-                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .withName(((BString) k8sVolume.get(NAME)).stringValue())
                                     .endMetadata()
-                                    .withData(((LinkedHashMap<String, String>) ((BMap) k8sVolume.get("data")).getMap()))
+                                    .withData(getDataMap(((BMap) k8sVolume.get("data")).getMap()))
                                     .build();
-                    volumeInfo.setSecret(secret);
+                    volumeInfo.setVolume(secret);
                     break;
                 default:
                     break;
             }
-
-
+            component.addVolumeInfo(volumeInfo);
         });
+    }
 
+    private static PersistentVolumeClaim getVolumeClaim(LinkedHashMap k8sVolume) {
+        PersistentVolumeClaimSpecBuilder specBuilder = new PersistentVolumeClaimSpecBuilder();
+        Map<String, Quantity> requests = new HashMap<>();
+        requests.put("storage", new QuantityBuilder()
+                .withAmount(((BString) k8sVolume.get("request")).stringValue())
+                .build());
+        specBuilder.withNewResources().withRequests(requests).endResources();
+        if (k8sVolume.containsKey("storageClass")) {
+            specBuilder.withStorageClassName(((BString) k8sVolume.get("storageClass")).stringValue());
+        }
+        if (k8sVolume.containsKey("mode")) {
+            specBuilder.withVolumeMode(((BString) k8sVolume.get("mode")).stringValue());
+        }
+        if (k8sVolume.containsKey("accessMode")) {
+            final BValueArray accessModes = ((BValueArray) k8sVolume.get("accessMode"));
+            List<String> accessModeList = new ArrayList<>();
+            IntStream.range(0, (int) accessModes.size()).forEach(accessModeIndex ->
+                    accessModeList.add(accessModes.getRefValue(accessModeIndex).stringValue()));
+            specBuilder.withAccessModes(accessModeList);
+        }
+        return new PersistentVolumeClaimBuilder().withNewMetadata()
+                .withName(((BString) k8sVolume.get(NAME)).stringValue())
+                .endMetadata().withSpec(specBuilder.build()).build();
     }
 
     /**
@@ -323,6 +345,20 @@ public class CelleryUtils {
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
                         e -> new Quantity(e.getValue().stringValue()))
+                );
+    }
+
+    /**
+     * Get Resource Quantity Map.
+     *
+     * @param conf map of configurations
+     * @return ResourceQuantityMap
+     */
+    private static Map<String, String> getDataMap(LinkedHashMap<String, BValue> conf) {
+        return conf.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> e.getValue().stringValue())
                 );
     }
 
@@ -473,7 +509,7 @@ public class CelleryUtils {
     /**
      * Append content to a file.
      *
-     * @param content content to be added
+     * @param content    content to be added
      * @param targetPath path to the file
      */
     public static void appendToFile(String content, String targetPath) {
@@ -606,11 +642,11 @@ public class CelleryUtils {
         } catch (IOException e) {
             throw new BallerinaException(
                     "Error occurred while executing the command '" + command + "', " + "from directory '"
-                            + workingDirectory.toString(), e);
+                            + Objects.requireNonNull(workingDirectory).toString(), e);
         } catch (InterruptedException e) {
             throw new BallerinaException(
                     "InterruptedException occurred while executing the command '" + command + "', " + "from directory '"
-                            + workingDirectory.toString(), e);
+                            + Objects.requireNonNull(workingDirectory).toString(), e);
         } finally {
             executor.shutdownNow();
         }
@@ -674,11 +710,11 @@ public class CelleryUtils {
         } catch (IOException e) {
             throw new BallerinaException(
                     "Error occurred while executing the command '" + String.join(" ", command) + "', " +
-                            "from directory '" + workingDirectory.toString(), e);
+                            "from directory '" + Objects.requireNonNull(workingDirectory).toString(), e);
         } catch (InterruptedException e) {
             throw new BallerinaException(
                     "InterruptedException occurred while executing the command '" + String.join(" ", command) +
-                            "', " + "from directory '" + workingDirectory.toString(), e);
+                            "', " + "from directory '" + Objects.requireNonNull(workingDirectory).toString(), e);
         } finally {
             executor.shutdownNow();
         }
@@ -730,38 +766,6 @@ public class CelleryUtils {
     }
 
     /**
-     * Interface to print shell command output.
-     */
-    public interface Writer {
-
-        /**
-         * Called when a newline should be printed.
-         *
-         * @param msg message to write
-         */
-        void writeMessage(String msg);
-    }
-
-    /**
-     * StreamGobbler to handle process builder output.
-     */
-    private static class StreamGobbler implements Runnable {
-        private InputStream inputStream;
-        private Consumer<String> consumer;
-
-        StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
-            this.inputStream = inputStream;
-            this.consumer = consumer;
-        }
-
-        @Override
-        public void run() {
-            new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines()
-                    .forEach(consumer);
-        }
-    }
-
-    /**
      * Check if a cell instance is running.
      *
      * @param instance name of the instance
@@ -779,7 +783,7 @@ public class CelleryUtils {
      * Get the fully qualified image name of an instance.
      *
      * @param instance instance name
-     * @param kind instance kind
+     * @param kind     instance kind
      * @return image name
      */
     public static String getInstanceImageName(String instance, String kind) {
@@ -801,11 +805,11 @@ public class CelleryUtils {
     /**
      * Get dependent instance name using its image name.
      *
-     * @param parentInstance parent instance name
-     * @param dependentOrg dependent instance org
-     * @param dependentName dependent instance name
+     * @param parentInstance   parent instance name
+     * @param dependentOrg     dependent instance org
+     * @param dependentName    dependent instance name
      * @param dependentVersion dependent instance version
-     * @param dependentKind dependent instance kind
+     * @param dependentKind    dependent instance kind
      * @return dependent instance name
      */
     public static String getDependentInstanceName(String parentInstance, String dependentOrg, String dependentName,
@@ -837,8 +841,7 @@ public class CelleryUtils {
      * Extract a zip file to a given location.
      *
      * @param zipFilePath path to the zip file
-     * @param destDir location which the zip file will be extracted to
-     * @throws IOException if zip extraction fails
+     * @param destDir     location which the zip file will be extracted to
      */
     public static void unzip(String zipFilePath, String destDir) {
         PrintStream out = System.out;
@@ -904,10 +907,10 @@ public class CelleryUtils {
     /**
      * Replace a string in a file.
      *
-     * @param srcPath path to the file
+     * @param srcPath   path to the file
      * @param oldString string to be replaced
      * @param newString string which will be replaced by
-     * @throws IOException
+     * @throws IOException if unable to read file
      */
     public static void replaceInFile(String srcPath, String oldString, String newString) throws IOException {
         Path path = Paths.get(srcPath);
@@ -927,7 +930,7 @@ public class CelleryUtils {
      */
     public static List<File> getFilesByExtension(String directory, String extension) {
         File dir = new File(directory);
-        String[] extensions = new String[] {extension};
+        String[] extensions = new String[]{extension};
         return new ArrayList<>(FileUtils.listFiles(dir, extensions, true));
     }
 
@@ -945,11 +948,43 @@ public class CelleryUtils {
     /**
      * Remove prefix from a string.
      *
-     * @param s string
+     * @param s      string
      * @param prefix prefix
      * @return prefix removed string
      */
     public static String removePrefix(String s, String prefix) {
         return StringUtils.removeStart(s, prefix);
+    }
+
+    /**
+     * Interface to print shell command output.
+     */
+    public interface Writer {
+
+        /**
+         * Called when a newline should be printed.
+         *
+         * @param msg message to write
+         */
+        void writeMessage(String msg);
+    }
+
+    /**
+     * StreamGobbler to handle process builder output.
+     */
+    private static class StreamGobbler implements Runnable {
+        private InputStream inputStream;
+        private Consumer<String> consumer;
+
+        StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+            this.inputStream = inputStream;
+            this.consumer = consumer;
+        }
+
+        @Override
+        public void run() {
+            new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines()
+                    .forEach(consumer);
+        }
     }
 }

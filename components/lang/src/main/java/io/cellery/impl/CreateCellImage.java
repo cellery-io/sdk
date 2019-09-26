@@ -27,7 +27,6 @@ import io.cellery.models.CellSpec;
 import io.cellery.models.ClusterIngress;
 import io.cellery.models.Component;
 import io.cellery.models.ComponentSpec;
-import io.cellery.models.ComponentTemplate;
 import io.cellery.models.Composite;
 import io.cellery.models.CompositeSpec;
 import io.cellery.models.Destination;
@@ -46,10 +45,12 @@ import io.cellery.models.STSTemplateSpec;
 import io.cellery.models.ScalingPolicy;
 import io.cellery.models.TCP;
 import io.cellery.models.TLS;
+import io.cellery.models.VolumeClaim;
 import io.cellery.models.Web;
 import io.cellery.models.internal.Dependency;
 import io.cellery.models.internal.Image;
 import io.cellery.models.internal.ImageComponent;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
@@ -57,6 +58,13 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
+import io.fabric8.kubernetes.api.model.PodSpec;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
@@ -207,7 +215,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             component.setName(((BString) attributeMap.get("name")).stringValue());
             component.setReplicas((int) (((BInteger) attributeMap.get("replicas")).intValue()));
             component.setService(component.getName());
-            component.setType(((BString) attributeMap.get("type")).stringValue());
+            component.setType(((BString) attributeMap.get("componentType")).stringValue());
             processSource(component, attributeMap);
             //Process Optional fields
             if (attributeMap.containsKey(INGRESSES)) {
@@ -345,9 +353,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         if (attributeMap.containsKey(CelleryConstants.CONTEXT)) {
             httpAPI.setContext(((BString) attributeMap.get(CelleryConstants.CONTEXT)).stringValue());
         }
-
+        httpAPI.setAuthenticate(((BBoolean) attributeMap.get("authenticate")).booleanValue());
         if (attributeMap.containsKey(EXPOSE)) {
-            httpAPI.setAuthenticate(((BBoolean) attributeMap.get("authenticate")).booleanValue());
             if (!httpAPI.isAuthenticate()) {
                 String context = httpAPI.getContext();
                 if (!context.startsWith("/")) {
@@ -488,13 +495,69 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         component.setMetadata(new ObjectMetaBuilder().withName(imageComponent.getName())
                 .withLabels(imageComponent.getLabels())
                 .build());
-        ComponentTemplate componentTemplate = new ComponentTemplate();
-        componentTemplate.addContainer(getContainer(imageComponent, getEnvVars(imageComponent)));
+        PodSpec componentTemplate = new PodSpec();
+        Container container = getContainer(imageComponent, getEnvVars(imageComponent));
         ComponentSpec componentSpec = new ComponentSpec();
-        componentSpec.setTemplate(componentTemplate);
         componentSpec.setType(imageComponent.getType());
         componentSpec.setScalingPolicy(imageComponent.getScalingPolicy());
         componentSpec.setPorts(imageComponent.getPorts());
+        List<VolumeMount> volumeMounts = new ArrayList<>();
+        List<Volume> volumes = new ArrayList<>();
+        imageComponent.getVolumes().forEach(volumeInfo -> {
+            String name;
+            if (volumeInfo.getVolume() instanceof ConfigMap) {
+                name = ((ConfigMap) volumeInfo.getVolume())
+                        .getMetadata().getName();
+                Volume volume = new VolumeBuilder()
+                        .withName(name)
+                        .withNewConfigMap()
+                        .withName(name)
+                        .endConfigMap()
+                        .build();
+                volumes.add(volume);
+                if (!volumeInfo.isShared()) {
+                    componentSpec.addConfiguration((ConfigMap) volumeInfo.getVolume());
+                }
+            } else if (volumeInfo.getVolume() instanceof Secret) {
+                name = ((Secret) volumeInfo.getVolume())
+                        .getMetadata().getName();
+                Volume volume = new VolumeBuilder()
+                        .withName(name)
+                        .withNewSecret()
+                        .withSecretName(name)
+                        .endSecret()
+                        .build();
+                volumes.add(volume);
+                if (!volumeInfo.isShared()) {
+                    componentSpec.addSecrets((Secret) volumeInfo.getVolume());
+                }
+            } else {
+                name = ((PersistentVolumeClaim) volumeInfo.getVolume()).getMetadata().getName();
+                Volume volume = new VolumeBuilder()
+                        .withName(name)
+                        .withNewPersistentVolumeClaim()
+                        .withClaimName(name)
+                        .endPersistentVolumeClaim()
+                        .build();
+                volumes.add(volume);
+                if (!volumeInfo.isShared()) {
+                    VolumeClaim sharedVolumeClaim = new VolumeClaim();
+                    sharedVolumeClaim.setShared(true);
+                    sharedVolumeClaim.setVolumeClaim((PersistentVolumeClaim) volumeInfo.getVolume());
+                    sharedVolumeClaim.setName(name);
+                    componentSpec.addVolumeClaim(sharedVolumeClaim);
+                }
+            }
+            VolumeMount volumeMount = new VolumeMountBuilder()
+                    .withName(name)
+                    .withMountPath(volumeInfo.getPath())
+                    .withReadOnly(volumeInfo.isReadOnly()).build();
+            volumeMounts.add(volumeMount);
+        });
+        container.setVolumeMounts(volumeMounts);
+        componentTemplate.setVolumes(volumes);
+        componentTemplate.setContainers(Collections.singletonList(container));
+        componentSpec.setTemplate(componentTemplate);
         return componentSpec;
     }
 

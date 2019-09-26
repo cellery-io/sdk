@@ -19,6 +19,9 @@
 package io.cellery.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.PodSpec;
+import io.fabric8.kubernetes.api.model.Secret;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -33,10 +36,28 @@ public class ComponentSpec {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private ScalingPolicy scalingPolicy;
-    private ComponentTemplate template;
+    private PodSpec template;
     private List<Port> ports;
+    private List<ConfigMap> configurations;
+    private List<Secret> secrets;
+    private List<VolumeClaim> volumeClaims;
 
     public ComponentSpec() {
+        configurations = new ArrayList<>();
+        secrets = new ArrayList<>();
+        volumeClaims = new ArrayList<>();
         ports = new ArrayList<>();
+    }
+
+    public void addConfiguration(ConfigMap configMap) {
+        this.configurations.add(configMap);
+    }
+
+    public void addSecrets(Secret secret) {
+        this.secrets.add(secret);
+    }
+
+    public void addVolumeClaim(VolumeClaim volumeClaim) {
+        this.volumeClaims.add(volumeClaim);
     }
 }
