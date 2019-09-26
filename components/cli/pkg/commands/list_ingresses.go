@@ -50,7 +50,7 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting list of components", err)
 	}
-	apiArray := gateways.GatewaySpec.HttpApis
+	apiArray := gateways.GatewaySpec.Ingress.HttpApis
 	var tableData [][]string
 	for i := 0; i < len(apiArray); i++ {
 		for j := 0; j < len(apiArray[i].Definitions); j++ {

@@ -317,14 +317,9 @@ func buildTcpRoutes(dependencyInst string, targetInst string, port kubectl.TCPPo
 }
 
 func checkForMatchingApis(currentTarget *kubectl.Cell, newTarget *kubectl.Cell) error {
-	currTargetApiVersion := currentTarget.CellMetaData.Annotations.ApiVersion
-	newTargetApiVersion := newTarget.CellMetaData.Annotations.ApiVersion
-
 outer:
-	for _, currTargetGwApi := range currentTarget.CellSpec.GateWayTemplate.GatewaySpec.HttpApis {
-		currTargetGwApi.Version = currTargetApiVersion
-		for _, newTargetGwApi := range newTarget.CellSpec.GateWayTemplate.GatewaySpec.HttpApis {
-			newTargetGwApi.Version = newTargetApiVersion
+	for _, currTargetGwApi := range currentTarget.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis {
+		for _, newTargetGwApi := range newTarget.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis {
 			if doApisMatch(&newTargetGwApi, &currTargetGwApi) {
 				// if matches, continue the outer loop
 				continue outer

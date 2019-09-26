@@ -36,16 +36,15 @@ type CellToCellRoute struct {
 func (router *CellToCellRoute) Check() error {
 	// if the target instance has only TCP components exposed, will not work.
 	// TODO: remove this once TCP is supported
-	if len(router.NewTarget.CellSpec.GateWayTemplate.GatewaySpec.HttpApis) == 0 &&
-		len(router.NewTarget.CellSpec.GateWayTemplate.GatewaySpec.TcpApis) > 0 {
+	if len(router.NewTarget.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis) == 0 &&
+		len(router.NewTarget.CellSpec.GateWayTemplate.GatewaySpec.Ingress.TcpApis) > 0 {
 		return fmt.Errorf("traffic switching to TCP cells not supported")
 	}
 	// check if APIs are matching
-	// TODO: uncomment when api versions are supported
-	//err := checkForMatchingApis(&router.CurrentTarget, &router.NewTarget)
-	//if err != nil {
-	//	return err
-	//}
+	err := checkForMatchingApis(&router.CurrentTarget, &router.NewTarget)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

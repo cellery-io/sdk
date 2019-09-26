@@ -70,8 +70,8 @@ type K8SMetaData struct {
 }
 
 type CellSpec struct {
-	ComponentTemplates []ComponentTemplate `json:"servicesTemplates"`
-	GateWayTemplate    Gateway             `json:"gatewayTemplate,omitempty"`
+	ComponentTemplates []ComponentTemplate `json:"components"`
+	GateWayTemplate    Gateway             `json:"gateway,omitempty"`
 }
 
 type CompositeSpec struct {
@@ -120,6 +120,10 @@ type Gateway struct {
 }
 
 type GatewaySpec struct {
+	Ingress Ingress `json:"ingress,omitempty"`
+}
+
+type Ingress struct {
 	HttpApis []GatewayHttpApi `json:"http,omitempty"`
 	TcpApis  []GatewayTcpApi  `json:"tcp,omitempty"`
 	GrpcApis []GatewayGrpcApi `json:"grpc,omitempty"`
