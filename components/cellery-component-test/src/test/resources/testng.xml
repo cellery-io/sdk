@@ -44,6 +44,7 @@
             <class name="org.cellery.components.test.scenarios.composite.EmployeeCompositeTest"/>
             <class name="org.cellery.components.test.scenarios.composite.HRCompositeTest"/>
             <class name="org.cellery.components.test.scenarios.composite.TCPTest"/>
+            <class name="org.cellery.components.test.scenarios.volume.VolumeTest"/>
         </classes>
     </test>
 </suite>

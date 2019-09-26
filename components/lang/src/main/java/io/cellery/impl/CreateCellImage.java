@@ -353,7 +353,9 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         if (attributeMap.containsKey(CelleryConstants.CONTEXT)) {
             httpAPI.setContext(((BString) attributeMap.get(CelleryConstants.CONTEXT)).stringValue());
         }
-        httpAPI.setAuthenticate(((BBoolean) attributeMap.get("authenticate")).booleanValue());
+        if (attributeMap.containsKey("authenticate")) {
+            httpAPI.setAuthenticate(((BBoolean) attributeMap.get("authenticate")).booleanValue());
+        }
         if (attributeMap.containsKey(EXPOSE)) {
             if (!httpAPI.isAuthenticate()) {
                 String context = httpAPI.getContext();
