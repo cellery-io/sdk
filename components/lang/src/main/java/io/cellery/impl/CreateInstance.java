@@ -64,10 +64,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -90,7 +88,9 @@ import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.CENTRAL_REGISTRY_HOST;
 import static io.cellery.CelleryConstants.COMPONENTS;
 import static io.cellery.CelleryConstants.DEBUG_BALLERINA_CONF;
+import static io.cellery.CelleryConstants.DEPENDENCY_LINKS_ENV_VAR;
 import static io.cellery.CelleryConstants.ENV_VARS;
+import static io.cellery.CelleryConstants.IMAGE_NAME_ENV_VAR;
 import static io.cellery.CelleryConstants.INGRESSES;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
@@ -220,6 +220,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 rootCellInfo.put("name", new BString(rootMeta.getName()));
                 rootCellInfo.put("ver", new BString(rootMeta.getVer()));
                 rootCellInfo.put("instanceName", new BString(rootMeta.getInstanceName()));
+                rootCellInfo.put("isRoot", new BBoolean(true));
                 bmap = BLangConnectorSPIUtil.createBStruct(ctx,
                         CelleryConstants.CELLERY_PACKAGE,
                         CelleryConstants.INSTANCE_STATE_DEFINITION,
@@ -227,6 +228,21 @@ public class CreateInstance extends BlockingNativeCallableUnit {
 
                 bValueArray.add(runCount.getAndIncrement(), bmap);
                 dependencyInfo = generateDependencyInfo();
+                Map<String, String> testEnvVars = new HashMap<>();
+
+                testEnvVars.put(IMAGE_NAME_ENV_VAR, rootCellInfo.toString()
+                        .replace("org", "\"org\"")
+                        .replace("name", "\"name\"")
+                        .replace("ver", "\"ver\"")
+                        .replace("instanceName", "\"instanceName\"")
+                        .replace("isRoot", "\"isRoot\""));
+                testEnvVars.put(DEPENDENCY_LINKS_ENV_VAR, dependencyInfo.toString()
+                        .replace("org", "\"org\"")
+                        .replace("name", "\"name\"")
+                        .replace("ver", "\"ver\"")
+                        .replace("instanceName", "\"instanceName\"")
+                        .replace("isRoot", "\"isRoot\""));
+                setEnvVarsForTests(testEnvVars);
 
                 if (startDependencies) {
                     printInfo("Dependency tree structure\n");
@@ -872,28 +888,19 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private String generateRandomInstanceName(String name, String ver) {
         String instanceName = name + ver + randomString(4);
-        instanceName = instanceName.replace(".", "");
+        return instanceName.replace(".", "");
+    }
 
-        Properties properties = new Properties();
-        properties.setProperty(CelleryConstants.INSTANCE_NAME_ENV_VAR, "\"" + instanceName + "\"");
-
-        try (OutputStream output = new FileOutputStream(Paths.get(System.getProperty("user.dir"),
-                CelleryConstants.BALLERINA_CONF).toString())) {
-            properties.store(output, null);
-
-        } catch (IOException e) {
-            throw new BallerinaException("Error occurred while creating " + CelleryConstants.BALLERINA_CONF);
-        }
+    private void setEnvVarsForTests(Map<String, String> envVars) {
+        Map<String, String> env = System.getenv();
         try {
-            Map<String, String> env = System.getenv();
             Field field = env.getClass().getDeclaredField("m");
             field.setAccessible(true);
-            ((Map<String, String>) field.get(env)).put(CelleryConstants.INSTANCE_NAME_ENV_VAR, instanceName);
+            ((Map<String, String>) field.get(env)).putAll(envVars);
             field.setAccessible(false);
         } catch (IllegalAccessException | NoSuchFieldException e) {
             throw new BallerinaException("Error occurred while creating " + CelleryConstants.BALLERINA_CONF);
         }
-        return instanceName;
     }
 
     /**

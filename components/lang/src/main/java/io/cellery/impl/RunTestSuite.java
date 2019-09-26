@@ -197,14 +197,20 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             Thread.sleep(5000);
         }
         if (!"True".equalsIgnoreCase(jobStatus)) {
-            printWarning("Error getting status of job " + jobName + ". Skipping collection of logs.");
-        } else {
-            printInfo("Test execution completed. Collecting logs to logs/" +
+            String podInfo = CelleryUtils.executeShellCommand("kubectl get pods " + podName,
+                    null, CelleryUtils::printDebug, CelleryUtils::printWarning);
+            if (podInfo.contains("CrashLoopBackOff")) {
+                printWarning("Pod status turned to CrashLoopBackOff.");
+            } else {
+                printWarning("Error getting status of job " + jobName + ". Skipping collection of logs.");
+                return;
+            }
+        }
+        printInfo("Test execution completed. Collecting logs to logs/" +
                     instanceName + ".log");
-            CelleryUtils.executeShellCommand(
+        CelleryUtils.executeShellCommand(
                     "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
                     CelleryUtils::printDebug, CelleryUtils::printWarning);
-        }
     }
 
     private String getPodName(String podInfo, String instanceName) throws InterruptedException {
@@ -246,14 +252,8 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             module = CelleryConstants.TEMP_TEST_MODULE;
         }
 
-        String cmdArgs;
-        if ("true".equalsIgnoreCase(System.getenv("INCELL"))) {
-            cmdArgs = "--groups incell ";
-        } else {
-            cmdArgs = "--disable-groups incell ";
-        }
-        CelleryUtils.executeShellCommand("ballerina test " + cmdArgs + module, workingDir,
-                CelleryUtils::printInfo, CelleryUtils::printWarning);
+        CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System
+                .getenv(), "ballerina", "test", module);
     }
 
     private Cell generateTestCell(Test test, LinkedHashMap nameStruct) {

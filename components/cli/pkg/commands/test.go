@@ -119,7 +119,7 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 		}
 	}
 
-	instanceEnvVars := map[string][]*environmentVariable{}
+	instanceEnvVars := []*environmentVariable{}
 	if len(envVars) > 0 {
 		// Parsing environment variables
 		spinner.SetNewAction("Validating environment variables")
@@ -149,39 +149,11 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 				targetInstance = instanceName
 			}
 			parsedEnvVar := &environmentVariable{
-				Key:   envVarKey,
-				Value: envVarValue,
+				InstanceName: targetInstance,
+				Key:          envVarKey,
+				Value:        envVarValue,
 			}
-
-			// Validating whether the instance of the environment var is provided as an instance of a link
-			if targetInstance != instanceName {
-				isInstanceProvided := false
-				isInstanceToBeStarted := false
-				for _, link := range parsedDependencyLinks {
-					if targetInstance == link.DependencyInstance {
-						isInstanceProvided = true
-						isInstanceToBeStarted = !link.IsRunning
-						break
-					}
-				}
-				if !isInstanceProvided {
-					spinner.Stop(false)
-					util.ExitWithErrorMessage("Invalid environment variable",
-						fmt.Errorf("the instance of the environment variables should be provided as a "+
-							"dependency link, instance %s of the environment variable %s not found", targetInstance,
-							parsedEnvVar.Key))
-				} else if !isInstanceToBeStarted {
-					spinner.Stop(false)
-					util.ExitWithErrorMessage("Invalid environment variable",
-						fmt.Errorf("the instance of the environment should be an instance to be "+
-							"created, instance %s is already available in the runtime", targetInstance))
-				}
-			}
-
-			if _, hasKey := instanceEnvVars[targetInstance]; !hasKey {
-				instanceEnvVars[targetInstance] = []*environmentVariable{}
-			}
-			instanceEnvVars[targetInstance] = append(instanceEnvVars[targetInstance], parsedEnvVar)
+			instanceEnvVars = append(instanceEnvVars, parsedEnvVar)
 		}
 	}
 
@@ -193,17 +165,18 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 		IsShared:  false,
 	}
 
-	//rootNodeDependencies := map[string]*dependencyTreeNode{}
+	dependencyEnv := []string{}
 	rootNodeDependencies := map[string]*dependencyInfo{}
 	for _, link := range parsedDependencyLinks {
 		rootNodeDependencies[link.DependencyAlias] = &dependencyInfo{
 			InstanceName: link.DependencyInstance,
 		}
+		dependencyEnv = append(dependencyEnv, link.DependencyAlias+"="+link.DependencyInstance)
 	}
 
 	spinner.Stop(true)
 	util.PrintSuccessMessage("Starting execution of tests for " + util.Bold(cellImageTag) + "...")
-	err = startTestCellInstance(imageDir, instanceName, mainNode, instanceEnvVars[instanceName], startDependencies,
+	err = startTestCellInstance(imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
 		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to test Cell instance "+instanceName, err)
@@ -291,6 +264,17 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		}
 	}
 
+	var imageNameStruct = &dependencyInfo{
+		Organization: runningNode.MetaData.Organization,
+		Name:         runningNode.MetaData.Name,
+		Version:      runningNode.MetaData.Version,
+		InstanceName: instanceName,
+		IsRoot:       true,
+	}
+	iName, err := json.Marshal(imageNameStruct)
+	if err != nil {
+		util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
+	}
 	if containsTestFunction {
 		tempTestFileName, err := util.CreateTempExecutableBalFile(balFilePath, "test")
 		if err != nil {
@@ -298,17 +282,6 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		}
 		// Preparing the run command arguments
 		cmdArgs := []string{"run"}
-		var imageNameStruct = &dependencyInfo{
-			Organization: runningNode.MetaData.Organization,
-			Name:         runningNode.MetaData.Name,
-			Version:      runningNode.MetaData.Version,
-			InstanceName: instanceName,
-			IsRoot:       true,
-		}
-		iName, err := json.Marshal(imageNameStruct)
-		if err != nil {
-			util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
-		}
 		var startDependenciesFlag = "false"
 		if startDependencies {
 			startDependenciesFlag = "true"
@@ -333,14 +306,13 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 
 		if debug {
 			content := []string{fmt.Sprintf("DEBUG_MODE=\"%s\"\n", verboseMode)}
-			content = append(content, fmt.Sprintf("IMAGE_ORG=\"%s\"\n", runningNode.MetaData.Organization))
-			content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", runningNode.MetaData.Name))
-			content = append(content, fmt.Sprintf("IMAGE_VERSION=\"%s\"\n", runningNode.MetaData.Version))
-			content = append(content, fmt.Sprintf("INSTANCE_NAME=\"%s\"\n", instanceName))
 			content = append(content, fmt.Sprintf(constants.CELLERY_IMAGE_DIR_ENV_VAR+"=\"%s\"\n", imageDir))
 			for _, envVar := range envVars {
 				content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
 			}
+			content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(string(iName), "\"", "\\\"", -1)))
+			content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
+				strings.Replace(string(dependencyLinksJson), "\"", "\\\"", -1)))
 
 			ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BALLERINA_CONF)
 			isExistsBalConf, err := util.FileExists(ballerinaConf)
@@ -370,29 +342,20 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 					util.ExitWithErrorMessage("error while writing properties to "+ballerinaConf, err)
 				}
 			}
-			var launchStr string
-			if incell {
-				launchStr = ", \"--groups\", \"incell\""
-			} else {
-				launchStr = ", \"--disable-groups\", \"incell\""
-			}
+
 			util.PrintSuccessMessage("Note that the following configuration should be added to the launch configuration " +
 				"before starting the debug session\n" +
 				fmt.Sprintf("--------------------------------------------------------\n\n") +
-				fmt.Sprintf("\"commandOptions\": [\"--config\", \"%s],\n\n", ballerinaConf +
-				launchStr) +
+				fmt.Sprintf("\"commandOptions\": [\"--config\", \"%s\"],\n\n", ballerinaConf) +
 				fmt.Sprintln("--------------------------------------------------------"))
 		} else {
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 			cmd.Env = append(cmd.Env, fmt.Sprintf("DEBUG_MODE=%s", verboseMode))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("INCELL=%s", strconv.FormatBool(incell)))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_ORG=%s", runningNode.MetaData.Organization))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s", runningNode.MetaData.Name))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_VERSION=%s", runningNode.MetaData.Version))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IS_ROOT=%s", strconv.FormatBool(true)))
-			if instanceName != ""{
-				cmd.Env = append(cmd.Env, fmt.Sprintf("INSTANCE_NAME=%s", instanceName))
+			for _, envVar := range envVars {
+				cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
 			}
+			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s\n", string(iName)))
+			cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s\n", string(dependencyLinksJson)))
 		}
 
 		if !assumeYes {
@@ -534,28 +497,28 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		cmd = &exec.Cmd{}
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
+
+		ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BALLERINA_CONF)
+		isExistsBalConf, err := util.FileExists(ballerinaConf)
+		if err != nil {
+			util.ExitWithErrorMessage("error while checking if "+ballerinaConf+" exists", err)
+		}
+		if isExistsBalConf {
+			err := os.Remove(ballerinaConf)
+			if err != nil {
+				util.ExitWithErrorMessage("error while removing "+ballerinaConf+" file", err)
+			}
+		}
 		if debug {
 			content := []string{fmt.Sprintf("DEBUG_MODE=\"%s\"\n", verboseMode)}
-			content = append(content, fmt.Sprintf("IMAGE_ORG=\"%s\"\n", runningNode.MetaData.Organization))
-			content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", runningNode.MetaData.Name))
-			content = append(content, fmt.Sprintf("IMAGE_VERSION=\"%s\"\n", runningNode.MetaData.Version))
-			content = append(content, fmt.Sprintf("INSTANCE_NAME=\"%s\"\n", instanceName))
 			content = append(content, fmt.Sprintf(constants.CELLERY_IMAGE_DIR_ENV_VAR+"=\"%s\"\n", imageDir))
 			for _, envVar := range envVars {
 				content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
 			}
+			content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(string(iName), "\"", "\\\"", -1)))
+			content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
+				strings.Replace(string(dependencyLinksJson), "\"", "\\\"", -1)))
 
-			ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BALLERINA_CONF)
-			isExistsBalConf, err := util.FileExists(ballerinaConf)
-			if err != nil {
-				util.ExitWithErrorMessage("error while checking if "+ballerinaConf+" exists", err)
-			}
-			if isExistsBalConf {
-				err := os.Remove(ballerinaConf)
-				if err != nil {
-					util.ExitWithErrorMessage("error while removing "+ballerinaConf+" file", err)
-				}
-			}
 			_, err = os.Create(ballerinaConf)
 			if err != nil {
 				util.ExitWithErrorMessage("error while creating "+ballerinaConf+" file", err)
@@ -583,10 +546,11 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		} else {
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 			cmd.Env = append(cmd.Env, fmt.Sprintf("DEBUG_MODE=%s", verboseMode))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_ORG=%s", runningNode.MetaData.Organization))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s", runningNode.MetaData.Name))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_VERSION=%s", runningNode.MetaData.Version))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("INSTANCE_NAME=%s", instanceName))
+			for _, envVar := range envVars {
+				cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
+			}
+			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s\n", string(iName)))
+			cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s\n", string(dependencyLinksJson)))
 		}
 
 		if !assumeYes {

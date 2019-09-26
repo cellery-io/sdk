@@ -435,13 +435,7 @@ public function resolveReference(ImageName iName) returns (Reference) {
         panic err;
     }
     Reference myRef = <Reference>ref;
-    foreach var(key,value) in myRef {
-        string temp = <string> value;
-        temp = temp.replaceAll("\\{", "");
-        temp = temp.replaceAll("\\}", "");
-        myRef[key] = temp;
-    }
-    return myRef;
+    return replaceInRef(myRef);
 }
 # Returns a Reference record with url information
 #
@@ -497,42 +491,75 @@ public function stopInstances(InstanceState[] instances) returns ( error?) = ext
 # Returns the Image Name of the cell
 #
 # + return - ImageName
-public function getCellImage() returns (ImageName) {
-    string org = config:getAsString("IMAGE_ORG");
-    string name = config:getAsString("IMAGE_NAME");
-    string ver = config:getAsString("IMAGE_VERSION");
-
-    ImageName iName = {
-        org: org,
-        name: name,
-        ver: ver,
-        isRoot: true
-    };
-    iName.instanceName = config:getAsString("INSTANCE_NAME", defaultValue = "");
+public function getCellImage() returns (ImageName | error){
+    string iNameStr = config:getAsString("IMAGE_NAME",
+    defaultValue = "{org:\"\", name:\"\", ver:\"\", instanceName:\"\"}");
+    io:StringReader reader = new(iNameStr);
+    json|error iNameJson = reader.readJson();
+    if (iNameJson is error) {
+        return iNameJson;
+    }
+    ImageName|error iName = ImageName.convert(iNameJson);
     return iName;
 }
 
+# Get cell dependencies map
+#
+# + return - map of dependencies ImageName
+public function getDependencies() returns (map<ImageName> | error) {
+    string dependencyStr = config:getAsString("DEPENDENCY_LINKS", defaultValue = "{}");
+    io:StringReader reader = new(dependencyStr);
+    json|error dependencyJson = reader.readJson();
+    if (dependencyJson is error) {
+        return dependencyJson;
+    }
+    map<ImageName>|error instances = map<ImageName>.convert(dependencyJson);
+    return instances;
+}
 # Returns cell gateway URL of the started cell
 #
 # + iNameList - list of InstanceState
-# + alias - (optional) dependency alias of instance 
+# + alias - (optional) dependency alias of instance
+# + kind - Composite/Cell and defaults
 # + return - URL of the cell gateway
-public function getGatewayHost(InstanceState[] iNameList, string alias = "") returns (string | error) {
-    string instanceName;
-    ImageName iName = {
-        org: "",
-        name: "",
-        ver: ""
-    };
+public function getGatewayHost(InstanceState[] iNameList, string alias = "", string kind = "Cell") returns (Reference|error) {
+    ImageName iName = {org: "", name:"", ver:""};
     foreach var inst in iNameList {
-        if (inst.alias == alias) {
+        if (inst.alias == "") {
             iName = inst.iName;
             break;
         }
     }
+    foreach var instState in iNameList {
+        if (instState.alias != "" && instState.alias == alias) {
+            if (kind == "Cell") {
+                CellImage cellImage = <CellImage>constructCellImage(iName);
+                foreach var(k, comp) in cellImage.components {
+                    if (comp["dependencies"] is ()) {
+                        break;
+                    }
+                    Reference ref = getReference(comp, instState.alias);
+
+                    Reference myref = ref;
+                    return replaceInRef(myref, alias = instState.alias, name = instState.iName.instanceName);
+                }
+            } else {
+                Composite composite = <Composite>constructCellImage(iName);
+                foreach var(k, comp) in composite.components {
+                    if (comp["dependencies"] is ()) {
+                        break;
+                    }
+                    Reference ref = getReference(comp, instState.alias);
+
+                    Reference myref = ref;
+                    return replaceInRef(myref, alias = instState.alias, name = instState.iName.instanceName);
+                }
+            }
+        }
+    }
     Reference | error? ref = resolveReference(<ImageName>iName);
     Reference tempRef = <Reference> ref;
-    return <string>tempRef.gateway_host;
+    return tempRef;
 }
 
 function parseCellDependency(string alias) returns ImageName {
@@ -644,4 +671,17 @@ function read(string path) returns json | error {
         closeRc(rch);
         return result;
     }
+}
+
+function replaceInRef (Reference ref, string alias = "", string name = "") returns Reference {
+    foreach var(key,value) in ref {
+        string temp = <string> value;
+        temp = temp.replaceAll("\\{", "");
+        temp = temp.replaceAll("\\}", "");
+        if (alias != "") {
+            temp = temp.replace(alias, name);
+        }
+        ref[key] = temp;
+    }
+    return ref;
 }
