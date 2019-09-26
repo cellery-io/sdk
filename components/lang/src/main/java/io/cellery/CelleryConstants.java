@@ -65,6 +65,7 @@ public class CelleryConstants {
     public static final String ENV_VARS = "envVars";
     public static final String PROBES = "probes";
     public static final String POD_RESOURCES = "resources";
+    public static final String VOLUMES = "volumes";
     public static final String KIND = "kind";
     public static final String LIVENESS = "liveness";
     public static final String READINESS = "readiness";

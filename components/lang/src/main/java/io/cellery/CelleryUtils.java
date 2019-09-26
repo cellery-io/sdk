@@ -31,17 +31,26 @@ import io.cellery.models.Port;
 import io.cellery.models.Test;
 import io.cellery.models.Web;
 import io.cellery.models.internal.ImageComponent;
+import io.cellery.models.internal.VolumeInfo;
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.cellery.util.KubernetesClient;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.HTTPHeader;
 import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.QuantityBuilder;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
@@ -68,6 +77,7 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -224,6 +234,82 @@ public class CelleryUtils {
             resourceRequirements.setRequests(getResourceQuantityMap(requestConf));
         }
         component.setResources(resourceRequirements);
+    }
+
+    public static void processVolumes(LinkedHashMap<?, ?> volumes, ImageComponent component) {
+        volumes.forEach((key, volume) -> {
+            LinkedHashMap volumeAttributes = ((BMap) volume).getMap();
+            VolumeInfo volumeInfo = new VolumeInfo();
+            volumeInfo.setPath(((BString) volumeAttributes.get("path")).stringValue());
+            volumeInfo.setReadOnly(((BBoolean) volumeAttributes.get("readOnly")).booleanValue());
+            component.addVolumeInfo(volumeInfo);
+            LinkedHashMap k8sVolume = ((BMap) volumeAttributes.get("volume")).getMap();
+            switch (((BMap) volumeAttributes.get("volume")).getType().getName()) {
+                case "K8sNonSharedPersistence":
+                    Map<String, Quantity> requests = new HashMap<>();
+                    requests.put("storage", new QuantityBuilder()
+                            .withAmount(((BString) k8sVolume.get("request")).stringValue())
+                            .build());
+                    PersistentVolumeClaim volumeClaim =
+                            new PersistentVolumeClaimBuilder().withNewMetadata()
+                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .endMetadata()
+                                    .withNewSpec()
+                                    .withNewResources()
+                                    .withRequests(requests)
+                                    .endResources()
+                                    .endSpec().build();
+                    volumeInfo.setVolumeClaim(volumeClaim);
+                    break;
+                case "K8sSharedPersistence":
+                    PersistentVolumeClaim volumeClaimShared =
+                            new PersistentVolumeClaimBuilder().withNewMetadata()
+                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .endMetadata()
+                                    .build();
+                    volumeInfo.setVolumeClaim(volumeClaimShared);
+                    break;
+                case "NonSharedConfiguration":
+                    ConfigMap configMap =
+                            new ConfigMapBuilder().withNewMetadata()
+                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .endMetadata()
+                                    .withData(((LinkedHashMap<String, String>) ((BMap) k8sVolume.get("data")).getMap()))
+                                    .build();
+                    volumeInfo.setConfigMap(configMap);
+                    break;
+                case "SharedConfiguration":
+                    ConfigMap configMapShred =
+                            new ConfigMapBuilder().withNewMetadata()
+                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .endMetadata()
+                                    .build();
+                    volumeInfo.setConfigMap(configMapShred);
+                    break;
+                case "SharedSecret":
+                    Secret secretShared =
+                            new SecretBuilder().withNewMetadata()
+                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .endMetadata()
+                                    .build();
+                    volumeInfo.setSecret(secretShared);
+                    break;
+                case "NonSharedSecret":
+                    Secret secret =
+                            new SecretBuilder().withNewMetadata()
+                                    .withName(((BString) k8sVolume.get("name")).stringValue())
+                                    .endMetadata()
+                                    .withData(((LinkedHashMap<String, String>) ((BMap) k8sVolume.get("data")).getMap()))
+                                    .build();
+                    volumeInfo.setSecret(secret);
+                    break;
+                default:
+                    break;
+            }
+
+
+        });
+
     }
 
     /**

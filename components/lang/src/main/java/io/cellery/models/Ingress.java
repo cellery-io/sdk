@@ -18,6 +18,7 @@
 
 package io.cellery.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
  */
 @Data
 public class Ingress {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Extension extensions;
     private List<API> http;
     private List<GRPC> grpc;

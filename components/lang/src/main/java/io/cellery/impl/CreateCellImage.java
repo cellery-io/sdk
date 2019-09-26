@@ -132,6 +132,7 @@ import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
 import static io.cellery.CelleryConstants.SCALING_POLICY;
 import static io.cellery.CelleryConstants.TARGET;
 import static io.cellery.CelleryConstants.VERSION;
+import static io.cellery.CelleryConstants.VOLUMES;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getApi;
@@ -140,6 +141,7 @@ import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.processEnvVars;
 import static io.cellery.CelleryUtils.processProbes;
 import static io.cellery.CelleryUtils.processResources;
+import static io.cellery.CelleryUtils.processVolumes;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
@@ -226,6 +228,9 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             }
             if (attributeMap.containsKey(POD_RESOURCES)) {
                 processResources(((BMap<?, ?>) attributeMap.get(POD_RESOURCES)).getMap(), component);
+            }
+            if (attributeMap.containsKey(VOLUMES)) {
+                processVolumes(((BMap<?, ?>) attributeMap.get(VOLUMES)).getMap(), component);
             }
             image.addComponent(component);
         });

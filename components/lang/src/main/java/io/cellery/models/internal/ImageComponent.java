@@ -59,6 +59,7 @@ public class ImageComponent {
     private Probe readinessProbe;
     private Probe livenessProbe;
     private ResourceRequirements resources;
+    private List<VolumeInfo> volumes;
 
     public ImageComponent() {
         ports = new ArrayList<>();
@@ -68,6 +69,7 @@ public class ImageComponent {
         tcpList = new ArrayList<>();
         grpcList = new ArrayList<>();
         unsecuredPaths = new ArrayList<>();
+        volumes = new ArrayList<>();
         replicas = 1;
     }
 
@@ -97,5 +99,9 @@ public class ImageComponent {
 
     public void addPort(Port port) {
         this.ports.add(port);
+    }
+
+    public void addVolumeInfo(VolumeInfo volumeInfo) {
+        this.volumes.add(volumeInfo);
     }
 }

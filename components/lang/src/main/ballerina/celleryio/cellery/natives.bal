@@ -147,6 +147,7 @@ public type Component record {|
     Probes probes?;
     Resources resources?;
     ComponentType ^"type" = "Deployment";
+    map<VolumeMount> volumes?;
 |};
 
 public type TCPIngress record {|
@@ -223,12 +224,6 @@ public type Env record {|
     *ParamValue;
 |};
 
-public type Secret record {|
-    *ParamValue;
-    string mountPath;
-    boolean readOnly;
-|};
-
 public type GlobalApiPublisher record {|
     string context?;
     string apiVersion?;
@@ -270,18 +265,42 @@ public type K8sSharedPersistence record {|
     string name;
 |};
 
-public type Mode "Filesystem" | "Filesystem";
+public type Mode "Filesystem" | "Block";
 
 public type StorageClass "null" | "" | "slow" | "fast";
 
 public type AccessMode "ReadWriteOnce" | "ReadOnlyMany" | "ReadWriteMany";
 
 public type K8sNonSharedPersistence record {|
-    string name;    // Name will be prefixed with instance and //component  name eg: hrInst-hrComp-bar-<instance-id>
+    string name;
     Mode mode?;
     StorageClass storageClass?;
-    AccessMode accessMode?;
+    AccessMode?[] accessMode?;
     string request;
+|};
+
+public type SharedConfiguration record {|
+    string name;
+|};
+
+public type NonSharedConfiguration record {|
+    string name;
+    map<string> data;
+|};
+
+public type SharedSecret record {|
+    string name;
+|};
+public type NonSharedSecret record {|
+    string name;
+    map<string> data;
+|};
+
+public type VolumeMount record {|
+    string path;
+    boolean readOnly = false;
+    K8sNonSharedPersistence | K8sSharedPersistence | SharedConfiguration | NonSharedConfiguration | SharedSecret
+    | NonSharedSecret volume;
 |};
 
 # Build the cell artifacts and persist metadata
@@ -335,6 +354,14 @@ function validateCell(CellImage image) {
             }
         }
     }
+}
+
+# Generate Volume Name.
+#
+# + name - The volume mount name
+# + return - Name prefixed with instance name place Holder.
+public function generateVolumeName(string name) returns (string) {
+    return "{{instance_name}}" + name;
 }
 
 
