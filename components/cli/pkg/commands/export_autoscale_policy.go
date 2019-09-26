@@ -39,7 +39,7 @@ func RunExportAutoscalePolicies(kind kubectl.InstanceKind, instance string, outp
 		polExportSpinner.Stop(false)
 		return err
 	}
-	originalResource := &kubectl.CompositeResource{}
+	originalResource := &kubectl.ScaleResource{}
 	err = json.Unmarshal(data, originalResource)
 	if err != nil {
 		polExportSpinner.Stop(false)
@@ -52,6 +52,20 @@ func RunExportAutoscalePolicies(kind kubectl.InstanceKind, instance string, outp
 			Name:          v.Metadata.Name,
 			ScalingPolicy: v.Spec.ScalingPolicy,
 		})
+	}
+
+	if kind == kubectl.InstanceKindCell {
+		if gwScalePolicyExists(originalResource) {
+			sp.Gateway = kubectl.GwScalePolicy{
+				ScalingPolicy: originalResource.Spec.Gateway.Spec.ScalingPolicy,
+			}
+		} else {
+			sp.Gateway = kubectl.GwScalePolicy{
+				ScalingPolicy: struct {
+					Replicas int32 `json:"replicas"`
+				}{1},
+			}
+		}
 	}
 
 	spData, err := json.Marshal(sp)
@@ -103,4 +117,8 @@ func writeToFile(content []byte, file string) error {
 		return err
 	}
 	return nil
+}
+
+func gwScalePolicyExists(scaleResource *kubectl.ScaleResource) bool {
+	return &scaleResource.Spec.Gateway != nil && scaleResource.Spec.Gateway.Spec.ScalingPolicy != nil
 }

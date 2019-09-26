@@ -332,8 +332,7 @@ type Resource struct {
 	TargetAverageValue       string `json:"targetAverageValue,omitempty"`
 }
 
-// This type is only used for extracting scaling information from receiving JSON
-type CompositeResource struct {
+type ScaleResource struct {
 	Spec struct {
 		Components []struct {
 			Metadata struct {
@@ -343,20 +342,28 @@ type CompositeResource struct {
 				ScalingPolicy interface{} `json:"scalingPolicy,omitempty"`
 			} `json:"spec,omitempty"`
 		} `json:"components,omitempty"`
+		Gateway struct {
+			Metadata struct {
+				Name string `json:"name,omitempty"`
+			} `json:"metadata,omitempty"`
+			Spec struct {
+				ScalingPolicy interface{} `json:"scalingPolicy,omitempty"`
+			} `json:"spec,omitempty"`
+		} `json:"gateway,omitempty"`
 	} `json:"spec,omitempty"`
-}
-
-type CellResource struct {
-	// Todo: add gateway scaling
-	CompositeResource
 }
 
 type AutoScalingPolicy struct {
 	Components []ComponentScalePolicy `json:"components,omitempty"`
+	Gateway    GwScalePolicy          `json:"gateway,omitempty"`
 }
 
 type ComponentScalePolicy struct {
 	Name          string      `json:"name,omitempty"`
+	ScalingPolicy interface{} `json:"scalingPolicy,omitempty"`
+}
+
+type GwScalePolicy struct {
 	ScalingPolicy interface{} `json:"scalingPolicy,omitempty"`
 }
 

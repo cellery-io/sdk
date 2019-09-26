@@ -38,8 +38,8 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 		spinner.Stop(false)
 		return err
 	}
-	sp := &kubectl.AutoScalingPolicy{}
-	err = yaml.Unmarshal(fileData, &sp)
+	newScalePolicy := &kubectl.AutoScalingPolicy{}
+	err = yaml.Unmarshal(fileData, &newScalePolicy)
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -51,7 +51,7 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 		spinner.Stop(false)
 		return err
 	}
-	originalResource := &kubectl.CompositeResource{}
+	originalResource := &kubectl.ScaleResource{}
 	err = json.Unmarshal(instanceData, originalResource)
 	if err != nil {
 		spinner.Stop(false)
@@ -64,12 +64,15 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 	}
 	// we are modifying the original resource here as we already Marshal the required data
 	desiredResource := originalResource
-	for _, v1 := range sp.Components {
+	for _, spComponent := range newScalePolicy.Components {
 		for i := range originalResource.Spec.Components {
-			if v1.Name == originalResource.Spec.Components[i].Metadata.Name {
-				desiredResource.Spec.Components[i].Spec.ScalingPolicy = v1.ScalingPolicy
+			if spComponent.Name == originalResource.Spec.Components[i].Metadata.Name {
+				desiredResource.Spec.Components[i].Spec.ScalingPolicy = spComponent.ScalingPolicy
 			}
 		}
+	}
+	if kind == kubectl.InstanceKindCell && newScalePolicy.Gateway.ScalingPolicy != nil {
+		desiredResource.Spec.Gateway.Spec.ScalingPolicy = newScalePolicy.Gateway.ScalingPolicy
 	}
 
 	desiredData, err := json.Marshal(desiredResource)
@@ -83,7 +86,7 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 
 	if len(patch) == 0 {
 		spinner.Stop(true)
-		util.PrintSuccessMessage(fmt.Sprintf("Nothing to apply. Autoscale policies for instance %q is match with the file %q", instance, file))
+		util.PrintSuccessMessage(fmt.Sprintf("Nothing to apply. Scaling policies for %q matches with policy file %q", instance, file))
 		return nil
 	}
 

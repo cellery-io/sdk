@@ -59,7 +59,7 @@ func newApplyCellAutoscalePolicyCommand() *cobra.Command {
 				log.Fatal(err)
 			}
 			if !valid {
-				return fmt.Errorf("expects a valid cell instance name, received %s", args[1])
+				return fmt.Errorf("expects a valid cell instance name, received %s", args[0])
 			}
 			return nil
 		},
@@ -83,12 +83,12 @@ func newApplyCompositeAutoscalePolicyCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[1])
+			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
 			if err != nil {
 				log.Fatal(err)
 			}
 			if !valid {
-				return fmt.Errorf("expects a valid composite instance name, received %s", args[1])
+				return fmt.Errorf("expects a valid composite instance name, received %s", args[0])
 			}
 			return nil
 		},
