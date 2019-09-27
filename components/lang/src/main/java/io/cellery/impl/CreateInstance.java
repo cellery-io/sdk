@@ -171,10 +171,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             instanceName = generateRandomInstanceName(((BString) nameStruct.get("name")).stringValue(),
                     ((BString) nameStruct.get("ver")).stringValue());
         }
-        if (!isRoot) {
-            PrintStream out = System.out;
-            out.println("starting instance " + instanceName);
-        }
         String cellImageDir = System.getenv(CELLERY_IMAGE_DIR_ENV_VAR);
         if (cellImageDir == null) {
             try (InputStream inputStream = new FileInputStream(DEBUG_BALLERINA_CONF)) {
@@ -201,9 +197,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         }
         try {
             if (isRoot) {
+                printInfo("Main Instance: " + instanceName);
                 generateDependencyTree(destinationPath + File.separator + "metadata.json");
                 // Validate main instance
                 validateMainInstance(instanceName, ((Meta) dependencyTree.getRoot().getData()).getKind());
+                printInfo("Validating dependencies");
                 // Validate dependencies provided by user
                 validateDependencyLinksAliasNames(userDependencyLinks);
                 // Assign user defined instance names to dependent cells and create the finalized dependency tree
@@ -272,6 +270,8 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                     });
                 }
             } else {
+                PrintStream out = System.out;
+                out.println("starting instance " + instanceName);
                 // If not root instance, simply start the instance itself
                 dependencyInfo = ((BMap) ctx.getNullableRefArgument(2)).getMap();
             }

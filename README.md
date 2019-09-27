@@ -136,7 +136,7 @@ Now let's look at the steps required to run this cell.
     organization in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
     
     ```
-    $ cellery run wso2cellery/hello-world-cell:latest -n hello-world-cell -y
+    $ cellery run wso2cellery/hello-world-cell:latest -n hello-world-cell
     ```
     
     You should see the following output:
@@ -150,23 +150,21 @@ Now let's look at the steps required to run this cell.
     Image Digest : sha256:2d5659e5787df7e7ae0f58671c0b9d857b5a19e5fbdb02fccbc98a64016a97f6
     
     ✔ Extracting Cell Image wso2cellery/hello-world-cell:latest
-    
-    Main Instance: hello
-    
-    ✔ Reading Cell Image wso2cellery/hello-world-cell:latest
-    ✔ Validating dependencies
-    
-    Instances to be Used:
-    
-      INSTANCE NAME                            CELL IMAGE             USED INSTANCE   SHARED
-     ------------------------- ------------------------------------- --------------- --------
-      hello-world-cell           wso2cellery/hello-world-cell:latest   To be Created    -
-    
-    Dependency Tree to be Used:
-    
-     No Dependencies
-    
+    ✔ Reading Image wso2cellery/hello-world-cell:latest
+    Info: Main Instance: hello-world-cell
+    Info: Validating dependencies
+    Info: Instances to be Used
+    ------------------------------------------------------------------------------------------------------------------------
+    INSTANCE NAME                  CELL IMAGE                          USED INSTANCE             KIND            SHARED
+    ------------------------------------------------------------------------------------------------------------------------
+    hello-world-cell               wso2cellery/hello-world-cell:latest To be Created             Cell            -
+    ------------------------------------------------------------------------------------------------------------------------
+    Info: Dependency Tree to be Used
+
+    No Dependencies
     ✔ Starting main instance hello-world-cell
+
+
     ✔ Successfully deployed cell image: wso2cellery/hello-world-cell:latest
     
     What's next?
