@@ -114,10 +114,11 @@ build-ubuntu-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-
 	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION)
 
 .PHONY: build-mac-installer
-build-mac-installer: cleanup-installers copy-k8s-artefacts
+build-mac-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-artefacts
 	cd ${PROJECT_ROOT}/installers/macOS-x64; \
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
+	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
 	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION)
 
 .PHONY: cleanup-installers
