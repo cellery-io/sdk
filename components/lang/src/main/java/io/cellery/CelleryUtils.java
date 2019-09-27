@@ -266,12 +266,7 @@ public class CelleryUtils {
                     break;
                 case "NonSharedConfiguration":
                     volumeInfo.setShared(false);
-                    ConfigMap configMap =
-                            new ConfigMapBuilder().withNewMetadata()
-                                    .withName(((BString) k8sVolume.get(NAME)).stringValue())
-                                    .endMetadata()
-                                    .withData(getDataMap(((BMap) k8sVolume.get("data")).getMap()))
-                                    .build();
+                    ConfigMap configMap = getConfigMap(k8sVolume);
                     volumeInfo.setVolume(configMap);
                     break;
                 case "SharedConfiguration":
@@ -294,12 +289,7 @@ public class CelleryUtils {
                     break;
                 case "NonSharedSecret":
                     volumeInfo.setShared(false);
-                    Secret secret =
-                            new SecretBuilder().withNewMetadata()
-                                    .withName(((BString) k8sVolume.get(NAME)).stringValue())
-                                    .endMetadata()
-                                    .withData(getDataMap(((BMap) k8sVolume.get("data")).getMap()))
-                                    .build();
+                    Secret secret = getSecret(k8sVolume);
                     volumeInfo.setVolume(secret);
                     break;
                 default:
@@ -309,7 +299,23 @@ public class CelleryUtils {
         });
     }
 
-    private static PersistentVolumeClaim getVolumeClaim(LinkedHashMap k8sVolume) {
+    public static Secret getSecret(LinkedHashMap k8sVolume) {
+        return new SecretBuilder().withNewMetadata()
+                .withName(((BString) k8sVolume.get(NAME)).stringValue())
+                .endMetadata()
+                .withData(getDataMap(((BMap) k8sVolume.get("data")).getMap()))
+                .build();
+    }
+
+    public static ConfigMap getConfigMap(LinkedHashMap k8sVolume) {
+        return new ConfigMapBuilder().withNewMetadata()
+                .withName(((BString) k8sVolume.get(NAME)).stringValue())
+                .endMetadata()
+                .withData(getDataMap(((BMap) k8sVolume.get("data")).getMap()))
+                .build();
+    }
+
+    public static PersistentVolumeClaim getVolumeClaim(LinkedHashMap k8sVolume) {
         PersistentVolumeClaimSpecBuilder specBuilder = new PersistentVolumeClaimSpecBuilder();
         Map<String, Quantity> requests = new HashMap<>();
         requests.put("storage", new QuantityBuilder()

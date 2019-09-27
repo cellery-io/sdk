@@ -271,11 +271,23 @@ public type StorageClass "null" | "" | "slow" | "fast";
 
 public type AccessMode "ReadWriteOnce" | "ReadOnlyMany" | "ReadWriteMany";
 
+public type Expression record {|
+    string key;
+    string operator;
+    string[] values;
+|};
+
+public type Lookup record {|
+    map<string> labels?;
+    Expression?[] expression?;
+|};
+
 public type K8sNonSharedPersistence record {|
     string name;
     Mode mode?;
     StorageClass storageClass?;
     AccessMode?[] accessMode?;
+    Lookup lookup?;
     string request;
 |};
 
@@ -502,6 +514,12 @@ public function getCellImage() returns (ImageName | error){
     ImageName|error iName = ImageName.convert(iNameJson);
     return iName;
 }
+
+public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns ( error?) = external;
+
+public function createSecret(NonSharedSecret secret) returns ( error?) = external;
+
+public function createConfiguration(NonSharedConfiguration configuration) returns ( error?) = external;
 
 # Get cell dependencies map
 #
