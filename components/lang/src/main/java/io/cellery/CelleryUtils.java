@@ -61,6 +61,7 @@ import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.util.exceptions.BallerinaException;
+import org.bouncycastle.util.Strings;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -97,6 +98,9 @@ import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static io.cellery.CelleryConstants.BALLERINA_EXECUTABLE_PATH;
+import static io.cellery.CelleryConstants.BALLERINA_INSTALLATION_PATH_MAC;
+import static io.cellery.CelleryConstants.BALLERINA_INSTALLATION_PATH_UBUNTU;
 import static io.cellery.CelleryConstants.CELL;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
@@ -1020,5 +1024,36 @@ public class CelleryUtils {
             new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines()
                     .forEach(consumer);
         }
+    }
+
+    /**
+     * Get ballerina installation directory.
+     *
+     * @return ballerina installation directory
+     */
+    private static String ballerinaInstallationDirectory() {
+        String ballerinaHome = "";
+        String osName = Strings.toLowerCase(System.getProperty("os.name"));
+        if (osName.contains("mac")) {
+            return BALLERINA_INSTALLATION_PATH_MAC;
+        }
+        if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) {
+            return BALLERINA_INSTALLATION_PATH_UBUNTU;
+        }
+        return ballerinaHome;
+    }
+
+    /**
+     * Get ballerina executable path.
+     *
+     * @return ballerina executable path
+     */
+    public static String getBallerinaExecutablePath() {
+        String exePath = ballerinaInstallationDirectory() + BALLERINA_EXECUTABLE_PATH;
+        File dir = new File(exePath);
+        if (!dir.exists()) {
+            throw new BallerinaException("Ballerina executable path not found");
+        }
+        return exePath;
     }
 }

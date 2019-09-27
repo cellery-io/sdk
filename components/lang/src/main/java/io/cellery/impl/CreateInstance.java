@@ -100,6 +100,7 @@ import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.appendToFile;
 import static io.cellery.CelleryUtils.fileExists;
+import static io.cellery.CelleryUtils.getBallerinaExecutablePath;
 import static io.cellery.CelleryUtils.getDependentInstanceName;
 import static io.cellery.CelleryUtils.getFilesByExtension;
 import static io.cellery.CelleryUtils.getInstanceImageName;
@@ -229,6 +230,10 @@ public class CreateInstance extends BlockingNativeCallableUnit {
 
                 bValueArray.add(runCount.getAndIncrement(), bmap);
                 dependencyInfo = generateDependencyInfo();
+                printInfo("Instances to be Used");
+                displayDependentCellTable();
+                printInfo("Dependency Tree to be Used\n");
+                printDependencyTree();
                 Map<String, String> testEnvVars = new HashMap<>();
 
                 testEnvVars.put(IMAGE_NAME_ENV_VAR, rootCellInfo.toString()
@@ -246,10 +251,6 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 setEnvVarsForTests(testEnvVars);
 
                 if (startDependencies) {
-                    printInfo("Dependency tree structure\n");
-                    printDependencyTree();
-                    printInfo("Instances information");
-                    displayDependentCellTable();
                     dependencyInfo.forEach((alias, info) -> {
                         String depInstanceName = ((BString) ((BMap) info).getMap().get(INSTANCE_NAME)).stringValue();
                         String depKind = ((BString) ((BMap) info).getMap().get(KIND)).stringValue();
@@ -649,7 +650,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         PrintStream out = System.out;
         out.println("------------------------------------------------------------------------------------------------" +
                 "------------------------");
-        out.printf("%-30s %-30s %-30s %-15S %-15S", "INSTANCE NAME", "CELL IMAGE", "USED INSTANCE", "KIND", "SHARED");
+        out.printf("%-30s %-35s %-25s %-15S %-15S", "INSTANCE NAME", "CELL IMAGE", "USED INSTANCE", "KIND", "SHARED");
         out.println();
         out.println("------------------------------------------------------------------------------------------------" +
                 "------------------------");
@@ -664,7 +665,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             if (node.getData().isShared()) {
                 shared = "Shared";
             }
-            out.format("%-30s %-30s %-30s %-15s %-15s", meta.getInstanceName(), image, availability,
+            out.format("%-30s %-35s %-25s %-15s %-15s", meta.getInstanceName(), image, availability,
                     meta.getKind(), shared);
             out.println();
         }
@@ -718,15 +719,16 @@ public class CreateInstance extends BlockingNativeCallableUnit {
             environment.put(environmentVariable.getKey(), environmentVariable.getValue());
         }
         Path workingDir = Paths.get(System.getProperty("user.dir"));
+        String exePath = getBallerinaExecutablePath();
         if (Files.exists(workingDir.resolve(CelleryConstants.BALLERINA_TOML))) {
             createTempDirForDependency(tempBalFile, System.getProperty("user.dir"), cellInstanceName);
             CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                    environment, "ballerina", "run", cellInstanceName, "run", image.toString(), dependentCells,
-                    "false", shareDependenciesFlag);
+                    environment, exePath + "ballerina", "run", cellInstanceName, "run", image.toString(),
+                    dependentCells, "false", shareDependenciesFlag);
         } else {
             CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                    environment, "ballerina", "run", tempBalFile, "run", image.toString(), dependentCells,
-                    "false", shareDependenciesFlag);
+                    environment, exePath + "ballerina", "run", tempBalFile, "run", image.toString(),
+                    dependentCells, "false", shareDependenciesFlag);
         }
     }
 
@@ -1033,7 +1035,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
     private void printDependencyTree() {
         PrintStream out = System.out;
         StringBuilder buffer = new StringBuilder(50);
-        printDependencyTreeNode(buffer, "", "", dependencyTree.getRoot());
-        out.println(buffer.toString());
+        if (dependencyTree.getRoot().getChildren().size() > 0) {
+            printDependencyTreeNode(buffer, "", "", dependencyTree.getRoot());
+            out.println(buffer.toString());
+        } else {
+            out.println("No Dependencies");
+        }
     }
 }
