@@ -22,6 +22,7 @@ import io.cellery.CelleryUtils;
 import io.cellery.models.Cell;
 import io.cellery.models.Component;
 import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaimSpec;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.cellery.components.test.models.CellImageInfo;
@@ -202,6 +203,12 @@ public class VolumeTest {
         Assert.assertEquals(container.getVolumeMounts().get(5).getMountPath(), "/tmp/pvc/shared");
         Assert.assertTrue(container.getVolumeMounts().get(5).getReadOnly());
         Assert.assertEquals(component.getSpec().getVolumeClaims().get(0).getName(), "pv1");
+        final PersistentVolumeClaimSpec pvSpec =
+                component.getSpec().getVolumeClaims().get(0).getVolumeClaim().getSpec();
+        Assert.assertEquals(pvSpec.getStorageClassName(), "slow");
+        Assert.assertEquals(pvSpec.getSelector().getMatchLabels().size(), 1);
+        Assert.assertEquals(pvSpec.getSelector().getMatchExpressions().size(), 1);
+
         Assert.assertEquals(component.getSpec().getConfigurations().get(0).getMetadata().getName(), "my-config");
         Assert.assertEquals(component.getSpec().getSecrets().get(0).getMetadata().getName(), "volume-inst-my" +
                 "-secret");

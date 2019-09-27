@@ -87,7 +87,13 @@ public function build(cellery:ImageName iName) returns error? {
                     mode:"Filesystem",
                     storageClass:"slow",
                     accessMode: ["ReadWriteMany"],
-                    request:"2G"
+                    request:"2G",
+                     lookup: {
+                        labels: {
+                            release: "stable"
+                        },
+                        expressions: [{ key: "environment", operator: "In", values: ["dev", "staging"]}]
+                     }
                 }
             },
             volumeClaimShared: {
