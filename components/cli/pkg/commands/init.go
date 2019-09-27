@@ -94,7 +94,7 @@ func RunInit(projectName string) {
 		"    return cellery:createImage(helloCell, untaint iName);\n" +
 		"}\n" +
 		"\n" +
-		"public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {\n" +
+		"public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {\n" +
 		"    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);\n" +
 		"    string vhostName = config:getAsString(\"VHOST_NAME\");\n" +
 		"    if (vhostName !== \"\") {\n" +
@@ -107,7 +107,7 @@ func RunInit(projectName string) {
 		"    if (helloName !== \"\") {\n" +
 		"        helloCell.components.helloComp.envVars.HELLO_NAME.value = helloName;\n" +
 		"    }\n" +
-		"    return cellery:createInstance(helloCell, iName, instances);\n" +
+		"    return cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);\n" +
 		"}\n"
 
 	currentDir, err := os.Getwd()

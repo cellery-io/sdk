@@ -47,7 +47,7 @@ import (
 const celleryEnvVar = "cellery_env_"
 
 func RunRun(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
-	dependencyLinks []string, envVars []string, assumeYes bool) {
+	dependencyLinks []string, envVars []string) {
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
 	parsedCellImage, err := image.ParseImageTag(cellImageTag)
 	if err != nil {

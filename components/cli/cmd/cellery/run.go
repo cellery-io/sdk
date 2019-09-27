@@ -34,7 +34,6 @@ func newRunCommand() *cobra.Command {
 	var name string
 	var startDependencies bool
 	var shareAllInstances bool
-	var assumeYes bool
 	var dependencyLinks []string
 	var envVars []string
 	cmd := &cobra.Command{
@@ -74,12 +73,11 @@ func newRunCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunRun(args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
-				assumeYes)
+			commands.RunRun(args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars)
 		},
 		Example: "  cellery run cellery-samples/hr:1.0.0 -n hr-inst\n" +
-			"  cellery run cellery-samples/hr:1.0.0 -n hr-inst -y\n" +
-			"  cellery run cellery-samples/hr:1.0.0 -n hr-inst --assume-yes\n" +
+			"  cellery run cellery-samples/hr:1.0.0 -n hr-inst\n" +
+			"  cellery run cellery-samples/hr:1.0.0 -n hr-inst\n" +
 			"  cellery run registry.foo.io/cellery-samples/hr:1.0.0 -n hr-inst -l employee:employee-inst " +
 			"-l stock:stock-inst \n" +
 			"  cellery run cellery-samples/employee:1.0.0 -l employee-inst.people-hr:people-hr-inst\n" +
@@ -87,8 +85,6 @@ func newRunCommand() *cobra.Command {
 			"-l employee-inst.people-hr:people-hr-inst",
 	}
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Name of the cell instance")
-	cmd.Flags().BoolVarP(&assumeYes, "assume-yes", "y", false,
-		"Flag to enable/disable prompting for confirmation before starting instance(s)")
 	cmd.Flags().BoolVarP(&startDependencies, "start-dependencies", "d", false,
 		"Start all the dependencies of this Cell Image in order")
 	cmd.Flags().BoolVarP(&shareAllInstances, "share-instances", "s", false,
