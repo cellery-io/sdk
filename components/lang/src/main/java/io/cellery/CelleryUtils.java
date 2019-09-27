@@ -152,7 +152,7 @@ public class CelleryUtils {
         Web webIngress = new Web();
         LinkedHashMap gatewayConfig = ((BMap) attributeMap.get("gatewayConfig")).getMap();
         API httpAPI = getApi(component, attributeMap);
-        httpAPI.setGlobal(true);
+        httpAPI.setGlobal(false);
         httpAPI.setPort(DEFAULT_GATEWAY_PORT);
         httpAPI.setContext(((BString) gatewayConfig.get("context")).stringValue());
         Destination destination = new Destination();
