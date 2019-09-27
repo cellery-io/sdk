@@ -11,7 +11,7 @@ public function build(cellery:ImageName iName) returns error? {
         ingresses: {
             "hr": <cellery:HttpApiIngress>{
                 port: 8080,
-                context: "hr",
+                context: "/hr",
                 apiVersion:"local",
                 definition: {
                     resources: [

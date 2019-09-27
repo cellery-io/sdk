@@ -12,7 +12,7 @@ public function build(cellery:ImageName iName) returns error? {
         },
         ingresses: {
             stock: <cellery:HttpApiIngress>{ port: 8080,
-                context: "stock",
+                context: "/stock",
                 definition: {
                     resources: [
                         {

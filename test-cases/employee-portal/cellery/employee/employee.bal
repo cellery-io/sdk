@@ -39,7 +39,7 @@ public function build(cellery:ImageName iName) returns error? {
         ingresses: {
             employee: <cellery:HttpApiIngress>{
                 port: 8080,
-                context: "employee",
+                context: "/employee",
                 expose: "local",
                 definition: <cellery:ApiDefinition>cellery:readSwaggerFile("./resources/employee.swagger.json")
             }
