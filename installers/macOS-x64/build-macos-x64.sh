@@ -167,7 +167,8 @@ copyBuildDirectory() {
     #mkdir -p ${TARGET_DIRECTORY}/darwinpkg/${HOME_BALLERINA}/bre/lib/
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
 
-    cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}//darwinpkg/Library/Cellery/
+    cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
+    cp -R $RESOURCE_LOCATION/telepresence-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
 
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib
     cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib/
