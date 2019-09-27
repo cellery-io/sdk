@@ -102,7 +102,7 @@ public class PetStoreFeTest {
         Assert.assertEquals(ingress.getExtensions().getClusterIngress().getHost(), "pet-store.com");
         Assert.assertEquals(ingress.getHttp().get(0).getDestination().getHost(), "portal");
         Assert.assertEquals(ingress.getHttp().get(0).getContext(), "/");
-        Assert.assertTrue(ingress.getHttp().get(0).isGlobal());
+        Assert.assertFalse(ingress.getHttp().get(0).isGlobal());
         final OIDC oidc = ingress.getExtensions().getOidc();
         Assert.assertEquals(oidc.getBaseUrl(), "http://pet-store.com/");
         Assert.assertEquals(oidc.getClientId(), "petstoreapplication");
@@ -185,7 +185,7 @@ public class PetStoreFeTest {
         Assert.assertEquals(ingress.getExtensions().getClusterIngress().getHost(), "pet-store.com");
         Assert.assertEquals(ingress.getHttp().get(0).getDestination().getHost(), "portal");
         Assert.assertEquals(ingress.getHttp().get(0).getContext(), "/");
-        Assert.assertTrue(ingress.getHttp().get(0).isGlobal());
+        Assert.assertFalse(ingress.getHttp().get(0).isGlobal());
         final OIDC oidc = ingress.getExtensions().getOidc();
         Assert.assertEquals(oidc.getBaseUrl(), "http://pet-store.com/");
         Assert.assertEquals(oidc.getClientId(), "petstoreapplication");

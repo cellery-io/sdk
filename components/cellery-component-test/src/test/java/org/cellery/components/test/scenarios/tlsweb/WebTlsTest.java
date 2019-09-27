@@ -102,7 +102,7 @@ public class WebTlsTest {
         Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getDestination()
                 .getHost(), "web-ui");
         Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getContext(), "/");
-        Assert.assertTrue(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).isGlobal());
+        Assert.assertFalse(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).isGlobal());
     }
 
     @Test(groups = "build")
@@ -159,7 +159,7 @@ public class WebTlsTest {
         Assert.assertEquals(ingress.getExtensions().getClusterIngress().getHost(), "hello.com");
         Assert.assertEquals(ingress.getHttp().get(0).getDestination().getHost(), "web-ui");
         Assert.assertEquals(ingress.getHttp().get(0).getContext(), "/");
-        Assert.assertTrue(ingress.getHttp().get(0).isGlobal());
+        Assert.assertFalse(ingress.getHttp().get(0).isGlobal());
     }
 
     @Test(groups = "run")
