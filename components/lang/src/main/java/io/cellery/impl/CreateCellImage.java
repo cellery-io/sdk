@@ -567,7 +567,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         List<ImageComponent> components = new ArrayList<>(image.getComponentNameToComponentMap().values());
         Ingress ingress = new Ingress();
         Extension extension = new Extension();
-        extension.setGlobalApiPublisher(image.getGlobalApiPublisher());
+        extension.setApiPublisher(image.getGlobalApiPublisher());
         CellSpec cellSpec = new CellSpec();
         List<String> unsecuredPaths = new ArrayList<>();
         components.forEach(imageComponent -> {
