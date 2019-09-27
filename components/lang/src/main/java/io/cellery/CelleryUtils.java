@@ -306,7 +306,7 @@ public class CelleryUtils {
         return new SecretBuilder().withNewMetadata()
                 .withName(((BString) k8sVolume.get(NAME)).stringValue())
                 .endMetadata()
-                .withData(getDataMap(((BMap) k8sVolume.get("data")).getMap()))
+                .withStringData(getDataMap(((BMap) k8sVolume.get("data")).getMap()))
                 .build();
     }
 
