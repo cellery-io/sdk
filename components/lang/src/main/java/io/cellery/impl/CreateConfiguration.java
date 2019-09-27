@@ -21,7 +21,6 @@ package io.cellery.impl;
 
 import io.cellery.CelleryUtils;
 import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.Secret;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
 import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
@@ -43,7 +42,6 @@ import static io.cellery.CelleryConstants.VOLUMES;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.executeShellCommand;
 import static io.cellery.CelleryUtils.getConfigMap;
-import static io.cellery.CelleryUtils.getSecret;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 
@@ -52,8 +50,8 @@ import static io.cellery.CelleryUtils.writeToFile;
  */
 @BallerinaFunction(
         orgName = "celleryio", packageName = "cellery:0.0.0",
-        functionName = "createSecret",
-        args = {@Argument(name = "secret", type = TypeKind.RECORD)},
+        functionName = "createConfiguration",
+        args = {@Argument(name = "configuration", type = TypeKind.RECORD)},
         returnType = {@ReturnType(type = TypeKind.ERROR)},
         isPublic = true
 )

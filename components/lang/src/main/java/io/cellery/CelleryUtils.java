@@ -38,6 +38,9 @@ import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.HTTPHeader;
 import io.fabric8.kubernetes.api.model.HTTPHeaderBuilder;
+import io.fabric8.kubernetes.api.model.LabelSelector;
+import io.fabric8.kubernetes.api.model.LabelSelectorRequirement;
+import io.fabric8.kubernetes.api.model.LabelSelectorRequirementBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimBuilder;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimSpecBuilder;
@@ -334,6 +337,31 @@ public class CelleryUtils {
             IntStream.range(0, (int) accessModes.size()).forEach(accessModeIndex ->
                     accessModeList.add(accessModes.getRefValue(accessModeIndex).stringValue()));
             specBuilder.withAccessModes(accessModeList);
+        }
+        if (k8sVolume.containsKey("lookup")) {
+            final LinkedHashMap lookupAttributes = ((BMap) k8sVolume.get("lookup")).getMap();
+            LabelSelector labelSelector = new LabelSelector();
+            if (lookupAttributes.containsKey("labels")) {
+                final LinkedHashMap labels = ((BMap) lookupAttributes.get("labels")).getMap();
+                labelSelector.setMatchLabels(getDataMap(labels));
+            }
+            if (lookupAttributes.containsKey("expressions")) {
+                final BValueArray expressions = ((BValueArray) lookupAttributes.get("expressions"));
+                List<LabelSelectorRequirement> labelSelectorRequirements = new ArrayList<>();
+                specBuilder.withNewSelector().withMatchExpressions();
+                IntStream.range(0, (int) expressions.size()).forEach(index -> {
+                    LinkedHashMap expressionAttributes = ((BMap) expressions.getRefValue(index)).getMap();
+                    final BValueArray valueList = (BValueArray) expressionAttributes.get("values");
+                    LabelSelectorRequirement labelSelectorRequirement = new LabelSelectorRequirementBuilder()
+                            .withKey(((BString) expressionAttributes.get("key")).stringValue())
+                            .withOperator(((BString) expressionAttributes.get("operator")).stringValue())
+                            .withValues(Arrays.copyOfRange(valueList.getStringArray(), 0, (int) valueList.size()))
+                            .build();
+                    labelSelectorRequirements.add(labelSelectorRequirement);
+                });
+                labelSelector.setMatchExpressions(labelSelectorRequirements);
+            }
+            specBuilder.withSelector(labelSelector);
         }
         return new PersistentVolumeClaimBuilder().withNewMetadata()
                 .withName(((BString) k8sVolume.get(NAME)).stringValue())

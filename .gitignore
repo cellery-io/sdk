@@ -36,6 +36,7 @@ components/build
 
 # Ballerina
 *.balx
+test-cases/volumes/ballerina.conf
 
 # NPM
 *node_modules

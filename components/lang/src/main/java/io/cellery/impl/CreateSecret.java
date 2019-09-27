@@ -20,7 +20,6 @@
 package io.cellery.impl;
 
 import io.cellery.CelleryUtils;
-import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Secret;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
@@ -43,7 +42,6 @@ import static io.cellery.CelleryConstants.VOLUMES;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.executeShellCommand;
 import static io.cellery.CelleryUtils.getSecret;
-import static io.cellery.CelleryUtils.getVolumeClaim;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.writeToFile;
 

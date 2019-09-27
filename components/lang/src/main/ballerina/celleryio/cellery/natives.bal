@@ -279,7 +279,7 @@ public type Expression record {|
 
 public type Lookup record {|
     map<string> labels?;
-    Expression?[] expression?;
+    Expression?[] expressions?;
 |};
 
 public type K8sNonSharedPersistence record {|
