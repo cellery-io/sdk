@@ -248,19 +248,6 @@ func PrintWarningMessage(message string) {
 	fmt.Printf("%s\n", YellowBold("\U000026A0 "+message))
 }
 
-// RunMethodExists checks if the run method exists in ballerina file
-func RunMethodExists(sourceFile string) (bool, error) {
-	sourceFileBytes, err := ioutil.ReadFile(sourceFile)
-	if err != nil {
-		return false, err
-	}
-
-	// Check whether run method exists
-	return regexp.MatchString(
-		`.*public(\s)+function(\s)+run(\s)*\((s)*cellery:ImageName(\s)+.+(\s)*,(\s)*map<cellery:ImageName>(\s)+.+(\s)*\)(\s)+returns(\s)+\(cellery:InstanceState\[\]\|error\?\)`,
-		string(sourceFileBytes))
-}
-
 // TestMethodExists checks if the test method exists in ballerina file
 func TestMethodExists(sourceFile string) (bool, error) {
 	sourceFileBytes, err := ioutil.ReadFile(sourceFile)
