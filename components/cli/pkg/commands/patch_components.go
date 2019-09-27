@@ -500,12 +500,12 @@ func getContainerSpec(o interface{}) (map[string]interface{}, error) {
 	return containerSpec, err
 }
 
-func getComponentMetadate(component map[string]interface{}) (map[string]string, error) {
+func getComponentMetadate(component map[string]interface{}) (map[string]interface{}, error) {
 	compMetadataBytes, err := yaml.Marshal(component[k8sYamlMetadata])
 	if err != nil {
 		return nil, err
 	}
-	var compMetadata map[string]string
+	var compMetadata map[string]interface{}
 	err = yaml.Unmarshal(compMetadataBytes, &compMetadata)
 	if err != nil {
 		return nil, err
