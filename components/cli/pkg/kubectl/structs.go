@@ -362,6 +362,12 @@ type AutoScalingPolicy struct {
 	Gateway    GwScalePolicy          `json:"gateway,omitempty"`
 }
 
+type ScalingPolicy struct {
+	Hpa struct {
+		Overridable *bool `json:"overridable,omitempty"`
+	} `json:"hpa,omitempty"`
+}
+
 type ComponentScalePolicy struct {
 	Name          string      `json:"name,omitempty"`
 	ScalingPolicy interface{} `json:"scalingPolicy,omitempty"`

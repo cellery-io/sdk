@@ -67,12 +67,24 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 	for _, spComponent := range newScalePolicy.Components {
 		for i := range originalResource.Spec.Components {
 			if spComponent.Name == originalResource.Spec.Components[i].Metadata.Name {
-				desiredResource.Spec.Components[i].Spec.ScalingPolicy = spComponent.ScalingPolicy
+				overridable, err := isOverridable(originalResource.Spec.Components[i].Spec.ScalingPolicy)
+				if err != nil {
+					return err
+				}
+				if overridable {
+					desiredResource.Spec.Components[i].Spec.ScalingPolicy = spComponent.ScalingPolicy
+				}
 			}
 		}
 	}
 	if kind == kubectl.InstanceKindCell && newScalePolicy.Gateway.ScalingPolicy != nil {
-		desiredResource.Spec.Gateway.Spec.ScalingPolicy = newScalePolicy.Gateway.ScalingPolicy
+		overridable, err := isOverridable(originalResource.Spec.Gateway.Spec.ScalingPolicy)
+		if err != nil {
+			return err
+		}
+		if overridable {
+			desiredResource.Spec.Gateway.Spec.ScalingPolicy = newScalePolicy.Gateway.ScalingPolicy
+		}
 	}
 
 	desiredData, err := json.Marshal(desiredResource)
@@ -104,4 +116,25 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 	spinner.Stop(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully applied autoscale policies for instance %q", instance))
 	return nil
+}
+
+func isOverridable(o interface{}) (bool, error) {
+	hpaBytes, err := json.Marshal(o)
+	if err != nil {
+		return false, err
+	}
+	hpa := &kubectl.ScalingPolicy{}
+	err = json.Unmarshal(hpaBytes, hpa)
+	if err != nil {
+		return false, err
+	}
+	if &hpa.Hpa == nil {
+		// no HPA, can be overridden
+		return true, nil
+	}
+	if hpa.Hpa.Overridable == nil {
+		// flag not provided, should be overridable
+		return true, nil
+	}
+	return *hpa.Hpa.Overridable, nil
 }
