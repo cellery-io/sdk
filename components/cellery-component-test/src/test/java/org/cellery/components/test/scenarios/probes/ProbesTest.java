@@ -91,11 +91,11 @@ public class ProbesTest {
     public void validateBuildTimeGatewayTemplate() {
         final List<API> httpAPI = cell.getSpec().getGateway().getSpec().getIngress().getHttp();
         Assert.assertEquals(httpAPI.get(0).getDestination().getHost(), "employee");
-        Assert.assertEquals(httpAPI.get(0).getContext(), "employee");
+        Assert.assertEquals(httpAPI.get(0).getContext(), "/employee");
         Assert.assertEquals(httpAPI.get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(httpAPI.get(0).getDefinitions().get(0).getPath(), "/details");
         Assert.assertEquals(httpAPI.get(1).getDestination().getHost(), "salary");
-        Assert.assertEquals(httpAPI.get(1).getContext(), "payroll");
+        Assert.assertEquals(httpAPI.get(1).getContext(), "/payroll");
         Assert.assertEquals(httpAPI.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(httpAPI.get(1).getDefinitions().get(0).getPath(), "salary");
     }
@@ -197,11 +197,11 @@ public class ProbesTest {
     public void validateRunTimeGatewayTemplate() {
         final List<API> httpList = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp();
         Assert.assertEquals(httpList.get(0).getDestination().getHost(), "employee");
-        Assert.assertEquals(httpList.get(0).getContext(), "employee");
+        Assert.assertEquals(httpList.get(0).getContext(), "/employee");
         Assert.assertEquals(httpList.get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(httpList.get(0).getDefinitions().get(0).getPath(), "/details");
         Assert.assertEquals(httpList.get(1).getDestination().getHost(), "salary");
-        Assert.assertEquals(httpList.get(1).getContext(), "payroll");
+        Assert.assertEquals(httpList.get(1).getContext(), "/payroll");
         Assert.assertEquals(httpList.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(httpList.get(1).getDefinitions().get(0).getPath(), "salary");
     }

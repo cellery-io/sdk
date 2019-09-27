@@ -102,7 +102,7 @@ public class PetStoreBeTest {
     public void validateBuildTimeGatewayTemplate() {
         GatewaySpec gatewaySpec = cell.getSpec().getGateway().getSpec();
         Assert.assertEquals(gatewaySpec.getIngress().getHttp().get(0).getDestination().getHost(), "controller");
-        Assert.assertEquals(gatewaySpec.getIngress().getHttp().get(0).getContext(), "controller");
+        Assert.assertEquals(gatewaySpec.getIngress().getHttp().get(0).getContext(), "/controller");
         Assert.assertFalse(gatewaySpec.getIngress().getHttp().get(0).isGlobal());
         Assert.assertEquals(gatewaySpec.getIngress().getHttp().get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(gatewaySpec.getIngress().getHttp().get(0).getDefinitions().get(0).getPath(), "/catalog");
@@ -194,7 +194,7 @@ public class PetStoreBeTest {
         GatewaySpec gatewaySpec = runtimeCell.getSpec().getGateway().getSpec();
         final API api = gatewaySpec.getIngress().getHttp().get(0);
         Assert.assertEquals(api.getDestination().getHost(), "controller");
-        Assert.assertEquals(api.getContext(), "controller");
+        Assert.assertEquals(api.getContext(), "/controller");
         Assert.assertFalse(api.isGlobal());
         Assert.assertEquals(api.getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(api.getDefinitions().get(0).getPath(), "/catalog");

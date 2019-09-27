@@ -103,14 +103,14 @@ public class CustomerProductTest {
 
         final API api = cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0);
         Assert.assertEquals(api.getDestination().getHost(), "customers");
-        Assert.assertEquals(api.getContext(), "customers-1");
+        Assert.assertEquals(api.getContext(), "/customers-1");
         Assert.assertEquals(api.getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(api.getDefinitions().get(0).getPath(), "/*");
         Assert.assertTrue(api.isAuthenticate());
 
         final API api1 = cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1);
         Assert.assertEquals(api1.getDestination().getHost(), "products");
-        Assert.assertEquals(api1.getContext(), "products-1");
+        Assert.assertEquals(api1.getContext(), "/products-1");
         Assert.assertEquals(api1.getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(api1.getDefinitions().get(0).getPath(), "/*");
         Assert.assertTrue(api.isAuthenticate());
@@ -190,13 +190,13 @@ public class CustomerProductTest {
         Assert.assertEquals(ingress.getGrpc().get(0).getPort(), 8000);
 
         Assert.assertEquals(ingress.getHttp().get(0).getDestination().getHost(), "customers");
-        Assert.assertEquals(ingress.getHttp().get(0).getContext(), "customers-1");
+        Assert.assertEquals(ingress.getHttp().get(0).getContext(), "/customers-1");
         Assert.assertEquals(ingress.getHttp().get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(ingress.getHttp().get(0).getDefinitions().get(0).getPath(), "/*");
         Assert.assertTrue(ingress.getHttp().get(0).isAuthenticate());
 
         Assert.assertEquals(ingress.getHttp().get(1).getDestination().getHost(), "products");
-        Assert.assertEquals(ingress.getHttp().get(1).getContext(), "products-1");
+        Assert.assertEquals(ingress.getHttp().get(1).getContext(), "/products-1");
         Assert.assertEquals(ingress.getHttp().get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(ingress.getHttp().get(1).getDefinitions().get(0).getPath(), "/*");
         Assert.assertTrue(ingress.getHttp().get(0).isAuthenticate());

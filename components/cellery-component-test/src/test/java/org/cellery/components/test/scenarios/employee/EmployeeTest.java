@@ -99,11 +99,11 @@ public class EmployeeTest {
     public void validateBuildTimeGatewayTemplate() {
         final List<API> http = cell.getSpec().getGateway().getSpec().getIngress().getHttp();
         Assert.assertEquals(http.get(0).getDestination().getHost(), "employee");
-        Assert.assertEquals(http.get(0).getContext(), "employee");
+        Assert.assertEquals(http.get(0).getContext(), "/employee");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getPath(), "/details");
         Assert.assertEquals(http.get(1).getDestination().getHost(), "salary");
-        Assert.assertEquals(http.get(1).getContext(), "payroll");
+        Assert.assertEquals(http.get(1).getContext(), "/payroll");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
     }
@@ -162,11 +162,11 @@ public class EmployeeTest {
     public void validateRunTimeGatewayTemplate() {
         final List<API> http = runtimeCell.getSpec().getGateway().getSpec().getIngress().getHttp();
         Assert.assertEquals(http.get(0).getDestination().getHost(), "employee");
-        Assert.assertEquals(http.get(0).getContext(), "employee");
+        Assert.assertEquals(http.get(0).getContext(), "/employee");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(0).getDefinitions().get(0).getPath(), "/details");
         Assert.assertEquals(http.get(1).getDestination().getHost(), "salary");
-        Assert.assertEquals(http.get(1).getContext(), "payroll");
+        Assert.assertEquals(http.get(1).getContext(), "/payroll");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(http.get(1).getDefinitions().get(0).getPath(), "salary");
     }

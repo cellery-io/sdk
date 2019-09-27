@@ -136,7 +136,7 @@ named hr_global_1_0_0_info. Get the Consumer Key and Consumer secret of the appl
  curl -k -d "grant_type=password&username=alice&password=<password>" -H "Authorization: Basic <Base64 encoded consumer_key:consumer_secret>" https://wso2-apim-gateway:<port>/token  
 To invoke the HR API, execute the following curl command; Replace the <port> with the value you got from #1 above and <Access_Token> with the access token value you got from #5 above.
 ```
-curl -k -H "Authorization: Bearer <Access_Token>" https://wso2-apim-gateway:<port>/hr/hr/
+curl -k -H "Authorization: Bearer <Access_Token>" https://wso2-apim-gateway:<port>/myorg/hr/
 ```
 Sample Response:
 ```json

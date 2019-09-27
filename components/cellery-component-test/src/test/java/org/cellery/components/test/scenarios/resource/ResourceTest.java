@@ -95,7 +95,7 @@ public class ResourceTest {
     public void validateBuildTimeGatewayTemplate() {
         final API api = cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0);
         Assert.assertEquals(api.getDestination().getHost(), "stock");
-        Assert.assertEquals(api.getContext(), "stock");
+        Assert.assertEquals(api.getContext(), "/stock");
         Assert.assertEquals(api.getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(api.getDefinitions().get(0).getPath(), "/options");
     }

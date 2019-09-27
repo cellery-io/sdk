@@ -351,18 +351,18 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
         component.setProtocol(DEFAULT_GATEWAY_PROTOCOL);
         // Process optional attributes
         if (attributeMap.containsKey(CelleryConstants.CONTEXT)) {
-            httpAPI.setContext(((BString) attributeMap.get(CelleryConstants.CONTEXT)).stringValue());
+            String context = ((BString) attributeMap.get(CelleryConstants.CONTEXT)).stringValue();
+            if (!context.startsWith("/")) {
+                context = "/" + context;
+            }
+            httpAPI.setContext(context);
         }
         if (attributeMap.containsKey("authenticate")) {
             httpAPI.setAuthenticate(((BBoolean) attributeMap.get("authenticate")).booleanValue());
         }
         if (attributeMap.containsKey(EXPOSE)) {
             if (!httpAPI.isAuthenticate()) {
-                String context = httpAPI.getContext();
-                if (!context.startsWith("/")) {
-                    context = "/" + context;
-                }
-                component.addUnsecuredPaths(context);
+                component.addUnsecuredPaths(httpAPI.getContext());
             }
             if ("global".equals(((BString) attributeMap.get(EXPOSE)).stringValue())) {
                 httpAPI.setGlobal(true);

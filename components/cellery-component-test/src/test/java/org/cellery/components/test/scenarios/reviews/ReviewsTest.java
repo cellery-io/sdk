@@ -99,14 +99,14 @@ public class ReviewsTest {
     public void validateBuildTimeGatewayTemplate() {
         GatewaySpec cellGatewaySpec = cell.getSpec().getGateway().getSpec();
         Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(0).getDestination().getHost(), "reviews");
-        Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(0).getContext(), "reviews-1");
+        Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(0).getContext(), "/reviews-1");
         Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(0).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(0).getDefinitions().get(0).getPath(), "/*");
         Assert.assertTrue(cellGatewaySpec.getIngress().getHttp().get(0).isAuthenticate());
         Assert.assertTrue(cellGatewaySpec.getIngress().getHttp().get(0).isGlobal());
 
         Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(1).getDestination().getHost(), "ratings");
-        Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(1).getContext(), "ratings-1");
+        Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(1).getContext(), "/ratings-1");
         Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(1).getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(cellGatewaySpec.getIngress().getHttp().get(1).getDefinitions().get(0).getPath(), "/*");
         Assert.assertTrue(cellGatewaySpec.getIngress().getHttp().get(0).isAuthenticate());
@@ -228,7 +228,7 @@ public class ReviewsTest {
         GatewaySpec runtimeGatewaySpec = runtimeCell.getSpec().getGateway().getSpec();
         final API api = runtimeGatewaySpec.getIngress().getHttp().get(0);
         Assert.assertEquals(api.getDestination().getHost(), "reviews");
-        Assert.assertEquals(api.getContext(), "reviews-1");
+        Assert.assertEquals(api.getContext(), "/reviews-1");
         Assert.assertEquals(api.getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(api.getDefinitions().get(0).getPath(), "/*");
         Assert.assertTrue(api.isAuthenticate());
@@ -236,7 +236,7 @@ public class ReviewsTest {
 
         final API api1 = runtimeGatewaySpec.getIngress().getHttp().get(1);
         Assert.assertEquals(api1.getDestination().getHost(), "ratings");
-        Assert.assertEquals(api1.getContext(), "ratings-1");
+        Assert.assertEquals(api1.getContext(), "/ratings-1");
         Assert.assertEquals(api1.getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(api1.getDefinitions().get(0).getPath(), "/*");
         Assert.assertTrue(api.isAuthenticate());

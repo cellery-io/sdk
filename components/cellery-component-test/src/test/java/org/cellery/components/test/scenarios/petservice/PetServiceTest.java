@@ -92,7 +92,7 @@ public class PetServiceTest {
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
         Assert.assertEquals(cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(0).getContext(),
-                "petsvc");
+                "/petsvc");
     }
 
     @Test(groups = "build")
