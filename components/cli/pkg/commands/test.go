@@ -258,12 +258,6 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		if fileCopyError != nil {
 			util.ExitWithErrorMessage("Error occurred while copying tests folder", err)
 		}
-
-		fileCopyError = util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
-		if fileCopyError != nil {
-			util.ExitWithErrorMessage("Error occurred while copying ballerina source file", err)
-		}
-
 		err = os.Chdir(testsRoot)
 		if err != nil {
 			util.ExitWithErrorMessage("Error occurred while changing working directory", err)
@@ -495,6 +489,10 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			if err != nil {
 				return fmt.Errorf("error occurred while initializing ballerina project for tests", err)
 			}
+		}
+		fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
+		if fileCopyError != nil {
+			util.ExitWithErrorMessage("Error occurred while copying ballerina source file", err)
 		}
 		cmd = &exec.Cmd{}
 		cmd.Env = os.Environ()
