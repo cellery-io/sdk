@@ -516,9 +516,10 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                         .withName(name)
                         .endConfigMap()
                         .build();
-                volumes.add(volume);
                 if (!volumeInfo.isShared()) {
                     componentSpec.addConfiguration((ConfigMap) volumeInfo.getVolume());
+                } else {
+                    volumes.add(volume);
                 }
             } else if (volumeInfo.getVolume() instanceof Secret) {
                 name = ((Secret) volumeInfo.getVolume())
@@ -529,9 +530,10 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                         .withSecretName(name)
                         .endSecret()
                         .build();
-                volumes.add(volume);
                 if (!volumeInfo.isShared()) {
                     componentSpec.addSecrets((Secret) volumeInfo.getVolume());
+                } else {
+                    volumes.add(volume);
                 }
             } else {
                 name = ((PersistentVolumeClaim) volumeInfo.getVolume()).getMetadata().getName();
@@ -541,13 +543,14 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                         .withClaimName(name)
                         .endPersistentVolumeClaim()
                         .build();
-                volumes.add(volume);
                 if (!volumeInfo.isShared()) {
                     VolumeClaim sharedVolumeClaim = new VolumeClaim();
                     sharedVolumeClaim.setShared(true);
                     sharedVolumeClaim.setVolumeClaim((PersistentVolumeClaim) volumeInfo.getVolume());
                     sharedVolumeClaim.setName(name);
                     componentSpec.addVolumeClaim(sharedVolumeClaim);
+                } else {
+                    volumes.add(volume);
                 }
             }
             VolumeMount volumeMount = new VolumeMountBuilder()

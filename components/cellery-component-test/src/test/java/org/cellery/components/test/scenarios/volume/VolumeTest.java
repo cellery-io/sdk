@@ -123,7 +123,7 @@ public class VolumeTest {
         Assert.assertEquals(container.getVolumeMounts().get(5).getName(), "pv2");
         Assert.assertEquals(container.getVolumeMounts().get(5).getMountPath(), "/tmp/pvc/shared");
         Assert.assertTrue(container.getVolumeMounts().get(5).getReadOnly());
-        Assert.assertEquals(component.getSpec().getTemplate().getVolumes().size(), 6);
+        Assert.assertEquals(component.getSpec().getTemplate().getVolumes().size(), 3);
         Assert.assertEquals(component.getSpec().getVolumeClaims().size(), 1);
         Assert.assertEquals(component.getSpec().getConfigurations().size(), 1);
         Assert.assertEquals(component.getSpec().getSecrets().size(), 1);
