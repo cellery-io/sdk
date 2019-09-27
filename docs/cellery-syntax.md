@@ -24,7 +24,11 @@ This README explains,
 * [Probes](#probes)
     * [TCP Socket](#1-tcp-socket)
     * [Command](#2-command)
-    * [HTTP-GET](#3-http-get)    
+    * [HTTP-GET](#3-http-get)  
+* [Volumes](#volumes)     
+    * [Configurations](#1-configuration) 
+    * [Secretes](#2-secrets) 
+    * [Volume Claims](#3-volume-claims)
 * [Intra-cell Communication](#intra-cell-communication)
 * [Inter-cell Communication](#inter-cell-communication)
     
@@ -600,6 +604,170 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
 }
+```
+
+#### Volumes
+Volumes can be mounted to a component. Cellery support mounting 3 types of volumes to a component.
+
+##### 1. Configuration
+Configurations allow to decouple configuration artifacts from image content to keep containerized applications portable.
+Configurations can be add to component as following.
+```ballerina
+    cellery:Component helloComponent = {
+        name: "hello-api",
+        source: {
+            image: "docker.io/wso2cellery/samples-hello-world-api-hello-service"
+        },
+        ingresses: {
+            helloApi: <cellery:HttpApiIngress>{ port: 9090,
+                context: "hello",
+                authenticate: false,
+                apiVersion: "v1.0.0",
+                definition: {
+                    resources: [
+                        {
+                            path: "/",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        },
+        volumes: {
+            // Mounting a non existing configuration.
+            // Configuration will be created and mounted to component
+            config: {
+                path: "/tmp/config",
+                readOnly: false,
+                volume:<cellery:NonSharedConfiguration>{
+                    name:"my-config",
+                    data:{
+                        debug:"enable",
+                        logs:"enable"
+                    }
+                }
+            },
+            // Mounting an existing configuration.
+            // Configuration is already available in runtime and will be mounted to the component.
+            configShared: {
+                path: "/tmp/shared/config",
+                readOnly: false,
+                volume:<cellery:SharedConfiguration>{
+                    name:"my-config-shared"
+                }
+            }
+        }
+    };
+```
+##### 2. Secrets
+Secret recors let you store and manage sensitive information, such as passwords, OAuth tokens, and ssh keys.
+Secret can be add to component as following.
+```ballerina
+    cellery:Component helloComponent = {
+        name: "hello-api",
+        source: {
+            image: "docker.io/wso2cellery/samples-hello-world-api-hello-service"
+        },
+        ingresses: {
+            helloApi: <cellery:HttpApiIngress>{ port: 9090,
+                context: "hello",
+                authenticate: false,
+                apiVersion: "v1.0.0",
+                definition: {
+                    resources: [
+                        {
+                            path: "/",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        },
+        volumes: {
+            // Mounting a non existing secret.
+            // Secret will be created and mounted to component
+            secret: {
+                path: "/tmp/secret/",
+                readOnly: false,
+                volume:<cellery:NonSharedSecret>{
+                    name:cellery:generateVolumeName("my-secret"),
+                    data:{
+                        username:"admin",
+                        password:"admin"
+                    }
+                }
+            },
+            // Mounting an existing secret.
+            // Secret is already available in runtime and will be mounted to the component.
+            secertShared: {
+                path: "/tmp/shared/secret",
+                readOnly: false,
+                volume:<cellery:SharedSecret>{
+                    name:"my-secret-shared"
+                }
+            }
+        }
+    };
+```
+##### 3. Volume Claims
+Volume Claims (or PVCs) are objects that request storage resources from your cluster. They’re similar to a voucher that your deployment can redeem for storage access.
+Volume Claims can be add to component as following.
+
+```ballerina
+    cellery:Component helloComponent = {
+        name: "hello-api",
+        source: {
+            image: "docker.io/wso2cellery/samples-hello-world-api-hello-service"
+        },
+        ingresses: {
+            helloApi: <cellery:HttpApiIngress>{ port: 9090,
+                context: "hello",
+                authenticate: false,
+                apiVersion: "v1.0.0",
+                definition: {
+                    resources: [
+                        {
+                            path: "/",
+                            method: "GET"
+                        }
+                    ]
+                },
+                expose: "global"
+            }
+        },
+        volumes: {
+            // Mounting a non existing volume claim.
+            // Volume claim will be created and mounted to component 
+            volumeClaim: {
+                path: "/tmp/pvc/",
+                readOnly: false,
+                volume:<cellery:K8sNonSharedPersistence>{
+                    name:"pv1",
+                    mode:"Filesystem",
+                    storageClass:"slow",
+                    accessMode: ["ReadWriteMany"],
+                    request:"2G",
+                     lookup: {
+                        labels: {
+                            release: "stable"
+                        },
+                        expressions: [{ key: "environment", operator: "In", values: ["dev", "staging"]}]
+                     }
+                }
+            },
+            // Mounting an existing volume claim.
+            // Volume claim is already available in runtime and will be mounted to the component.
+            volumeClaimShared: {
+                path: "/tmp/pvc/shared",
+                readOnly: true,
+                volume:<cellery:K8sSharedPersistence>{
+                    name:"pv2"
+                }
+            }
+        }
+    };
 ```
 
 ### Intra Cell Communication
