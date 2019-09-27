@@ -124,18 +124,26 @@ type GatewaySpec struct {
 }
 
 type Ingress struct {
-	HttpApis []GatewayHttpApi `json:"http,omitempty"`
-	TcpApis  []GatewayTcpApi  `json:"tcp,omitempty"`
-	GrpcApis []GatewayGrpcApi `json:"grpc,omitempty"`
+	Extensions interface{}      `json:"extensions,omitempty"`
+	HttpApis   []GatewayHttpApi `json:"http,omitempty"`
+	TcpApis    []GatewayTcpApi  `json:"tcp,omitempty"`
+	GrpcApis   []GatewayGrpcApi `json:"grpc,omitempty"`
 }
 
 type GatewayHttpApi struct {
-	Version     string              `json:"version,omitempty"`
-	Backend     string              `json:"backend"`
-	Context     string              `json:"context"`
-	Definitions []GatewayDefinition `json:"definitions"`
-	Global      bool                `json:"global"`
-	Vhost       string              `json:"vhost"`
+	Context      string          `json:"context"`
+	Version      string          `json:"version"`
+	Definitions  []APIDefinition `json:"definitions"`
+	Global       bool            `json:"global"`
+	Authenticate bool            `json:"authenticate"`
+	Port         uint32          `json:"port"`
+	Destination  Destination     `json:"destination,omitempty"`
+	ZeroScale    bool            `json:"zeroScale,omitempty"`
+}
+
+type APIDefinition struct {
+	Path   string `json:"path"`
+	Method string `json:"method"`
 }
 
 type GatewayTcpApi struct {
@@ -170,8 +178,8 @@ type CellAnnotations struct {
 
 type CellStatus struct {
 	Status       string `json:"status"`
-	Gateway      string `json:"gatewayHostname"`
-	ServiceCount int    `json:"serviceCount"`
+	Gateway      string `json:"gatewayServiceName"`
+	ServiceCount int    `json:"componentCount"`
 }
 
 type CompositeStatus struct {

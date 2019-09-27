@@ -244,7 +244,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		}
 
 		isBallerinaProject, err = util.FileExists(balTomlPath)
-		if isBallerinaProject  {
+		if isBallerinaProject {
 			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BALLERINA_TOML))
 			if fileCopyError != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Error occurred while copying %s", constants.BALLERINA_TOML), err)
@@ -299,7 +299,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		} else {
 			cmdArgs = append(cmdArgs, tempTestFileName, "test", string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
 		}
-		util.CleanAndCreateDir(filepath.Join(currentDir,"target","logs"))
+		util.CleanAndCreateDir(filepath.Join(currentDir, "target", "logs"))
 		defer os.Remove(imageDir)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
@@ -564,7 +564,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				return fmt.Errorf("Cell testing aborted")
 			}
 		}
-		cmdArgs := []string{exePath+"ballerina", "test", filepath.Base(balModule)}
+		cmdArgs := []string{exePath + "ballerina", "test", filepath.Base(balModule)}
 		if incell {
 			cmdArgs = append(cmdArgs, "--groups", "incell")
 		} else {
