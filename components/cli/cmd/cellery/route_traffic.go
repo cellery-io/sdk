@@ -40,6 +40,7 @@ func newRouteTrafficCommand() *cobra.Command {
 	var percentage int
 	var srcInstances []string
 	var enableSessionAwareness bool
+	var assumeYes bool
 	cmd := &cobra.Command{
 		Use:   "route-traffic [--source|-s=<list_of_source_cell_instances>] --dependency|-d <dependency_instance_name> --target|-t <target instance name> [--percentage|-p <x>]",
 		Short: "route a percentage of the traffic to a cell instance",
@@ -75,7 +76,7 @@ func newRouteTrafficCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunRouteTrafficCommand(srcInstances, dependencyInstance, targetInstance, percentage, enableSessionAwareness)
+			err := commands.RunRouteTrafficCommand(srcInstances, dependencyInstance, targetInstance, percentage, enableSessionAwareness, assumeYes)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to route traffic to the target instance: %s, percentage: %d", targetInstance, percentage), err)
 			}
@@ -86,6 +87,7 @@ func newRouteTrafficCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&targetInstance, "target", "t", "", "target instance to which the traffic should be re-routed")
 	cmd.Flags().StringVarP(&targetPercentage, "percentage", "p", "", "percentage to be switched to the target instance")
 	cmd.Flags().BoolVarP(&enableSessionAwareness, "enable-session-awareness", "a", false, "flag to enable session awareness based on user name")
+	cmd.Flags().BoolVarP(&assumeYes, "assume-yes", "y", false, "flag to assume yes for user confirmations")
 	return cmd
 }
 

@@ -32,7 +32,7 @@ import (
 )
 
 func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string, targetInstance string, percentage int,
-	enableUserBasedSessionAwareness bool) error {
+	enableUserBasedSessionAwareness bool, assumeYes bool) error {
 	spinner := util.StartNewSpinner(fmt.Sprintf("Starting to route %d%% of traffic to instance %s", percentage,
 		targetInstance))
 
@@ -60,16 +60,19 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 		if err != nil {
 			// if this is a CellGwApiVersionMismatchError, need to print a warning and prompt user for action
 			if versionErr, match := err.(errorpkg.CellGwApiVersionMismatchError); match {
-				spinner.Pause()
-				canContinue, err := canContinueWithWarning(versionErr.CurrentTargetApiContext, versionErr.CurrentTargetApiVersion)
-				spinner.Resume()
-				if err != nil {
-					spinner.Stop(false)
-					return err
-				}
-				if !canContinue {
-					spinner.Stop(false)
-					return err
+				if !assumeYes {
+					// prompt confirmation from user
+					spinner.Pause()
+					canContinue, err := canContinueWithWarning(versionErr.CurrentTargetApiContext, versionErr.CurrentTargetApiVersion)
+					spinner.Resume()
+					if err != nil {
+						spinner.Stop(false)
+						return err
+					}
+					if !canContinue {
+						spinner.Stop(false)
+						return err
+					}
 				}
 			} else {
 				spinner.Stop(false)
@@ -98,7 +101,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 }
 
 func canContinueWithWarning(currCtxt string, currVersion string) (bool, error) {
-	util.PrintWarningMessage(fmt.Sprintf("No API with matching version found in target instance for context: %s, version: %s \n", currCtxt, currVersion))
+	util.PrintWarningMessage(fmt.Sprintf("No matching API found in target instance for context: %s, version: %s \n", currCtxt, currVersion))
 	canContinue, _, err := util.GetYesOrNoFromUser("Continue traffic routing", false)
 	if err != nil {
 		return false, err
