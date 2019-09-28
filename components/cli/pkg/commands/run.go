@@ -312,7 +312,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		}
 		cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", exeUid,
 			strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", tempRunFileName, "run",
-			string(iName), string(dependencyLinksJson))
+			string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
 	}
 	defer os.Remove(imageDir)
 	cmd.Env = os.Environ()
