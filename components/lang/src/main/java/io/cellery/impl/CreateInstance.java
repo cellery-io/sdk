@@ -270,7 +270,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 }
             } else {
                 PrintStream out = System.out;
-                out.println("starting instance " + instanceName);
+                out.println("starting instance " + instanceName + " ");
                 // If not root instance, simply start the instance itself
                 dependencyInfo = ((BMap) ctx.getNullableRefArgument(2)).getMap();
             }
@@ -988,9 +988,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void pullImage(String registry, String org, String name, String version) {
         Map<String, String> environment = new HashMap<>();
-        CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                environment, "cellery", "pull", registry + File.separator + org + File.separator +
-                        name + ":" + version);
+        CelleryUtils.executeShellCommand(null, CelleryUtils::printInfoWithCarriageReturn,
+                CelleryUtils::printInfoWithCarriageReturn, environment, "cellery", "pull", "--silent",
+                registry + File.separator + org + File.separator + name + ":" + version);
     }
 
     /**

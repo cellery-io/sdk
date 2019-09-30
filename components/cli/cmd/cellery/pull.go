@@ -31,6 +31,7 @@ import (
 func newPullCommand() *cobra.Command {
 	var username string
 	var password string
+	var isSilent bool
 	cmd := &cobra.Command{
 		Use:   "pull [<registry>/]<organization>/<cell-image>:<version>",
 		Short: "Pull cell image from the remote repository",
@@ -49,12 +50,13 @@ func newPullCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunPull(args[0], false, username, password)
+			commands.RunPull(args[0], isSilent, username, password)
 		},
 		Example: "  cellery pull cellery-samples/employee:1.0.0\n" +
 			"  cellery pull registry.foo.io/cellery-samples/employee:1.0.0",
 	}
 	cmd.Flags().StringVarP(&username, "username", "u", "", "Username for Cellery Registry")
 	cmd.Flags().StringVarP(&password, "password", "p", "", "Password for Cellery Registry")
+	cmd.Flags().BoolVarP(&isSilent, "silent", "s", false, "Pull image silently")
 	return cmd
 }

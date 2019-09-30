@@ -56,7 +56,7 @@ func PrintWhatsNextMessage(action string, cmd string) {
 	fmt.Println("--------------------------------------------------------")
 	fmt.Printf("Execute the following command to %s:\n", action)
 	fmt.Println("  $ " + cmd)
-	fmt.Println("--------------------------------------------------------")
+	fmt.Println("--------------------------------------------------------\n")
 }
 
 func GetDuration(startTime time.Time) string {

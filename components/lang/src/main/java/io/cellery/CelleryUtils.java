@@ -593,6 +593,11 @@ public class CelleryUtils {
         out.println("Info: " + message);
     }
 
+    public static void printInfoWithCarriageReturn(String message) {
+        PrintStream out = System.out;
+        out.print("Info: " + message + "\r");
+    }
+
     /**
      * Print a Debug message.
      *
@@ -706,8 +711,8 @@ public class CelleryUtils {
      */
     public static String executeShellCommand(Path workingDirectory, Writer stdout, Writer stderr,
                                              Map<String, String> environment, String... command) {
-        StringBuilder stdOut = new StringBuilder();
-        StringBuilder stdErr = new StringBuilder();
+        StringBuilder stdOutBuilder = new StringBuilder();
+        StringBuilder stdErrBuilder = new StringBuilder();
 
         // Set environment variables
         ProcessBuilder processBuilder = new ProcessBuilder(command);
@@ -728,11 +733,11 @@ public class CelleryUtils {
             Process process = processBuilder.start();
 
             StreamGobbler outputStreamGobbler = new StreamGobbler(process.getInputStream(), msg -> {
-                stdOut.append(msg);
+                stdOutBuilder.append(msg);
                 stdout.writeMessage(msg);
             });
             StreamGobbler errorStreamGobbler = new StreamGobbler(process.getErrorStream(), msg -> {
-                stdErr.append(msg);
+                stdErrBuilder.append(msg);
                 stderr.writeMessage(msg);
             });
 
@@ -742,7 +747,7 @@ public class CelleryUtils {
             exitCode = process.waitFor();
             if (exitCode > 0) {
                 throw new BallerinaException("Command " + String.join(" ", command) +
-                        " exited with exit code " + exitCode + " message: " + stdErr.toString());
+                        " exited with exit code " + exitCode + " message: " + stdErrBuilder.toString());
             }
 
         } catch (IOException e) {
@@ -757,10 +762,10 @@ public class CelleryUtils {
             executor.shutdownNow();
         }
 
-        if (stdOut.toString().isEmpty()) {
-            return stdErr.toString();
+        if (stdOutBuilder.toString().isEmpty()) {
+            return stdErrBuilder.toString();
         }
-        return stdOut.toString();
+        return stdOutBuilder.toString();
     }
 
     /**
@@ -978,6 +983,37 @@ public class CelleryUtils {
     }
 
     /**
+     * Get ballerina installation directory.
+     *
+     * @return ballerina installation directory
+     */
+    private static String ballerinaInstallationDirectory() {
+        String ballerinaHome = "";
+        String osName = Strings.toLowerCase(System.getProperty("os.name"));
+        if (osName.contains("mac")) {
+            return BALLERINA_INSTALLATION_PATH_MAC;
+        }
+        if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) {
+            return BALLERINA_INSTALLATION_PATH_UBUNTU;
+        }
+        return ballerinaHome;
+    }
+
+    /**
+     * Get ballerina executable path.
+     *
+     * @return ballerina executable path
+     */
+    public static String getBallerinaExecutablePath() {
+        String exePath = ballerinaInstallationDirectory() + BALLERINA_EXECUTABLE_PATH;
+        File dir = new File(exePath);
+        if (!dir.exists()) {
+            throw new BallerinaException("Ballerina executable path not found");
+        }
+        return exePath;
+    }
+
+    /**
      * Interface to print shell command output.
      */
     public interface Writer {
@@ -1007,36 +1043,5 @@ public class CelleryUtils {
             new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines()
                     .forEach(consumer);
         }
-    }
-
-    /**
-     * Get ballerina installation directory.
-     *
-     * @return ballerina installation directory
-     */
-    private static String ballerinaInstallationDirectory() {
-        String ballerinaHome = "";
-        String osName = Strings.toLowerCase(System.getProperty("os.name"));
-        if (osName.contains("mac")) {
-            return BALLERINA_INSTALLATION_PATH_MAC;
-        }
-        if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) {
-            return BALLERINA_INSTALLATION_PATH_UBUNTU;
-        }
-        return ballerinaHome;
-    }
-
-    /**
-     * Get ballerina executable path.
-     *
-     * @return ballerina executable path
-     */
-    public static String getBallerinaExecutablePath() {
-        String exePath = ballerinaInstallationDirectory() + BALLERINA_EXECUTABLE_PATH;
-        File dir = new File(exePath);
-        if (!dir.exists()) {
-            throw new BallerinaException("Ballerina executable path not found");
-        }
-        return exePath;
     }
 }
