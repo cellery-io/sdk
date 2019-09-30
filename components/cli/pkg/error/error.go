@@ -39,8 +39,9 @@ func buildCellInstanceNonExistErrorMatcher(name string) string {
 type CellGwApiVersionMismatchError struct {
 	CurrentTargetInstance   string
 	NewTargetInstance       string
-	CurrentTargetApiContext string
+	ApiContext              string
 	CurrentTargetApiVersion string
+	NewTargetApiVersion     string
 }
 
 func (err CellGwApiVersionMismatchError) Error() string {

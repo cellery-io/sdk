@@ -320,20 +320,28 @@ func checkForMatchingApis(currentTarget *kubectl.Cell, newTarget *kubectl.Cell) 
 outer:
 	for _, currTargetGwApi := range currentTarget.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis {
 		for _, newTargetGwApi := range newTarget.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis {
-			if doApisMatch(&newTargetGwApi, &currTargetGwApi) {
-				// if matches, continue the outer loop
-				continue outer
+			if currTargetGwApi.Context == newTargetGwApi.Context {
+				if doApisVersionsMatch(&newTargetGwApi, &currTargetGwApi) {
+					// if matches, continue the outer loop to check for other APIs
+					continue outer
+				} else {
+					// versions does not match
+					return errorpkg.CellGwApiVersionMismatchError{
+						currentTarget.CellMetaData.Name, newTarget.CellMetaData.Name,
+						currTargetGwApi.Context, currTargetGwApi.Version, newTargetGwApi.Version,
+					}
+				}
 			}
 		}
 		// no match, error
 		return errorpkg.CellGwApiVersionMismatchError{
 			currentTarget.CellMetaData.Name, newTarget.CellMetaData.Name,
-			currTargetGwApi.Context, currTargetGwApi.Version,
+			currTargetGwApi.Context, currTargetGwApi.Version, "",
 		}
 	}
 	return nil
 }
 
-func doApisMatch(api1 *kubectl.GatewayHttpApi, api2 *kubectl.GatewayHttpApi) bool {
-	return (api1.Context == api2.Context) && (api1.Version == api2.Version)
+func doApisVersionsMatch(api1 *kubectl.GatewayHttpApi, api2 *kubectl.GatewayHttpApi) bool {
+	return api1.Version == api2.Version
 }

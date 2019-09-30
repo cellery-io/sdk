@@ -63,7 +63,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 				if !assumeYes {
 					// prompt confirmation from user
 					spinner.Pause()
-					canContinue, err := canContinueWithWarning(versionErr.CurrentTargetApiContext, versionErr.CurrentTargetApiVersion)
+					canContinue, err := canContinueWithWarning(versionErr.ApiContext, versionErr.CurrentTargetApiVersion, versionErr.NewTargetApiVersion)
 					spinner.Resume()
 					if err != nil {
 						spinner.Stop(false)
@@ -100,8 +100,14 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 	return nil
 }
 
-func canContinueWithWarning(currCtxt string, currVersion string) (bool, error) {
-	util.PrintWarningMessage(fmt.Sprintf("No matching API found in target instance for context: %s, version: %s \n", currCtxt, currVersion))
+func canContinueWithWarning(context string, currVersion string, newVersion string) (bool, error) {
+	var warnMsg string
+	if newVersion != "" {
+		warnMsg = fmt.Sprintf("No matching API found in target for context: '%s', version: '%s'. Available version in target: '%s' \n", context, currVersion, newVersion)
+	} else {
+		warnMsg = fmt.Sprintf("No matching API found in target for context: '%s', version: '%s' \n", context, currVersion)
+	}
+	util.PrintWarningMessage(warnMsg)
 	canContinue, _, err := util.GetYesOrNoFromUser("Continue traffic routing", false)
 	if err != nil {
 		return false, err
