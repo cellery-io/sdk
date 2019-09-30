@@ -147,7 +147,7 @@ public class ResourceTest {
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
         final List<Component> components = runtimeCell.getSpec().getComponents();
-        Assert.assertEquals(components.get(0).getMetadata().getName(), "stock-inst");
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "stock");
         final ComponentSpec spec = components.get(0).getSpec();
         final ResourceRequirements resources = spec.getTemplate().getContainers().get(0).getResources();
         Assert.assertEquals(resources.getLimits().get("cpu"), new Quantity("500m"));

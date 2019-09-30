@@ -114,7 +114,6 @@ import static io.cellery.CelleryUtils.processResources;
 import static io.cellery.CelleryUtils.processWebIngress;
 import static io.cellery.CelleryUtils.randomString;
 import static io.cellery.CelleryUtils.removePrefix;
-import static io.cellery.CelleryUtils.replaceInFile;
 import static io.cellery.CelleryUtils.toYaml;
 import static io.cellery.CelleryUtils.unzip;
 import static io.cellery.CelleryUtils.writeToFile;
@@ -300,9 +299,9 @@ public class CreateInstance extends BlockingNativeCallableUnit {
                 //update volume Instance name
                 updateVolumeInstanceName(component, instanceName);
             });
-            writeToFile(toYaml(composite), cellYAMLPath);
             // Update cell yaml with instance name
-            replaceInFile(cellYAMLPath, "  name: \"" + cellName + "\"\n", "  name: \"" + instanceName + "\"\n");
+            composite.getMetadata().setName(instanceName);
+            writeToFile(toYaml(composite), cellYAMLPath);
             // Apply yaml file of the instance
             KubernetesClient.apply(cellYAMLPath);
             KubernetesClient.waitFor("Ready", 30 * 60, instanceArg, "default");

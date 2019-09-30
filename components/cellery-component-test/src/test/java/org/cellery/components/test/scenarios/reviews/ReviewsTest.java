@@ -245,7 +245,7 @@ public class ReviewsTest {
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
         List<Component> components = runtimeCell.getSpec().getComponents();
-        Assert.assertEquals(components.get(0).getMetadata().getName(), "review-inst");
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "reviews");
 
         final Container container = components.get(0).getSpec().getTemplate().getContainers().get(0);
         Assert.assertEquals(container.getEnv().get(0).getName(), "PRODUCTS_HOST");

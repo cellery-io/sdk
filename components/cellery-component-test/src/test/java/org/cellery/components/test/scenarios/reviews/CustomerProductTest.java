@@ -224,7 +224,7 @@ public class CustomerProductTest {
         Assert.assertEquals(containers1.get(0).getPorts().get(0).getContainerPort().intValue(), 8000);
 
         Assert.assertEquals(runtimeCell.getSpec().getComponents().get(2).getMetadata().getName(),
-                "cust-inst");
+                "products");
         final List<Container> containers2 =
                 runtimeCell.getSpec().getComponents().get(2).getSpec().getTemplate().getContainers();
         Assert.assertEquals(containers2.get(0).getEnv().get(0).getName(), "CATEGORIES_PORT");

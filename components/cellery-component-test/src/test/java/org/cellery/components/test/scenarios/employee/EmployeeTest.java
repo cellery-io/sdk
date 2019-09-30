@@ -174,7 +174,7 @@ public class EmployeeTest {
     @Test(groups = "run")
     public void validateRunTimeServiceTemplates() {
         final List<Component> components = runtimeCell.getSpec().getComponents();
-        Assert.assertEquals(components.get(0).getMetadata().getName(), "emp-inst");
+        Assert.assertEquals(components.get(0).getMetadata().getName(), "employee");
         Assert.assertEquals(components.get(0).getMetadata().getLabels().get("team"), "HR");
         Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getName(),
                 "SALARY_HOST");

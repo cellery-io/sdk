@@ -943,23 +943,6 @@ public class CelleryUtils {
     }
 
     /**
-     * Replace a string in a file.
-     *
-     * @param srcPath   path to the file
-     * @param oldString string to be replaced
-     * @param newString string which will be replaced by
-     * @throws IOException if unable to read file
-     */
-    public static void replaceInFile(String srcPath, String oldString, String newString) throws IOException {
-        Path path = Paths.get(srcPath);
-        Charset charset = StandardCharsets.UTF_8;
-
-        String content = new String(Files.readAllBytes(path), charset);
-        content = content.replaceAll(oldString, newString);
-        Files.write(path, content.getBytes(charset));
-    }
-
-    /**
      * Get a list of files in a directory for a given extension.
      *
      * @param directory name of the directory
