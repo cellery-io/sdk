@@ -179,7 +179,7 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 	err = startTestCellInstance(imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
 		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes)
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to test Cell instance "+instanceName, err)
+		util.ExitWithErrorMessage("Failed to test Cell instance"+instanceName, err)
 	}
 	util.PrintSuccessMessage(fmt.Sprintf("Completed running tests for instance %s", util.Bold(instanceName)))
 }
@@ -234,6 +234,9 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
 	var isBallerinaProject bool
 
+	if (!isTestDirExists && !containsTestFunction) {
+		return fmt.Errorf("no tests found in the cell image %v", imageTag)
+	}
 	if isTestDirExists {
 		if exePath == "" {
 			util.ExitWithErrorMessage("Ballerina not found. Please install Ballerina to run inline tests", err)
@@ -588,7 +591,6 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir
 	var srcYamlFile string
 	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
 	var deploymentName string
-	var stsDeploymentName string
 	var spinner *util.Spinner
 	if incell {
 		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-deployment.yaml")
@@ -606,14 +608,19 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir
 			util.ExitWithErrorMessage(fmt.Sprintf("error while copying telepresene k8s artifact to %s", imageDir), err)
 		}
 		deploymentName = "telepresence--telepresence-deployment"
-		stsDeploymentName = "telepresence--sts-deployment"
 		spinner = util.StartNewSpinner("Creating telepresence instance")
 	}
 	kubectl.ApplyFile(dstYamlFile)
-	kubectl.WaitForDeployment("available", 900, "deployment.extensions/"+deploymentName, "default")
+	err := kubectl.WaitForDeployment("available", 900, deploymentName, "default")
+	if err != nil {
+		util.ExitWithErrorMessage(fmt.Sprintf("error waiting for telepresence deployment %v to be available", deploymentName), err)
+	}
 
 	if !incell {
-		kubectl.WaitForDeployment("available", 900, "deployment.extensions/"+stsDeploymentName, "default")
+		err = kubectl.WaitForCell("Ready", 30*60, "telepresence", "default")
+		if err != nil {
+			util.ExitWithErrorMessage("error waiting for instance telepresence to be ready", err)
+		}
 	}
 	spinner.Stop(true)
 
@@ -629,7 +636,7 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
-	err := cmd.Start()
+	err = cmd.Start()
 	if err != nil {
 		StopTelepresence(dstYamlFile)
 		util.ExitWithErrorMessage("error occurred while running tests", err)

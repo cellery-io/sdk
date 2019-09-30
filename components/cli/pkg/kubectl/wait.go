@@ -31,6 +31,10 @@ func WaitForDeployment(condition string, timeoutSeconds int, resourceName string
 	return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("deployment/%s", resourceName), namespace)
 }
 
+func WaitForCell(condition string, timeoutSeconds int, resourceName string, namespace string) error {
+	return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("cells.mesh.cellery.io/%s", resourceName), namespace)
+}
+
 func WaitForCondition(condition string, timeoutSeconds int, resourceName string, namespace string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
