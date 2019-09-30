@@ -57,6 +57,7 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 			url := cellInstanceName + "--gateway-service"
 			path := apiArray[i].Definitions[j].Path
 			context := apiArray[i].Context
+			version := apiArray[i].Version
 			method := apiArray[i].Definitions[j].Method
 			// Add the context of the Cell
 			if !strings.HasPrefix(context, "/") {
@@ -85,12 +86,12 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context
 				}
 			}
-			tableRecord := []string{context, method, url, globalUrl}
+			tableRecord := []string{context, version, method, url, globalUrl}
 			tableData = append(tableData, tableRecord)
 		}
 	}
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"CONTEXT", "METHOD", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
+	table.SetHeader([]string{"CONTEXT", "VERSION", "METHOD", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")
@@ -100,8 +101,10 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold})
 	table.SetColumnColor(
+		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
@@ -133,6 +136,7 @@ func displayCellImageApisTable(cellImageName string) {
 				}
 				ingressData = append(ingressData, ingressType)
 				ingressData = append(ingressData, ingress.Context)
+				ingressData = append(ingressData, ingress.Version)
 				ingressData = append(ingressData, strconv.Itoa(ingress.Port))
 				if ingressType == "web" || ingress.Global {
 					ingressData = append(ingressData, "True")
@@ -150,6 +154,7 @@ func displayCellImageApisTable(cellImageName string) {
 				ingressData = append(ingressData, componentName)
 				ingressData = append(ingressData, "tcp")
 				ingressData = append(ingressData, "N/A")
+				ingressData = append(ingressData, "N/A")
 				ingressData = append(ingressData, strconv.Itoa(ingress.Port))
 				ingressData = append(ingressData, "False")
 				tableData = append(tableData, ingressData)
@@ -163,6 +168,7 @@ func displayCellImageApisTable(cellImageName string) {
 				ingressData = append(ingressData, componentName)
 				ingressData = append(ingressData, "grpc")
 				ingressData = append(ingressData, "N/A")
+				ingressData = append(ingressData, "N/A")
 				ingressData = append(ingressData, strconv.Itoa(ingress.Port))
 				ingressData = append(ingressData, "False")
 				tableData = append(tableData, ingressData)
@@ -170,7 +176,7 @@ func displayCellImageApisTable(cellImageName string) {
 		}
 	}
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS CONTEXT", "INGRESS PORT", "GLOBALLY EXPOSED"})
+	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS CONTEXT", "INGRESS_VERSION", "INGRESS PORT", "GLOBALLY EXPOSED"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")
@@ -181,8 +187,10 @@ func displayCellImageApisTable(cellImageName string) {
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold})
 	table.SetColumnColor(
+		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},

@@ -85,6 +85,7 @@ type ClusterIngress struct {
 
 type HttpIngress struct {
 	Context     string      `json:"context"`
+	Version     string      `json:"version"`
 	Global      bool        `json:"global"`
 	Port        int         `json:"port"`
 	Destination Destination `json:"destination"`
