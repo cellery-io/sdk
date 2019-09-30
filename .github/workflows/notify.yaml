@@ -6,6 +6,6 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - name: Send Message
-      uses: docker://mirage20/hangouts-action:latest
+      uses: docker://wso2cellery/hangouts-action:latest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
