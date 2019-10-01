@@ -27,27 +27,42 @@ public function build(cellery:ImageName iName) returns error? {
             }
         },
         envVars: {
-            MYSQL_ROOT_PASSWORD: { value: "root" }
+            MYSQL_ROOT_PASSWORD: {
+                value: "root"
+            }
+        }
+    };
+
+    cellery:Component tcpComponent = {
+        name: "TcpInternal",
+        source: {
+            image: "wso2/samples-tcp"
+        },
+        ingresses: {
+            tcpIngress: <cellery:TCPIngress>{
+                backendPort: 5506
+            }
         }
     };
 
     cellery:Component grpcComponent = {
-            name: "grpc",
-            source: {
-                image: "mirage20/samples-productreview-mysql"
-            },
-            ingresses: {
-                mysqlIngress: <cellery:GRPCIngress>{
+        name: "grpc",
+        source: {
+            image: "mirage20/samples-productreview-mysql"
+        },
+        ingresses: {
+            mysqlIngress: <cellery:GRPCIngress>{
                     backendPort: 4406
                 }
-            }
-        };
-
-    cellery:CellImage mysqlCell = {
-        components: {
-            mysqlComp: mysqlComponent,
-            grpcComp: grpcComponent
         }
     };
-    return cellery:createImage(mysqlCell, untaint iName);
+
+    cellery:CellImage tcpCell = {
+        components: {
+            mysqlComp: mysqlComponent,
+            grpcComp: grpcComponent,
+            tcpComp: tcpComponent
+        }
+    };
+    return cellery:createImage(tcpCell, untaint iName);
 }

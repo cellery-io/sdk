@@ -85,6 +85,7 @@ public class TCPTest {
     @Test(groups = "build")
     public void validateBuildTimeGatewayTemplate() {
         final GatewaySpec spec = cell.getSpec().getGateway().getSpec();
+        Assert.assertEquals(spec.getIngress().getTcp().size(), 1);
         Assert.assertEquals(spec.getIngress().getTcp().get(0).getDestination().getPort(), 3306);
         Assert.assertEquals(spec.getIngress().getTcp().get(0).getPort(), 31406);
         Assert.assertEquals(spec.getIngress().getGrpc().size(), 0);
@@ -92,17 +93,23 @@ public class TCPTest {
 
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
-        Assert.assertEquals(cell.getSpec().getComponents().get(0).getMetadata().getName(), "mysql");
-        final ComponentSpec spec = cell.getSpec().getComponents().get(0).getSpec();
-        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getName(), "MYSQL_ROOT_PASSWORD");
-        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getValue(), "root");
-        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getImage(), "mirage20/samples-productreview" +
-                "-mysql");
-        Assert.assertEquals(spec.getTemplate().getContainers().get(0).getPorts().get(0).getContainerPort().intValue()
-                , 3306);
 
-        Assert.assertEquals(cell.getSpec().getComponents().get(1).getMetadata().getName(), "grpc");
-        final ComponentSpec grpcCompSpec = cell.getSpec().getComponents().get(1).getSpec();
+        Assert.assertEquals(cell.getSpec().getComponents().get(0).getMetadata().getName(), "TcpInternal");
+        final ComponentSpec tcpSpec = cell.getSpec().getComponents().get(0).getSpec();
+        final Container tcpContainer = tcpSpec.getTemplate().getContainers().get(0);
+        Assert.assertEquals(tcpContainer.getImage(), "wso2/samples-tcp");
+        Assert.assertEquals(tcpContainer.getPorts().get(0).getContainerPort().intValue(), 5506);
+
+        Assert.assertEquals(cell.getSpec().getComponents().get(1).getMetadata().getName(), "mysql");
+        final ComponentSpec mysqlSpec = cell.getSpec().getComponents().get(1).getSpec();
+        final Container container = mysqlSpec.getTemplate().getContainers().get(0);
+        Assert.assertEquals(container.getEnv().get(0).getName(), "MYSQL_ROOT_PASSWORD");
+        Assert.assertEquals(container.getEnv().get(0).getValue(), "root");
+        Assert.assertEquals(container.getImage(), "mirage20/samples" + "-productreview-mysql");
+        Assert.assertEquals(container.getPorts().get(0).getContainerPort().intValue(), 3306);
+
+        Assert.assertEquals(cell.getSpec().getComponents().get(2).getMetadata().getName(), "grpc");
+        final ComponentSpec grpcCompSpec = cell.getSpec().getComponents().get(2).getSpec();
         final List<Container> containers = grpcCompSpec.getTemplate().getContainers();
         Assert.assertEquals(containers.get(0).getImage(), "mirage20/samples" +
                 "-productreview-mysql");

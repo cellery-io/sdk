@@ -578,7 +578,8 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
             ingress.addHttpAPI(imageComponent.getApis());
             ingress.addGRPC(imageComponent.getGrpcList().stream()
                     .filter(a -> a.getPort() > 0).collect(Collectors.toList()));
-            ingress.addTCP(imageComponent.getTcpList());
+            ingress.addTCP(imageComponent.getTcpList().stream()
+                    .filter(a -> a.getPort() > 0).collect(Collectors.toList()));
             final Web web = imageComponent.getWeb();
             if (web != null) {
                 extension.setOidc(web.getOidc());
