@@ -124,28 +124,45 @@ A particular `HttpApiIngress` can be exposed as an API by setting `expose` field
     -  `local`: Expose an HTTP API via local cell gateway.
     -  `global`: Expose an HTTP API via global gateway.
 
-By setting `expose` to `global`, the API will be published to the global gateway which will expose the API to external 
-traffic. In this case, the cell name and the context provided in the ingress is combined to create the full context for the 
+By setting `expose` to `global`, the API will be published to the global gateway ready to receive external traffic. 
+In this case, the cell name and the context provided in the ingress is combined to create the full context for the 
 global API.
 
-In addition to exposing HTTP ingresses selectively, users can expose all the ingresses of a particular cell to outside by 
-using the `globalPublisher` configuration. 
+```ballerina
+cellery:HttpApiIngress helloAPI = {
+    port: 9090,
+    context: "hello",
+    apiVersion: "1.0.0",
+    // ...
+    expose: "global"
+};
+```
+In the above ingress exposed as global, the API will he published with the context `/<cell-name>/hello/1.0.0`.
+
+In addition, user can expose the ingresses of a particular cell to outside with a common root context by using the 
+`globalPublisher` configuration. 
 
 ```ballerina
+cellery:HttpApiIngress helloAPI = {
+    context: "hello",
+    apiVersion: "1.0.0",
+    // ...
+    expose: "global"
+};
+
 cellery:CellImage hrCell = {
     globalPublisher: {
         apiVersion: "1.0.1",
         context: "myorg"
     },
-    components: {
-        hrComp: hrComponent
-    }
 };
 ```
 
-Here, all the http ingresses defined in the cell will be published to the global API gateway. The context of the each 
-published API will be the concatenation of `\myorg` and the sub context defined in each ingress. Each API will be versioned 
-as `1.0.1`.
+Here, http ingresses marked as `expose: "global"` will be published to the global API gateway. The context of the each 
+published API will be the concatenation of context defined in `globalPublisher` and the sub context defined in each ingress. 
+
+Therefore, the global API will be published as `/myorg/hello/1.0.1`. Note that the root context `/myorg` is picked from the 
+`globalPublisher` section and the sub context `hello` is picked from the http ingress. The version is specified in `globalPublisher` section. 
 
 ##### 2. Web Ingress
 Web cell ingress allows web traffic to the cell. A sample Web ingress would be as following: 
