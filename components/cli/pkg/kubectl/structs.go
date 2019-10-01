@@ -184,7 +184,7 @@ type CellStatus struct {
 
 type CompositeStatus struct {
 	Status       string `json:"status"`
-	ServiceCount int    `json:"serviceCount"`
+	ServiceCount int    `json:"componentCount"`
 }
 
 type Pods struct {
