@@ -175,7 +175,6 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 	}
 
 	spinner.Stop(true)
-	util.PrintSuccessMessage("Starting execution of tests for " + util.Bold(cellImageTag) + "...")
 	err = startTestCellInstance(imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
 		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes)
 	if err != nil {
@@ -346,11 +345,29 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				}
 			}
 
-			util.PrintSuccessMessage("Note that the following configuration should be added to the launch configuration " +
-				"before starting the debug session\n" +
-				fmt.Sprintf("--------------------------------------------------------\n\n") +
-				fmt.Sprintf("\"commandOptions\": [\"--config\", \"%s\"],\n\n", ballerinaConf) +
-				fmt.Sprintln("--------------------------------------------------------"))
+			util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
+				fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
+				fmt.Sprintf(util.Faint(
+				" {\n" +
+					"   \"version\": \"0.2.0\",\n" +
+					"   \"configurations\": [\n" +
+					"     ...\n")) +
+
+				fmt.Sprintf(util.Bold(
+				"     {\n" +
+						"\t\"type\": \"ballerina\",\n" +
+						"\t\"request\": \"launch\",\n" +
+						"\t\"name\": \"Cellery Test\",\n" +
+						"\t\"script\": \"${file}\",\n" +
+						"\t\"commandOptions\": [\"--config\", \"%s\"],\n" +
+						"\t\"debugTests\": true\n" +
+						"     },\n"), ballerinaConf) +
+
+				fmt.Sprintf(util.Faint(
+					"     ...\n" +
+					"   ]\n" +
+				   " }\n\n")) +
+				fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
 		} else {
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 			cmd.Env = append(cmd.Env, fmt.Sprintf("DEBUG_MODE=%s", verboseMode))
@@ -361,8 +378,8 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s\n", string(dependencyLinksJson)))
 		}
 
-		if !assumeYes {
-			fmt.Printf("%s Do you wish to continue with testing above Cell instances (Y/n)? ", util.YellowBold("?"))
+		if !assumeYes && debug {
+			fmt.Printf("%s Do you wish to continue with debugging the tests(Y/n)? ", util.YellowBold("?"))
 			reader := bufio.NewReader(os.Stdin)
 			confirmation, err := reader.ReadString('\n')
 			if err != nil {
@@ -486,8 +503,10 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	} else {
 		if !isBallerinaProject {
 			cmd = exec.Command(exePath+"ballerina", "init")
-			cmd.Stderr = os.Stderr
-			cmd.Stdout = os.Stdout
+			if verbose {
+				cmd.Stderr = os.Stderr
+				cmd.Stdout = os.Stdout
+			}
 			err = cmd.Run()
 			if err != nil {
 				return fmt.Errorf("error occurred while initializing ballerina project for tests", err)
@@ -540,11 +559,29 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				}
 			}
 
-			util.PrintSuccessMessage("Note that the following configuration should be added to the launch configuration " +
-				"before starting the debug session\n" +
-				fmt.Sprintf("--------------------------------------------------------\n\n") +
-				fmt.Sprintf("\"commandOptions\": [\"--config\", \"%s\"],\n\n", ballerinaConf) +
-				fmt.Sprintln("--------------------------------------------------------"))
+			util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
+				fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
+				fmt.Sprintf(util.Faint(
+					" {\n" +
+						"   \"version\": \"0.2.0\",\n" +
+						"   \"configurations\": [\n" +
+						"     ...\n")) +
+
+				fmt.Sprintf(util.Bold(
+					"     {\n" +
+						"\t\"type\": \"ballerina\",\n" +
+						"\t\"request\": \"launch\",\n" +
+						"\t\"name\": \"Cellery Test\",\n" +
+						"\t\"script\": \"${file}\",\n" +
+						"\t\"commandOptions\": [\"--config\", \"%s\"],\n" +
+						"\t\"debugTests\": true\n" +
+						"     },\n"), ballerinaConf) +
+
+				fmt.Sprintf(util.Faint(
+					"     ...\n" +
+						"   ]\n" +
+						" }\n\n")) +
+				fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
 
 		} else {
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
@@ -556,8 +593,8 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s\n", string(dependencyLinksJson)))
 		}
 
-		if !assumeYes {
-			fmt.Printf("%s Do you wish to continue with testing above Cell instances (Y/n)? ", util.YellowBold("?"))
+		if !assumeYes && debug{
+			fmt.Printf("%s Do you wish to continue with debugging the tests (Y/n)? ", util.YellowBold("?"))
 			reader := bufio.NewReader(os.Stdin)
 			confirmation, err := reader.ReadString('\n')
 			if err != nil {
@@ -592,6 +629,7 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir
 	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
 	var deploymentName string
 	var spinner *util.Spinner
+	var spinnerMsg string
 	if incell {
 		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-deployment.yaml")
 		err := util.CopyFile(srcYamlFile, dstYamlFile)
@@ -600,7 +638,7 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir
 		}
 		util.ReplaceInFile(dstYamlFile, "{{cell}}", instanceName, -1)
 		deploymentName = instanceName + "--telepresence"
-		spinner = util.StartNewSpinner("Creating telepresence deployment")
+		spinnerMsg = "Creating telepresence deployment"
 	} else {
 		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-cell.yaml")
 		err := util.CopyFile(srcYamlFile, dstYamlFile)
@@ -608,9 +646,11 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir
 			util.ExitWithErrorMessage(fmt.Sprintf("error while copying telepresene k8s artifact to %s", imageDir), err)
 		}
 		deploymentName = "telepresence--telepresence-deployment"
-		spinner = util.StartNewSpinner("Creating telepresence instance")
+		spinnerMsg = "Creating telepresence instance"
 	}
 	kubectl.ApplyFile(dstYamlFile)
+	spinner = util.StartNewSpinner(spinnerMsg)
+	time.Sleep(5 * time.Second)
 	err := kubectl.WaitForDeployment("available", 900, deploymentName, "default")
 	if err != nil {
 		util.ExitWithErrorMessage(fmt.Sprintf("error waiting for telepresence deployment %v to be available", deploymentName), err)
