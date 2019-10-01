@@ -1,8 +1,9 @@
-# Manage Cells 
-Cells can be managed by,
+# Manage Cells and Composites
+Cell and Composites can be managed by,
  * [Observing cells](#observability)
  * [Scaling cells](#scaling-cells) 
  * [Patching cells/composites](#patching-cellcomposite-components-and-advanced-deployments)
+ * [Cell API Versioning](#cell-api-versioning)
  
  ## Observability 
 Cellery Observability brings along the capability to observe the Cells deployed on Cellery Mesh. It provides overview of 
@@ -25,3 +26,7 @@ Cell/Composite instances are only allowed to be updated restrictively. Its possi
 Further, as advanced deployment methods, Cellery supports both blue-green and canary deployment options. In that case, a new instance with updated 
 version will be spawned along with the old cell instance, and the traffic can be routed to completely or partially to the new instance. 
 Find more details on updating cell components and advanced deployment patterns [here.](cell-patch-and-adv-deployment.md)
+
+## Cell API Versioning
+Cell APIs can be optionally versioned, and exposed from the cell gateway or global gateway. Refer 
+[api versioning documentation](cell-api-versioning.md) for further details.

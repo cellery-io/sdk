@@ -84,6 +84,7 @@ A sample `HttpApiIngress` instance  with inline API definition would be as follo
 cellery:HttpApiIngress helloAPI = {
     port: 9090,
     context: "hello",
+    apiVersion: "1.0.0",
     definition: {
         resources: [
             {
@@ -109,6 +110,7 @@ public function build(cellery:ImageName iName) returns error? {
     cellery:HttpApiIngress helloAPI = {
         port: 9090,
         context: "hello",
+        apiVersion: "1.0.0",
         definition: <cellery:ApiDefinition>cellery:readSwaggerFile("./resources/employee.swagger.json"),
         expose: "global"
     };
@@ -117,11 +119,33 @@ public function build(cellery:ImageName iName) returns error? {
 ```
 
 ###### Expose
-An `HttpApiIngress` can be exposed as an API by setting `expose` field. This field accepts two values.
+A particular `HttpApiIngress` can be exposed as an API by setting `expose` field. This field accepts two values.
 
     -  `local`: Expose an HTTP API via local cell gateway.
     -  `global`: Expose an HTTP API via global gateway.
 
+By setting `expose` to `global`, the API will be published to the global gateway which will expose the API to external 
+traffic. In this case, the cell name and the context provided in the ingress is combined to create the full context for the 
+global API.
+
+In addition to exposing HTTP ingresses selectively, users can expose all the ingresses of a particular cell to outside by 
+using the `globalPublisher` configuration. 
+
+```ballerina
+cellery:CellImage hrCell = {
+    globalPublisher: {
+        apiVersion: "1.0.1",
+        context: "myorg"
+    },
+    components: {
+        hrComp: hrComponent
+    }
+};
+```
+
+Here, all the http ingresses defined in the cell will be published to the global API gateway. The context of the each 
+published API will be the concatenation of `\myorg` and the sub context defined in each ingress. Each API will be versioned 
+as `1.0.1`.
 
 ##### 2. Web Ingress
 Web cell ingress allows web traffic to the cell. A sample Web ingress would be as following: 

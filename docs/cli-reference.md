@@ -367,6 +367,7 @@ This is used to direct a percentage of traffic originating from one cell instanc
 If this is not given all instances which are currently depending on the provided dependency instance will be considered._
 * _-p, --percentage: The percentage of traffic to be routed to the target instance. If not specified, this will be considered to be 100%._
 * _-a, --enable-session-awareness: Flag to enable session aware routing based on user name. An instance will be selected and will be propagated via the header `x-instance-id`. Its the cell component's responsibility to forward this header if this option is to be used._
+* _-y, --assume-yes: Assume the answer as yes to any user prompts, such as the confirmation to continue with routing when there are api version mismatches._
 
 Ex:
  ```
@@ -374,6 +375,7 @@ Ex:
    cellery route-traffic --dependency hr-inst-1 --target hr-inst-2 --percentage 20
    cellery route-traffic --dependency hr-inst-1 --target hr-inst-2 --percentage 20 --enable-session-awareness
    cellery route-traffic --dependency hr-inst-1 --target hr-inst-2
+   cellery route-traffic --dependency hr-inst-1 --target hr-inst-2 --assume-yes
  ```
 
 [Back to Command List](#cellery-cli-commands)

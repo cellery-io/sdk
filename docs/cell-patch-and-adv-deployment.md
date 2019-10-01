@@ -78,6 +78,10 @@ using the `-s/--source` option:
 ```
 $ cellery route-traffic -s pet-fe -d pet-be -t pet-be-v2 -p 50
 ```
+
+The cell API versions are used in traffic routing, where the API versions of the current dependency and the new target instance are compared. 
+If the API versions do not match, the user is prompted to continue with traffic routing or to abort.
+
 Refer to [CLI docs](cli-reference.md#cellery-route-traffic) for a complete guide on managing advanced deployments with cell instances.
 
 ## Try with sample
