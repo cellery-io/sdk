@@ -79,6 +79,7 @@ func newCliCommand() *cobra.Command {
 }
 
 func main() {
+	util.CreateCelleryDirStructure()
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")
 

@@ -359,3 +359,14 @@ func CopyK8sArtifacts(outPath string) {
 	CreateDir(k8sArtifactsDir)
 	CopyDir(filepath.Join(CelleryInstallationDir(), constants.K8S_ARTIFACTS), k8sArtifactsDir)
 }
+
+func CreateCelleryDirStructure()  {
+	celleryHome := filepath.Join(UserHomeDir(), constants.CELLERY_HOME)
+	CreateDir(celleryHome)
+	CreateDir(filepath.Join(celleryHome, "gpc"))
+	CreateDir(filepath.Join(celleryHome, "k8s-artefacts"))
+	CreateDir(filepath.Join(celleryHome, "logs"))
+	CreateDir(filepath.Join(celleryHome, "repo"))
+	CreateDir(filepath.Join(celleryHome, "tmp"))
+	CreateDir(filepath.Join(celleryHome, "vm"))
+}
