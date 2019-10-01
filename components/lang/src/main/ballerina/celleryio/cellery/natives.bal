@@ -598,9 +598,6 @@ function parseCellDependency(string alias) returns ImageName {
 # + return - hostname 
 public function getHost(Component component) returns (string) {
     string host = "{{instance_name}}--" + getValidName(component.name) + "-service";
-    if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
-        host += "-rev";
-    }
     return host;
 }
 
