@@ -58,7 +58,7 @@ func RunVersion() {
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to get executable path", err)
 	}
-	balVersionCmd := exec.Command(exePath+"ballerina", "version")
+	balVersionCmd := exec.Command(exePath, "version")
 	balResult, err := balVersionCmd.Output()
 	if err != nil {
 		// Having b7a locally is optional since the cellery build and run can be invoked via a docker container.

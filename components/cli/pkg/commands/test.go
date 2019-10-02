@@ -502,7 +502,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		}
 	} else {
 		if !isBallerinaProject {
-			cmd = exec.Command(exePath+"ballerina", "init")
+			cmd = exec.Command(exePath, "init")
 			if verbose {
 				cmd.Stderr = os.Stderr
 				cmd.Stdout = os.Stdout
