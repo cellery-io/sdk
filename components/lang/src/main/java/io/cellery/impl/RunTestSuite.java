@@ -70,6 +70,7 @@ import static io.cellery.CelleryConstants.SERVICE_TYPE_JOB;
 import static io.cellery.CelleryConstants.VERSION;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.getValidName;
+import static io.cellery.CelleryUtils.printDebug;
 import static io.cellery.CelleryUtils.printInfo;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.toYaml;
@@ -209,10 +210,10 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             }
         }
         printInfo("Test execution completed. Collecting logs to logs/" +
-                    instanceName + ".log");
+                instanceName + ".log");
         CelleryUtils.executeShellCommand(
-                    "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
-                    CelleryUtils::printDebug, CelleryUtils::printWarning);
+                "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
+                CelleryUtils::printDebug, CelleryUtils::printWarning);
     }
 
     private String getPodName(String podInfo, String instanceName) throws InterruptedException {
@@ -247,26 +248,35 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
 
         String srcDir = Paths.get(System.getenv(CELLERY_IMAGE_DIR_ENV_VAR), "src").toString();
-        String sourceBalPath = CelleryUtils.getFilesByExtension(srcDir,"bal").get(0).toString();
-        String sourcebalFileName = Paths.get(sourceBalPath).getFileName().toString();
-        try {
-            Files.copy(Paths.get(sourceBalPath), workingDir.resolve(module).resolve(sourcebalFileName), StandardCopyOption
-                    .REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new BallerinaException(e);
+        String sourceBalPath = CelleryUtils.getFilesByExtension(srcDir, "bal").get(0).toString();
+
+        Path sourcebalFileName = Paths.get(sourceBalPath).getFileName();
+
+        if (sourcebalFileName != null) {
+            try {
+                Files.copy(Paths.get(sourceBalPath), workingDir.resolve(module).resolve(sourcebalFileName),
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new BallerinaException(e);
+            }
+
+            if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
+                CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
+                        CelleryUtils::printWarning);
+            }
+
+            if (Files.exists(workingDir.resolve(CelleryConstants.TEMP_TEST_MODULE))) {
+                module = CelleryConstants.TEMP_TEST_MODULE;
+            }
+
+            CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System
+                    .getenv(), "ballerina", "test", module);
+        } else {
+            String err = "Unable to find ballerina source file in" + srcDir;
+            printDebug(err);
+            throw new BallerinaException(err);
         }
 
-        if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
-            CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
-                    CelleryUtils::printWarning);
-        }
-
-        if (Files.exists(workingDir.resolve(CelleryConstants.TEMP_TEST_MODULE))) {
-            module = CelleryConstants.TEMP_TEST_MODULE;
-        }
-
-        CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System
-                .getenv(), "ballerina", "test", module);
     }
 
     private Cell generateTestCell(Test test, LinkedHashMap nameStruct) {
