@@ -20,8 +20,9 @@ package main
 
 import (
 	"fmt"
-
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/spf13/cobra"
+	"regexp"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
@@ -38,10 +39,19 @@ func newSetupCreateOnExistingClusterCommand(isComplete *bool) *cobra.Command {
 	var dbHostName = ""
 	var dbUserName = ""
 	var dbPassword = ""
+	var nodePortIpAddress = ""
 	cmd := &cobra.Command{
 		Use:   "existing",
 		Short: "Create a Cellery runtime in existing cluster",
-		Args:  cobra.NoArgs,
+		Args: func(cmd *cobra.Command, args []string) error {
+			if nodePortIpAddress != "" {
+				isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.IP_ADDRESS_PATTERN), nodePortIpAddress)
+				if err != nil || !isNodePortIpAddressValid {
+					return fmt.Errorf("expects a valid nodeport ip address, received %s", nodePortIpAddress)
+				}
+			}
+			return nil
+		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			runtime.SetCompleteSetup(*isComplete)
 			hasNfsStorage = useNfsStorage(nfsServerIp, fileShare, dbHostName, dbUserName, dbPassword)
@@ -54,7 +64,7 @@ func newSetupCreateOnExistingClusterCommand(isComplete *bool) *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			commands.RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode,
-				nfs, db)
+				nfs, db, nodePortIpAddress)
 		},
 		Example: "  cellery setup create existing",
 	}
@@ -66,6 +76,7 @@ func newSetupCreateOnExistingClusterCommand(isComplete *bool) *cobra.Command {
 	cmd.Flags().StringVar(&dbHostName, "dbHost", "", "Database host")
 	cmd.Flags().StringVar(&dbUserName, "dbUsername", "", "Database user name")
 	cmd.Flags().StringVar(&dbPassword, "dbPassword", "", "Database password")
+	cmd.Flags().StringVar(&nodePortIpAddress, "nodePortIp", "", "NodePort Ip Address")
 	return cmd
 }
 

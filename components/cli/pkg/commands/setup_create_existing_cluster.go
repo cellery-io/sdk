@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
@@ -39,6 +40,7 @@ func createOnExistingCluster() error {
 	var isBackSelected = false
 	var nfs runtime.Nfs
 	var db runtime.MysqlDb
+	var nodePortIpAddress = ""
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -85,22 +87,31 @@ func createOnExistingCluster() error {
 		createOnExistingCluster()
 		return nil
 	}
+	if !isLoadBalancerIngressMode {
+		nodePortIpAddress = getNodePortIpAddress()
+		isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.IP_ADDRESS_PATTERN),
+			nodePortIpAddress)
+		if err != nil || !isNodePortIpAddressValid {
+			util.ExitWithErrorMessage("Error creating cellery runtime", fmt.Errorf("expects a valid " +
+				"nodeport ip address, received %s", nodePortIpAddress))
+		}
+	}
 
 	if err != nil {
 		return fmt.Errorf("failed to get user input: %v", err)
 	}
-	RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db)
+	RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db, nodePortIpAddress)
 
 	return nil
 }
 
 func RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
-	nfs runtime.Nfs, db runtime.MysqlDb) {
+	nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) {
 	artifactsPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.K8S_ARTIFACTS)
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), artifactsPath)
 	if err := runtime.CreateRuntime(artifactsPath, isPersistentVolume, hasNfsStorage,
-		isLoadBalancerIngressMode, nfs, db); err != nil {
+		isLoadBalancerIngressMode, nfs, db, nodePortIpAddress); err != nil {
 		util.ExitWithErrorMessage("Failed to deploy cellery runtime", err)
 	}
 	runtime.WaitFor(false, false)
@@ -169,4 +180,34 @@ func getPersistentVolumeDataWithNfs() (runtime.Nfs, runtime.MysqlDb, error) {
 	}
 	return runtime.Nfs{NfsServerIp: nfsServerIp, FileShare: fileShare},
 		runtime.MysqlDb{DbHostName: dbHostName, DbUserName: dbUserName, DbPassword: dbPassword}, nil
+}
+
+func getNodePortIpAddress() string {
+	prefix := util.CyanBold("?")
+	nodePortIpAddress := ""
+	err := interact.Run(&interact.Interact{
+		Before: func(c interact.Context) error {
+			c.SetPrfx(color.Output, prefix)
+			return nil
+		},
+		Questions: []*interact.Question{
+			{
+				Before: func(c interact.Context) error {
+					c.SetPrfx(nil, util.CyanBold("?"))
+					return nil
+				},
+				Quest: interact.Quest{
+					Msg: util.Bold("NodePort Ip address: "),
+				},
+				Action: func(c interact.Context) interface{} {
+					nodePortIpAddress, _ = c.Ans().String()
+					return nil
+				},
+			},
+		},
+	})
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while getting nodePort id address from user", err)
+	}
+	return nodePortIpAddress
 }

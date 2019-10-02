@@ -349,3 +349,24 @@ func GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{
 	err = json.Unmarshal([]byte(out), &output)
 	return output, err
 }
+
+func GetService(service, namespace string) (Service, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"get",
+		"services",
+		"-n",
+		namespace,
+		service,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := Service{}
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput, err
+}

@@ -38,7 +38,7 @@ func manageExistingCluster() error {
 	}
 
 	cellPrompt := promptui.Select{
-		Label:     util.YellowBold("?") + " Select `cleanup` to remove an existing GCP cluster",
+		Label:     util.YellowBold("?") + " Select `cleanup` to remove existing cluster",
 		Items:     []string{constants.CELLERY_MANAGE_CLEANUP, constants.CELLERY_SETUP_BACK},
 		Templates: cellTemplate,
 	}

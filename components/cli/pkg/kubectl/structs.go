@@ -227,6 +227,7 @@ type ServiceMetaData struct {
 
 type ServiceSpec struct {
 	Ports []ServicePort `json:"ports"`
+	ExternalIPs []string `json:"externalIPs"`
 }
 
 type ServicePort struct {

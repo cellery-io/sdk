@@ -39,3 +39,20 @@ func JsonPatch(kind, instance, jsonPatch string) error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+func JsonPatchWithNameSpace(kind, instance, jsonPatch, nameSpace string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"patch",
+		"--type=json",
+		kind,
+		instance,
+		"-p",
+		jsonPatch,
+		"-n",
+		nameSpace,
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
