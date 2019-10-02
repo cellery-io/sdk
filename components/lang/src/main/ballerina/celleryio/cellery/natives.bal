@@ -164,7 +164,7 @@ public type HttpApiIngress record {|
     int port;
     string context?;
     ApiDefinition definition?;
-    string apiVersion?;    // version is a keyword in Ballerina.
+    string apiVersion = "0.1";    // Default api version for 0.1
     Expose expose?;
     boolean authenticate = true;
 |};
