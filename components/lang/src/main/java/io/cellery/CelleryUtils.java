@@ -595,7 +595,7 @@ public class CelleryUtils {
 
     public static void printInfoWithCarriageReturn(String message) {
         PrintStream out = System.out;
-        out.print("Info: " + message + "\r");
+        out.print(message + "\r");
     }
 
     /**

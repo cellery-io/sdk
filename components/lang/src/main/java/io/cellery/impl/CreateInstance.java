@@ -988,9 +988,11 @@ public class CreateInstance extends BlockingNativeCallableUnit {
      */
     private void pullImage(String registry, String org, String name, String version) {
         Map<String, String> environment = new HashMap<>();
+        String image = registry + File.separator + org + File.separator + name + ":" + version;
+        printInfo("Pulling image " + image);
         CelleryUtils.executeShellCommand(null, CelleryUtils::printInfoWithCarriageReturn,
-                CelleryUtils::printInfoWithCarriageReturn, environment, "cellery", "pull", "--silent",
-                registry + File.separator + org + File.separator + name + ":" + version);
+                CelleryUtils::printInfoWithCarriageReturn, environment, "cellery", "pull", "--silent", image);
+        printInfo("\nImage pull completed.");
     }
 
     /**
