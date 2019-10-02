@@ -267,8 +267,6 @@ public type K8sSharedPersistence record {|
 
 public type Mode "Filesystem" | "Block";
 
-public type StorageClass "null" | "" | "slow" | "fast";
-
 public type AccessMode "ReadWriteOnce" | "ReadOnlyMany" | "ReadWriteMany";
 
 public type Expression record {|
@@ -285,7 +283,7 @@ public type Lookup record {|
 public type K8sNonSharedPersistence record {|
     string name;
     Mode mode?;
-    StorageClass storageClass?;
+    string storageClass?;
     AccessMode?[] accessMode?;
     Lookup lookup?;
     string request;

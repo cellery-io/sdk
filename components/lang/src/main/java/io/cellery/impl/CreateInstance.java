@@ -423,7 +423,7 @@ public class CreateInstance extends BlockingNativeCallableUnit {
         component.getSpec().getVolumeClaims().forEach(volumeClaim -> {
             String name = volumeClaim.getName();
             volumeClaim.setName(name.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
-            volumeClaim.getVolumeClaim().getMetadata().setName(name.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
+            volumeClaim.getTemplate().getMetadata().setName(name.replace(INSTANCE_NAME_PLACEHOLDER, instanceName));
         });
         component.getSpec().getSecrets().forEach(secret -> {
             String name = secret.getMetadata().getName();

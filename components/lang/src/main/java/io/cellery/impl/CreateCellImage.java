@@ -546,7 +546,7 @@ public class CreateCellImage extends BlockingNativeCallableUnit {
                 if (!volumeInfo.isShared()) {
                     VolumeClaim sharedVolumeClaim = new VolumeClaim();
                     sharedVolumeClaim.setShared(true);
-                    sharedVolumeClaim.setVolumeClaim((PersistentVolumeClaim) volumeInfo.getVolume());
+                    sharedVolumeClaim.setTemplate((PersistentVolumeClaim) volumeInfo.getVolume());
                     sharedVolumeClaim.setName(name);
                     componentSpec.addVolumeClaim(sharedVolumeClaim);
                 } else {

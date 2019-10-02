@@ -28,5 +28,5 @@ import lombok.Data;
 public class VolumeClaim {
     private String name;
     private boolean shared;
-    private PersistentVolumeClaim volumeClaim;
+    private PersistentVolumeClaim template;
 }

@@ -204,7 +204,7 @@ public class VolumeTest {
         Assert.assertTrue(container.getVolumeMounts().get(5).getReadOnly());
         Assert.assertEquals(component.getSpec().getVolumeClaims().get(0).getName(), "pv1");
         final PersistentVolumeClaimSpec pvSpec =
-                component.getSpec().getVolumeClaims().get(0).getVolumeClaim().getSpec();
+                component.getSpec().getVolumeClaims().get(0).getTemplate().getSpec();
         Assert.assertEquals(pvSpec.getStorageClassName(), "slow");
         Assert.assertEquals(pvSpec.getSelector().getMatchLabels().size(), 1);
         Assert.assertEquals(pvSpec.getSelector().getMatchExpressions().size(), 1);
