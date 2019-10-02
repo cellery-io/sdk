@@ -257,7 +257,7 @@ func GetVirtualService(vs string) (VirtualService, error) {
 	)
 	displayVerboseOutput(cmd)
 	jsonOutput := VirtualService{}
-	out, err := osexec.GetCommandOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
@@ -306,7 +306,7 @@ func GetGatewayAsMapInterface(gw string) (map[string]interface{}, error) {
 	)
 	displayVerboseOutput(cmd)
 	var output map[string]interface{}
-	out, err := osexec.GetCommandOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return output, err
 	}
