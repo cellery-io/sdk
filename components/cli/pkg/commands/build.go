@@ -98,7 +98,7 @@ func RunBuild(tag string, fileName string) {
 	cmd := &exec.Cmd{}
 
 	if exePath != "" {
-		cmd = exec.Command(exePath+"ballerina", "run", tempBuildFileName, "build", string(iName), "{}")
+		cmd = exec.Command(exePath, "run", tempBuildFileName, "build", string(iName), "{}")
 	} else {
 		if err != nil {
 			spinner.Stop(false)
