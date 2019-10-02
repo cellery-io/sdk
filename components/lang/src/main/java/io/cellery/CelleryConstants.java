@@ -114,4 +114,5 @@ public class CelleryConstants {
     public static final String BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-0.991.0";
     public static final String BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-0.991.0";
     public static final String BALLERINA_EXECUTABLE_PATH = "/bin/";
+    public static final String BALLERINA_VERSION = "0.991.0";
 }

@@ -83,6 +83,37 @@ func (langMgr *BLangManager) Init() error {
 }
 
 func (langMgr *BLangManager) GetExecutablePath() (string, error) {
+	balVersionCmdOutput := ""
+	cmd := exec.Command("ballerina", "version")
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			balVersionCmdOutput += stdoutScanner.Text()
+		}
+	}()
+	err := cmd.Start()
+	if err != nil {
+		log.Printf("failed to start ballerina version command due to %v", err)
+		return getBallerinaExecutablePath()
+	}
+	err = cmd.Wait()
+	if err != nil {
+		log.Printf("failed waiting for ballerina version command due to %v", err)
+		return getBallerinaExecutablePath()
+	}
+	if strings.Contains(balVersionCmdOutput, "Ballerina") {
+		if len(strings.Split(balVersionCmdOutput, " ")) > 0 {
+			if strings.Split(balVersionCmdOutput, " ")[1] == constants.BALLERINA_VERSION {
+				// If existing ballerina version is as the expected version, execute ballerina run without executable path
+				return "ballerina", nil
+			}
+		}
+	}
+	return getBallerinaExecutablePath()
+}
+
+func getBallerinaExecutablePath() (string, error) {
 	exePath := BallerinaInstallationDir() + constants.BALLERINA_EXECUTABLE_PATH
 	if _, err := os.Stat(exePath); os.IsNotExist(err) {
 		exePath = strings.TrimSuffix(CelleryInstallationDir(), "/") + constants.CELLERY_EXECUTABLE_PATH
@@ -95,5 +126,5 @@ func (langMgr *BLangManager) GetExecutablePath() (string, error) {
 		return "", err
 	}
 	log.Printf("Executable path: %sballerina", exePath)
-	return exePath, nil
+	return exePath + "ballerina", nil
 }

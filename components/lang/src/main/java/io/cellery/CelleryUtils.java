@@ -101,6 +101,7 @@ import java.util.zip.ZipInputStream;
 import static io.cellery.CelleryConstants.BALLERINA_EXECUTABLE_PATH;
 import static io.cellery.CelleryConstants.BALLERINA_INSTALLATION_PATH_MAC;
 import static io.cellery.CelleryConstants.BALLERINA_INSTALLATION_PATH_UBUNTU;
+import static io.cellery.CelleryConstants.BALLERINA_VERSION;
 import static io.cellery.CelleryConstants.CELL;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PORT;
 import static io.cellery.CelleryConstants.DEFAULT_GATEWAY_PROTOCOL;
@@ -1005,7 +1006,17 @@ public class CelleryUtils {
      * @return ballerina executable path
      */
     public static String getBallerinaExecutablePath() {
-        String exePath = ballerinaInstallationDirectory() + BALLERINA_EXECUTABLE_PATH;
+        String exePath;
+        Map<String, String> environment = new HashMap<>();
+        String balVersionCmdOutput = CelleryUtils.executeShellCommand(null, msg -> { }, msg -> { }, environment,
+                "ballerina", "version");
+        if (balVersionCmdOutput.contains("Ballerina")) {
+            String ballerinaVersion = balVersionCmdOutput.split(" ")[1];
+            if (ballerinaVersion.equals(BALLERINA_VERSION)) {
+                return "";
+            }
+        }
+        exePath = ballerinaInstallationDirectory() + BALLERINA_EXECUTABLE_PATH;
         File dir = new File(exePath);
         if (!dir.exists()) {
             throw new BallerinaException("Ballerina executable path not found");

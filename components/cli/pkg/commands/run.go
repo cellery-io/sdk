@@ -229,8 +229,8 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 
 	cmd := &exec.Cmd{}
 
-	if exePath != "" {
-		cmd = exec.Command(exePath+"ballerina", cmdArgs...)
+	if len(exePath) > 0 {
+		cmd = exec.Command(exePath, cmdArgs...)
 	} else {
 		currentDir, err := os.Getwd()
 		if err != nil {
