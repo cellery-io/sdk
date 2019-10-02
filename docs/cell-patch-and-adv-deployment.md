@@ -45,7 +45,7 @@ pet-fe--gateway-deployment-67ccf688fb-dnhhw      2/2     Running           0    
 pet-fe--portal-deployment-69bb57c466-25nqd       2/2     Running           0          4h6m
 pet-fe--sts-deployment-59dbb995c7-g7tc7          3/3     Running           0          4h6m
 ```
-Refer to [CLI docs](cli-reference.md#cellery-update) for a complete guide on performing updates on cell instances.
+Refer to [CLI docs](cli-reference.md#cellery-patch) for a complete guide on performing updates on cell instances.
 
 ## Blue/Green and Canary Deployment of Cell/Composite Instances
 Blue-Green and Canary are advanced deployment patterns which can used to perform updates to running cell/composite instances. 

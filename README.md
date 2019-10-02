@@ -83,6 +83,7 @@ For other installation approaches including GCP and Docker for Desktop see [here
 
 ### Prerequisites 
 - [VirtualBox](https://www.virtualbox.org/wiki/Downloads) 
+- [Kubectl version 1.14 or more](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
 ### Download Cellery
 #### Linux
