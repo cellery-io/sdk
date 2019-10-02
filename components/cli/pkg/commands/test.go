@@ -180,6 +180,9 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to test Cell instance"+instanceName, err)
 	}
+	//Remove Ballerina toml and local repo to avoid failing cellery build and run
+	os.Remove(constants.BALLERINA_TOML)
+	os.RemoveAll(constants.BALLERINA_LOCAL_REPO)
 	util.PrintSuccessMessage(fmt.Sprintf("Completed running tests for instance %s", util.Bold(instanceName)))
 }
 
@@ -409,7 +412,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		}()
 
 		if exePath != "" {
-			ballerinaArgs := []string{exePath + "ballerina"}
+			ballerinaArgs := []string{exePath}
 			ballerinaArgs = append(ballerinaArgs, cmdArgs...)
 			RunTelepresenceTests(incell, cmd, ballerinaArgs, imageDir, instanceName, debug)
 		} else {
@@ -604,7 +607,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				return fmt.Errorf("Cell testing aborted")
 			}
 		}
-		cmdArgs := []string{exePath + "ballerina", "test", filepath.Base(balModule)}
+		cmdArgs := []string{exePath, "test", filepath.Base(balModule)}
 		if incell {
 			cmdArgs = append(cmdArgs, "--groups", "incell")
 		} else {

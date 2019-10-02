@@ -53,6 +53,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -61,6 +62,7 @@ import java.util.List;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
+import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.NAME;
 import static io.cellery.CelleryConstants.ORG;
@@ -243,6 +245,17 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
 
     private void runInlineTest(String module) {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
+
+        String srcDir = Paths.get(System.getenv(CELLERY_IMAGE_DIR_ENV_VAR), "src").toString();
+        String sourceBalPath = CelleryUtils.getFilesByExtension(srcDir,"bal").get(0).toString();
+        String sourcebalFileName = Paths.get(sourceBalPath).getFileName().toString();
+        try {
+            Files.copy(Paths.get(sourceBalPath), workingDir.resolve(module).resolve(sourcebalFileName), StandardCopyOption
+                    .REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new BallerinaException(e);
+        }
+
         if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
             CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
                     CelleryUtils::printWarning);
