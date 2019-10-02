@@ -39,6 +39,9 @@ func RunVersion() {
 		ServerVersion struct {
 			GitVersion string
 		}
+		ClientVersion struct {
+			GitVersion string
+		}
 	}
 
 	// Creating functions for printing version details
@@ -85,7 +88,8 @@ func RunVersion() {
 		if jsonErr != nil {
 			fmt.Printf("\x1b[31;1m Cannot connect to Kubernetes Cluster \x1b[0m %v \n", k8sExecErr)
 		}
-		fmt.Println(" Version:\t\t" + k8sVersionJson.ServerVersion.GitVersion)
+		fmt.Println(" Server Version:\t" + k8sVersionJson.ServerVersion.GitVersion)
+		fmt.Println(" Client Version:\t" + k8sVersionJson.ClientVersion.GitVersion)
 		fmt.Println(" CRD:\t\t\ttrue") // TODO
 	}
 
