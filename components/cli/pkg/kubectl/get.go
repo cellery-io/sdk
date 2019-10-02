@@ -186,7 +186,7 @@ func GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
 		"json",
 	)
 	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	return []byte(out), err
 }
 
@@ -324,7 +324,7 @@ func GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) 
 	)
 	displayVerboseOutput(cmd)
 	var output map[string]interface{}
-	out, err := osexec.GetCommandOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return output, err
 	}
@@ -342,7 +342,7 @@ func GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{
 	)
 	displayVerboseOutput(cmd)
 	var output map[string]interface{}
-	out, err := osexec.GetCommandOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
 		return output, err
 	}
