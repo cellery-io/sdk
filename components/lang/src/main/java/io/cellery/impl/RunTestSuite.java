@@ -32,6 +32,7 @@ import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.PodSpec;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
@@ -48,6 +49,7 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
@@ -246,19 +248,33 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
 
     private void runInlineTest(String module) {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
-
         String srcDir = Paths.get(System.getenv(CELLERY_IMAGE_DIR_ENV_VAR), "src").toString();
-        String sourceBalPath = CelleryUtils.getFilesByExtension(srcDir, "bal").get(0).toString();
+        String sourceBal = CelleryUtils.getFilesByExtension(srcDir, "bal").get(0).toString();
 
-        Path sourcebalFileName = Paths.get(sourceBalPath).getFileName();
+        if (Paths.get(sourceBal).getFileName() != null) {
+            Path sourcebalFileName = Paths.get(sourceBal).getFileName();
+            Path destBalFilePath = workingDir.resolve(module).resolve(sourcebalFileName);
 
-        if (sourcebalFileName != null) {
-            try {
-                Files.copy(Paths.get(sourceBalPath), workingDir.resolve(module).resolve(sourcebalFileName),
-                        StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw new BallerinaException(e);
+            List<File> destBalFileList = new ArrayList<>(FileUtils.listFiles(
+                    workingDir.resolve(module).toFile(), new String[]{"bal"}, false));
+            if (!(destBalFileList.size() > 0)) {
+                try {
+                    Files.copy(Paths.get(sourceBal), destBalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new BallerinaException(e);
+                }
+            } else {
+                printDebug("Found bal file: " + destBalFilePath);
             }
+
+        } else {
+            String err = "Unable to find source bal file in " + srcDir;
+            printWarning(err);
+            throw new BallerinaException(err);
+        }
+
+
+
 
             if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
                 CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
@@ -271,11 +287,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
 
             CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System
                     .getenv(), "ballerina", "test", module);
-        } else {
-            String err = "Unable to find ballerina source file in" + srcDir;
-            printDebug(err);
-            throw new BallerinaException(err);
-        }
+
 
     }
 
