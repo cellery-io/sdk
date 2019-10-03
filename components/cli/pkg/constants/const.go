@@ -133,4 +133,4 @@ const INGRESS_MODE_LOAD_BALANCER = "Load balancer [gcp, docker for desktop]"
 
 const CELLERY_DOCKER_CLI_USER_ID = "1000"
 
-const TELEPRESENCE_EXEC_PATH = "telepresence-0.101/bin/"
+const TELEPRESENCE_EXEC_PATH = "telepresence-0.102/bin/"
