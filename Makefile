@@ -39,7 +39,7 @@ DISTRIBUTION_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/distribution
 DISTRIBUTION_ARTIFACTS_PATH := $(DISTRIBUTION_LAST_BUILD)/artifact
 DISTRIBUTION_K8S_ARTIFACT := k8s-artefacts.tar.gz
 
-TELEPRESENCE_VERSION := telepresence-0.102
+TELEPRESENCE_VERSION := telepresence-0.101
 TELEPRESENCE_URL := https://s3.amazonaws.com/datawire-static-files/telepresence/$(TELEPRESENCE_VERSION).tar.gz
 
 MAIN_PACKAGES := cli
