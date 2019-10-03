@@ -116,6 +116,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                 executeTests(tests, nameStruct);
             }
         } catch (Exception e) {
+            printWarning(e.getMessage());
             ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
         }
     }
@@ -276,9 +277,6 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             printWarning(err);
             throw new BallerinaException(err);
         }
-
-
-
 
             if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
                 CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
