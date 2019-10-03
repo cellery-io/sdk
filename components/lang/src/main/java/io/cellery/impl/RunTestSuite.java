@@ -249,7 +249,11 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
     private void runInlineTest(String module) {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
         String srcDir = Paths.get(System.getenv(CELLERY_IMAGE_DIR_ENV_VAR), "src").toString();
-        String sourceBal = CelleryUtils.getFilesByExtension(srcDir, "bal").get(0).toString();
+        List<File> sourceBalList = CelleryUtils.getFilesByExtension(srcDir, "bal");
+        if (!(sourceBalList.size() > 0)) {
+           throw new BallerinaException("no bal files not found in " + srcDir);
+        }
+        String sourceBal = sourceBalList.get(0).toString();
 
         if (Paths.get(sourceBal).getFileName() != null) {
             Path sourcebalFileName = Paths.get(sourceBal).getFileName();
@@ -311,6 +315,8 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         componentTemplate.setContainers(Collections.singletonList(new ContainerBuilder()
                 .withImage(cellImage.getTest().getSource()).withEnv(envVarList)
                 .withName(cellImage.getTest().getName()).build()));
+        componentTemplate.setRestartPolicy("Never");
+        componentTemplate.setShareProcessNamespace(true);
 
         ComponentSpec componentSpec = new ComponentSpec();
         componentSpec.setType(SERVICE_TYPE_JOB);
