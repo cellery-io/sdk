@@ -21,10 +21,11 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mattbaird/jsonpatch"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/mattbaird/jsonpatch"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
@@ -175,11 +176,11 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 
 			originalData, err := json.Marshal(originalIngressNginx)
 			if err != nil {
-				return fmt.Errorf("error marshalling original date: %v", err)
+				return fmt.Errorf("error marshalling original data: %v", err)
 			}
 			desiredData, err := json.Marshal(updatedIngressNginx)
 			if err != nil {
-				return fmt.Errorf("error marshalling desired date: %v", err)
+				return fmt.Errorf("error marshalling desired data: %v", err)
 			}
 			patch, err := jsonpatch.CreatePatch(originalData, desiredData)
 			if err != nil {

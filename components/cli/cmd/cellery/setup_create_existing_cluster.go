@@ -20,9 +20,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/spf13/cobra"
 	"regexp"
+
+	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"

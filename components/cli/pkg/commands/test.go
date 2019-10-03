@@ -236,7 +236,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
 	var isBallerinaProject bool
 
-	if (!isTestDirExists && !containsTestFunction) {
+	if !isTestDirExists && !containsTestFunction {
 		return fmt.Errorf("no tests found in the cell image %v", imageTag)
 	}
 	if isTestDirExists {
@@ -351,25 +351,25 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
 				fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
 				fmt.Sprintf(util.Faint(
-				" {\n" +
-					"   \"version\": \"0.2.0\",\n" +
-					"   \"configurations\": [\n" +
-					"     ...\n")) +
+					" {\n"+
+						"   \"version\": \"0.2.0\",\n"+
+						"   \"configurations\": [\n"+
+						"     ...\n")) +
 
 				fmt.Sprintf(util.Bold(
-				"     {\n" +
-						"\t\"type\": \"ballerina\",\n" +
-						"\t\"request\": \"launch\",\n" +
-						"\t\"name\": \"Cellery Test\",\n" +
-						"\t\"script\": \"${file}\",\n" +
-						"\t\"commandOptions\": [\"--config\", \"%s\"],\n" +
-						"\t\"debugTests\": true\n" +
+					"     {\n"+
+						"\t\"type\": \"ballerina\",\n"+
+						"\t\"request\": \"launch\",\n"+
+						"\t\"name\": \"Cellery Test\",\n"+
+						"\t\"script\": \"${file}\",\n"+
+						"\t\"commandOptions\": [\"--config\", \"%s\"],\n"+
+						"\t\"debugTests\": true\n"+
 						"     },\n"), ballerinaConf) +
 
 				fmt.Sprintf(util.Faint(
-					"     ...\n" +
-					"   ]\n" +
-				   " }\n\n")) +
+					"     ...\n"+
+						"   ]\n"+
+						" }\n\n")) +
 				fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
 		} else {
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
@@ -565,24 +565,24 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
 				fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
 				fmt.Sprintf(util.Faint(
-					" {\n" +
-						"   \"version\": \"0.2.0\",\n" +
-						"   \"configurations\": [\n" +
+					" {\n"+
+						"   \"version\": \"0.2.0\",\n"+
+						"   \"configurations\": [\n"+
 						"     ...\n")) +
 
 				fmt.Sprintf(util.Bold(
-					"     {\n" +
-						"\t\"type\": \"ballerina\",\n" +
-						"\t\"request\": \"launch\",\n" +
-						"\t\"name\": \"Cellery Test\",\n" +
-						"\t\"script\": \"${file}\",\n" +
-						"\t\"commandOptions\": [\"--config\", \"%s\"],\n" +
-						"\t\"debugTests\": true\n" +
+					"     {\n"+
+						"\t\"type\": \"ballerina\",\n"+
+						"\t\"request\": \"launch\",\n"+
+						"\t\"name\": \"Cellery Test\",\n"+
+						"\t\"script\": \"${file}\",\n"+
+						"\t\"commandOptions\": [\"--config\", \"%s\"],\n"+
+						"\t\"debugTests\": true\n"+
 						"     },\n"), ballerinaConf) +
 
 				fmt.Sprintf(util.Faint(
-					"     ...\n" +
-						"   ]\n" +
+					"     ...\n"+
+						"   ]\n"+
 						" }\n\n")) +
 				fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
 
@@ -596,7 +596,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s\n", string(dependencyLinksJson)))
 		}
 
-		if !assumeYes && debug{
+		if !assumeYes && debug {
 			fmt.Printf("%s Do you wish to continue with debugging the tests (Y/n)? ", util.YellowBold("?"))
 			reader := bufio.NewReader(os.Stdin)
 			confirmation, err := reader.ReadString('\n')

@@ -92,7 +92,7 @@ func createOnExistingCluster() error {
 		isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.IP_ADDRESS_PATTERN),
 			nodePortIpAddress)
 		if err != nil || !isNodePortIpAddressValid {
-			util.ExitWithErrorMessage("Error creating cellery runtime", fmt.Errorf("expects a valid " +
+			util.ExitWithErrorMessage("Error creating cellery runtime", fmt.Errorf("expects a valid "+
 				"nodeport ip address, received %s", nodePortIpAddress))
 		}
 	}
