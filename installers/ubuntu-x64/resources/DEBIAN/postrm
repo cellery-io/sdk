@@ -1,4 +1,7 @@
-#!/bin/sh
+#!/bin/bash
+
+CELLERY_VERSION=__CELLERY_VERSION__
+SUPPORTED_B7A_VERSION="0.991.0"
 
 if [ $1 = 'remove' ] && [ -L /usr/local/bin/cellery ]
 then
@@ -12,10 +15,26 @@ then
 fi
 sudo rm -rf /usr/share/cellery/
 
-BRE_LIB_PATH="/usr/lib/ballerina/ballerina-0.991.0/bre/lib"
-if [ -d $BRE_LIB_PATH ]
-then
-sudo rm -f $BRE_LIB_PATH/cellery-*.jar
+B7A_BIN_PATH=$(which ballerina)
+if [ -L "${B7A_BIN_PATH}" ]; then
+    B7A_BIN_PATH=$(readlink $B7A_BIN_PATH)
 fi
 
+B7A_VERSION=$($B7A_BIN_PATH -v)
+if [ ! -f ${B7A_BIN_PATH} ]; then
+    B7A_BIN_PATH="/usr/lib/ballerina/ballerina-${SUPPORTED_B7A_VERSION}/bin"
+    echo "Failed to find the ballerina home directory, falling back to the default installation path."
+fi
 
+if [[ "${B7A_VERSION}" =~ "${SUPPORTED_B7A_VERSION}" ]]; then
+    BIN_FOLDER="/bin/ballerina"
+    BALLERINA_HOME="${B7A_BIN_PATH/$BIN_FOLDER/}"
+    CELLERY_JAR="${BALLERINA_HOME}/bre/lib/cellery-${CELLERY_VERSION}.jar"
+fi
+
+if [ -f "${CELLERY_JAR}" ]; then
+        rm -f ${CELLERY_JAR}
+        echo "Removed the Cellery jar ${CELLERY_JAR} from the Ballerina."
+else
+	rm -f "/usr/lib/ballerina/ballerina-${SUPPORTED_B7A_VERSION}/bre/lib/cellery-${CELLERY_VERSION}.jar"
+fi
