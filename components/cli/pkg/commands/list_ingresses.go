@@ -19,38 +19,94 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/ghodss/yaml"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunListIngresses(name string) {
 	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
 	if instancePattern {
-		displayCellInstanceApisTable(name)
+		displayInstanceApisTable(name)
 	} else {
 		displayCellImageApisTable(name)
 	}
 }
 
-func displayCellInstanceApisTable(cellInstanceName string) {
-	gateways, err := kubectl.GetGateways(cellInstanceName)
+func displayInstanceApisTable(instanceName string) {
+	var canBeComposite bool
+	cell, err := kubectl.GetCell(instanceName)
 	if err != nil {
-		util.ExitWithErrorMessage("Error getting list of components", err)
+		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
+			canBeComposite = true
+		} else {
+			util.ExitWithErrorMessage("Failed to check available Cells", err)
+		}
+	} else {
+		displayCellInstanceApisTable(cell, instanceName)
 	}
-	apiArray := gateways.GatewaySpec.Ingress.HttpApis
+
+	if canBeComposite {
+		composite, err := kubectl.GetComposite(instanceName)
+		if err != nil {
+			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
+				util.ExitWithErrorMessage("Failed to retrieve ingresses of "+instanceName,
+					errors.New(instanceName+" instance not available in the runtime"))
+			} else {
+				util.ExitWithErrorMessage("Failed to check available Composites", err)
+			}
+		} else {
+			displayCompositeInstanceApisTable(composite)
+		}
+	}
+}
+
+func displayCompositeInstanceApisTable(composite kubectl.Composite) {
+	components := composite.CompositeSpec.ComponentTemplates
+	var tableData [][]string
+	for i := 0; i < len(components); i++ {
+		component := components[i]
+		ports := component.Spec.Ports
+		for j := 0; j < len(ports); j++ {
+			port := ports[j]
+			tableRecord := []string{component.Metadata.Name, fmt.Sprint(port.Port), port.Protocol}
+			tableData = append(tableData, tableRecord)
+		}
+	}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"COMPONENT", "PORT", "PROTOCOL"})
+	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+	table.SetAlignment(3)
+	table.SetRowSeparator("-")
+	table.SetCenterSeparator(" ")
+	table.SetColumnSeparator(" ")
+	table.SetHeaderColor(
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold})
+	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{})
+	table.AppendBulk(tableData)
+	table.Render()
+}
+
+func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
+	apiArray := cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis
 	var tableData [][]string
 	for i := 0; i < len(apiArray); i++ {
 		for j := 0; j < len(apiArray[i].Definitions); j++ {
