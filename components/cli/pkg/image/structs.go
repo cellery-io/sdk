@@ -58,6 +58,7 @@ type ComponentSpec struct {
 
 type ComponentPort struct {
 	Protocol string `json:"protocol"`
+	Port     string `json:"port"`
 }
 
 type Gateway struct {

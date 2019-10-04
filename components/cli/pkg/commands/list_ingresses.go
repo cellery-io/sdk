@@ -42,7 +42,7 @@ func RunListIngresses(name string) {
 	if instancePattern {
 		displayInstanceApisTable(name)
 	} else {
-		displayCellImageApisTable(name)
+		displayImageApisTable(name)
 	}
 }
 
@@ -75,19 +75,15 @@ func displayInstanceApisTable(instanceName string) {
 }
 
 func displayCompositeInstanceApisTable(composite kubectl.Composite) {
-	components := composite.CompositeSpec.ComponentTemplates
 	var tableData [][]string
-	for i := 0; i < len(components); i++ {
-		component := components[i]
-		ports := component.Spec.Ports
-		for j := 0; j < len(ports); j++ {
-			port := ports[j]
-			tableRecord := []string{component.Metadata.Name, fmt.Sprint(port.Port), port.Protocol}
+	for _, component := range composite.CompositeSpec.ComponentTemplates {
+		for _, port := range component.Spec.Ports {
+			tableRecord := []string{component.Metadata.Name, port.Protocol, fmt.Sprint(port.Port)}
 			tableData = append(tableData, tableRecord)
 		}
 	}
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"COMPONENT", "PORT", "PROTOCOL"})
+	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS PORT"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")
@@ -169,13 +165,49 @@ func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 	table.Render()
 }
 
-func displayCellImageApisTable(cellImageName string) {
+func displayImageApisTable(cellImageName string) {
 	cellYamlContent := image.ReadCellImageYaml(cellImageName)
 	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)
 	}
+
+	if cellImageContent.Kind == "Cell" {
+		displayCellImageApisTable(cellImageContent)
+	} else if cellImageContent.Kind == "Composite" {
+		displayCompositeImageApisTable(cellImageContent)
+	}
+}
+
+func displayCompositeImageApisTable(compositeImageContent *image.Cell) {
+	var tableData [][]string
+	for _, component := range compositeImageContent.Spec.Components {
+		for _, port := range component.Spec.Ports {
+			tableRecord := []string{component.Metadata.Name, port.Protocol, fmt.Sprint(port.Port)}
+			tableData = append(tableData, tableRecord)
+		}
+	}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS PORT"})
+	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+	table.SetAlignment(3)
+	table.SetRowSeparator("-")
+	table.SetCenterSeparator(" ")
+	table.SetColumnSeparator(" ")
+	table.SetHeaderColor(
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold})
+	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{})
+	table.AppendBulk(tableData)
+	table.Render()
+}
+
+func displayCellImageApisTable(cellImageContent *image.Cell) {
 	var tableData [][]string
 	for _, component := range cellImageContent.Spec.Components {
 		componentName := component.Metadata.Name
