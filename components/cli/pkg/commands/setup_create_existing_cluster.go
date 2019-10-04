@@ -89,7 +89,7 @@ func createOnExistingCluster() error {
 	}
 	if !isLoadBalancerIngressMode {
 		nodePortIpAddress = getNodePortIpAddress()
-		isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.IP_ADDRESS_PATTERN),
+		isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$|^$", constants.IP_ADDRESS_PATTERN),
 			nodePortIpAddress)
 		if err != nil || !isNodePortIpAddressValid {
 			util.ExitWithErrorMessage("Error creating cellery runtime", fmt.Errorf("expects a valid "+
@@ -193,6 +193,7 @@ func getNodePortIpAddress() string {
 		Questions: []*interact.Question{
 			{
 				Before: func(c interact.Context) error {
+					c.SetDef("", util.Faint("[Press enter to use default NodePort ip address]"))
 					c.SetPrfx(nil, util.CyanBold("?"))
 					return nil
 				},

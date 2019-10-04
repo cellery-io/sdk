@@ -169,12 +169,37 @@ This is ideal for development and quick test environments.
          Complete
    ```
    
+#### 3. Selecting ingress mode
+User should select the suitable ingress mode: NodePort or Load balancer, based on their runtime(kubeadm, minikube, gcp, docker for desktop).
+
+```
+    ✔ Create
+    ✔ Existing cluster
+    ✔ Non persistent volume
+    ✔ Basic
+    [Use arrow keys]
+    ? Select ingress mode
+      ➤ Node port [kubeadm, minikube]
+        Load balancer [gcp, docker for desktop]
+        BACK
+```
+##### 3.1. NodePort
+If the ingress mode is NodePort user can either use a default NodePort ip address or provide a custom NodePort ip address.
+```
+    ✔ Create
+    ✔ Existing cluster
+    ✔ Non persistent volume
+    ✔ Basic
+    ✔ Node port [kubeadm, minikube]
+    ? NodePort Ip address:  [Press enter to use default NodePort ip address]
+```
+   
 ### Inline Method
 |Persistent volume	|Access to NFS storage	| Command | Description|
 |-------------------|-----------------------|---------|------------| 
-|No	|N/A| cellery setup create existing [--complete] [--loadbalancer] | By default basic setup will be created, if `--complete` flag is passed, then complete setup will be created. If k8s cluster supports cloud based loadbalancer (e.g: GCP, Docker-for-mac), users have to pass `--loadbalancer` flag.| 
-|Yes| No |cellery setup create existing --persistent [--complete] [--loadbalancer] | In this case, the file system should be mounted or should be accessible by the k8s cluster. By default basic setup will be created, if `--complete` flag is passed, then complete setup will be created. If k8s cluster supports cloud based loadbalancer (e.g: GCP, Docker-for-mac), users have to pass `--loadbalancer` flag.| 
-|Yes |Yes| cellery setup create existing [--complete] [--dbHost <DB_HOST> --dbUsername <DB_USER_NAME> --dbPassword <DB_PASSWORD> --nfsServerIp <IP_ADDRESS> --nfsFileShare <FILE_SHARE>] [--loadbalancer] | In this case, the external database and NFS server available and k8s cluster can be connected to those to provide the persisted functionality. This is the recommended mode for the production deployment.| 
+|No	|N/A| cellery setup create existing [--complete] [--loadbalancer &#124; --nodePortIp <NODEPORT_IP_ADDRESS>] | By default basic setup will be created, if `--complete` flag is passed, then complete setup will be created. If k8s cluster supports cloud based loadbalancer (e.g: GCP, Docker-for-mac), users have to pass `--loadbalancer` flag. If the ingress type of the runtime is NodePort, users can pass a custom NodePort ip address.| 
+|Yes| No |cellery setup create existing --persistent [--complete] [--loadbalancer &#124; --nodePortIp <NODEPORT_IP_ADDRESS>] | In this case, the file system should be mounted or should be accessible by the k8s cluster. By default basic setup will be created, if `--complete` flag is passed, then complete setup will be created. If k8s cluster supports cloud based loadbalancer (e.g: GCP, Docker-for-mac), users have to pass `--loadbalancer` flag.If the ingress type of the runtime is NodePort, users can pass a custom NodePort ip address.| 
+|Yes |Yes| cellery setup create existing [--complete] [--dbHost <DB_HOST> --dbUsername <DB_USER_NAME> --dbPassword <DB_PASSWORD> --nfsServerIp <IP_ADDRESS> --nfsFileShare <FILE_SHARE>] [--loadbalancer &#124; --nodePortIp <NODEPORT_IP_ADDRESS>] | In this case, the external database and NFS server available and k8s cluster can be connected to those to provide the persisted functionality. This is the recommended mode for the production deployment.| 
 
 ## Configure host entries 
 Once the setup is complete, cellery system hostnames should be mapped with the ip of the ingress. 
