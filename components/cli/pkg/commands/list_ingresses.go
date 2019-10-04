@@ -103,6 +103,12 @@ func displayCompositeInstanceApisTable(composite kubectl.Composite) {
 
 func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 	apiArray := cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis
+	globalContext := ""
+	globalVersion := ""
+	if cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.IngressExtensions.ApiPublisher != nil {
+		globalContext = cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.IngressExtensions.ApiPublisher.Context
+		globalVersion = cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.IngressExtensions.ApiPublisher.Version
+	}
 	var tableData [][]string
 	for i := 0; i < len(apiArray); i++ {
 		for j := 0; j < len(apiArray[i].Definitions); j++ {
@@ -131,11 +137,13 @@ func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 			}
 			// Add the global api url if globally exposed
 			globalUrl := ""
+			globalUrlContext := getGlobalUrlContext(globalContext, cellInstanceName)
+			globalUrlVersion := getGlobalUrlVersion(globalVersion, version)
 			if apiArray[i].Global {
 				if path != "/" {
-					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context + path
+					globalUrl = constants.WSO2_APIM_HOST + strings.Replace("/"+globalUrlContext+"/"+context+path+"/"+globalUrlVersion, "//", "/", -1)
 				} else {
-					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context
+					globalUrl = constants.WSO2_APIM_HOST + strings.Replace("/"+globalUrlContext+"/"+context+"/"+globalUrlVersion, "//", "/", -1)
 				}
 			}
 			tableRecord := []string{context, version, method, url, globalUrl}
@@ -286,4 +294,20 @@ func displayCellImageApisTable(cellImageContent *image.Cell) {
 		tablewriter.Colors{})
 	table.AppendBulk(tableData)
 	table.Render()
+}
+
+func getGlobalUrlContext(globalContext string, cellInstanceName string) string {
+	if globalContext != "" {
+		return globalContext
+	} else {
+		return cellInstanceName
+	}
+}
+
+func getGlobalUrlVersion(globalVersion string, apiVersion string) string {
+	if globalVersion != "" {
+		return globalVersion
+	} else {
+		return apiVersion
+	}
 }

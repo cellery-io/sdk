@@ -124,10 +124,10 @@ type GatewaySpec struct {
 }
 
 type Ingress struct {
-	Extensions interface{}      `json:"extensions,omitempty"`
-	HttpApis   []GatewayHttpApi `json:"http,omitempty"`
-	TcpApis    []GatewayTcpApi  `json:"tcp,omitempty"`
-	GrpcApis   []GatewayGrpcApi `json:"grpc,omitempty"`
+	IngressExtensions IngressExtensions `json:"extensions,omitempty"`
+	HttpApis          []GatewayHttpApi  `json:"http,omitempty"`
+	TcpApis           []GatewayTcpApi   `json:"tcp,omitempty"`
+	GrpcApis          []GatewayGrpcApi  `json:"grpc,omitempty"`
 }
 
 type GatewayHttpApi struct {
@@ -139,6 +139,47 @@ type GatewayHttpApi struct {
 	Port         uint32          `json:"port"`
 	Destination  Destination     `json:"destination,omitempty"`
 	ZeroScale    bool            `json:"zeroScale,omitempty"`
+}
+
+type IngressExtensions struct {
+	ApiPublisher   *ApiPublisherConfig   `json:"apiPublisher,omitempty"`
+	ClusterIngress *ClusterIngressConfig `json:"clusterIngress,omitempty"`
+	OidcConfig     *OidcConfig           `json:"oidc,omitempty"`
+}
+
+type ApiPublisherConfig struct {
+	Authenticate bool   `json:"authenticate"`
+	Backend      string `json:"backend"`
+	Context      string `json:"context"`
+	Version      string `json:"version"`
+}
+
+type ClusterIngressConfig struct {
+	Host string    `json:"host,omitempty"`
+	Tls  TlsConfig `json:"tls,omitempty"`
+}
+
+type OidcConfig struct {
+	ProviderUrl    string   `json:"providerUrl"`
+	ClientId       string   `json:"clientId"`
+	ClientSecret   string   `json:"clientSecret"`
+	DcrUrl         string   `json:"dcrUrl"`
+	DcrUser        string   `json:"dcrUser"`
+	DcrPassword    string   `json:"dcrPassword"`
+	RedirectUrl    string   `json:"redirectUrl"`
+	BaseUrl        string   `json:"baseUrl"`
+	SubjectClaim   string   `json:"subjectClaim"`
+	JwtIssuer      string   `json:"jwtIssuer"`
+	JwtAudience    string   `json:"jwtAudience"`
+	SecretName     string   `json:"secretName"`
+	SecurePaths    []string `json:"securePaths,omitempty"`
+	NonSecurePaths []string `json:"nonSecurePaths,omitempty"`
+}
+
+type TlsConfig struct {
+	Secret string `json:"secret,omitempty"`
+	Key    string `json:"key,omitempty"`
+	Cert   string `json:"cert,omitempty"`
 }
 
 type APIDefinition struct {

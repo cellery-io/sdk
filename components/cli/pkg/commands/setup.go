@@ -20,8 +20,9 @@ package commands
 
 import (
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"os"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
