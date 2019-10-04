@@ -11,6 +11,10 @@ Cellery installer is tested on K8s environments with following component version
 - MySQL Server: 5.7
 - NFS Server : NFSv3 compatible
 
+## Prerequisite
+- [Kubectl version 1.14 or more](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [Download and install Cellery](../../README.md#download-cellery)
+
 ## Tested Kubernetes Providers
 1. [GCP GKE](#1-gcp-gke)
 

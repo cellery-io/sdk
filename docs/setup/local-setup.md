@@ -1,5 +1,9 @@
 Local setup
 ---
+## Prerequisite
+- [Kubectl version 1.14 or more](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [Download and install Cellery](../../README.md#download-cellery)
+
 This will setup the local environment, by creating a virtual machine with pre-installed kubeadm and cellery runtime. 
 
 ## Interactive Method

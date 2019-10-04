@@ -1,5 +1,9 @@
 GCP setup
 ---
+## Prerequisite
+- [Kubectl version 1.14 or more](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [Download and install Cellery](../../README.md#download-cellery)
+
 To create a GCP based cellery installation, you need to have GCP account and [Gloud SDK](https://cloud.google.com/sdk/docs/) installed in your machine. 
 Follow the below steps to install cellery into your GCP.
 
