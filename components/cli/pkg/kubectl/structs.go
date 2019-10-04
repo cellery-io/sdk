@@ -131,7 +131,8 @@ type Ingress struct {
 }
 
 type Extensions struct {
-	ClusterIngress ClusterIngress `json:"clusterIngress"`
+	ApiPublisher   ApiPublisherConfig `json:"apiPublisher,omitempty"`
+	ClusterIngress ClusterIngress     `json:"clusterIngress"`
 }
 
 type ClusterIngress struct {
@@ -152,6 +153,13 @@ type GatewayHttpApi struct {
 type APIDefinition struct {
 	Path   string `json:"path"`
 	Method string `json:"method"`
+}
+
+type ApiPublisherConfig struct {
+	Authenticate bool   `json:"authenticate"`
+	Backend      string `json:"backend"`
+	Context      string `json:"context"`
+	Version      string `json:"version"`
 }
 
 type GatewayTcpApi struct {

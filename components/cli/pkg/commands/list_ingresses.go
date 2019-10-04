@@ -104,8 +104,16 @@ func displayCompositeInstanceApisTable(composite kubectl.Composite) {
 func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 	apiArray := cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis
 	var ingressType = "web"
+	globalContext := ""
+	globalVersion := ""
 	if len(cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ClusterIngress.Host) == 0 {
 		ingressType = "http"
+	}
+	if cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ApiPublisher.Context != "" {
+		globalContext = cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ApiPublisher.Context
+	}
+	if cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ApiPublisher.Version != "" {
+		globalVersion = cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ApiPublisher.Version
 	}
 	var tableData [][]string
 	for i := 0; i < len(apiArray); i++ {
@@ -139,11 +147,13 @@ func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 			}
 			// Add the global api url if globally exposed
 			globalUrl := ""
+			globalUrlContext := getGlobalUrlContext(globalContext, cellInstanceName)
+			globalUrlVersion := getGlobalUrlVersion(globalVersion, version)
 			if apiArray[i].Global {
 				if path != "/" {
-					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context + path
+					globalUrl = constants.WSO2_APIM_HOST + strings.Replace("/"+globalUrlContext+"/"+context+path+"/"+globalUrlVersion, "//", "/", -1)
 				} else {
-					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context
+					globalUrl = constants.WSO2_APIM_HOST + strings.Replace("/"+globalUrlContext+"/"+context+"/"+globalUrlVersion, "//", "/", -1)
 				}
 			}
 			tableRecord := []string{context, ingressType, version, method, path, url, globalUrl}
@@ -302,4 +312,20 @@ func displayCellImageApisTable(cellImageContent *image.Cell) {
 		tablewriter.Colors{})
 	table.AppendBulk(tableData)
 	table.Render()
+}
+
+func getGlobalUrlContext(globalContext string, cellInstanceName string) string {
+	if globalContext != "" {
+		return globalContext
+	} else {
+		return cellInstanceName
+	}
+}
+
+func getGlobalUrlVersion(globalVersion string, apiVersion string) string {
+	if globalVersion != "" {
+		return globalVersion
+	} else {
+		return apiVersion
+	}
 }
