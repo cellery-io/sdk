@@ -19,22 +19,47 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/routing"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"github.com/olekukonko/tablewriter"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 func RunListDependencies(instanceName string) error {
+	var depJson string
+	var canBeComposite bool
 	cellInst, err := kubectl.GetCell(instanceName)
 	if err != nil {
-		return err
+		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
+			canBeComposite = true
+		} else {
+			util.ExitWithErrorMessage("Failed to check available Cells", err)
+		}
+	} else {
+		depJson = cellInst.CellMetaData.Annotations.Dependencies
 	}
-	dependencies, err := routing.ExtractDependencies(cellInst.CellMetaData.Annotations.Dependencies)
+
+	if canBeComposite {
+		compositeInst, err := kubectl.GetComposite(instanceName)
+		if err != nil {
+			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
+				util.ExitWithErrorMessage("Failed to retrieve dependencies of "+instanceName,
+					errors.New(instanceName+" instance not available in the runtime"))
+			} else {
+				util.ExitWithErrorMessage("Failed to check available Composites", err)
+			}
+		} else {
+			depJson = compositeInst.CompositeMetaData.Annotations.Dependencies
+		}
+	}
+
+	dependencies, err := routing.ExtractDependencies(depJson)
 	if err != nil {
 		return err
 	}
