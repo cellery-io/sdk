@@ -52,30 +52,6 @@ var enableObservability = false
 var enableKnative = false
 var enableHpa = false
 
-func init() {
-	var err error
-	apimEnabled, err = runtime.IsApimEnabled()
-	if err != nil {
-		util.ExitWithErrorMessage("Failed check if apim is enabled", err)
-	}
-	enableApim = !apimEnabled
-	observabilityEnabled, err = runtime.IsObservabilityEnabled()
-	if err != nil {
-		util.ExitWithErrorMessage("Failed check if observability is enabled", err)
-	}
-	enableObservability = !observabilityEnabled
-	knativeEnabled, err = runtime.IsKnativeEnabled()
-	if err != nil {
-		util.ExitWithErrorMessage("Failed check if knative is enabled", err)
-	}
-	enableKnative = !knativeEnabled
-	hpaEnabled, err = runtime.IsHpaEnabled()
-	if err != nil {
-		util.ExitWithErrorMessage("Failed check if hpa is enabled", err)
-	}
-	enableHpa = !hpaEnabled
-}
-
 func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime.Selection) {
 	err := runtime.UpdateRuntime(addApimGlobalGateway, addObservability, knative, hpa)
 	if err != nil {
