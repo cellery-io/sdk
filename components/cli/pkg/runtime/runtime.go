@@ -19,10 +19,13 @@
 package runtime
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/mattbaird/jsonpatch"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
@@ -44,7 +47,7 @@ func SetCompleteSetup(completeSetup bool) {
 }
 
 func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool, nfs Nfs,
-	db MysqlDb) error {
+	db MysqlDb, nodePortIpAddress string) error {
 	spinner := util.StartNewSpinner("Creating cellery runtime")
 	if isPersistentVolume && !hasNfsStorage {
 		createFoldersRequiredForMysqlPvc()
@@ -156,6 +159,41 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		spinner.SetNewAction("Adding idp")
 		if err := addIdp(artifactsPath); err != nil {
 			return fmt.Errorf("error creating idp deployment: %v", err)
+		}
+	}
+	if !isLoadBalancerIngressMode {
+		if nodePortIpAddress != "" {
+			spinner.SetNewAction("Adding node port ip address")
+			originalIngressNginx, err := kubectl.GetService("ingress-nginx", "ingress-nginx")
+			if err != nil {
+				return fmt.Errorf("error getting original ingress-nginx: %v", err)
+			}
+			updatedIngressNginx, err := kubectl.GetService("ingress-nginx", "ingress-nginx")
+			if err != nil {
+				return fmt.Errorf("error getting updated ingress-nginx: %v", err)
+			}
+			updatedIngressNginx.Spec.ExternalIPs = append(updatedIngressNginx.Spec.ExternalIPs, nodePortIpAddress)
+
+			originalData, err := json.Marshal(originalIngressNginx)
+			if err != nil {
+				return fmt.Errorf("error marshalling original data: %v", err)
+			}
+			desiredData, err := json.Marshal(updatedIngressNginx)
+			if err != nil {
+				return fmt.Errorf("error marshalling desired data: %v", err)
+			}
+			patch, err := jsonpatch.CreatePatch(originalData, desiredData)
+			if err != nil {
+				return fmt.Errorf("error creating json patch: %v", err)
+			}
+			if len(patch) == 0 {
+				return fmt.Errorf("no changes in ingress-nginx to apply")
+			}
+			patchBytes, err := json.Marshal(patch)
+			if err != nil {
+				return fmt.Errorf("error marshalling json patch: %v", err)
+			}
+			kubectl.JsonPatchWithNameSpace("svc", "ingress-nginx", string(patchBytes), "ingress-nginx")
 		}
 	}
 	spinner.Stop(true)

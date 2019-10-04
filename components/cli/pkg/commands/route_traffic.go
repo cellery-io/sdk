@@ -54,7 +54,6 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 	defer func() {
 		_ = os.Remove(artifactFile)
 	}()
-	spinner.SetNewAction("Building modified rules")
 	for _, route := range routes {
 		err := route.Check()
 		if err != nil {
@@ -70,8 +69,9 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 						return err
 					}
 					if !canContinue {
-						spinner.Stop(false)
-						return err
+						spinner.SetNewAction("Aborting traffic routing")
+						spinner.Stop(true)
+						return nil
 					}
 				}
 			} else {
@@ -79,6 +79,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 				return err
 			}
 		}
+		spinner.SetNewAction("Building modified rules")
 		err = route.Build(percentage, enableUserBasedSessionAwareness, artifactFile)
 		if err != nil {
 			spinner.Stop(false)

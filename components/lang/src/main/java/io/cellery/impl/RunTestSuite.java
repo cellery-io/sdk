@@ -32,6 +32,7 @@ import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.PodSpec;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.bre.Context;
 import org.ballerinalang.bre.bvm.BLangVMErrors;
@@ -48,11 +49,13 @@ import org.ballerinalang.util.exceptions.BallerinaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -61,6 +64,7 @@ import java.util.List;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_NAME;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_ORG;
 import static io.cellery.CelleryConstants.ANNOTATION_CELL_IMAGE_VERSION;
+import static io.cellery.CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.NAME;
 import static io.cellery.CelleryConstants.ORG;
@@ -68,6 +72,7 @@ import static io.cellery.CelleryConstants.SERVICE_TYPE_JOB;
 import static io.cellery.CelleryConstants.VERSION;
 import static io.cellery.CelleryConstants.YAML;
 import static io.cellery.CelleryUtils.getValidName;
+import static io.cellery.CelleryUtils.printDebug;
 import static io.cellery.CelleryUtils.printInfo;
 import static io.cellery.CelleryUtils.printWarning;
 import static io.cellery.CelleryUtils.toYaml;
@@ -111,6 +116,7 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
                 executeTests(tests, nameStruct);
             }
         } catch (Exception e) {
+            printWarning(e.getMessage());
             ctx.setReturnValues(BLangVMErrors.createError(ctx, e.getMessage()));
         }
     }
@@ -207,10 +213,10 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             }
         }
         printInfo("Test execution completed. Collecting logs to logs/" +
-                    instanceName + ".log");
+                instanceName + ".log");
         CelleryUtils.executeShellCommand(
-                    "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
-                    CelleryUtils::printDebug, CelleryUtils::printWarning);
+                "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
+                CelleryUtils::printDebug, CelleryUtils::printWarning);
     }
 
     private String getPodName(String podInfo, String instanceName) throws InterruptedException {
@@ -243,17 +249,48 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
 
     private void runInlineTest(String module) {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
-        if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
-            CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
-                    CelleryUtils::printWarning);
+        String srcDir = Paths.get(System.getenv(CELLERY_IMAGE_DIR_ENV_VAR), "src").toString();
+        List<File> sourceBalList = CelleryUtils.getFilesByExtension(srcDir, "bal");
+        if (!(sourceBalList.size() > 0)) {
+           throw new BallerinaException("no bal files not found in " + srcDir);
+        }
+        String sourceBal = sourceBalList.get(0).toString();
+
+        if (Paths.get(sourceBal).getFileName() != null) {
+            Path sourcebalFileName = Paths.get(sourceBal).getFileName();
+            Path destBalFilePath = workingDir.resolve(module).resolve(sourcebalFileName);
+
+            List<File> destBalFileList = new ArrayList<>(FileUtils.listFiles(
+                    workingDir.resolve(module).toFile(), new String[]{"bal"}, false));
+            if (!(destBalFileList.size() > 0)) {
+                try {
+                    Files.copy(Paths.get(sourceBal), destBalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new BallerinaException(e);
+                }
+            } else {
+                printDebug("Found bal file: " + destBalFilePath);
+            }
+
+        } else {
+            String err = "Unable to find source bal file in " + srcDir;
+            printWarning(err);
+            throw new BallerinaException(err);
         }
 
-        if (Files.exists(workingDir.resolve(CelleryConstants.TEMP_TEST_MODULE))) {
-            module = CelleryConstants.TEMP_TEST_MODULE;
-        }
+            if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
+                CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
+                        CelleryUtils::printWarning);
+            }
 
-        CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System
-                .getenv(), "ballerina", "test", module);
+            if (Files.exists(workingDir.resolve(CelleryConstants.TEMP_TEST_MODULE))) {
+                module = CelleryConstants.TEMP_TEST_MODULE;
+            }
+
+            CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System
+                    .getenv(), "ballerina", "test", module);
+
+
     }
 
     private Cell generateTestCell(Test test, LinkedHashMap nameStruct) {
@@ -276,6 +313,8 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         componentTemplate.setContainers(Collections.singletonList(new ContainerBuilder()
                 .withImage(cellImage.getTest().getSource()).withEnv(envVarList)
                 .withName(cellImage.getTest().getName()).build()));
+        componentTemplate.setRestartPolicy("Never");
+        componentTemplate.setShareProcessNamespace(true);
 
         ComponentSpec componentSpec = new ComponentSpec();
         componentSpec.setType(SERVICE_TYPE_JOB);
