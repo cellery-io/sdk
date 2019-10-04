@@ -95,8 +95,8 @@ dpkg -i cellery-ubuntu-x64-<version>.deb
 - Download [latest Cellery(.pkg) installer](https://wso2-cellery.github.io/downloads)  and install it by following macOS package installation steps.
 
 - Execute below script to complete cellery installation. 
-```
- 
+```bash
+ $ wget -O - https://raw.githubusercontent.com/wso2-cellery/sdk/master/installers/cellery_finalize.sh | sudo bash
 ```
 
 
