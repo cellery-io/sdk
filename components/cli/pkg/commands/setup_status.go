@@ -22,9 +22,14 @@ package commands
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
@@ -42,6 +47,18 @@ type SystemComponent struct {
 
 func RunSetupStatusCommand() {
 	var err error
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"version",
+	)
+	out, err := osexec.GetCommandOutput(cmd)
+	if err != nil {
+		if strings.Contains(out, "Unable to connect to the server") {
+			util.ExitWithErrorMessage("Failed to get setup status", fmt.Errorf(
+				"unable to connect to the kubernetes cluster"))
+		}
+	}
+
 	var clusterName string
 	systemComponents := []*SystemComponent{{runtime.ApiManager, false, "Disabled"},
 		{runtime.Observability, false, "Disabled"},
