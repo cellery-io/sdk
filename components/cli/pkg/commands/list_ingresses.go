@@ -103,19 +103,27 @@ func displayCompositeInstanceApisTable(composite kubectl.Composite) {
 
 func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 	apiArray := cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis
+	var ingressType = "web"
+	if len(cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ClusterIngress.Host) == 0 {
+		ingressType = "http"
+	}
 	var tableData [][]string
 	for i := 0; i < len(apiArray); i++ {
+		url := cellInstanceName + "--gateway-service"
+		context := apiArray[i].Context
+		version := apiArray[i].Version
+		// Add the context of the Cell
+		if !strings.HasPrefix(context, "/") {
+			url += "/"
+		}
+		url += context
+		if len(apiArray[i].Definitions) == 0 {
+			tableRecord := []string{context, ingressType, version, "", "", url, cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ClusterIngress.Host}
+			tableData = append(tableData, tableRecord)
+		}
 		for j := 0; j < len(apiArray[i].Definitions); j++ {
-			url := cellInstanceName + "--gateway-service"
 			path := apiArray[i].Definitions[j].Path
-			context := apiArray[i].Context
-			version := apiArray[i].Version
 			method := apiArray[i].Definitions[j].Method
-			// Add the context of the Cell
-			if !strings.HasPrefix(context, "/") {
-				url += "/"
-			}
-			url += context
 			// Add the path of the API definition
 			if path != "/" {
 				if !strings.HasSuffix(url, "/") {
@@ -138,12 +146,16 @@ func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context
 				}
 			}
-			tableRecord := []string{context, version, method, url, globalUrl}
+			tableRecord := []string{context, ingressType, version, method, path, url, globalUrl}
 			tableData = append(tableData, tableRecord)
 		}
 	}
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"CONTEXT", "VERSION", "METHOD", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
+	if ingressType == "http" {
+		table.SetHeader([]string{"CONTEXT", "INGRESS TYPE", "VERSION", "METHOD", "RESOURCE", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
+	} else {
+		table.SetHeader([]string{"CONTEXT", "INGRESS TYPE", "VERSION", "METHOD", "RESOURCE", "LOCAL CELL GATEWAY", "VHOST"})
+	}
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")
@@ -154,8 +166,12 @@ func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold})
 	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
