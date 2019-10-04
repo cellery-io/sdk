@@ -13,16 +13,35 @@ fi
 PRODUCT_HOME=/usr/share/cellery
 BALLERINA_RUNTIME="ballerina-0.991.0"
 CELLERY_VERSION=__CELLERY_VERSION__
+SUPPORTED_B7A_VERSION="0.991.0"
 chmod -R 0755 ${PRODUCT_HOME}
 chmod 0644 ${PRODUCT_HOME}/repo/celleryio/cellery/*/cellery.zip
 
-BRE_LIB_PATH="/usr/lib/ballerina/ballerina-0.991.0/bre/lib/"
-if [ -d $BRE_LIB_PATH ]
-then
-    #Remove stale cellery-*.jar files if exists.
-    rm -f $BRE_LIB_PATH/cellery-*.jar
-    #Copy Cellery libs to bre libs
-    cp /usr/share/cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib/cellery-${CELLERY_VERSION}.jar ${BRE_LIB_PATH}
+B7A_BIN_PATH=$(which ballerina)
+if [ -L "${B7A_BIN_PATH}" ]; then
+    B7A_BIN_PATH=$(readlink $B7A_BIN_PATH)
+fi
+
+B7A_VERSION=$($B7A_BIN_PATH -v)
+if [ ! -f ${B7A_BIN_PATH} ]; then
+    B7A_BIN_PATH="/usr/lib/ballerina/ballerina-0.991.0/bin"
+    echo "Failed to find the ballerina home directory, falling back to the default installation path."
+    echo $B7A_BIN_PATH
+fi
+
+if [[ "${B7A_VERSION}" =~ "${SUPPORTED_B7A_VERSION}" ]]; then
+    echo "B7A version $B7A_VERSION"
+    echo "Correct B7A version installed."
+
+    BIN_FOLDER="/bin/ballerina"
+    BALLERINA_HOME="${B7A_BIN_PATH/$BIN_FOLDER/}"
+    CELLERY_JAR="${BALLERINA_HOME}/bre/lib/cellery-${CELLERY_VERSION}.jar"
+
+    if [[ -f "${CELLERY_JAR}" ]]; then
+        rm -f ${BALLERINA_HOME}/bre/lib/cellery-${CELLERY_VERSION}.jar
+        echo "Removed the stale jar ${BALLERINA_HOME}/bre/lib/cellery-${CELLERY_VERSION}.jar"
+    fi
+    cp /usr/share/cellery/bre-libs/ballerina-0.991.0/bre/lib/cellery-${CELLERY_VERSION}.jar ${BALLERINA_HOME}/bre/lib/
 else
 #Pull docker based Ballerina cli.
     echo "Ballerina 0.991.0 is not installed"

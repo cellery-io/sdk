@@ -36,6 +36,19 @@ func buildCellInstanceNonExistErrorMatcher(name string) string {
 	return fmt.Sprintf("cell(.)+(%s)(.)+not found", name)
 }
 
+func IsCompositeInstanceNotFoundError(srcInst string, compositeErr error) (bool, error) {
+	matches, err := regexp.MatchString(buildCompositeInstanceNonExistErrorMatcher(srcInst),
+		compositeErr.Error())
+	if err != nil {
+		return false, err
+	}
+	return matches, nil
+}
+
+func buildCompositeInstanceNonExistErrorMatcher(name string) string {
+	return fmt.Sprintf("composite(.)+(%s)(.)+not found", name)
+}
+
 type CellGwApiVersionMismatchError struct {
 	CurrentTargetInstance   string
 	NewTargetInstance       string

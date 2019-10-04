@@ -166,7 +166,7 @@ func GetComposite(compositeName string) (Composite, error) {
 	jsonOutput := Composite{}
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			return jsonOutput, fmt.Errorf("cell instance %s not found", compositeName)
+			return jsonOutput, fmt.Errorf("composite instance %s not found", compositeName)
 		}
 		return jsonOutput, fmt.Errorf("unknown error: %v", err)
 	}

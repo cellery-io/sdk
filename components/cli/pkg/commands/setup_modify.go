@@ -47,6 +47,10 @@ var apimChange = runtime.NoChange
 var observabilityChange = runtime.NoChange
 var knativeChange = runtime.NoChange
 var hpaChange = runtime.NoChange
+var enableApim = false
+var enableObservability = false
+var enableKnative = false
+var enableHpa = false
 
 func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime.Selection) {
 	err := runtime.UpdateRuntime(addApimGlobalGateway, addObservability, knative, hpa)
@@ -69,27 +73,36 @@ func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime
 }
 
 func modifyRuntime() {
-	var err error
-	const done = "DONE"
+	const done = "Apply changes"
 	const back = "BACK"
 	value := getPromptValue([]string{apim, autoscaling, observability, done, back}, "Modify system components "+
-		"and select DONE to apply the changes")
+		"and select Apply changes to apply the changes")
 	switch value {
 	case apim:
 		{
-			apimEnabled, err = runtime.IsApimEnabled()
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to get select options for apim", err)
+			change := getComponentChange(&enableApim, apim)
+			if change != runtime.NoChange {
+				apimChange = change
+				if confirmModification() {
+					applyChanges()
+				} else {
+					modifyRuntime()
+				}
+				return
 			}
-			apimChange = getComponentChange(apimEnabled, apim)
 		}
 	case observability:
 		{
-			observabilityEnabled, err = runtime.IsObservabilityEnabled()
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to get select options for observability", err)
+			change := getComponentChange(&enableObservability, observability)
+			if change != runtime.NoChange {
+				observabilityChange = change
+				if confirmModification() {
+					applyChanges()
+				} else {
+					modifyRuntime()
+				}
+				return
 			}
-			observabilityChange = getComponentChange(observabilityEnabled, observability)
 		}
 	case autoscaling:
 		{
@@ -97,48 +110,11 @@ func modifyRuntime() {
 		}
 	case done:
 		{
-			changes := []changedComponent{{apim, apimChange}, {observability,
-				observabilityChange}, {knative, knativeChange}, {hpa, hpaChange}}
-			enabledComponents, disabledComponents := getModifiedComponents(changes)
-			// If total number of enabled and disabled components is greater than zero the runtime has changed
-			runtimeUpdated := len(enabledComponents) > 0 || len(disabledComponents) > 0
-			if !runtimeUpdated {
-				fmt.Printf("No changes will be applied to the runtime\n")
-			} else {
-				fmt.Printf("Following modifications to the runtime will be applied\n")
-				if len(enabledComponents) > 0 {
-					// Print a comma separated list of enabled components
-					enabledList := strings.Join(enabledComponents, ", ")
-					fmt.Printf("Enabling : %s\n", enabledList)
-				}
-				if len(disabledComponents) > 0 {
-					// Print a comma separated list of disabled components
-					disabledList := strings.Join(disabledComponents, ", ")
-					fmt.Printf("Disabling : %s\n", disabledList)
-				}
-			}
-			confirmModify, _, err := util.GetYesOrNoFromUser("Do you wish to continue", false)
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to select confirmation", err)
-			}
-			if confirmModify {
-				if runtimeUpdated {
-					RunSetupModify(apimChange, observabilityChange, knativeChange, hpaChange)
-					os.Exit(0)
-				}
-			} else {
-				modifyRuntime()
-			}
+			applyChanges()
 			return
 		}
 	default:
 		{
-			// If back selected, remove all the saved state transitions of each components
-			// This will delete all the inputs of user
-			apimChange = runtime.NoChange
-			observabilityChange = runtime.NoChange
-			knativeChange = runtime.NoChange
-			hpaChange = runtime.NoChange
 			RunSetup()
 			return
 		}
@@ -149,7 +125,6 @@ func modifyRuntime() {
 func modifyAutoScalingPolicy() {
 	var label = "Select system components to modify"
 	var value = ""
-	var err error
 	const back = "BACK"
 	if runtime.IsGcpRuntime() {
 		value = getPromptValue([]string{knative, back}, label)
@@ -159,19 +134,29 @@ func modifyAutoScalingPolicy() {
 	switch value {
 	case knative:
 		{
-			knativeEnabled, err = runtime.IsKnativeEnabled()
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to get select options for knative", err)
+			change := getComponentChange(&enableKnative, knative)
+			if change != runtime.NoChange {
+				knativeChange = change
+				if confirmModification() {
+					applyChanges()
+				} else {
+					modifyRuntime()
+				}
+				return
 			}
-			knativeChange = getComponentChange(knativeEnabled, knative)
 		}
 	case hpa:
 		{
-			hpaEnabled, err = runtime.IsHpaEnabled()
-			if err != nil {
-				util.ExitWithErrorMessage("Failed to get select options for hpa", err)
+			change := getComponentChange(&enableHpa, hpa)
+			if change != runtime.NoChange {
+				hpaChange = change
+				if confirmModification() {
+					applyChanges()
+				} else {
+					modifyRuntime()
+				}
+				return
 			}
-			hpaChange = getComponentChange(hpaEnabled, hpa)
 		}
 	default:
 		{
@@ -183,7 +168,7 @@ func modifyAutoScalingPolicy() {
 	modifyAutoScalingPolicy()
 }
 
-func getComponentChange(componentEnabled bool, label string) runtime.Selection {
+func getComponentChange(enableComponent *bool, label string) runtime.Selection {
 	const enable = "Enable"
 	const disable = "Disable"
 	const back = "BACK"
@@ -193,9 +178,9 @@ func getComponentChange(componentEnabled bool, label string) runtime.Selection {
 		Inactive: "  {{ . | faint }}",
 		Help:     util.Faint("[Use arrow keys]"),
 	}
-	option := enable
-	if componentEnabled {
-		option = disable
+	option := disable
+	if *enableComponent {
+		option = enable
 	}
 	prompt := promptui.Select{
 		Label:     util.YellowBold("?") + " " + label,
@@ -208,8 +193,10 @@ func getComponentChange(componentEnabled bool, label string) runtime.Selection {
 	}
 	switch value {
 	case enable:
+		*enableComponent = false
 		return runtime.Enable
 	case disable:
+		*enableComponent = true
 		return runtime.Disable
 	default:
 		{
@@ -250,4 +237,64 @@ func getPromptValue(items []string, label string) string {
 		util.ExitWithErrorMessage("Failed to select an option", err)
 	}
 	return value
+}
+
+func confirmModification() bool {
+	cellTemplate := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   "\U000027A4 {{ .| bold }}",
+		Inactive: "  {{ . | faint }}",
+		Help:     util.Faint("[Use arrow keys]"),
+	}
+
+	cellPrompt := promptui.Select{
+		Label:     util.YellowBold("?") + " " + "Do you want to modify another component",
+		Items:     []string{"Yes", "No, Apply change"},
+		Templates: cellTemplate,
+	}
+	_, value, err := cellPrompt.Run()
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to select an option", err)
+	}
+	switch value {
+	case "Yes":
+		return false
+	default:
+		return true
+	}
+}
+
+func applyChanges() {
+	changes := []changedComponent{{apim, apimChange}, {observability,
+		observabilityChange}, {knative, knativeChange}, {hpa, hpaChange}}
+	enabledComponents, disabledComponents := getModifiedComponents(changes)
+	// If total number of enabled and disabled components is greater than zero the runtime has changed
+	runtimeUpdated := len(enabledComponents) > 0 || len(disabledComponents) > 0
+	if !runtimeUpdated {
+		fmt.Printf("No changes will be applied to the runtime\n")
+	} else {
+		fmt.Printf("Following modifications to the runtime will be applied\n")
+		if len(enabledComponents) > 0 {
+			// Print a comma separated list of enabled components
+			enabledList := strings.Join(enabledComponents, ", ")
+			fmt.Printf("Enabling : %s\n", enabledList)
+		}
+		if len(disabledComponents) > 0 {
+			// Print a comma separated list of disabled components
+			disabledList := strings.Join(disabledComponents, ", ")
+			fmt.Printf("Disabling : %s\n", disabledList)
+		}
+	}
+	confirmModify, _, err := util.GetYesOrNoFromUser("Do you wish to continue", false)
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to select confirmation", err)
+	}
+	if confirmModify {
+		if runtimeUpdated {
+			RunSetupModify(apimChange, observabilityChange, knativeChange, hpaChange)
+		}
+		os.Exit(0)
+	} else {
+		modifyRuntime()
+	}
 }

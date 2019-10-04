@@ -187,6 +187,17 @@ func RunPatchForSingleComponent(instance string, component string, containerImag
 	}()
 
 	if canBeComposite {
+		_, err = kubectl.GetComposite(instance)
+		if err != nil {
+			if notFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instance, err); notFound {
+				// the given instance is neither a cell or a composite
+				spinner.Stop(false)
+				return fmt.Errorf("unable to find a running instance with name: %s", instance)
+			} else {
+				spinner.Stop(false)
+				return err
+			}
+		}
 		err := patchSingleComponentinComposite(instance, component, containerImage, containerName, envVars, artifactFile)
 		if err != nil {
 			spinner.Stop(false)

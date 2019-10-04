@@ -19,51 +19,119 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/ghodss/yaml"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunListIngresses(name string) {
 	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
 	if instancePattern {
-		displayCellInstanceApisTable(name)
+		displayInstanceApisTable(name)
 	} else {
-		displayCellImageApisTable(name)
+		displayImageApisTable(name)
 	}
 }
 
-func displayCellInstanceApisTable(cellInstanceName string) {
-	gateways, err := kubectl.GetGateways(cellInstanceName)
+func displayInstanceApisTable(instanceName string) {
+	var canBeComposite bool
+	cell, err := kubectl.GetCell(instanceName)
 	if err != nil {
-		util.ExitWithErrorMessage("Error getting list of components", err)
+		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
+			canBeComposite = true
+		} else {
+			util.ExitWithErrorMessage("Failed to check available Cells", err)
+		}
+	} else {
+		displayCellInstanceApisTable(cell, instanceName)
 	}
-	apiArray := gateways.GatewaySpec.Ingress.HttpApis
+
+	if canBeComposite {
+		composite, err := kubectl.GetComposite(instanceName)
+		if err != nil {
+			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
+				util.ExitWithErrorMessage("Failed to retrieve ingresses of "+instanceName,
+					errors.New(instanceName+" instance not available in the runtime"))
+			} else {
+				util.ExitWithErrorMessage("Failed to check available Composites", err)
+			}
+		} else {
+			displayCompositeInstanceApisTable(composite)
+		}
+	}
+}
+
+func displayCompositeInstanceApisTable(composite kubectl.Composite) {
+	var tableData [][]string
+	for _, component := range composite.CompositeSpec.ComponentTemplates {
+		for _, port := range component.Spec.Ports {
+			tableRecord := []string{component.Metadata.Name, port.Protocol, fmt.Sprint(port.Port)}
+			tableData = append(tableData, tableRecord)
+		}
+	}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS PORT"})
+	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+	table.SetAlignment(3)
+	table.SetRowSeparator("-")
+	table.SetCenterSeparator(" ")
+	table.SetColumnSeparator(" ")
+	table.SetHeaderColor(
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold})
+	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{})
+	table.AppendBulk(tableData)
+	table.Render()
+}
+
+func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
+	apiArray := cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis
+	var ingressType = "web"
+	globalContext := ""
+	globalVersion := ""
+	if len(cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ClusterIngress.Host) == 0 {
+		ingressType = "http"
+	}
+	if cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ApiPublisher.Context != "" {
+		globalContext = cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ApiPublisher.Context
+	}
+	if cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ApiPublisher.Version != "" {
+		globalVersion = cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ApiPublisher.Version
+	}
 	var tableData [][]string
 	for i := 0; i < len(apiArray); i++ {
+		url := cellInstanceName + "--gateway-service"
+		context := apiArray[i].Context
+		version := apiArray[i].Version
+		// Add the context of the Cell
+		if !strings.HasPrefix(context, "/") {
+			url += "/"
+		}
+		url += context
+		if len(apiArray[i].Definitions) == 0 {
+			tableRecord := []string{context, ingressType, version, "", "", url, cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.Extensions.ClusterIngress.Host}
+			tableData = append(tableData, tableRecord)
+		}
 		for j := 0; j < len(apiArray[i].Definitions); j++ {
-			url := cellInstanceName + "--gateway-service"
 			path := apiArray[i].Definitions[j].Path
-			context := apiArray[i].Context
-			version := apiArray[i].Version
 			method := apiArray[i].Definitions[j].Method
-			// Add the context of the Cell
-			if !strings.HasPrefix(context, "/") {
-				url += "/"
-			}
-			url += context
 			// Add the path of the API definition
 			if path != "/" {
 				if !strings.HasSuffix(url, "/") {
@@ -79,19 +147,25 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 			}
 			// Add the global api url if globally exposed
 			globalUrl := ""
+			globalUrlContext := getGlobalUrlContext(globalContext, cellInstanceName)
+			globalUrlVersion := getGlobalUrlVersion(globalVersion, version)
 			if apiArray[i].Global {
 				if path != "/" {
-					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context + path
+					globalUrl = constants.WSO2_APIM_HOST + strings.Replace("/"+globalUrlContext+"/"+context+path+"/"+globalUrlVersion, "//", "/", -1)
 				} else {
-					globalUrl = constants.WSO2_APIM_HOST + "/" + cellInstanceName + "/" + context
+					globalUrl = constants.WSO2_APIM_HOST + strings.Replace("/"+globalUrlContext+"/"+context+"/"+globalUrlVersion, "//", "/", -1)
 				}
 			}
-			tableRecord := []string{context, version, method, url, globalUrl}
+			tableRecord := []string{context, ingressType, version, method, path, url, globalUrl}
 			tableData = append(tableData, tableRecord)
 		}
 	}
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"CONTEXT", "VERSION", "METHOD", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
+	if ingressType == "http" {
+		table.SetHeader([]string{"CONTEXT", "INGRESS TYPE", "VERSION", "METHOD", "RESOURCE", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
+	} else {
+		table.SetHeader([]string{"CONTEXT", "INGRESS TYPE", "VERSION", "METHOD", "RESOURCE", "LOCAL CELL GATEWAY", "VHOST"})
+	}
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 	table.SetAlignment(3)
 	table.SetRowSeparator("-")
@@ -102,8 +176,12 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold})
 	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
 		tablewriter.Colors{},
@@ -113,13 +191,49 @@ func displayCellInstanceApisTable(cellInstanceName string) {
 	table.Render()
 }
 
-func displayCellImageApisTable(cellImageName string) {
+func displayImageApisTable(cellImageName string) {
 	cellYamlContent := image.ReadCellImageYaml(cellImageName)
 	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)
 	}
+
+	if cellImageContent.Kind == "Cell" {
+		displayCellImageApisTable(cellImageContent)
+	} else if cellImageContent.Kind == "Composite" {
+		displayCompositeImageApisTable(cellImageContent)
+	}
+}
+
+func displayCompositeImageApisTable(compositeImageContent *image.Cell) {
+	var tableData [][]string
+	for _, component := range compositeImageContent.Spec.Components {
+		for _, port := range component.Spec.Ports {
+			tableRecord := []string{component.Metadata.Name, port.Protocol, fmt.Sprint(port.Port)}
+			tableData = append(tableData, tableRecord)
+		}
+	}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS PORT"})
+	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+	table.SetAlignment(3)
+	table.SetRowSeparator("-")
+	table.SetCenterSeparator(" ")
+	table.SetColumnSeparator(" ")
+	table.SetHeaderColor(
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold},
+		tablewriter.Colors{tablewriter.Bold})
+	table.SetColumnColor(
+		tablewriter.Colors{},
+		tablewriter.Colors{},
+		tablewriter.Colors{})
+	table.AppendBulk(tableData)
+	table.Render()
+}
+
+func displayCellImageApisTable(cellImageContent *image.Cell) {
 	var tableData [][]string
 	for _, component := range cellImageContent.Spec.Components {
 		componentName := component.Metadata.Name
@@ -198,4 +312,20 @@ func displayCellImageApisTable(cellImageName string) {
 		tablewriter.Colors{})
 	table.AppendBulk(tableData)
 	table.Render()
+}
+
+func getGlobalUrlContext(globalContext string, cellInstanceName string) string {
+	if globalContext != "" {
+		return globalContext
+	} else {
+		return cellInstanceName
+	}
+}
+
+func getGlobalUrlVersion(globalVersion string, apiVersion string) string {
+	if globalVersion != "" {
+		return globalVersion
+	} else {
+		return apiVersion
+	}
 }

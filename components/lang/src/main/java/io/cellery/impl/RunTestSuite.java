@@ -256,6 +256,10 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
         }
         String sourceBal = sourceBalList.get(0).toString();
 
+        if (Files.exists(workingDir.resolve(CelleryConstants.TEMP_TEST_MODULE))) {
+            module = CelleryConstants.TEMP_TEST_MODULE;
+        }
+
         if (Paths.get(sourceBal).getFileName() != null) {
             Path sourcebalFileName = Paths.get(sourceBal).getFileName();
             Path destBalFilePath = workingDir.resolve(module).resolve(sourcebalFileName);
@@ -281,10 +285,6 @@ public class RunTestSuite extends BlockingNativeCallableUnit {
             if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
                 CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
                         CelleryUtils::printWarning);
-            }
-
-            if (Files.exists(workingDir.resolve(CelleryConstants.TEMP_TEST_MODULE))) {
-                module = CelleryConstants.TEMP_TEST_MODULE;
             }
 
             CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System

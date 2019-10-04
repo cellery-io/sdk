@@ -124,10 +124,19 @@ type GatewaySpec struct {
 }
 
 type Ingress struct {
-	Extensions interface{}      `json:"extensions,omitempty"`
+	Extensions Extensions       `json:"extensions,omitempty"`
 	HttpApis   []GatewayHttpApi `json:"http,omitempty"`
 	TcpApis    []GatewayTcpApi  `json:"tcp,omitempty"`
 	GrpcApis   []GatewayGrpcApi `json:"grpc,omitempty"`
+}
+
+type Extensions struct {
+	ApiPublisher   ApiPublisherConfig `json:"apiPublisher,omitempty"`
+	ClusterIngress ClusterIngress     `json:"clusterIngress"`
+}
+
+type ClusterIngress struct {
+	Host string `json:"host"`
 }
 
 type GatewayHttpApi struct {
@@ -144,6 +153,13 @@ type GatewayHttpApi struct {
 type APIDefinition struct {
 	Path   string `json:"path"`
 	Method string `json:"method"`
+}
+
+type ApiPublisherConfig struct {
+	Authenticate bool   `json:"authenticate"`
+	Backend      string `json:"backend"`
+	Context      string `json:"context"`
+	Version      string `json:"version"`
 }
 
 type GatewayTcpApi struct {

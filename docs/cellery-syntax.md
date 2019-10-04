@@ -8,6 +8,7 @@ resembles with normal Ballerina language syntax.
 
 This README explains, 
 * [Cell](#Cell)
+* [Composite](#Composite)
 * [Component](#Component)
 * [Ingresses](#Ingresses)
     * [HTTP Ingress](#1.-HTTP-Ingress)
@@ -16,6 +17,7 @@ This README explains,
         * [Authentication](#22-authenticate-web-ingress)
     * [TCP Ingress](#3-tcp-ingress)
     * [GRPC Ingress](#4-grpc-ingress)
+    * [HttpPort Ingress](#5-httpport-ingress)
 * [Environmental Variables](#envvars)
 * [Resources](#resources)
 * [Scaling](#scaling)
@@ -38,6 +40,24 @@ A Cell is a collection of components, APIs, Ingresses and Policies. A Cell recor
 Components can be added to the components map in the CellImage record.
 ```ballerina
 cellery:CellImage helloCell = {
+   components: {
+       helloComp:helloWorldComp
+   }
+};
+
+```
+
+#### Composite
+A composite is a cut down version of cells. A composite doesn't have a network boundary. A gateway
+is not getting attached to a composite and therefore a composite components support only following ingress types.
+
+   1. [TCP Ingress](#3-tcp-ingress)
+   2. [GRPC Ingress](#4-grpc-ingress)
+   3. [HttpPort Ingress](#5-httpport-ingress) 
+
+Components matching above criteria can be added to the components map in the Composite record.
+```ballerina
+cellery:Composite helloComposite = {
    components: {
        helloComp:helloWorldComp
    }
@@ -209,7 +229,7 @@ cellery:CellImage webCell = {
 ```
 Values for tls key and tls cert can be assigned at the run method as below.
 ```ballerina
-public function run(cellery:ImageName iName, map<cellery:ImageName> instance) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
     //Read TLS key file path from ENV and get the value
     string tlsKey = readFile(config:getAsString("tls.key"));
     string tlsCert = readFile(config:getAsString("tls.cert"));
@@ -318,6 +338,27 @@ public function build(cellery:ImageName iName) returns error? {
 }
 ```
 
+##### 5. HttpPort Ingress
+HttpPort ingress supports defining a http port as an endpoint. This ingress is used to declare endpoint in composite components.
+```ballerina
+//Stock Component
+cellery:Component stockComponent = {
+    name: "stock",
+    source: {
+        image: "wso2cellery/sampleapp-stock:0.3.0"
+    },
+    ingresses: {
+        http:<cellery:HttpsPortIngress>{port: 8080}
+    }
+};
+
+cellery:Composite stockComposite = {
+    components: {
+        stockComp: stockComponent
+    }
+};
+```
+
 #### EnvVars
 A cell developer can require a set of environment parameters that should be passed to a Cell instance for it to be properly functional. 
 
@@ -347,7 +388,7 @@ cellery:Component employeeComponent = {
 Note the parameters SALARY_HOST in the Cell definition above. This parameters can be set in the run time of this Cell. 
 
 ```ballerina
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
     employeeCell.components.empComp.envVars.SALARY_HOST.value = config:getAsString("salary.host");
     return cellery:createInstance(employeeCell, iName);
 }
@@ -996,7 +1037,7 @@ public function build(cellery:ImageName iName) returns error? {
     return cellery:createImage(hrCell, untaint iName);
 }
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
     cellery:CellImage hrCell = check cellery:constructCellImage(untaint iName);
     return cellery:createInstance(hrCell, iName, instances);
 }
