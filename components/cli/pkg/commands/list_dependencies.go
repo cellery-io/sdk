@@ -69,7 +69,8 @@ func RunListDependencies(instanceName string) error {
 	}
 	var tableData [][]string
 	for _, dependency := range dependencies {
-		record := []string{dependency["instance"], dependency["name"], dependency["version"]}
+		record := []string{dependency["instance"], fmt.Sprintf("%s/%s", dependency["org"], dependency["name"]),
+			dependency["version"]}
 		tableData = append(tableData, record)
 	}
 
