@@ -17,7 +17,7 @@
 # under the License.
 # ----------------------------------------------------------------------------------
 
-CELLERT_VERSION=0.4.0
+CELLERT_VERSION="0.4.0"
 SUPPORTED_B7A_VERSION="0.991.0"
 B7A_BIN_PATH=$(which ballerina)
 
