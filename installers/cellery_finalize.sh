@@ -17,7 +17,7 @@
 # under the License.
 # ----------------------------------------------------------------------------------
 
-CELLERT_VERSION="0.4.0"
+CELLERY_VERSION="0.4.0"
 SUPPORTED_B7A_VERSION="0.991.0"
 B7A_BIN_PATH=$(which ballerina)
 
@@ -37,7 +37,7 @@ if [[ "${B7A_VERSION}" =~ "${SUPPORTED_B7A_VERSION}" ]]; then
     BALLERINA_HOME="${B7A_BIN_PATH/$BIN_FOLDER/}"
     CELLERY_JAR="${BALLERINA_HOME}/bre/lib/cellery-*.jar"
     rm -f ${BALLERINA_HOME}/bre/lib/cellery-*.jar
-    cp /Library/Cellery/bre-libs/ballerina-0.991.0/bre/lib/cellery-${CELLERT_VERSION}.jar ${BALLERINA_HOME}/bre/lib/
+    cp /Library/Cellery/bre-libs/ballerina-0.991.0/bre/lib/cellery-${CELLERY_VERSION}.jar ${BALLERINA_HOME}/bre/lib/
     echo "Successfully installed the cellery in ${BALLERINA_HOME}."
 else
 echo "Cellery does not support the installed Ballerina version."
