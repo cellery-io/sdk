@@ -36,9 +36,7 @@ if [[ "${B7A_VERSION}" =~ "${SUPPORTED_B7A_VERSION}" ]]; then
     BIN_FOLDER="/bin/ballerina"
     BALLERINA_HOME="${B7A_BIN_PATH/$BIN_FOLDER/}"
     CELLERY_JAR="${BALLERINA_HOME}/bre/lib/cellery-*.jar"
-    if [[ -f "${CELLERY_JAR}" ]]; then
-        rm -f ${BALLERINA_HOME}/bre/lib/cellery-*.jar
-    fi
+    rm -f ${BALLERINA_HOME}/bre/lib/cellery-*.jar
     cp /Library/Cellery/bre-libs/ballerina-0.991.0/bre/lib/cellery-${CELLERT_VERSION}.jar ${BALLERINA_HOME}/bre/lib/
     echo "Successfully installed the cellery in ${BALLERINA_HOME}."
 else
