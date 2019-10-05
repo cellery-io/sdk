@@ -13,9 +13,9 @@ public function build(cellery:ImageName iName) returns error? {
         dependencies: {
             composites: {
                 //  fully qualified dependency image name as a string
-                employeeCompDep: "myorg/employee-comp:1.0.0",
+                employeeCompDep: "sinthuja/employee-comp:1.0.0",
                 // dependency as a struct
-                stockCompDep: <cellery:ImageName>{ org: "myorg", name: "stock-comp", ver: "1.0.0" }
+                stockCompDep: <cellery:ImageName>{ org: "sinthuja", name: "stock-comp", ver: "1.0.0" }
             }
         },
         labels: {

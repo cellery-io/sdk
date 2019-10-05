@@ -43,66 +43,66 @@ public function build(cellery:ImageName iName) returns error? {
             }
         },
         volumes: {
-            secret: {
-                path: "/tmp/secret/",
-                readOnly: false,
-                volume:<cellery:NonSharedSecret>{
-                    name:cellery:generateVolumeName("my-secret"),
-                    data:{
-                        username:"admin",
-                        password:"admin"
-                    }
-                }
-            },
+            //secret: {
+            //    path: "/tmp/secret/",
+            //    readOnly: false,
+            //    volume:<cellery:NonSharedSecret>{
+            //        name:"my-secret",
+            //        data:{
+            //            username:"admin",
+            //            password:"admin"
+            //        }
+            //    }
+            //},
             secertShared: {
                 path: "/tmp/shared/secret",
                 readOnly: false,
                 volume:<cellery:SharedSecret>{
-                    name:"my-secret-shared"
+                    name:"my-shared-secret"
                 }
             },
-            config: {
-                path: "/tmp/config",
-                readOnly: false,
-                volume:<cellery:NonSharedConfiguration>{
-                    name:"my-config",
-                    data:{
-                        debug:"enable",
-                        logs:"enable"
-                    }
-                }
-            },
+            //config: {
+            //    path: "/tmp/config",
+            //    readOnly: false,
+            //    volume:<cellery:NonSharedConfiguration> {
+            //        name:"my-config",
+            //        data:{
+            //            debug:"enable",
+            //            logs:"enable"
+            //        }
+            //    }
+            //}
             configShared: {
                 path: "/tmp/shared/config",
                 readOnly: false,
                 volume:<cellery:SharedConfiguration>{
-                    name:"my-config-shared"
-                }
-            },
-            volumeClaim: {
-                path: "/tmp/pvc/",
-                readOnly: false,
-                volume:<cellery:K8sNonSharedPersistence>{
-                    name:"pv1",
-                    mode:"Filesystem",
-                    storageClass:"slow",
-                    accessMode: ["ReadWriteMany"],
-                    request:"2G",
-                     lookup: {
-                        labels: {
-                            release: "stable"
-                        },
-                        expressions: [{ key: "environment", operator: "In", values: ["dev", "staging"]}]
-                     }
-                }
-            },
-            volumeClaimShared: {
-                path: "/tmp/pvc/shared",
-                readOnly: true,
-                volume:<cellery:K8sSharedPersistence>{
-                    name:"pv2"
+                    name:"my-shared-config"
                 }
             }
+        //    volumeClaim: {
+        //        path: "/tmp/pvc/",
+        //        readOnly: false,
+        //        volume:<cellery:K8sNonSharedPersistence>{
+        //            name:"pv1",
+        //            mode:"Filesystem",
+        //            storageClass:"slow",
+        //            accessMode: ["ReadWriteMany"],
+        //            request:"2G",
+        //             lookup: {
+        //                labels: {
+        //                    release: "stable"
+        //                },
+        //                expressions: [{ key: "environment", operator: "In", values: ["dev", "staging"]}]
+        //             }
+        //        }
+        //    },
+        //    volumeClaimShared: {
+        //        path: "/tmp/pvc/shared",
+        //        readOnly: true,
+        //        volume:<cellery:K8sSharedPersistence>{
+        //            name:"pv2"
+        //        }
+        //    }
         }
     };
 
