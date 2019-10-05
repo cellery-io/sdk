@@ -96,7 +96,7 @@ dpkg -i cellery-ubuntu-x64-<version>.deb
 
 - Execute below script to complete cellery installation. 
 ```bash
- $ wget -O - https://raw.githubusercontent.com/wso2-cellery/sdk/master/installers/cellery_finalize.sh | sudo bash
+ $ wget -O - https://raw.githubusercontent.com/wso2-cellery/sdk/v0.4.0/installers/cellery_finalize.sh | sudo bash
 ```
 
 
