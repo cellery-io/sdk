@@ -9,3 +9,5 @@ jobs:
       uses: docker://wso2cellery/hangouts-action:latest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SELF_ACTION_NAME: Hangouts
+        SKIP_NOTIFY_LABEL: work-in-progress
