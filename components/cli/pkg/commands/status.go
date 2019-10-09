@@ -25,24 +25,60 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunStatus(cellName string) {
-	cellCreationTime, cellStatus, err := getCellSummary(cellName)
+func RunStatus(instance string) {
+	creationTime, status, err := getCellSummary(instance)
+	var canBeComposite bool
 	if err != nil {
-		util.ExitWithErrorMessage("Error running cell status", fmt.Errorf("cannot find cell %v \n", cellName))
+		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instance, err); cellNotFound {
+			// could be a composite
+			canBeComposite = true
+		} else {
+			util.ExitWithErrorMessage("Error running status command ", err)
+		}
 	}
+	if canBeComposite {
+		creationTime, status, err = getCompositeSummary(instance)
+		if err != nil {
+			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instance, err); compositeNotFound {
+				// given instance name does not correspond either to a cell or a composite
+				util.ExitWithErrorMessage("Error running status command ", fmt.Errorf("No instance found with name %s", instance))
+			} else {
+				util.ExitWithErrorMessage("Error running status command", err)
+			}
+		}
+		displayCompositeStatus(instance, creationTime, status)
+	} else {
+		displayCellStatus(instance, creationTime, status)
+	}
+}
+
+func displayCellStatus(instance, cellCreationTime, cellStatus string) {
 	displayStatusSummaryTable(cellCreationTime, cellStatus)
 	fmt.Println()
 	fmt.Println("  -COMPONENTS-")
 	fmt.Println()
-	pods, err := kubectl.GetPods(cellName)
+	pods, err := kubectl.GetPodsForCell(instance)
 	if err != nil {
-		util.ExitWithErrorMessage("Error getting pods information of cell "+cellName, err)
+		util.ExitWithErrorMessage("Error getting pods information of cell "+instance, err)
 	}
-	displayStatusDetailedTable(pods, cellName)
+	displayStatusDetailedTable(pods, instance)
+}
+
+func displayCompositeStatus(instance, cellCreationTime, cellStatus string) {
+	displayStatusSummaryTable(cellCreationTime, cellStatus)
+	fmt.Println()
+	fmt.Println("  -COMPONENTS-")
+	fmt.Println()
+	pods, err := kubectl.GetPodsForComposite(instance)
+	if err != nil {
+		util.ExitWithErrorMessage("Error getting pods information of composite "+instance, err)
+	}
+	displayStatusDetailedTable(pods, instance)
 }
 
 func getCellSummary(cellName string) (cellCreationTime, cellStatus string, err error) {
@@ -50,13 +86,27 @@ func getCellSummary(cellName string) (cellCreationTime, cellStatus string, err e
 	cellStatus = ""
 	cell, err := kubectl.GetCell(cellName)
 	if err != nil {
-		util.ExitWithErrorMessage("Error getting information of cell "+cellName, err)
+		return "", cellStatus, err
 	}
 	// Get the time since cell instance creation
 	duration := util.GetDuration(util.ConvertStringToTime(cell.CellMetaData.CreationTimestamp))
 	// Get the current status of the cell
 	cellStatus = cell.CellStatus.Status
 	return duration, cellStatus, err
+}
+
+func getCompositeSummary(compName string) (compCreationTime, compStatus string, err error) {
+	compCreationTime = ""
+	compStatus = ""
+	composite, err := kubectl.GetComposite(compName)
+	if err != nil {
+		return "", compStatus, err
+	}
+	// Get the time since composite instance creation
+	duration := util.GetDuration(util.ConvertStringToTime(composite.CompositeMetaData.CreationTimestamp))
+	// Get the current status of the composite
+	compStatus = composite.CompositeStatus.Status
+	return duration, compStatus, err
 }
 
 func displayStatusSummaryTable(cellCreationTime, cellStatus string) error {
