@@ -80,7 +80,7 @@ func (pw *progressWriter) finish() {
 
 func (pw *progressWriter) WriteAt(p []byte, off int64) (int, error) {
 	if pw.display {
-		pw.bar.Add64(int64(len(p)))
+		pw.bar.Set64(int64(len(p)) + off)
 	}
 	return pw.writer.WriteAt(p, off)
 }
