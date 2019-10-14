@@ -16,6 +16,8 @@
 import ballerina/log;
 import ballerina/io;
 import ballerina/config;
+import ballerina/stringutils;
+import ballerinax/java;
 
 public type ImageName record {|
     string org;
@@ -137,7 +139,7 @@ public type Quota record {|
 
 public type Component record {|
     string name;
-    ImageSource | DockerSource source;
+    ImageSource | DockerSource src;
     int replicas = 1;
     map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses?;
     Label labels?;
@@ -247,7 +249,7 @@ public type Reference record {
 
 public type Test record {|
     string name;
-    ImageSource | FileSource source;
+    ImageSource | FileSource src;
     map<Env> envVars?;
 |};
 
@@ -318,9 +320,9 @@ public type VolumeMount record {|
 # + image - The cell/composite image definition
 # + iName - The cell image org, name & version
 # + return - error
-public function createImage(CellImage | Composite image, ImageName iName) returns ( error?) {
+public function createImage(CellImage | Composite image, ImageName iName) returns @tainted ( error?) {
     //Persist the Ballerina cell image record as a json
-    json jsonValue = check json.stamp(image.clone());
+    json jsonValue = check json.constructFrom(image.clone());
     string filePath = "./target/cellery/" + iName.name + "_meta.json";
     var wResult = write(jsonValue, filePath);
     if (wResult is error) {
@@ -335,14 +337,17 @@ public function createImage(CellImage | Composite image, ImageName iName) return
 }
 
 
-function validateCell(CellImage image) {
-    foreach var(key,component) in image.components {
-        if (!(component["ingresses"] is ()) && component.ingresses.length() > 1) {
+function validateCell(CellImage|Composite image) {
+    image.components.forEach(function (Component component) {
+    map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses =
+              <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>>
+              component?.ingresses;
+        if (!(component["ingresses"] is ()) && ingresses.length() > 1) {
             error err = error("component: [" + component.name + "] has more than one ingress");
             panic err;
         } else if (image.kind == "Composite") {
             //TODO: Fix this when multiple ingress support is added.
-            var ingress = component.ingresses[component.ingresses.keys()[0]];
+            var ingress = ingresses[ingresses.keys()[0]];
             if (ingress is HttpApiIngress || ingress is WebIngress) {
                 string errMsg = "Invalid ingress type in component " + component.name + ". Composites doesn't support HttpApiIngress and WebIngress.";
                 error e = error(errMsg);
@@ -350,20 +355,20 @@ function validateCell(CellImage image) {
                 panic e;
             }
         }
-        if (!(component["scalingPolicy"] is ()) && (component.scalingPolicy is AutoScalingPolicy)) {
-            AutoScalingPolicy policy = <AutoScalingPolicy> component.scalingPolicy;
-            if ((!(policy.metrics["cpu"] is ()) && (policy.metrics.cpu is Percentage)) &&
-            ((component["resources"] is ()) || component.resources["limits"] is ())) {
+        if (!(component["scalingPolicy"] is ()) && (component?.scalingPolicy is AutoScalingPolicy)) {
+            AutoScalingPolicy policy = <AutoScalingPolicy> component?.scalingPolicy;
+            if ((!(policy?.metrics["cpu"] is ()) && (policy?.metrics?.cpu is Percentage)) &&
+            ((component["resources"] is ()) || component?.resources["limits"] is ())) {
                 io:println("Warning: cpu percentage is defined without resource limits in component: [" + component.name + "]." +
                 " Scaling may not work due to the missing resource limits.");
             }
-            if ((!(policy.metrics["memory"] is ()) && (policy.metrics.memory is Percentage))
-            && ((component["resources"] is ()) || component.resources["limits"] is ())) {
+            if ((!(policy?.metrics["memory"] is ()) && (policy?.metrics?.memory is Percentage))
+            && ((component["resources"] is ()) || component?.resources["limits"] is ())) {
                 io:println("Warning: memory percentage is defined without resource limits in component [" + component.name + "]." +
                 " Scaling may not work due to the missing resource limits.");
             }
         }
-    }
+    });
 }
 
 # Generate Volume Name.
@@ -375,60 +380,31 @@ public function generateVolumeName(string name) returns (string) {
 }
 
 
-# Build the cell yaml
-#
-# + image - The cell image definition
-# + iName - The cell image org, name & version
-# + return - error
-public function createCellImage(CellImage image, ImageName iName) returns ( error?) = external;
-
-# Update the cell aritifacts with runtime changes
-#
-# + image - The cell image definition
-# + iName - The cell instance name
-# + instances - The cell instance dependencies
-# + startDependencies - Whether to start dependencies
-# + return - error optional
-public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances,
-boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) = external;
-
 # Update the cell aritifacts with runtime changes
 #
 # + iName - The cell instance name
 # + return - error or CellImage record
-public function constructCellImage(ImageName iName) returns (CellImage | error) {
+public function constructCellImage(ImageName iName) returns @tainted (CellImage | error) {
+    string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
+    json|error rResult = read(filePath);
+    if (rResult is error) {
+        log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
+        return rResult;
+    }
+    CellImage | error image = CellImage.constructFrom(<json>rResult);
+    return image;
+}
+
+public function constructImage(ImageName iName) returns @tainted (Composite | error) {
     string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
     var rResult = read(filePath);
     if (rResult is error) {
         log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
         return rResult;
     }
-    CellImage | error image = CellImage.stamp(rResult);
+    Composite | error image = Composite.constructFrom(<json>rResult);
     return image;
 }
-
-public function constructImage(ImageName iName) returns (Composite | error) {
-    string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
-    var rResult = read(filePath);
-    if (rResult is error) {
-        log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
-        return rResult;
-    }
-    Composite | error image = Composite.stamp(rResult);
-    return image;
-}
-
-# Parse the swagger file and returns API Defintions
-#
-# + swaggerFilePath - The swaggerFilePath
-# + return - Array of ApiDefinitions
-public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition | error) = external;
-
-# Returns a Reference record with url information
-#
-# + iName - Dependency Image Name
-# + return - Reference record
-public function readReference(ImageName iName) returns (Reference | error | ()) = external;
 
 # Returns a Reference record with url information
 #
@@ -441,7 +417,7 @@ public function resolveReference(ImageName iName) returns (Reference) {
         panic ref;
     }
     if (ref is ()) {
-        error err = error("Empty reference retrieved for " + iName.instanceName + "\n");
+        error err = error("Empty reference retrieved for " + <string>iName?.instanceName + "\n");
         panic err;
     }
     Reference myRef = <Reference>ref;
@@ -454,10 +430,10 @@ public function resolveReference(ImageName iName) returns (Reference) {
 # + return - Reference record
 public function getReference(Component component, string dependencyAlias) returns (Reference) {
     ImageName | string? alias;
-    if (!(component.dependencies["cells"] is ())) {
-        alias = component.dependencies.cells[dependencyAlias];
+    if (!(component?.dependencies["cells"] is ())) {
+        alias = component?.dependencies?.cells[dependencyAlias];
     } else {
-        alias = component.dependencies.composites[dependencyAlias];
+        alias = component?.dependencies?.composites[dependencyAlias];
     }
     ImageName aliasImage;
     if (alias is string) {
@@ -483,53 +459,32 @@ public function getReference(Component component, string dependencyAlias) return
     return <Reference>ref;
 }
 
-# Run instances required for executing tests
-#
-# + iName - Cell instance name to start before executing tests
-# + instances - The cell instance dependencies
-# + return - error optional
-public function runInstances(ImageName iName, map<ImageName> instances) returns ImageName[] = external;
-
-public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns ( error?) = external;
-
-# Terminate instances started for testing.
-#
-# + instances -  The cell instance dependencies
-# + return - error optional
-public function stopInstances(InstanceState[] instances) returns ( error?) = external;
 
 # Returns the Image Name of the cell
 #
 # + return - ImageName
-public function getCellImage() returns (ImageName | error){
-    string iNameStr = config:getAsString("IMAGE_NAME",
-    defaultValue = "{org:\"\", name:\"\", ver:\"\", instanceName:\"\"}");
+public function getCellImage() returns @tainted (ImageName | error){
+    string iNameStr = config:getAsString("IMAGE_NAME", "{org:\"\", name:\"\", ver:\"\", instanceName:\"\"}");
     io:StringReader reader = new(iNameStr);
     json|error iNameJson = reader.readJson();
     if (iNameJson is error) {
         return iNameJson;
     }
-    ImageName|error iName = ImageName.convert(iNameJson);
+    ImageName|error iName = ImageName.constructFrom(<json>iNameJson);
     return iName;
 }
-
-public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns ( error?) = external;
-
-public function createSecret(NonSharedSecret secret) returns ( error?) = external;
-
-public function createConfiguration(NonSharedConfiguration configuration) returns ( error?) = external;
 
 # Get cell dependencies map
 #
 # + return - map of dependencies ImageName
-public function getDependencies() returns (map<ImageName> | error) {
-    string dependencyStr = config:getAsString("DEPENDENCY_LINKS", defaultValue = "{}");
+public function getDependencies() returns @tainted (map<ImageName> | error) {
+    string dependencyStr = config:getAsString("DEPENDENCY_LINKS", "{}");
     io:StringReader reader = new(dependencyStr);
     json|error dependencyJson = reader.readJson();
     if (dependencyJson is error) {
         return dependencyJson;
     }
-    map<ImageName>|error instances = map<ImageName>.convert(dependencyJson);
+    map<ImageName>|error instances = map<ImageName>.constructFrom(<json>dependencyJson);
     return instances;
 }
 # Returns cell gateway URL of the started cell
@@ -550,25 +505,21 @@ public function getGatewayHost(InstanceState[] iNameList, string alias = "", str
         if (instState.alias != "" && instState.alias == alias) {
             if (kind == "Cell") {
                 CellImage cellImage = <CellImage>constructCellImage(iName);
-                foreach var(k, comp) in cellImage.components {
+                foreach var[k, comp] in cellImage.components.entries() {
                     if (comp["dependencies"] is ()) {
                         break;
                     }
                     Reference ref = getReference(comp, instState.alias);
-
-                    Reference myref = ref;
-                    return replaceInRef(myref, alias = instState.alias, name = instState.iName.instanceName);
+                    return replaceInRef(ref, alias = instState.alias, name = <string>instState.iName?.instanceName);
                 }
             } else {
-                Composite composite = <Composite>constructCellImage(iName);
-                foreach var(k, comp) in composite.components {
+                Composite composite = <Composite>constructImage(iName);
+                foreach var[k, comp] in composite.components.entries() {
                     if (comp["dependencies"] is ()) {
                         break;
                     }
                     Reference ref = getReference(comp, instState.alias);
-
-                    Reference myref = ref;
-                    return replaceInRef(myref, alias = instState.alias, name = instState.iName.instanceName);
+                    return replaceInRef(ref, alias = instState.alias, name = <string>instState.iName?.instanceName);
                 }
             }
         }
@@ -579,9 +530,9 @@ public function getGatewayHost(InstanceState[] iNameList, string alias = "", str
 }
 
 function parseCellDependency(string alias) returns ImageName {
-    string org = alias.substring(0, alias.indexOf("/"));
-    string name = alias.substring(alias.indexOf("/") + 1, alias.indexOf(":"));
-    string ver = alias.substring(alias.indexOf(":") + 1, alias.length());
+    string org = alias.substring(0, <int>alias.indexOf("/"));
+    string name = alias.substring(<int>alias.indexOf("/") + 1, <int>alias.indexOf(":"));
+    string ver = alias.substring(<int>alias.indexOf(":") + 1, alias.length());
     ImageName imageName = {
         name: name,
         org: org,
@@ -593,7 +544,7 @@ function parseCellDependency(string alias) returns ImageName {
 # Returns the hostname of the target component with placeholder for instances name
 #
 # + component - Target component
-# + return - hostname 
+# + return - hostname
 public function getHost(Component component) returns (string) {
     string host = "{{instance_name}}--" + getValidName(component.name) + "-service";
     return host;
@@ -609,27 +560,29 @@ public function getPort(Component component) returns (int) {
         error err = error("getPort is invoked on a component: [" + component.name + "] with empty ingress");
         panic err;
     }
-    if (component.ingresses.length() > 0) {
-        var ingress = component.ingresses[component.ingresses.keys()[0]];
+    map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses =
+         <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>> component?.ingresses;
+    if (ingresses.length() > 0) {
+        var ingress = ingresses[ingresses.keys()[0]];
         if (ingress is TCPIngress) {
             TCPIngress ing = <TCPIngress>ingress;
             port = ing.backendPort;
         } else if (ingress is HttpApiIngress) {
-            if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
+            if (!(component["scalingPolicy"] is ()) && component?.scalingPolicy is ZeroScalingPolicy) {
                 port = 80;
             } else {
                 HttpApiIngress ing = <HttpApiIngress>ingress;
                 port = ing.port;
             }
         } else if (ingress is GRPCIngress) {
-            if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
+            if (!(component["scalingPolicy"] is ()) && component?.scalingPolicy is ZeroScalingPolicy) {
                 port = 81;
             } else {
                 GRPCIngress ing = <GRPCIngress>ingress;
                 port = ing.backendPort;
             }
         } else if (ingress is WebIngress) {
-            if (!(component["scalingPolicy"] is ()) && component.scalingPolicy is ZeroScalingPolicy) {
+            if (!(component["scalingPolicy"] is ()) && component?.scalingPolicy is ZeroScalingPolicy) {
                 port = 80;
             } else {
                 WebIngress ing = <WebIngress>ingress;
@@ -641,7 +594,9 @@ public function getPort(Component component) returns (int) {
 }
 
 function getValidName(string name) returns string {
-    return name.toLower().replace("_", "-").replace(".", "-");
+    string validName = name.toLowerAscii();
+    validName = stringutils:replaceAll(validName,"_", "-");
+    return stringutils:replaceAll(validName,".", "-");
 }
 
 function closeRc(io:ReadableCharacterChannel rc) {
@@ -660,41 +615,83 @@ function closeWc(io:WritableCharacterChannel wc) {
     }
 }
 
-function write(json content, string path) returns error? {
-    io:WritableByteChannel wbc = io:openWritableFile(path);
+function write(json content, string path) returns @tainted error? {
+    io:WritableByteChannel wbc = check io:openWritableFile(path);
     io:WritableCharacterChannel wch = new(wbc, "UTF8");
     var result = wch.writeJson(content);
-    if (result is error) {
-        closeWc(wch);
-        return result;
-    } else {
-        closeWc(wch);
-        return result;
-    }
+    closeWc(wch);
+    return result;
 }
 
-function read(string path) returns json | error {
-    io:ReadableByteChannel rbc = io:openReadableFile(path);
+function read(string path) returns @tainted json | error {
+    io:ReadableByteChannel rbc = check io:openReadableFile(path);
     io:ReadableCharacterChannel rch = new(rbc, "UTF8");
     var result = rch.readJson();
-    if (result is error) {
-        closeRc(rch);
-        return result;
-    } else {
-        closeRc(rch);
-        return result;
-    }
+    closeRc(rch);
+    return result;
 }
 
 function replaceInRef (Reference ref, string alias = "", string name = "") returns Reference {
-    foreach var(key,value) in ref {
+    foreach var[key,value] in ref.entries() {
         string temp = <string> value;
-        temp = temp.replaceAll("\\{", "");
-        temp = temp.replaceAll("\\}", "");
+        temp = stringutils:replaceAll(temp, "\\{", "");
+        temp = stringutils:replaceAll(temp, "\\}", "");
         if (alias != "") {
-            temp = temp.replace(alias, name);
+            temp = stringutils:replace(temp, alias, name);
         }
         ref[key] = temp;
     }
     return ref;
 }
+
+# Build the cell yaml
+#
+# + image - The cell image definition
+# + iName - The cell image org, name & version
+# + return - error
+public function createCellImage(CellImage|Composite image,ImageName imageName) returns error? = @java:Method {
+    class:"io.cellery.impl.CreateCellImage"
+} external;
+
+# Update the cell aritifacts with runtime changes
+#
+# + image - The cell image definition
+# + iName - The cell instance name
+# + instances - The cell instance dependencies
+# + startDependencies - Whether to start dependencies
+# + return - error optional
+public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances,
+boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) = external;
+
+# Parse the swagger file and returns API Defintions
+#
+# + swaggerFilePath - The swaggerFilePath
+# + return - Array of ApiDefinitions
+public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition | error) = external;
+
+# Returns a Reference record with url information
+#
+# + iName - Dependency Image Name
+# + return - Reference record
+public function readReference(ImageName iName) returns (Reference | error | ()) = external;
+
+# Run instances required for executing tests
+#
+# + iName - Cell instance name to start before executing tests
+# + instances - The cell instance dependencies
+# + return - error optional
+public function runInstances(ImageName iName, map<ImageName> instances) returns ImageName[] = external;
+
+public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns ( error?) = external;
+
+# Terminate instances started for testing.
+#
+# + instances -  The cell instance dependencies
+# + return - error optional
+public function stopInstances(InstanceState[] instances) returns ( error?) = external;
+
+public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns ( error?) = external;
+
+public function createSecret(NonSharedSecret secret) returns ( error?) = external;
+
+public function createConfiguration(NonSharedConfiguration configuration) returns ( error?) = external;

@@ -299,5 +299,6 @@
     <modules>
         <module>lang</module>
         <module>cellery-component-test</module>
+        <module>module-cellery</module>
     </modules>
 </project>
