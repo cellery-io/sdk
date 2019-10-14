@@ -21,8 +21,10 @@ package util
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -59,7 +61,20 @@ func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 	writer.display = displayProgressBar
 
 	writer.init(s3ObjectSize)
-	_, err = downloader.Download(writer,
+	if displayProgressBar {
+		go func() {
+			var size int64 = 0
+			for size < s3ObjectSize {
+				size, err = GetFileSize(filepath.Join(path, item))
+				if err != nil {
+					log.Println(err)
+				}
+				writer.setProgress(size)
+				time.Sleep(time.Second)
+			}
+		}()
+	}
+	_, err = downloader.Download(file,
 		&s3.GetObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(item),
