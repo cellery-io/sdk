@@ -650,7 +650,7 @@ function replaceInRef (Reference ref, string alias = "", string name = "") retur
 # + imageName - The cell image org, name & version
 # + return - error
 public function createCellImage(CellImage|Composite image, ImageName imageName) returns error? = @java:Method {
-    class:"CreateCellImage"
+    class:"io.cellery.impl.CreateCellImage"
 } external;
 
 # Update the cell aritifacts with runtime changes
@@ -663,7 +663,7 @@ public function createCellImage(CellImage|Composite image, ImageName imageName) 
 # + return - error optional
 public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances,
 boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) = @java:Method {
-    class: "CreateInstance"
+    class: "io.cellery.impl.CreateInstance"
 } external;
 
 # Parse the swagger file and returns API Defintions
@@ -671,7 +671,7 @@ boolean startDependencies, boolean shareDependencies) returns (InstanceState[] |
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
 public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition | error) = @java:Method {
-    class: "ReadSwaggerFile"
+    class: "io.cellery.impl.ReadSwaggerFile"
 } external;
 
 
@@ -680,7 +680,7 @@ public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition |
 # + iName - Dependency Image Name
 # + return - Reference record
 public function readReference(ImageName iName) returns (Reference | error | ()) = @java:Method {
-    class: "ReadReference"
+    class: "io.cellery.impl.ReadReference"
 } external;
 
 # Run instances required for executing tests
@@ -689,11 +689,11 @@ public function readReference(ImageName iName) returns (Reference | error | ()) 
 # + instances - The cell instance dependencies
 # + return - error optional
 public function runInstances(ImageName iName, map<ImageName> instances) returns ImageName[] = @java:Method {
-    class: "RunInstances"
+    class: "io.cellery.impl.RunInstances"
 } external;
 
 public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns ( error?) = @java:Method {
-   class: "RunTestSuite"
+   class: "io.cellery.impl.RunTestSuite"
 } external;
 
 # Terminate instances started for testing.
@@ -701,7 +701,7 @@ public function runTestSuite(InstanceState[] instances, TestSuite testSuite) ret
 # + instances -  The cell instance dependencies
 # + return - error optional
 public function stopInstances(InstanceState[] instances) returns ( error?) = @java:Method {
-   class: "StopInstances"
+   class: "io.cellery.impl.StopInstances"
 } external;
 
 # Create a Persistence Claim.
@@ -709,13 +709,13 @@ public function stopInstances(InstanceState[] instances) returns ( error?) = @ja
 # + pvc -  The K8sNonSharedPersistence record
 # + return - error optional
 public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns ( error?) = @java:Method {
-  class: "CreatePersistenceClaim"
+  class: "io.cellery.impl.CreatePersistenceClaim"
 } external;
 
 public function createSecret(NonSharedSecret secret) returns ( error?) = @java:Method {
-    class: "CreateSecret"
+    class: "io.cellery.impl.CreateSecret"
 } external;
 
 public function createConfiguration(NonSharedConfiguration configuration) returns ( error?)= @java:Method {
-   class: "CreateConfiguration"
+   class: "io.cellery.impl.CreateConfiguration"
 } external;
