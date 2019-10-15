@@ -647,10 +647,10 @@ function replaceInRef (Reference ref, string alias = "", string name = "") retur
 # Build the cell yaml
 #
 # + image - The cell image definition
-# + iName - The cell image org, name & version
+# + imageName - The cell image org, name & version
 # + return - error
-public function createCellImage(CellImage|Composite image,ImageName imageName) returns error? = @java:Method {
-    class:"io.cellery.impl.CreateCellImage"
+public function createCellImage(CellImage|Composite image, ImageName imageName) returns error? = @java:Method {
+    class:"CreateCellImage"
 } external;
 
 # Update the cell aritifacts with runtime changes
@@ -659,39 +659,63 @@ public function createCellImage(CellImage|Composite image,ImageName imageName) r
 # + iName - The cell instance name
 # + instances - The cell instance dependencies
 # + startDependencies - Whether to start dependencies
+# + shareDependencies - Whether to share dependencies
 # + return - error optional
 public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances,
-boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) = external;
+boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) = @java:Method {
+    class: "CreateInstance"
+} external;
 
 # Parse the swagger file and returns API Defintions
 #
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
-public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition | error) = external;
+public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition | error) = @java:Method {
+    class: "ReadSwaggerFile"
+} external;
+
 
 # Returns a Reference record with url information
 #
 # + iName - Dependency Image Name
 # + return - Reference record
-public function readReference(ImageName iName) returns (Reference | error | ()) = external;
+public function readReference(ImageName iName) returns (Reference | error | ()) = @java:Method {
+    class: "ReadReference"
+} external;
 
 # Run instances required for executing tests
 #
 # + iName - Cell instance name to start before executing tests
 # + instances - The cell instance dependencies
 # + return - error optional
-public function runInstances(ImageName iName, map<ImageName> instances) returns ImageName[] = external;
+public function runInstances(ImageName iName, map<ImageName> instances) returns ImageName[] = @java:Method {
+    class: "RunInstances"
+} external;
 
-public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns ( error?) = external;
+public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns ( error?) = @java:Method {
+   class: "RunTestSuite"
+} external;
 
 # Terminate instances started for testing.
 #
 # + instances -  The cell instance dependencies
 # + return - error optional
-public function stopInstances(InstanceState[] instances) returns ( error?) = external;
+public function stopInstances(InstanceState[] instances) returns ( error?) = @java:Method {
+   class: "StopInstances"
+} external;
 
-public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns ( error?) = external;
+# Create a Persistence Claim.
+#
+# + pvc -  The K8sNonSharedPersistence record
+# + return - error optional
+public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns ( error?) = @java:Method {
+  class: "CreatePersistenceClaim"
+} external;
 
-public function createSecret(NonSharedSecret secret) returns ( error?) = external;
+public function createSecret(NonSharedSecret secret) returns ( error?) = @java:Method {
+    class: "CreateSecret"
+} external;
 
-public function createConfiguration(NonSharedConfiguration configuration) returns ( error?) = external;
+public function createConfiguration(NonSharedConfiguration configuration) returns ( error?)= @java:Method {
+   class: "CreateConfiguration"
+} external;
