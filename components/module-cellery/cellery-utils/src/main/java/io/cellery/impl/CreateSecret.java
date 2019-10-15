@@ -41,7 +41,7 @@ import static io.cellery.CelleryUtils.writeToFile;
  */
 public class CreateSecret {
 
-    public void createSecret(MapValue secretMap) throws BallerinaCelleryException {
+    public static void createSecret(MapValue secretMap) throws BallerinaCelleryException {
         Secret secret = getSecret(secretMap);
         final String targetDirectory = System.getProperty("user.dir") + File.separator + CelleryConstants.TARGET;
         final String targetFile = targetDirectory + File.separator + CelleryConstants.VOLUMES +

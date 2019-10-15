@@ -30,9 +30,9 @@ target = "java8"
 
   [[platform.libraries]]
   module = "docker"
-  path = "./cellery-utils/target/classes/lib/docker-generator-1.0.0.jar"
+  path = "./cellery-utils/target/classes/lib/docker-generator-1.0.1.jar"
   artafactId = "docker-generator"
-  version = "1.0.0"
+  version = "1.0.1"
   groupId = "org.ballerinax.docker"
 
   [[platform.libraries]]

@@ -575,7 +575,8 @@ public class CreateCellImage {
                 .build();
         Cell cell = new Cell(objectMeta, cellSpec);
         String targetPath =
-                OUTPUT_DIRECTORY + File.separator + CelleryConstants.CELLERY + File.separator + image.getCellName() + CelleryConstants.YAML;
+                OUTPUT_DIRECTORY + File.separator + CelleryConstants.CELLERY + File.separator
+                        + image.getCellName() + CelleryConstants.YAML;
         try {
             writeToFile(toYaml(cell), targetPath);
         } catch (IOException e) {
@@ -633,9 +634,10 @@ public class CreateCellImage {
                 component.getApis().forEach(api -> {
                     String context = api.getContext();
                     if (StringUtils.isNotEmpty(context)) {
-                        String url =
-                                CelleryConstants.DEFAULT_GATEWAY_PROTOCOL + "://" + CelleryConstants.INSTANCE_NAME_PLACEHOLDER + CelleryConstants.GATEWAY_SERVICE + ":"
-                                        + CelleryConstants.DEFAULT_GATEWAY_PORT + "/" + context;
+                        String url = CelleryConstants.DEFAULT_GATEWAY_PROTOCOL + "://" +
+                                CelleryConstants.INSTANCE_NAME_PLACEHOLDER +
+                                CelleryConstants.GATEWAY_SERVICE + ":"
+                                + CelleryConstants.DEFAULT_GATEWAY_PORT + "/" + context;
                         json.put(recordName + "_" + getValidRecordName(api.getName()) + "_api_url",
                                 url.replaceAll("(?<!http:)//", "/"));
                     }

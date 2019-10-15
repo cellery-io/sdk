@@ -809,9 +809,9 @@ public class CelleryUtils {
         JsonObject imageJson = new Gson().fromJson(image, JsonObject.class);
         JsonObject cellAnnotations = imageJson.get("metadata").getAsJsonObject().get("annotations").
                 getAsJsonObject();
-        return cellAnnotations.get(CelleryConstants.MESH_CELLERY_IO + "/cell-image-org").getAsString() + File.separator +
-                cellAnnotations.get(CelleryConstants.MESH_CELLERY_IO + "/cell-image-name").getAsString() + ":" + cellAnnotations.
-                get(CelleryConstants.MESH_CELLERY_IO + "/cell-image-version").getAsString();
+        return cellAnnotations.get(CelleryConstants.MESH_CELLERY_IO + "/cell-image-org").getAsString() + File.separator
+                + cellAnnotations.get(CelleryConstants.MESH_CELLERY_IO + "/cell-image-name").getAsString()
+                + ":" + cellAnnotations.get(CelleryConstants.MESH_CELLERY_IO + "/cell-image-version").getAsString();
     }
 
     /**
