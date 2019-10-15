@@ -19,18 +19,12 @@
 package io.cellery.impl;
 
 import io.cellery.CelleryConstants;
+import io.cellery.exception.BallerinaCelleryException;
 import org.apache.commons.io.IOUtils;
-import org.ballerinalang.bre.Context;
-import org.ballerinalang.bre.bvm.BLangVMErrors;
-import org.ballerinalang.bre.bvm.BlockingNativeCallableUnit;
-import org.ballerinalang.connector.api.BLangConnectorSPIUtil;
-import org.ballerinalang.model.types.TypeKind;
-import org.ballerinalang.model.values.BMap;
+import org.ballerinalang.jvm.BallerinaValues;
+import org.ballerinalang.jvm.types.BPackage;
+import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.model.values.BString;
-import org.ballerinalang.model.values.BValue;
-import org.ballerinalang.natives.annotations.Argument;
-import org.ballerinalang.natives.annotations.BallerinaFunction;
-import org.ballerinalang.natives.annotations.ReturnType;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -38,55 +32,47 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
-import java.util.LinkedHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static io.cellery.CelleryConstants.CELLERY_REPO_PATH;
+import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
+import static io.cellery.CelleryConstants.NAME;
+import static io.cellery.CelleryConstants.ORG;
 import static io.cellery.CelleryConstants.REFERENCE_FILE_NAME;
+import static io.cellery.CelleryConstants.VERSION;
 
 /**
  * Native function cellery:ReadReference.
  */
-@BallerinaFunction(
-        orgName = "celleryio", packageName = "cellery:0.0.0",
-        functionName = "readReference",
-        args = {@Argument(name = "cellImage", type = TypeKind.RECORD),
-                @Argument(name = "dependencyName", type = TypeKind.STRING)},
-        returnType = {@ReturnType(type = TypeKind.OBJECT), @ReturnType(type = TypeKind.ERROR)},
-        isPublic = true
-)
-public class ReadReference extends BlockingNativeCallableUnit {
+public class ReadReference {
 
-    public void execute(Context ctx) {
-        LinkedHashMap nameStruct = ((BMap) ctx.getNullableRefArgument(0)).getMap();
-        String orgName = ((BString) nameStruct.get("org")).stringValue();
-        String cellName = ((BString) nameStruct.get("name")).stringValue();
-        String cellVersion = ((BString) nameStruct.get("ver")).stringValue();
-        String instanceName = ((BString) nameStruct.get("instanceName")).stringValue();
+    public static MapValue readReference(MapValue nameStruct) throws BallerinaCelleryException {
+        String orgName = nameStruct.getStringValue(ORG);
+        String cellName = nameStruct.getStringValue(NAME);
+        String cellVersion = nameStruct.getStringValue(VERSION);
+        String instanceName = nameStruct.getStringValue(INSTANCE_NAME);
         String zipFilePath = CELLERY_REPO_PATH + File.separator + orgName + File.separator + cellName + File.separator
                 + cellVersion + File.separator + cellName + ".zip";
         JSONObject jsonObject;
         try {
             jsonObject = readReferenceJSON(zipFilePath);
             if (jsonObject == null || jsonObject.isEmpty()) {
-                ctx.setError(BLangVMErrors.createError(ctx, "Reference file is empty. " + zipFilePath));
-                return;
+                throw new BallerinaCelleryException("Reference file is empty. " + zipFilePath);
             }
         } catch (IOException e) {
-            ctx.setError(BLangVMErrors.createError(ctx, e.getMessage()));
-            return;
+            throw new BallerinaCelleryException("Error while reading reference file. " + zipFilePath);
         }
-        BMap<String, BValue> refMap = BLangConnectorSPIUtil.createBStruct(ctx, CelleryConstants.CELLERY_PACKAGE,
-                CelleryConstants.REFERENCE_DEFINITION);
+        MapValue<String, Object> refMap = BallerinaValues.createRecordValue(new BPackage("celleryio",
+                "cellery", "0.0.0"), CelleryConstants.REFERENCE_DEFINITION);
         jsonObject.keys().forEachRemaining(key -> refMap.put(key,
                 new BString(jsonObject.get(key).toString().replace(INSTANCE_NAME_PLACEHOLDER,
                         "{{" + instanceName + "}}"))));
-        ctx.setReturnValues(refMap);
+        return refMap;
     }
 
-    private JSONObject readReferenceJSON(String zipFilePath) throws IOException {
+    private static JSONObject readReferenceJSON(String zipFilePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(zipFilePath)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             String fileName = "artifacts" + File.separator + "ref" + File.separator + REFERENCE_FILE_NAME;
