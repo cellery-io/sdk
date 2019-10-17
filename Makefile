@@ -119,7 +119,8 @@ build-mac-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-art
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
 	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
-	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION)
+	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION); \
+	cd target && zip -r darwinpkg.zip darwinpkg
 
 .PHONY: cleanup-installers
 cleanup-installers:
