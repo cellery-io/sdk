@@ -44,7 +44,7 @@ TELEPRESENCE_URL := https://s3.amazonaws.com/datawire-static-files/telepresence/
 
 MAIN_PACKAGES := cli
 
-VERSION ?= 0.4.0-SNAPSHOT
+VERSION ?= 0.5.0-SNAPSHOT
 INSTALLER_VERSION ?= $(GIT_REVISION)
 
 # Go build time flags
@@ -120,7 +120,7 @@ build-mac-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-art
 	mv ../build-artifacts/k8s-artefacts files/; \
 	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
 	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION); \
-	cd target && zip -r darwinpkg.zip darwinpkg
+	cd target && zip -r cellery-$(VERSION).zip darwinpkg
 
 .PHONY: cleanup-installers
 cleanup-installers:
