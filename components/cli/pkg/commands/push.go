@@ -122,9 +122,9 @@ func RunPush(cellImage string, username string, password string) {
 				var done chan bool
 				finalizeChannelCalls := func(isAuthSuccessful bool) {
 					if isAuthorized != nil {
-						log.Printf("Writing authorized status: %t to channel from main goroutine", isAuthorized)
+						log.Printf("Writing authorized status: %v to channel from main goroutine", isAuthorized)
 						isAuthorized <- isAuthSuccessful
-						log.Printf("Finished writing authorized status: %t to channel from main goroutine", isAuthorized)
+						log.Printf("Finished writing authorized status: %v to channel from main goroutine", isAuthorized)
 					}
 					if done != nil {
 						log.Printf("Reading done channel from main goroutine to wait for server task finish")

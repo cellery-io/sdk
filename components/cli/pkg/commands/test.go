@@ -20,16 +20,16 @@ package commands
 
 import (
 	"bufio"
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
 	"os/user"
 	"runtime"
 	"strconv"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 
 	"encoding/json"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -37,6 +37,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -347,9 +349,9 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
 				fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
 				fmt.Sprintf(util.Faint(
-					" {\n" +
-						"   \"version\": \"0.2.0\",\n" +
-						"   \"configurations\": [\n" +
+					" {\n"+
+						"   \"version\": \"0.2.0\",\n"+
+						"   \"configurations\": [\n"+
 						"     ...\n")) +
 
 				fmt.Sprintf(util.Bold(
@@ -363,8 +365,8 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 						"     },\n"), ballerinaConf) +
 
 				fmt.Sprintf(util.Faint(
-					"     ...\n" +
-						"   ]\n" +
+					"     ...\n"+
+						"   ]\n"+
 						" }\n\n")) +
 				fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
 		} else {
@@ -438,10 +440,9 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			dependencyLinksJson1, _ := json.Marshal(string(dependencyLinksJson))
 
 			scriptCmds = append(scriptCmds, []string{constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
-			filepath.Join(filepath.Base(balModule), filepath.Base(tempTestFileName)),
-			"test", fmt.Sprintf("%s", string(iName1)), fmt.Sprintf("%s", string(dependencyLinksJson1)), startDependenciesFlag, shareDependenciesFlag}...)
+				filepath.Join(filepath.Base(balModule), filepath.Base(tempTestFileName)),
+				"test", fmt.Sprintf("%s", string(iName1)), fmt.Sprintf("%s", string(dependencyLinksJson1)), startDependenciesFlag, shareDependenciesFlag}...)
 			dockerCommand := []string{"/bin/bash", "-c", fmt.Sprintf("'%s'", strings.Join(scriptCmds, " "))}
-
 
 			dockerCmdArgs := []string{"-u", exeUid,
 				"-e", constants.CELLERY_IMAGE_DIR_ENV_VAR + "=" + tmpImgDir,
@@ -466,7 +467,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			return fmt.Errorf("failed to execute test method in Cell instance %s due to %v", instanceName, err)
 		}
 	} else {
-		if (exePath != "") {
+		if exePath != "" {
 
 			if !isBallerinaProject {
 				cmd = exec.Command(exePath, "init")
@@ -476,7 +477,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				}
 				err = cmd.Run()
 				if err != nil {
-					return fmt.Errorf("error occurred while initializing ballerina project for tests", err)
+					return fmt.Errorf("error occurred while initializing ballerina project for tests: %v", err)
 				}
 			}
 			fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
@@ -529,9 +530,9 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
 					fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
 					fmt.Sprintf(util.Faint(
-						" {\n" +
-							"   \"version\": \"0.2.0\",\n" +
-							"   \"configurations\": [\n" +
+						" {\n"+
+							"   \"version\": \"0.2.0\",\n"+
+							"   \"configurations\": [\n"+
 							"     ...\n")) +
 
 					fmt.Sprintf(util.Bold(
@@ -545,8 +546,8 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 							"     },\n"), ballerinaConf) +
 
 					fmt.Sprintf(util.Faint(
-						"     ...\n" +
-							"   ]\n" +
+						"     ...\n"+
+							"   ]\n"+
 							" }\n\n")) +
 					fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
 
@@ -604,7 +605,6 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			scriptCmds = append(scriptCmds, []string{constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "init", "&&"}...)
 			scriptCmds = append(scriptCmds, []string{constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "test", filepath.Base(balModule)}...)
 			dockerCommand := []string{"/bin/bash", "-c", fmt.Sprintf("'%s'", strings.Join(scriptCmds, " "))}
-
 
 			dockerCmdArgs := []string{"-u", exeUid,
 				"-e", constants.CELLERY_IMAGE_DIR_ENV_VAR + "=" + tmpImgDir,

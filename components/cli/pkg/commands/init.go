@@ -21,6 +21,7 @@ package commands
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -30,37 +31,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunInit(projectName string) {
-	prefix := util.CyanBold("?")
-	if projectName == "" {
-		err := interact.Run(&interact.Interact{
-			Before: func(c interact.Context) error {
-				c.SetPrfx(color.Output, prefix)
-				return nil
-			},
-			Questions: []*interact.Question{
-				{
-					Before: func(c interact.Context) error {
-						c.SetPrfx(nil, util.CyanBold("?"))
-						c.SetDef("my-project", util.Faint("[my-project]"))
-						return nil
-					},
-					Quest: interact.Quest{
-						Msg: util.Bold("Project name: "),
-					},
-					Action: func(c interact.Context) interface{} {
-						projectName, _ = c.Ans().String()
-						return nil
-					},
-				},
-			},
-		})
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while initializing the project", err)
-		}
-	}
-
-	cellTemplate := `
+const CellTemplate = `
 import ballerina/config;
 import celleryio/cellery;
 
@@ -111,13 +82,50 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
 }
 `
 
+func RunInit(projectName string) {
+	prefix := util.CyanBold("?")
+	if projectName == "" {
+		err := interact.Run(&interact.Interact{
+			Before: func(c interact.Context) error {
+				c.SetPrfx(color.Output, prefix)
+				return nil
+			},
+			Questions: []*interact.Question{
+				{
+					Before: func(c interact.Context) error {
+						c.SetPrfx(nil, util.CyanBold("?"))
+						c.SetDef("my-project", util.Faint("[my-project]"))
+						return nil
+					},
+					Quest: interact.Quest{
+						Msg: util.Bold("Project name: "),
+					},
+					Action: func(c interact.Context) interface{} {
+						projectName, _ = c.Ans().String()
+						return nil
+					},
+				},
+			},
+		})
+		if err != nil {
+			util.ExitWithErrorMessage("Error occurred while initializing the project", err)
+		}
+	}
 	currentDir, err := os.Getwd()
 	if err != nil {
 		util.ExitWithErrorMessage("Error in getting current directory location", err)
 	}
+	writer, projectDir := createBalFile(currentDir, projectName)
+	writeCellTemplate(writer, CellTemplate)
+	util.PrintSuccessMessage(fmt.Sprintf("Initialized project in directory: %s", util.Faint(projectDir)))
+	util.PrintWhatsNextMessage("build the image",
+		"cellery build "+projectName+"/"+projectName+".bal"+" organization/image_name:version")
+}
 
+// createBalFile creates a bal file at the current location.
+func createBalFile(currentDir, projectName string) (*os.File, string) {
 	projectDir := filepath.Join(currentDir, projectName)
-	err = util.CreateDir(projectDir)
+	err := util.CreateDir(projectDir)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to initialize project", err)
 	}
@@ -126,23 +134,18 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
 	if err != nil {
 		util.ExitWithErrorMessage("Error in creating Ballerina File", err)
 	}
-	defer func() {
-		err = balFile.Close()
-		if err != nil {
-			util.ExitWithErrorMessage("Failed to clean up", err)
-		}
-	}()
-	balW := bufio.NewWriter(balFile)
-	_, err = balW.WriteString(cellTemplate)
+	return balFile, projectDir
+}
+
+// writeCellTemplate writes the content to a bal file.
+func writeCellTemplate(writer io.Writer, cellTemplate string) {
+	balW := bufio.NewWriter(writer)
+	_, err := balW.WriteString(cellTemplate)
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to create cell file", err)
+		util.ExitWithErrorMessage("Failed to create writer for cell file", err)
 	}
 	_ = balW.Flush()
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to create cell file", err)
+		util.ExitWithErrorMessage("Failed to cleanup writer for cell file", err)
 	}
-
-	util.PrintSuccessMessage(fmt.Sprintf("Initialized project in directory: %s", util.Faint(projectDir)))
-	util.PrintWhatsNextMessage("build the image",
-		"cellery build "+projectName+"/"+projectName+".bal"+" organization/image_name:version")
 }

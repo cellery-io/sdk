@@ -27,12 +27,14 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func newCliCommand() *cobra.Command {
+func newCliCommand(cli cli.Cli, kubeCli kubernetes.KubeCli) *cobra.Command {
 	var verboseMode = false
 	var insecureMode = false
 	cmd := &cobra.Command{
@@ -53,7 +55,7 @@ func newCliCommand() *cobra.Command {
 		newInitCommand(),
 		newRunCommand(),
 		newTerminateCommand(),
-		newListCommand(),
+		newListCommand(kubeCli),
 		newDescribeCommand(),
 		newStatusCommand(),
 		newLogsCommand(),
@@ -79,6 +81,8 @@ func newCliCommand() *cobra.Command {
 }
 
 func main() {
+	celleryCli := cli.NewCelleryCli()
+	celleryKubeCli := kubernetes.NewCelleryKubeCli()
 	util.CreateCelleryDirStructure()
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")
@@ -111,7 +115,7 @@ func main() {
 		util.ExitWithErrorMessage("Unable to copy cellery installation artifacts to user repo", err)
 	}
 
-	cmd := newCliCommand()
+	cmd := newCliCommand(celleryCli, celleryKubeCli)
 	if err := cmd.Execute(); err != nil {
 		util.ExitWithErrorMessage("Error executing cellery main function", err)
 	}

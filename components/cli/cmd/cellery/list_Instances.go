@@ -21,17 +21,18 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newListInstancesCommand() *cobra.Command {
+func newListInstancesCommand(kubeCli kubernetes.KubeCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "instances",
 		Short:   "List all running cells",
 		Aliases: []string{"instance", "inst"},
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunListInstances()
+			commands.RunListInstances(kubeCli)
 		},
 		Example: "  cellery list instances",
 	}
