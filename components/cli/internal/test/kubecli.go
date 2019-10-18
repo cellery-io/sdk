@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,26 +16,23 @@
  * under the License.
  */
 
-package main
+package test
 
-import (
-	"github.com/spf13/cobra"
+import "github.com/cellery-io/sdk/components/cli/kubernetes"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
-)
+type MockKubeCli struct {
+	cells kubernetes.Cells
+}
 
-func newListCommand(kubeCli kubernetes.KubeCli) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list <command>",
-		Short: "List cell information",
+// NewMockKubeCli returns a mock cli for the cli.KubeCli interface.
+func NewMockKubeCli(cells kubernetes.Cells) *MockKubeCli {
+	cli := &MockKubeCli{
+		cells: cells,
 	}
+	return cli
+}
 
-	cmd.AddCommand(
-		newListInstancesCommand(kubeCli),
-		newListImagesCommand(),
-		newListIngressesCommand(),
-		newListComponentsCommand(),
-		newListDependenciesCommand(),
-	)
-	return cmd
+// GetCells returns cell instances array.
+func (kubecli *MockKubeCli) GetCells() ([]kubernetes.Cell, error) {
+	return kubecli.cells.Items, nil
 }

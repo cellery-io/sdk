@@ -25,36 +25,20 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunListInstances() {
-	displayCellTable()
+func RunListInstances(kubeCli kubernetes.KubeCli) {
+	displayCellTable(kubeCli)
 	displayCompositeTable()
 }
 
-func displayCellTable() {
-	cellData, err := kubectl.GetCells()
-	if err != nil {
-		util.ExitWithErrorMessage("Error getting information of cells", err)
-	}
-	if len(cellData.Items) > 0 {
+func displayCellTable(kubeCli kubernetes.KubeCli) {
+	tableData := getCellTableData(kubeCli)
+	if len(tableData) > 0 {
 		fmt.Printf("\n %s\n", util.Bold("Cell Instances:"))
-
-		var tableData [][]string
-
-		for i := 0; i < len(cellData.Items); i++ {
-			age := util.GetDuration(util.ConvertStringToTime(cellData.Items[i].CellMetaData.CreationTimestamp))
-			instance := cellData.Items[i].CellMetaData.Name
-			cellImage := cellData.Items[i].CellMetaData.Annotations.Organization + "/" + cellData.Items[i].CellMetaData.Annotations.Name + ":" + cellData.Items[i].CellMetaData.Annotations.Version
-			gateway := cellData.Items[i].CellStatus.Gateway
-			components := cellData.Items[i].CellStatus.ServiceCount
-			status := cellData.Items[i].CellStatus.Status
-			tableRecord := []string{instance, cellImage, status, gateway, strconv.Itoa(components), age}
-			tableData = append(tableData, tableRecord)
-		}
-
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"INSTANCE", "IMAGE", "STATUS", "GATEWAY", "COMPONENTS", "AGE"})
 		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
@@ -79,6 +63,8 @@ func displayCellTable() {
 
 		table.AppendBulk(tableData)
 		table.Render()
+	} else {
+		fmt.Println("No running cell instances.")
 	}
 }
 
@@ -127,4 +113,23 @@ func displayCompositeTable() {
 		table.AppendBulk(tableData)
 		table.Render()
 	}
+}
+
+func getCellTableData(kubeCli kubernetes.KubeCli) [][]string {
+	var tableData [][]string
+	cells, err := kubeCli.GetCells()
+	if err != nil {
+		util.ExitWithErrorMessage("Error getting information of cells", err)
+	}
+	for i := 0; i < len(cells); i++ {
+		age := util.GetDuration(util.ConvertStringToTime(cells[i].CellMetaData.CreationTimestamp))
+		instance := cells[i].CellMetaData.Name
+		cellImage := cells[i].CellMetaData.Annotations.Organization + "/" + cells[i].CellMetaData.Annotations.Name + ":" + cells[i].CellMetaData.Annotations.Version
+		gateway := cells[i].CellStatus.Gateway
+		components := cells[i].CellStatus.ServiceCount
+		status := cells[i].CellStatus.Status
+		tableRecord := []string{instance, cellImage, status, gateway, strconv.Itoa(components), age}
+		tableData = append(tableData, tableRecord)
+	}
+	return tableData
 }
