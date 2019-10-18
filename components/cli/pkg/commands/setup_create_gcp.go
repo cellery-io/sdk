@@ -301,8 +301,7 @@ func createGcpCluster(gcpService *container.Service, clusterName string) error {
 	gcpCluster := &container.Cluster{
 		Name:                  clusterName,
 		Description:           "k8s cluster",
-		InitialClusterVersion: "1.12",
-		EnableKubernetesAlpha: true,
+		InitialClusterVersion: "1.14",
 		InitialNodeCount:      1,
 		Location:              zone,
 		NodeConfig:            gcpGKENode,
