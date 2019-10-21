@@ -25,7 +25,10 @@ import java.nio.file.Paths;
  */
 public class CelleryConstants {
     public static final String CELLERY_RESOURCE_VERSION = "mesh.cellery.io/v1alpha2";
-    public static final String CELLERY_PACKAGE = "celleryio/cellery:0.0.0";
+    public static final String CELLERY_PKG_ORG = "celleryio";
+    public static final String CELLERY_PKG_NAME = "cellery";
+    public static final String CELLERY_PKG_VERSION = "0.5.0";
+
     public static final String RESOURCE_DEFINITION = "ResourceDefinition";
     public static final String API_DEFINITION = "ApiDefinition";
     public static final String REFERENCE_DEFINITION = "Reference";
@@ -34,7 +37,7 @@ public class CelleryConstants {
     public static final String CELLERY_HOME_PATH = Paths.get(System.getProperty("user.home"), ".cellery").toString();
     public static final String CELLERY_REPO_PATH = Paths.get(CELLERY_HOME_PATH, "repo").toString();
 
-    public static final String IMAGE_SOURCE = "source";
+    public static final String IMAGE_SOURCE = "src";
     public static final String AUTO_SCALING_METRIC_RESOURCE = "Resource";
     public static final String AUTO_SCALING_METRIC_RESOURCE_CPU = "cpu";
     public static final String AUTO_SCALING_METRIC_RESOURCE_MEMORY = "memory";
@@ -42,6 +45,7 @@ public class CelleryConstants {
     public static final String NAME = "name";
     public static final String VERSION = "ver";
     public static final String INSTANCE_NAME = "instanceName";
+    public static final String IS_ROOT = "isRoot";
     public static final String TEMP_TEST_MODULE = "tmp";
     public static final String BTYPE_STRING = "string";
     public static final String MAX_REPLICAS = "maxReplicas";
@@ -73,8 +77,6 @@ public class CelleryConstants {
     public static final String EXPOSE = "expose";
 
     // These should match the Ballerina object names of the Auto Scaling Metrics Objects
-    public static final String ENVOY_GATEWAY = "Envoy";
-    public static final String MICRO_GATEWAY = "MicroGateway";
     public static final String PROTO_FILE = "protoFile";
     public static final String YAML = ".yaml";
 
@@ -102,7 +104,7 @@ public class CelleryConstants {
 
     public static final String SERVICE_TYPE_JOB = "Job";
     public static final String CONTEXT = "context";
-    public static final String CELLERY = "io/cellery";
+    public static final String CELLERY = "cellery";
     public static final String CELLERY_API_VERSION = "mesh.cellery.io/v1alpha2";
     public static final String CENTRAL_REGISTRY_HOST = "registry.hub.cellery.io";
     public static final String BALLERINA_TOML = "Ballerina.toml";
@@ -112,8 +114,8 @@ public class CelleryConstants {
     public static final String CELLERY_ENV_VARIABLE = "cellery_env_";
     public static final String MESH_CELLERY_IO = "mesh.cellery.io";
 
-    public static final String BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-0.991.0";
-    public static final String BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-0.991.0";
+    public static final String BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-1.0.1";
+    public static final String BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-1.0.1";
     public static final String BALLERINA_EXECUTABLE_PATH = "/bin/";
-    public static final String BALLERINA_VERSION = "0.991.0";
+    public static final String BALLERINA_VERSION = "1.0.1";
 }

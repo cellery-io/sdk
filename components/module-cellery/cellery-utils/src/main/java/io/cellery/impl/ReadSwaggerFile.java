@@ -33,6 +33,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static io.cellery.CelleryConstants.API_DEFINITION;
+import static io.cellery.CelleryConstants.CELLERY_PKG_NAME;
+import static io.cellery.CelleryConstants.CELLERY_PKG_ORG;
+import static io.cellery.CelleryConstants.CELLERY_PKG_VERSION;
+import static io.cellery.CelleryConstants.RESOURCE_DEFINITION;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
 
 /**
@@ -40,7 +45,7 @@ import static io.cellery.CelleryUtils.copyResourceToTarget;
  */
 public class ReadSwaggerFile {
 
-    public static MapValue readSwaggerFile(String swaggerFilePath) {
+    public static MapValue readSwaggerFileInternal(String swaggerFilePath) {
         String specification = "";
         try {
             specification = readSwagger(swaggerFilePath, Charset.defaultCharset());
@@ -56,13 +61,13 @@ public class ReadSwaggerFile {
         AtomicLong runCount = new AtomicLong(0L);
         String finalBasePath = basePath;
         ArrayValue arrayValue = new ArrayValue(new BArrayType(BallerinaValues.createRecordValue(new BPackage(
-                "celleryio", "cellery", "0.0.0"), "ResourceDefinition").getType()));
-        MapValue<String, Object> apiDefinitions = BallerinaValues.createRecordValue(new BPackage("celleryio",
-                "cellery", "0.0.0"), "ApiDefinition");
+                CELLERY_PKG_ORG, CELLERY_PKG_NAME, CELLERY_PKG_VERSION), RESOURCE_DEFINITION).getType()));
+        MapValue<String, Object> apiDefinitions = BallerinaValues.createRecordValue(new BPackage(CELLERY_PKG_ORG,
+                CELLERY_PKG_NAME, CELLERY_PKG_VERSION), API_DEFINITION);
         swagger.getPaths().forEach((path, pathDefinition) ->
                 pathDefinition.getOperationMap().forEach((httpMethod, operation) -> {
                     MapValue<String, Object> resource = BallerinaValues.createRecordValue(new BPackage("celleryio",
-                            "cellery", "0.0.0"), "ResourceDefinition");
+                            "cellery", "0.5.0"), "ResourceDefinition");
                     resource.put("path", finalBasePath + path);
                     resource.put("method", httpMethod.toString());
                     arrayValue.add(runCount.getAndIncrement(), resource);
