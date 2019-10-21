@@ -1,13 +1,13 @@
 import ballerina/io;
 import celleryio/cellery;
 
-public function build(cellery:ImageName iName) returns error? {
+public function build(cellery:ImageName iName) returns @tainted error? {
     //Build Stock Cell
     io:println("Building Stock Cell ...");
     //Stock Component
     cellery:Component stockComponent = {
         name: "stock",
-        source: {
+        src: {
             image: "wso2cellery/sampleapp-stock:0.3.0"
         },
         ingresses: {
@@ -31,10 +31,10 @@ public function build(cellery:ImageName iName) returns error? {
             stockComp: stockComponent
         }
     };
-    return cellery:createImage(stockCell, untaint iName);
+    return cellery:createImage(stockCell, iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:CellImage stockCell = check cellery:constructCellImage(untaint iName);
+    cellery:CellImage stockCell = check cellery:constructCellImage(iName);
     return cellery:createInstance(stockCell, iName, instances, startDependencies, shareDependencies);
 }
