@@ -18,7 +18,9 @@
  */
 package io.cellery.impl;
 
-import org.ballerinalang.bre.Context;
+import io.cellery.exception.BallerinaCelleryException;
+import org.ballerinalang.jvm.values.ArrayValue;
+import org.ballerinalang.jvm.values.MapValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +31,7 @@ public class RunTestSuite {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir");
     private static final Logger log = LoggerFactory.getLogger(RunTestSuite.class);
 
-    public static void runTestSuite(Context ctx) {
+    public static void runTestSuite(ArrayValue instances, MapValue testSuite) throws BallerinaCelleryException {
 //        LinkedHashMap nameStruct = null;
 //        BRefType<?>[] instanceList = ((BValueArray) ctx.getNullableRefArgument(0)).getValues();
 //        BRefType<?> iNameRefType;

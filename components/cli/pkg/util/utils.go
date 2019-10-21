@@ -443,7 +443,7 @@ func CreateTempExecutableBalFile(file string, action string) (string, error) {
 	if action == "build" {
 		ballerinaMain = `
 public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-	return build(iName);
+	return build(<@untainted> iName);
 }`
 	} else if action == "run" {
 		ballerinaMain = `

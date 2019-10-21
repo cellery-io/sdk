@@ -13,9 +13,9 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/log;
-import ballerina/io;
 import ballerina/config;
+import ballerina/io;
+import ballerina/log;
 import ballerina/stringutils;
 import ballerinax/java;
 
@@ -320,7 +320,7 @@ public type VolumeMount record {|
 # + image - The cell/composite image definition
 # + iName - The cell image org, name & version
 # + return - error
-public function createImage(CellImage | Composite image, ImageName iName) returns @tainted ( error?) {
+public function createImage(CellImage | Composite image, ImageName iName) returns @tainted (error?) {
     //Persist the Ballerina cell image record as a json
     json jsonValue = check json.constructFrom(image.clone());
     string filePath = "./target/cellery/" + iName.name + "_meta.json";
@@ -337,11 +337,11 @@ public function createImage(CellImage | Composite image, ImageName iName) return
 }
 
 
-function validateCell(CellImage|Composite image) {
+function validateCell(CellImage | Composite image) {
     image.components.forEach(function (Component component) {
-    map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses =
-              <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>>
-              component?.ingresses;
+        map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses =
+        <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>>
+        component?.ingresses;
         if (!(component["ingresses"] is ()) && ingresses.length() > 1) {
             error err = error("component: [" + component.name + "] has more than one ingress");
             panic err;
@@ -356,7 +356,7 @@ function validateCell(CellImage|Composite image) {
             }
         }
         if (!(component["scalingPolicy"] is ()) && (component?.scalingPolicy is AutoScalingPolicy)) {
-            AutoScalingPolicy policy = <AutoScalingPolicy> component?.scalingPolicy;
+            AutoScalingPolicy policy = <AutoScalingPolicy>component?.scalingPolicy;
             if ((!(policy?.metrics["cpu"] is ()) && (policy?.metrics?.cpu is Percentage)) &&
             ((component["resources"] is ()) || component?.resources["limits"] is ())) {
                 io:println("Warning: cpu percentage is defined without resource limits in component: [" + component.name + "]." +
@@ -386,7 +386,7 @@ public function generateVolumeName(string name) returns (string) {
 # + return - error or CellImage record
 public function constructCellImage(ImageName iName) returns @tainted (CellImage | error) {
     string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
-    json|error rResult = read(filePath);
+    json | error rResult = read(filePath);
     if (rResult is error) {
         log:printError("Error occurred while constructing reading cell image from json: " + iName.name, err = rResult);
         return rResult;
@@ -463,14 +463,14 @@ public function getReference(Component component, string dependencyAlias) return
 # Returns the Image Name of the cell
 #
 # + return - ImageName
-public function getCellImage() returns @tainted (ImageName | error){
+public function getCellImage() returns @tainted (ImageName | error) {
     string iNameStr = config:getAsString("IMAGE_NAME", "{org:\"\", name:\"\", ver:\"\", instanceName:\"\"}");
-    io:StringReader reader = new(iNameStr);
-    json|error iNameJson = reader.readJson();
+    io:StringReader reader = new (iNameStr);
+    json | error iNameJson = reader.readJson();
     if (iNameJson is error) {
         return iNameJson;
     }
-    ImageName|error iName = ImageName.constructFrom(<json>iNameJson);
+    ImageName | error iName = ImageName.constructFrom(<json>iNameJson);
     return iName;
 }
 
@@ -479,12 +479,12 @@ public function getCellImage() returns @tainted (ImageName | error){
 # + return - map of dependencies ImageName
 public function getDependencies() returns @tainted (map<ImageName> | error) {
     string dependencyStr = config:getAsString("DEPENDENCY_LINKS", "{}");
-    io:StringReader reader = new(dependencyStr);
-    json|error dependencyJson = reader.readJson();
+    io:StringReader reader = new (dependencyStr);
+    json | error dependencyJson = reader.readJson();
     if (dependencyJson is error) {
         return dependencyJson;
     }
-    map<ImageName>|error instances = map<ImageName>.constructFrom(<json>dependencyJson);
+    map<ImageName> | error instances = map<ImageName>.constructFrom(<json>dependencyJson);
     return instances;
 }
 # Returns cell gateway URL of the started cell
@@ -493,8 +493,8 @@ public function getDependencies() returns @tainted (map<ImageName> | error) {
 # + alias - (optional) dependency alias of instance
 # + kind - Composite/Cell and defaults
 # + return - URL of the cell gateway
-public function getGatewayHost(InstanceState[] iNameList, string alias = "", string kind = "Cell") returns (Reference|error) {
-    ImageName iName = {org: "", name:"", ver:""};
+public function getGatewayHost(InstanceState[] iNameList, string alias = "", string kind = "Cell") returns (Reference | error) {
+    ImageName iName = {org: "", name: "", ver: ""};
     foreach var inst in iNameList {
         if (inst.alias == "") {
             iName = inst.iName;
@@ -505,7 +505,7 @@ public function getGatewayHost(InstanceState[] iNameList, string alias = "", str
         if (instState.alias != "" && instState.alias == alias) {
             if (kind == "Cell") {
                 CellImage cellImage = <CellImage>constructCellImage(iName);
-                foreach var[k, comp] in cellImage.components.entries() {
+                foreach var [k, comp] in cellImage.components.entries() {
                     if (comp["dependencies"] is ()) {
                         break;
                     }
@@ -514,7 +514,7 @@ public function getGatewayHost(InstanceState[] iNameList, string alias = "", str
                 }
             } else {
                 Composite composite = <Composite>constructImage(iName);
-                foreach var[k, comp] in composite.components.entries() {
+                foreach var [k, comp] in composite.components.entries() {
                     if (comp["dependencies"] is ()) {
                         break;
                     }
@@ -525,7 +525,7 @@ public function getGatewayHost(InstanceState[] iNameList, string alias = "", str
         }
     }
     Reference | error? ref = resolveReference(<ImageName>iName);
-    Reference tempRef = <Reference> ref;
+    Reference tempRef = <Reference>ref;
     return tempRef;
 }
 
@@ -561,7 +561,7 @@ public function getPort(Component component) returns (int) {
         panic err;
     }
     map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses =
-         <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>> component?.ingresses;
+    <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>>component?.ingresses;
     if (ingresses.length() > 0) {
         var ingress = ingresses[ingresses.keys()[0]];
         if (ingress is TCPIngress) {
@@ -595,15 +595,15 @@ public function getPort(Component component) returns (int) {
 
 function getValidName(string name) returns string {
     string validName = name.toLowerAscii();
-    validName = stringutils:replaceAll(validName,"_", "-");
-    return stringutils:replaceAll(validName,".", "-");
+    validName = stringutils:replaceAll(validName, "_", "-");
+    return stringutils:replaceAll(validName, ".", "-");
 }
 
 function closeRc(io:ReadableCharacterChannel rc) {
     var result = rc.close();
     if (result is error) {
         log:printError("Error occurred while closing character stream",
-            err = result);
+        err = result);
     }
 }
 
@@ -611,13 +611,13 @@ function closeWc(io:WritableCharacterChannel wc) {
     var result = wc.close();
     if (result is error) {
         log:printError("Error occurred while closing character stream",
-            err = result);
+        err = result);
     }
 }
 
 function write(json content, string path) returns @tainted error? {
     io:WritableByteChannel wbc = check io:openWritableFile(path);
-    io:WritableCharacterChannel wch = new(wbc, "UTF8");
+    io:WritableCharacterChannel wch = new (wbc, "UTF8");
     var result = wch.writeJson(content);
     closeWc(wch);
     return result;
@@ -625,15 +625,15 @@ function write(json content, string path) returns @tainted error? {
 
 function read(string path) returns @tainted json | error {
     io:ReadableByteChannel rbc = check io:openReadableFile(path);
-    io:ReadableCharacterChannel rch = new(rbc, "UTF8");
+    io:ReadableCharacterChannel rch = new (rbc, "UTF8");
     var result = rch.readJson();
     closeRc(rch);
     return result;
 }
 
-function replaceInRef (Reference ref, string alias = "", string name = "") returns Reference {
-    foreach var[key,value] in ref.entries() {
-        string temp = <string> value;
+function replaceInRef(Reference ref, string alias = "", string name = "") returns Reference {
+    foreach var [key, value] in ref.entries() {
+        string temp = <string>value;
         temp = stringutils:replaceAll(temp, "\\{", "");
         temp = stringutils:replaceAll(temp, "\\}", "");
         if (alias != "") {
@@ -649,8 +649,8 @@ function replaceInRef (Reference ref, string alias = "", string name = "") retur
 # + image - The cell image definition
 # + imageName - The cell image org, name & version
 # + return - error
-public function createCellImage(CellImage|Composite image, ImageName imageName) returns error? = @java:Method {
-    class:"io.cellery.impl.CreateCellImage"
+public function createCellImage(CellImage | Composite image, ImageName imageName) returns error? = @java:Method {
+    class: "io.cellery.impl.CreateCellImage"
 } external;
 
 # Update the cell aritifacts with runtime changes
@@ -670,7 +670,15 @@ boolean startDependencies, boolean shareDependencies) returns (InstanceState[] |
 #
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
-public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition | error) = @java:Method {
+public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition|error) {
+    return trap readSwaggerFileInternal(swaggerFilePath);
+}
+
+# Parse the swagger file and returns API Defintions
+#
+# + swaggerFilePath - The swaggerFilePath
+# + return - Array of ApiDefinitions
+public function readSwaggerFileInternal(string swaggerFilePath) returns (ApiDefinition) = @java:Method {
     class: "io.cellery.impl.ReadSwaggerFile"
 } external;
 
@@ -692,30 +700,30 @@ public function runInstances(ImageName iName, map<ImageName> instances) returns 
     class: "io.cellery.impl.RunInstances"
 } external;
 
-public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns ( error?) = @java:Method {
-   class: "io.cellery.impl.RunTestSuite"
+public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns (error?) = @java:Method {
+    class: "io.cellery.impl.RunTestSuite"
 } external;
 
 # Terminate instances started for testing.
 #
 # + instances -  The cell instance dependencies
 # + return - error optional
-public function stopInstances(InstanceState[] instances) returns ( error?) = @java:Method {
-   class: "io.cellery.impl.StopInstances"
+public function stopInstances(InstanceState[] instances) returns (error?) = @java:Method {
+    class: "io.cellery.impl.StopInstances"
 } external;
 
 # Create a Persistence Claim.
 #
 # + pvc -  The K8sNonSharedPersistence record
 # + return - error optional
-public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns ( error?) = @java:Method {
-  class: "io.cellery.impl.CreatePersistenceClaim"
+public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns (error?) = @java:Method {
+    class: "io.cellery.impl.CreatePersistenceClaim"
 } external;
 
-public function createSecret(NonSharedSecret secret) returns ( error?) = @java:Method {
+public function createSecret(NonSharedSecret secret) returns (error?) = @java:Method {
     class: "io.cellery.impl.CreateSecret"
 } external;
 
-public function createConfiguration(NonSharedConfiguration configuration) returns ( error?)= @java:Method {
-   class: "io.cellery.impl.CreateConfiguration"
+public function createConfiguration(NonSharedConfiguration configuration) returns (error?) = @java:Method {
+    class: "io.cellery.impl.CreateConfiguration"
 } external;
