@@ -199,9 +199,9 @@ Now let's look at the steps required to run this cell.
     ```
     
     **Note:**
-    The above provided value for /etc/host is for Cellery local setup, and if you are using a Cellery on,
-    - Existing kubernetes cluster (e.g.: Docker for Mac, Kubeadm, Minikube, etc) - Configure `/etc/hosts` as mentioned [here](docs/setup/existing-cluster.md#configure-host-entries).
-    - GCP - Configure `/etc/hosts` as mentioned [here](docs/setup/gcp-setup.md#configure-host-entries).
+    The above provided value host entry is for Cellery local setup. If you are using a Cellery on,
+    - Existing kubernetes cluster (e.g.: Docker for Mac, Kubeadm, Minikube, etc) - Configure the host entry as explained [here](docs/setup/existing-cluster.md#configure-host-entries).
+    - GCP - Configure the host entry as explained `/etc/hosts` as mentioned [here](docs/setup/gcp-setup.md#configure-host-entries).
 
 4. Now browse to [http://hello-world.com/](http://hello-world.com/) and you should see the web page.
 
