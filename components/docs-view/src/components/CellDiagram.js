@@ -244,9 +244,18 @@ class CellDiagram extends React.Component {
                         group: Constants.Type.CELL
                     });
                 } else {
+                    const cellIngressTypes = data.metaInfo[cell].ingresses;
+                    let cellLabelText = "";
+
+                    if (cellIngressTypes.length === 0) {
+                        cellLabelText = cell;
+                    } else {
+                        cellLabelText = `${cell}\n<b>(${getIngressTypes(cell)})</b>`;
+                    }
+
                     parentNodes.push({
                         id: cell,
-                        label: `${cell}\n<b>(${getIngressTypes(cell)})</b>`,
+                        label: cellLabelText,
                         shape: "image",
                         image: "./cell.svg",
                         group: Constants.Type.CELL
@@ -267,9 +276,18 @@ class CellDiagram extends React.Component {
                         group: Constants.Type.COMPOSITE
                     });
                 } else {
+                    const compIngressTypes = data.metaInfo[composite].ingresses;
+                    let compLabelText = "";
+
+                    if (compIngressTypes.length === 0) {
+                        compLabelText = composite;
+                    } else {
+                        compLabelText = `${composite}\n<b>(${getIngressTypes(composite)})</b>`;
+                    }
+
                     parentNodes.push({
                         id: composite,
-                        label: `${composite}\n<b>(${getIngressTypes(composite)})</b>`,
+                        label: compLabelText,
                         shape: "image",
                         image: "./composite.svg",
                         group: Constants.Type.COMPOSITE
@@ -457,8 +475,10 @@ class CellDiagram extends React.Component {
                 ctx.font = "bold 0.8rem Arial";
                 ctx.textAlign = "center";
                 ctx.fillStyle = "#777777";
-                ctx.fillText(`(${focusCellIngressTypes.join(", ")})`, focusCellLabelPoint.x,
-                    focusCellLabelPoint.y + 45);
+                if (focusCellIngressTypes.length > 0) {
+                    ctx.fillText(`(${focusCellIngressTypes.join(", ")})`, focusCellLabelPoint.x,
+                        focusCellLabelPoint.y + 45);
+                }
             });
 
             this.network.on("stabilizationIterationsDone", () => {

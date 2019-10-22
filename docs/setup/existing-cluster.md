@@ -45,7 +45,8 @@ User needs to increase the Docker Desktop resources to support Cellery runtime. 
  * Memory : 8 GB or more
 
 **Note:**
- * If users wants to install cellery with persisted volume, then add /var/tmp/cellery to the Docker Desktop file sharing to support persistence deployments.
+ * If users want to install cellery with persisted volume, then add **/var/tmp/cellery** to the Docker Desktop file sharing to support persistence deployments.
+ * Docker for Desktop versions **2.1.3.0 edge** does not allow to add **/var/tmp/cellery** as a Docker file share. User can overcome this problem by adding **/var/tmp/cellery** path to **filesharingDirectories** in **/Users/<user>/Library/Group\ Containers/group.com.docker/settings.json**.
  * User may need to restart the Docker Desktop to update the ingress-nginx EXTERNAL-IP after deploying the Cellery runtime.  ( This is a known issue in Docker Desktop.)
 
 ### 3. Kube Admin

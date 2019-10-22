@@ -307,9 +307,10 @@ func RenameFile(oldName, newName string) error {
 func ExtractTarGzFile(extractTo, archive_name string) error {
 	cmd := exec.Command("tar", "-zxvf", archive_name)
 	cmd.Dir = extractTo
-
-	ExecuteCommand(cmd)
-
+	err := ExecuteCommand(cmd)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

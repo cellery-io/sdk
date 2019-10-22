@@ -190,12 +190,31 @@ func GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
 	return []byte(out), err
 }
 
-func GetPods(cellName string) (Pods, error) {
+func GetPodsForCell(cellName string) (Pods, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
 		"pods",
 		"-l",
 		constants.GROUP_NAME+"/cell="+cellName,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := Pods{}
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput, err
+}
+
+func GetPodsForComposite(compName string) (Pods, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"pods",
+		"-l",
+		constants.GROUP_NAME+"/composite="+compName,
 		"-o",
 		"json",
 	)
