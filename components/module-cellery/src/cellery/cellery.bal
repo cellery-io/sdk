@@ -720,10 +720,18 @@ public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns (err
     class: "io.cellery.impl.CreatePersistenceClaim"
 } external;
 
+# Create a Seceret.
+#
+# + secret -  The NonSharedSecret record
+# + return - error optional
 public function createSecret(NonSharedSecret secret) returns (error?) = @java:Method {
     class: "io.cellery.impl.CreateSecret"
 } external;
 
+# Create a ConfigMap.
+#
+# + configuration -  The NonSharedConfiguration record
+# + return - error optional
 public function createConfiguration(NonSharedConfiguration configuration) returns (error?) = @java:Method {
     class: "io.cellery.impl.CreateConfiguration"
 } external;
