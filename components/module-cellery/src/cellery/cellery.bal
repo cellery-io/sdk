@@ -596,7 +596,7 @@ public function getPort(Component component) returns (int) {
 function getValidName(string name) returns string {
     string validName = name.toLowerAscii();
     validName = stringutils:replaceAll(validName, "_", "-");
-    return stringutils:replaceAll(validName, ".", "-");
+    return stringutils:replaceAll(validName, "\\.", "-");
 }
 
 function closeRc(io:ReadableCharacterChannel rc) {
@@ -671,14 +671,14 @@ boolean startDependencies, boolean shareDependencies) returns (InstanceState[] |
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
 public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition|error) {
-    return trap readSwaggerFileInternal(swaggerFilePath);
+    return trap readSwaggerFileExternal(swaggerFilePath);
 }
 
 # Parse the swagger file and returns API Defintions
 #
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
-public function readSwaggerFileInternal(string swaggerFilePath) returns (ApiDefinition) = @java:Method {
+public function readSwaggerFileExternal(string swaggerFilePath) returns (ApiDefinition) = @java:Method {
     class: "io.cellery.impl.ReadSwaggerFile"
 } external;
 
@@ -687,7 +687,15 @@ public function readSwaggerFileInternal(string swaggerFilePath) returns (ApiDefi
 #
 # + iName - Dependency Image Name
 # + return - Reference record
-public function readReference(ImageName iName) returns (Reference | error | ()) = @java:Method {
+public function readReference(ImageName iName) returns (Reference | error? ) {
+    return trap readReferenceExternal(iName);
+}
+
+# Returns a Reference record with url information
+#
+# + iName - Dependency Image Name
+# + return - Reference record
+public function readReferenceExternal(ImageName iName) returns (Reference) = @java:Method {
     class: "io.cellery.impl.ReadReference"
 } external;
 
