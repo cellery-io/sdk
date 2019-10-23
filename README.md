@@ -11,7 +11,7 @@
 Build, run, and manage code-first composites on Kubernetes.
 
 - For in-depth information about how to use Cellery, visit [https://wso2-cellery.github.io/](https://wso2-cellery.github.io/).                                 
-- To ask questions and get assistance from our community, use [Slack](https://join.slack.com/t/cellery-io/shared_invite/enQtNzkwMzI4NjE2MDA1LThkZTI2ZjQ2OWEzNmIwZWQ5ZDg3MGFmNWZiYmY3MWVmZTRiMjdjZDZlMmUyNmY4YmNmYjQ0MDRlZDEzNDg3N2U) or [cellery-dev mailing list](mailto:wso2-cellery-dev@googlegroups.com).
+- To ask questions and get assistance from our community, use [Slack](https://join.slack.com/t/wso2-cellery/shared_invite/enQtNzkwMzI4NjE2MDA1LThkZTI2ZjQ2OWEzNmIwZWQ5ZDg3MGFmNWZiYmY3MWVmZTRiMjdjZDZlMmUyNmY4YmNmYjQ0MDRlZDEzNDg3N2U) or [cellery-dev mailing list](mailto:wso2-cellery-dev@googlegroups.com).
 - To learn how to participate in our overall community, visit [our community page](docs/community.md).
 - To explore already existing Cellery images, visit [cellery hub](https://hub.cellery.io/)
 
