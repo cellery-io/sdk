@@ -19,12 +19,11 @@
 package io.cellery.impl;
 
 import io.cellery.CelleryConstants;
-import io.cellery.exception.BallerinaCelleryException;
 import org.apache.commons.io.IOUtils;
 import org.ballerinalang.jvm.BallerinaValues;
 import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.values.MapValue;
-import org.ballerinalang.model.values.BString;
+import org.ballerinalang.util.exceptions.BallerinaException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -51,7 +50,7 @@ import static io.cellery.CelleryConstants.VERSION;
  */
 public class ReadReference {
 
-    public static MapValue readReference(MapValue nameStruct) throws BallerinaCelleryException {
+    public static MapValue readReferenceExternal(MapValue nameStruct) {
         String orgName = nameStruct.getStringValue(ORG);
         String cellName = nameStruct.getStringValue(NAME);
         String cellVersion = nameStruct.getStringValue(VERSION);
@@ -62,16 +61,15 @@ public class ReadReference {
         try {
             jsonObject = readReferenceJSON(zipFilePath);
             if (jsonObject == null || jsonObject.isEmpty()) {
-                throw new BallerinaCelleryException("Reference file is empty. " + zipFilePath);
+                throw new BallerinaException("Reference file is empty. " + zipFilePath);
             }
         } catch (IOException e) {
-            throw new BallerinaCelleryException("Error while reading reference file. " + zipFilePath);
+            throw new BallerinaException("Error while reading reference file. " + zipFilePath);
         }
         MapValue<String, Object> refMap = BallerinaValues.createRecordValue(new BPackage(CELLERY_PKG_ORG,
                 CELLERY_PKG_NAME, CELLERY_PKG_VERSION), CelleryConstants.REFERENCE_DEFINITION);
         jsonObject.keys().forEachRemaining(key -> refMap.put(key,
-                new BString(jsonObject.get(key).toString().replace(INSTANCE_NAME_PLACEHOLDER,
-                        "{{" + instanceName + "}}"))));
+                jsonObject.get(key).toString().replace(INSTANCE_NAME_PLACEHOLDER, "{{" + instanceName + "}}")));
         return refMap;
     }
 

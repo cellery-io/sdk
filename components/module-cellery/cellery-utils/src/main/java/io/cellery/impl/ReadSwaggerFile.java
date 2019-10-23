@@ -45,7 +45,7 @@ import static io.cellery.CelleryUtils.copyResourceToTarget;
  */
 public class ReadSwaggerFile {
 
-    public static MapValue readSwaggerFileInternal(String swaggerFilePath) {
+    public static MapValue readSwaggerFileExternal(String swaggerFilePath) {
         String specification = "";
         try {
             specification = readSwagger(swaggerFilePath, Charset.defaultCharset());
