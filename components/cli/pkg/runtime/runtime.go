@@ -21,7 +21,9 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -421,7 +423,12 @@ func GetInstancesNames() ([]string, error) {
 
 func WaitFor(checkKnative, hpaEnabled bool) {
 	spinner := util.StartNewSpinner("Checking cluster status...")
-	err := kubectl.WaitForCluster(time.Hour)
+	wtCluster, err := waitingTimeCluster()
+	if err != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error getting waiting time for cluster", err)
+	}
+	err = kubectl.WaitForCluster(wtCluster)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error while checking cluster status", err)
@@ -461,12 +468,42 @@ func WaitFor(checkKnative, hpaEnabled bool) {
 	}
 
 	spinner = util.StartNewSpinner("Checking runtime status (Cellery)...")
-	err = kubectl.WaitForDeployments("cellery-system", time.Minute*15)
+	wrCellerySysterm, err := waitingTimeCellerySystem()
+	if err != nil {
+		spinner.Stop(false)
+		util.ExitWithErrorMessage("Error getting waiting time for cellery system", err)
+	}
+	err = kubectl.WaitForDeployments("cellery-system", wrCellerySysterm)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error while checking runtime status (Cellery)", err)
 	}
 	spinner.SetNewAction("Runtime status (Cellery)...OK")
 	spinner.Stop(true)
+}
 
+func waitingTimeCluster() (time.Duration, error) {
+	waitingTime := time.Hour
+	envVar := os.Getenv("CELLERY_CLUSTER_WAIT_TIME")
+	if envVar != "" {
+		wt, err := strconv.Atoi(envVar)
+		if err != nil {
+			return waitingTime, err
+		}
+		waitingTime = time.Duration(wt)
+	}
+	return waitingTime, nil
+}
+
+func waitingTimeCellerySystem() (time.Duration, error) {
+	waitingTime := time.Minute * 15
+	envVar := os.Getenv("CELLERY_SYSTEM_WAIT_TIME")
+	if envVar != "" {
+		wt, err := strconv.Atoi(envVar)
+		if err != nil {
+			return waitingTime, err
+		}
+		waitingTime = time.Duration(wt)
+	}
+	return waitingTime, nil
 }
