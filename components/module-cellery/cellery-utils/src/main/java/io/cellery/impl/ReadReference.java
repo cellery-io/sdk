@@ -35,6 +35,9 @@ import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static io.cellery.CelleryConstants.CELLERY_PKG_NAME;
+import static io.cellery.CelleryConstants.CELLERY_PKG_ORG;
+import static io.cellery.CelleryConstants.CELLERY_PKG_VERSION;
 import static io.cellery.CelleryConstants.CELLERY_REPO_PATH;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.INSTANCE_NAME_PLACEHOLDER;
@@ -64,8 +67,8 @@ public class ReadReference {
         } catch (IOException e) {
             throw new BallerinaCelleryException("Error while reading reference file. " + zipFilePath);
         }
-        MapValue<String, Object> refMap = BallerinaValues.createRecordValue(new BPackage("celleryio",
-                "cellery", "0.0.0"), CelleryConstants.REFERENCE_DEFINITION);
+        MapValue<String, Object> refMap = BallerinaValues.createRecordValue(new BPackage(CELLERY_PKG_ORG,
+                CELLERY_PKG_NAME, CELLERY_PKG_VERSION), CelleryConstants.REFERENCE_DEFINITION);
         jsonObject.keys().forEachRemaining(key -> refMap.put(key,
                 new BString(jsonObject.get(key).toString().replace(INSTANCE_NAME_PLACEHOLDER,
                         "{{" + instanceName + "}}"))));
