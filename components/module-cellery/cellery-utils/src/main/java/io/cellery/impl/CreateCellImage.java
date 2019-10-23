@@ -741,8 +741,8 @@ public class CreateCellImage {
         cellDependencies.forEach((alias, dependencyValue) -> {
             JSONObject dependencyJsonObject = new JSONObject();
             String org, name, version;
-            if (BTYPE_STRING.equals((((MapValue) dependencyValue).getType().getName()))) {
-                String dependency = ((MapValue) dependencyValue).stringValue();
+            if (dependencyValue instanceof String) {
+                String dependency = ((String) dependencyValue);
                 // Validate dependency text
                 if (dependency.matches("^([^/:]*)/([^/:]*):([^/:]*)$")) {
                     String[] dependencyVersionSplit = dependency.split(":");
