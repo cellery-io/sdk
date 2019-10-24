@@ -483,27 +483,27 @@ func WaitFor(checkKnative, hpaEnabled bool) {
 }
 
 func waitingTimeCluster() (time.Duration, error) {
-	waitingTime := time.Hour
-	envVar := os.Getenv("CELLERY_CLUSTER_WAIT_TIME")
+	waitingTime := time.Minute * 60
+	envVar := os.Getenv("CELLERY_CLUSTER_WAIT_TIME_MINUTES")
 	if envVar != "" {
 		wt, err := strconv.Atoi(envVar)
 		if err != nil {
 			return waitingTime, err
 		}
-		waitingTime = time.Duration(wt)
+		waitingTime = time.Duration(time.Minute * time.Duration(wt))
 	}
 	return waitingTime, nil
 }
 
 func waitingTimeCellerySystem() (time.Duration, error) {
 	waitingTime := time.Minute * 15
-	envVar := os.Getenv("CELLERY_SYSTEM_WAIT_TIME")
+	envVar := os.Getenv("CELLERY_SYSTEM_WAIT_TIME_MINUTES")
 	if envVar != "" {
 		wt, err := strconv.Atoi(envVar)
 		if err != nil {
 			return waitingTime, err
 		}
-		waitingTime = time.Duration(wt)
+		waitingTime = time.Duration(time.Minute * time.Duration(wt))
 	}
 	return waitingTime, nil
 }
