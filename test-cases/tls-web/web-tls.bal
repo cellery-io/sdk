@@ -6,7 +6,7 @@ public function build(cellery:ImageName iName) returns error? {
     // Web Component
     cellery:Component webComponent = {
         name: "web-ui",
-        source: {
+        src: {
             image: "wso2cellery/samples-hello-world-webapp"
         },
         ingresses: {
@@ -29,7 +29,7 @@ public function build(cellery:ImageName iName) returns error? {
             webComp: webComponent
         }
     };
-    return cellery:createImage(webCell, untaint iName);
+    return <@untainted> cellery:createImage(webCell, iName);
 }
 
 
@@ -39,11 +39,11 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
     string tlsCert = readFile(config:getAsString("tls.cert", defaultValue = "./certs/95749524_hello.com.cert"));
 
     //Assign values to cell
-    cellery:CellImage webCell = check cellery:constructCellImage(untaint iName);
+    cellery:CellImage webCell = check cellery:constructCellImage(iName);
     cellery:WebIngress webUI = <cellery:WebIngress>webCell.components.webComp.ingresses.webUI;
     webUI.gatewayConfig.tls.key = tlsKey;
     webUI.gatewayConfig.tls.cert = tlsCert;
-    return cellery:createInstance(webCell, iName, instances, startDependencies, shareDependencies);
+    return <@untainted> cellery:createInstance(webCell, iName, instances, startDependencies, shareDependencies);
 }
 
 function readFile(string filePath) returns (string) {

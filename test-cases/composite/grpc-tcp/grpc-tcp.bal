@@ -17,7 +17,7 @@ public function build(cellery:ImageName iName) returns error? {
     //MySQL Component
     cellery:Component mysqlComponent = {
         name: "mysql",
-        source: {
+        src: {
             image: "mirage20/samples-productreview-mysql"
         },
         ingresses: {
@@ -32,7 +32,7 @@ public function build(cellery:ImageName iName) returns error? {
 
     cellery:Component grpcComponent = {
             name: "grpc",
-            source: {
+            src: {
                 image: "mirage20/samples-productreview-mysql"
             },
             ingresses: {
@@ -48,5 +48,5 @@ public function build(cellery:ImageName iName) returns error? {
             grpcComp: grpcComponent
         }
     };
-    return cellery:createImage(mysqlComposite, untaint iName);
+    return <@untainted> cellery:createImage(mysqlComposite, iName);
 }

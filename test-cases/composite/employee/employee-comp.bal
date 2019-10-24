@@ -7,7 +7,7 @@ public function build(cellery:ImageName iName) returns error? {
       // Salary Component
       cellery:Component salaryComponent = {
           name: "salary",
-          source: {
+          src: {
               image: "wso2cellery/sampleapp-salary:0.3.0"
           },
           ingresses: {
@@ -22,7 +22,7 @@ public function build(cellery:ImageName iName) returns error? {
       // Employee Component
       cellery:Component employeeComponent = {
           name: "employee",
-          source: {
+          src: {
               image: "wso2cellery/sampleapp-employee:0.3.0"
           },
           ingresses: {
@@ -48,10 +48,10 @@ public function build(cellery:ImageName iName) returns error? {
           }
       };
 
-      return cellery:createImage(employeeComposite, untaint iName);
+      return <@untainted> cellery:createImage(employeeComposite, iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:Composite employeeComposite = check cellery:constructImage(untaint iName);
-    return cellery:createInstance(employeeComposite, iName, instances, startDependencies, shareDependencies);
+    cellery:Composite employeeComposite = check cellery:constructImage(iName);
+    return <@untainted> cellery:createInstance(employeeComposite, iName, instances, startDependencies, shareDependencies);
 }

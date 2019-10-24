@@ -1,11 +1,10 @@
-import ballerina/io;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
     //HR component
     cellery:Component hrComponent = {
         name: "hr",
-        source: {
+        src: {
             image: "wso2cellery/sampleapp-hr:0.3.0"
         },
         ingresses: {
@@ -42,10 +41,10 @@ public function build(cellery:ImageName iName) returns error? {
 
     hrComponent.envVars = {
         employee_api_url: {
-            value: <string>cellery:getReference(hrComponent, "employeeCellDep").employee_employee_api_url
+            value: <string>cellery:getReference(hrComponent, "employeeCellDep")["employee_employee_api_url"]
         },
         stock_api_url: {
-            value: <string>cellery:getReference(hrComponent, "stockCellDep").stock_stock_api_url
+            value: <string>cellery:getReference(hrComponent, "stockCellDep")["stock_stock_api_url"]
         }
     };
 
@@ -59,42 +58,42 @@ public function build(cellery:ImageName iName) returns error? {
             hrComp: hrComponent
         }
     };
-    return cellery:createImage(hrCell, untaint iName);
+    return <@untainted> cellery:createImage(hrCell,  iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:CellImage hrCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(hrCell, iName, instances, startDependencies, shareDependencies);
+    cellery:CellImage hrCell = check cellery:constructCellImage( iName);
+    return <@untainted> cellery:createInstance(hrCell, iName, instances, startDependencies, shareDependencies);
 }
 
 // cellery test command will facilitate all flags as cellery run
 public function test(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns error? {
     cellery:Test employeeExternalTest1 = {
         name: "hr-test1",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-test-hr"
         },
         envVars: {
             HR_CELL_URL: {
-                value: <string>cellery:resolveReference(iName).hr_api_url
+                value: <string>cellery:resolveReference(iName)["hr_api_url"]
             },
             EMP_CELL_URL: {
-                value: <string>cellery:resolveReference(instances.employeeCellDep).employee_employee_api_url
+                value: <string>cellery:resolveReference(<cellery:ImageName>instances["employeeCellDep"])["employee_employee_api_url"]
             },
             STOCK_CELL_URL: {
-                value: <string>cellery:resolveReference(instances.stockCellDep).stock_stock_api_url
+                value: <string>cellery:resolveReference(<cellery:ImageName>instances["stockCellDep"])["stock_stock_api_url"]
             }
         }
     };
 
     cellery:Test employeeExternalTest2 = {
         name: "hr-test2",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-test2-hr"
         },
         envVars: {
             EMP_CELL_URL: {
-                value: <string>cellery:resolveReference(instances.employeeCellDep).employee_employee_api_url
+                value: <string>cellery:resolveReference(<cellery:ImageName>instances["employeeCellDep"])["employee_employee_api_url"]
             }
         }
     };

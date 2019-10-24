@@ -8,7 +8,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Stock Component
     cellery:Component stockComponent = {
         name: "stock",
-        source: {
+        src: {
             image: "wso2cellery/sampleapp-stock:0.3.0"
         },
         ingresses: {
@@ -42,14 +42,14 @@ public function build(cellery:ImageName iName) returns error? {
             stockComp: stockComponent
         }
     };
-    return cellery:createImage(stockCell, untaint iName);
+    return <@untainted> cellery:createImage(stockCell, iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:CellImage stockCell = check cellery:constructCellImage(untaint iName);
+    cellery:CellImage stockCell = check cellery:constructCellImage(iName);
     stockCell.components.stockComp.resources.requests= {
             memory: "256Mi",
             cpu: "256m"
         };
-    return cellery:createInstance(stockCell, iName, instances, startDependencies, shareDependencies);
+    return <@untainted> cellery:createInstance(stockCell, iName, instances, startDependencies, shareDependencies);
 }

@@ -1,7 +1,7 @@
 import ballerina/io;
 import celleryio/cellery;
 
-public function build(cellery:ImageName iName) returns @tainted error? {
+public function build(cellery:ImageName iName) returns error? {
     //Build Stock Cell
     io:println("Building Stock Cell ...");
     //Stock Component
@@ -31,10 +31,10 @@ public function build(cellery:ImageName iName) returns @tainted error? {
             stockComp: stockComponent
         }
     };
-    return cellery:createImage(stockCell, iName);
+    return <@untainted> cellery:createImage(stockCell, iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
     cellery:CellImage stockCell = check cellery:constructCellImage(iName);
-    return cellery:createInstance(stockCell, iName, instances, startDependencies, shareDependencies);
+    return <@untainted> cellery:createInstance(stockCell, iName, instances, startDependencies, shareDependencies);
 }

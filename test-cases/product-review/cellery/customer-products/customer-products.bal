@@ -16,7 +16,7 @@ public function build(cellery:ImageName iName) returns error? {
 
     cellery:Component categoriesComponent = {
         name: "categories",
-        source: {
+        src: {
             image: "celleryio/samples-productreview-categories"
         },
         ingresses: {
@@ -33,7 +33,7 @@ public function build(cellery:ImageName iName) returns error? {
     // Salary Component
     cellery:Component customersComponent = {
         name: "customers",
-        source: {
+        src: {
             image: "celleryio/samples-productreview-customers"
         },
         ingresses: {
@@ -58,7 +58,7 @@ public function build(cellery:ImageName iName) returns error? {
 
     cellery:Component productsComponent = {
         name: "products",
-        source: {
+        src: {
             image: "celleryio/samples-productreview-products"
         },
         ingresses: {
@@ -90,10 +90,10 @@ public function build(cellery:ImageName iName) returns error? {
             categories: categoriesComponent
         }
     };
-    return cellery:createImage(productCell, untaint iName);
+    return <@untainted> cellery:createImage(productCell, iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?){
-    cellery:CellImage productCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(productCell, iName, instances, startDependencies, shareDependencies);
+    cellery:CellImage productCell = check cellery:constructCellImage(iName);
+    return <@untainted> cellery:createInstance(productCell, iName, instances, startDependencies, shareDependencies);
 }
