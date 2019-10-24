@@ -9,7 +9,6 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import ballerina/io;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
@@ -17,7 +16,7 @@ public function build(cellery:ImageName iName) returns error? {
     //MySQL Component
     cellery:Component mysqlComponent = {
         name: "mysql",
-        source: {
+        src: {
             image: "mirage20/samples-productreview-mysql"
         },
         ingresses: {
@@ -35,7 +34,7 @@ public function build(cellery:ImageName iName) returns error? {
 
     cellery:Component tcpComponent = {
         name: "TcpInternal",
-        source: {
+        src: {
             image: "wso2/samples-tcp"
         },
         ingresses: {
@@ -47,7 +46,7 @@ public function build(cellery:ImageName iName) returns error? {
 
     cellery:Component grpcComponent = {
         name: "grpc",
-        source: {
+        src: {
             image: "mirage20/samples-productreview-mysql"
         },
         ingresses: {
@@ -64,5 +63,10 @@ public function build(cellery:ImageName iName) returns error? {
             tcpComp: tcpComponent
         }
     };
-    return cellery:createImage(tcpCell, untaint iName);
+    return <@untainted> cellery:createImage(tcpCell, iName);
+}
+
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
+    cellery:CellImage grpcCell = check cellery:constructCellImage(iName);
+    return <@untainted> cellery:createInstance(grpcCell, iName, instances, startDependencies, shareDependencies);
 }

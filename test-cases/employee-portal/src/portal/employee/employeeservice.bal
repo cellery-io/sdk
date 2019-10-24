@@ -26,7 +26,7 @@ service<http:Service> employee bind { port: 8080 } {
 
         string[] headers = req.getHeaderNames();
         foreach header in headers {
-            io:println(header + ": " + req.getHeader(untaint header));
+            io:println(header + ": " + req.getHeader(header));
         }
 
         //check the header
@@ -37,11 +37,11 @@ service<http:Service> employee bind { port: 8080 } {
                 json employeeIdJson = { id: employeeIdMap[empName], designation: employeeDesignationMap[empName] };
                 string salaryServiceName = system:getEnv("SALARY_HOST");
 
-                json salaryDetails = getSalaryDetails(empName, salaryServiceName, untaint req);
+                json salaryDetails = getSalaryDetails(empName, salaryServiceName, req);
                 employeeIdJson.salary = salaryDetails.salary;
 
                 io:println(employeeIdJson);
-                res.setJsonPayload(untaint employeeIdJson);
+                res.setJsonPayload(employeeIdJson);
             } else {
                 res.statusCode = 404;
                 res.setContentType("application/json");

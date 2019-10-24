@@ -30,7 +30,7 @@ spec:
             maxReplicas: 10
             metrics:
               - type: Resource
-                resource:
+                resrc:
                   name: cpu
                   targetAverageUtilization: 50
     - metadata:

@@ -1,11 +1,10 @@
-import ballerina/io;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
     // Web Component
     cellery:Component helloComponent = {
         name: "hello",
-        source: {
+        src: {
             image: "wso2cellery/samples-hello-world-webapp"
         },
         ingresses: {
@@ -28,11 +27,11 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
 
-    return cellery:createImage(helloCell, untaint iName);
+    return <@untainted> cellery:createImage(helloCell, iName);
 }
 
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);
+    cellery:CellImage helloCell = check cellery:constructCellImage(iName);
+    return <@untainted> cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);
 }

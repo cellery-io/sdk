@@ -23,7 +23,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Hello World Component
     cellery:Component helloComponent = {
         name: "hello-api",
-        source: {
+        src: {
             image: "docker.io/wso2cellery/samples-hello-world-api-hello-service"
         },
         ingresses: {
@@ -115,10 +115,10 @@ public function build(cellery:ImageName iName) returns error? {
     io:println("Building Hello World Cell ...");
 
     //Build Hello Cell
-    return cellery:createImage(helloCell, untaint iName);
+    return <@untainted> cellery:createImage(helloCell, <@untainted> iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
-    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);
+    cellery:CellImage helloCell = check cellery:constructCellImage(<@untainted> iName);
+    return <@untainted> cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);
 }

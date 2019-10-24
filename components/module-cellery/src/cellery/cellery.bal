@@ -728,7 +728,7 @@ public function createPersistenceClaim(K8sNonSharedPersistence pvc) returns (err
     class: "io.cellery.impl.CreatePersistenceClaim"
 } external;
 
-# Create a Seceret.
+# Create a Secret.
 #
 # + secret -  The NonSharedSecret record
 # + return - error optional
