@@ -20,7 +20,7 @@ service<http:Service> payroll bind { port: 8080 } {
 
         string[] headers = req.getHeaderNames();
         foreach header in headers {
-            io:println(header + ": " + req.getHeader(untaint header));
+            io:println(header + ": " + req.getHeader(header));
         }
 
         //check the header

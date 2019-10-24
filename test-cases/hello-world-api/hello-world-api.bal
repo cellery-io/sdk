@@ -23,7 +23,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Hello World Component
     cellery:Component helloComponent = {
         name: "hello-api",
-        source: {
+        src: {
             image: "docker.io/wso2cellery/samples-hello-world-api-hello-service"
         },
         ingresses: {
@@ -51,5 +51,5 @@ public function build(cellery:ImageName iName) returns error? {
     io:println("Building Hello World Cell ...");
 
     //Build Hello Cell
-    return cellery:createImage(helloCell, untaint iName);
+    return <@untainted> cellery:createImage(helloCell, iName);
 }

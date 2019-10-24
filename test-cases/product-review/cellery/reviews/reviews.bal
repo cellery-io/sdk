@@ -17,7 +17,7 @@ public function build(cellery:ImageName iName) returns error? {
     // Rating Component
     cellery:Component ratingComponent = {
         name: "ratings",
-        source: {
+        src: {
             image: "celleryio/samples-productreview-ratings"
         },
         ingresses: {
@@ -43,7 +43,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Reviews Component
     cellery:Component reviewsComponent = {
         name: "reviews",
-        source: {
+        src: {
             image: "celleryio/samples-productreview-reviews"
         },
         ingresses: {
@@ -106,12 +106,12 @@ public function build(cellery:ImageName iName) returns error? {
             rating: ratingComponent
         }
     };
-    return cellery:createImage(reviewCell, untaint iName);
+    return <@untainted> cellery:createImage(reviewCell, iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:CellImage reviewCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(reviewCell, iName, instances, startDependencies, shareDependencies);
+    cellery:CellImage reviewCell = check cellery:constructCellImage(iName);
+    return <@untainted> cellery:createInstance(reviewCell, iName, instances, startDependencies, shareDependencies);
 }
 
 type ComponentApi record {

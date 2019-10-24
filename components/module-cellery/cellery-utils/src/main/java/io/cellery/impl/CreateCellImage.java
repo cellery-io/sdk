@@ -109,6 +109,7 @@ import static io.cellery.CelleryConstants.POD_RESOURCES;
 import static io.cellery.CelleryConstants.PROBES;
 import static io.cellery.CelleryConstants.SCALING_POLICY;
 import static io.cellery.CelleryConstants.VERSION;
+import static io.cellery.CelleryConstants.VOLUMES;
 import static io.cellery.CelleryUtils.copyResourceToTarget;
 import static io.cellery.CelleryUtils.getApi;
 import static io.cellery.CelleryUtils.getValidName;
@@ -195,8 +196,8 @@ public class CreateCellImage {
             if (attributeMap.containsKey(POD_RESOURCES)) {
                 processResources(attributeMap.getMapValue(POD_RESOURCES), component);
             }
-            if (attributeMap.containsKey(CelleryConstants.VOLUMES)) {
-                processVolumes(attributeMap.getMapValue(POD_RESOURCES), component);
+            if (attributeMap.containsKey(VOLUMES)) {
+                processVolumes(attributeMap.getMapValue(VOLUMES), component);
             }
             image.addComponent(component);
         });

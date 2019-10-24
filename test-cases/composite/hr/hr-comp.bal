@@ -4,7 +4,7 @@ import celleryio/cellery;
 public function build(cellery:ImageName iName) returns error? {
     cellery:Component hrCompComponent = {
         name: "hr",
-        source: {
+        src: {
             image: "wso2cellery/sampleapp-hr:0.3.0"
         },
         ingresses: {
@@ -45,12 +45,12 @@ public function build(cellery:ImageName iName) returns error? {
             hrComp: hrCompComponent
         }
     };
-    return cellery:createImage(hrComposite, untaint iName);// this will create an image with type = composite
+    return <@untainted> cellery:createImage(hrComposite, iName);// this will create an image with type = composite
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:Composite hrComposite = check cellery:constructImage(untaint iName);
-    return cellery:createInstance(hrComposite, iName, instances, startDependencies, shareDependencies);
+    cellery:Composite hrComposite = check cellery:constructImage(iName);
+    return <@untainted> cellery:createInstance(hrComposite, iName, instances, startDependencies, shareDependencies);
 }
 
 

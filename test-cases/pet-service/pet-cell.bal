@@ -5,7 +5,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Pet Component
     cellery:Component petComponent = {
         name: "pet-service",
-        source: {
+        src: {
             image: "docker.io/isurulucky/pet-service"
         },
         ingresses: {
@@ -32,7 +32,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Pet Component
     cellery:Component debugComponent = {
         name: "debug",
-        source: {
+        src: {
             image: "docker.io/mirage20/k8s-debug-tools"
         },
         scalingPolicy: <cellery:AutoScalingPolicy> {
@@ -51,5 +51,5 @@ public function build(cellery:ImageName iName) returns error? {
             debugComp: debugComponent
         }
     };
-    return cellery:createImage(petCell, untaint iName);
+    return <@untainted> cellery:createImage(petCell, iName);
 }

@@ -25,7 +25,7 @@ public function build(cellery:ImageName iName) returns error? {
     // This is the Component which exposes the Pet Store portal
     cellery:Component portalComponent = {
         name: "portal",
-        source: {
+        src: {
             image: "wso2cellery/samples-pet-store-portal"
         },
         ingresses: {
@@ -70,7 +70,7 @@ public function build(cellery:ImageName iName) returns error? {
             portal: portalComponent
         }
     };
-    return cellery:createImage(petStoreFrontendCell, untaint iName);
+    return <@untainted> cellery:createImage(petStoreFrontendCell, iName);
 }
 
 // The Cellery Lifecycle Run method which is invoked for creating a Cell Instance.
@@ -79,6 +79,6 @@ public function build(cellery:ImageName iName) returns error? {
 // instances - The map dependency instances of the Cell instance to be created
 // return - The Cell instance
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:CellImage petStoreFrontendCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(petStoreFrontendCell, iName, instances, startDependencies, shareDependencies);
+    cellery:CellImage petStoreFrontendCell = check cellery:constructCellImage(iName);
+    return <@untainted> cellery:createInstance(petStoreFrontendCell, iName, instances, startDependencies, shareDependencies);
 }

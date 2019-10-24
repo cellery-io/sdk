@@ -57,7 +57,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
-import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.util.exceptions.BallerinaException;
 import org.bouncycastle.util.Strings;
 
@@ -324,11 +323,11 @@ public class CelleryUtils {
                 specBuilder.withNewSelector().withMatchExpressions();
                 IntStream.range(0, expressions.size()).forEach(index -> {
                     MapValue expressionAttributes = ((MapValue) expressions.getRefValue(index));
-                    final BValueArray valueList = (BValueArray) expressionAttributes.get("values");
+                    final ArrayValue valueList = expressionAttributes.getArrayValue("values");
                     LabelSelectorRequirement labelSelectorRequirement = new LabelSelectorRequirementBuilder()
                             .withKey(expressionAttributes.getStringValue("key"))
                             .withOperator((expressionAttributes.getStringValue("operator")))
-                            .withValues(Arrays.copyOfRange(valueList.getStringArray(), 0, (int) valueList.size()))
+                            .withValues(Arrays.copyOfRange(valueList.getStringArray(), 0, valueList.size()))
                             .build();
                     labelSelectorRequirements.add(labelSelectorRequirement);
                 });
@@ -401,8 +400,8 @@ public class CelleryUtils {
                     .build()
             );
         } else {
-            final BValueArray commandList = (BValueArray) probeKindConf.get("commands");
-            String[] commands = Arrays.copyOfRange(commandList.getStringArray(), 0, (int) commandList.size());
+            final ArrayValue commandList = probeKindConf.getArrayValue("commands");
+            String[] commands = Arrays.copyOfRange(commandList.getStringArray(), 0, commandList.size());
             probeBuilder.withNewExec().addToCommand(commands).endExec();
         }
         return probeBuilder

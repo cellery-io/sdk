@@ -42,7 +42,7 @@ service<http:Service> hr bind { port: 8080 } {
 
         string[] headers = req.getHeaderNames();
         foreach header in headers {
-            io:println(header + ": " + req.getHeader(untaint header));
+            io:println(header + ": " + req.getHeader(header));
         }
 
         string employeeName = req.getHeader("x-cellery-auth-subject");
@@ -98,7 +98,7 @@ service<http:Service> hr bind { port: 8080 } {
         json resp = buildResponse(employeeDetails, stockOptionDetails);
         io:println("response: ");
         io:println(resp);
-        res.setJsonPayload(untaint resp);
+        res.setJsonPayload(resp);
 
         caller->respond(res) but { error e => log:printError("Error sending response", err = e) };
     }
@@ -116,7 +116,7 @@ returns json
 }
 
 function getEmployeeDetails(http:Request clientRequest) returns http:Response|error {
-    var response = employeeDetailsEp->get("/details", message = untaint clientRequest);
+    var response = employeeDetailsEp->get("/details", message = clientRequest);
     match response {
         http:Response httpResponse => {
             return httpResponse;
@@ -129,7 +129,7 @@ function getEmployeeDetails(http:Request clientRequest) returns http:Response|er
 }
 
 function getStockOptionData(http:Request clientRequest) returns http:Response|error {
-    var response = stockOptionsEp->get("/options", message = untaint clientRequest);
+    var response = stockOptionsEp->get("/options", message = clientRequest);
     match response {
         http:Response httpResponse => {
             return httpResponse;
