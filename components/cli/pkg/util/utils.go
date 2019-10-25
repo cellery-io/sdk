@@ -439,27 +439,35 @@ func IsCommandAvailable(name string) bool {
 }
 
 func CreateTempExecutableBalFile(file string, action string) (string, error) {
-	var ballerinaMain = ""
-	if action == "build" {
-		ballerinaMain = `
-public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
-	return build(<@untainted> iName);
-}`
-	} else if action == "run" {
-		ballerinaMain = `
+	var ballerinaMain = `
 public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns error? {
-	cellery:InstanceState[]|error? result = run(iName, instances, startDependencies, shareDependencies);
-    if (result is error?) {
-		return result;
+	if(action == "build") {
+		return <@untainted> build(<@untainted> iName);
+	} else if (action == "run") {
+		 cellery:InstanceState[]|error? result = run(<@untainted> iName, instances, startDependencies, shareDependencies);
+		if (result is error?) {
+			return <@untainted> result;
+		}
 	}
 }`
-	} else if action == "test" {
+	testExists, err := TestMethodExists(file)
+	if err != nil {
+		return "", errors.New("invalid action:" + action)
+	}
+	if testExists {
 		ballerinaMain = `
 public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns error? {
-	return test(iName, instances, startDependencies, shareDependencies);
+	if (action == "build") {
+		return <@untainted> build(<@untainted>iName);
+	} else if (action == "run") {
+		cellery:InstanceState[] | error? result = run(<@untainted>iName, instances, startDependencies, shareDependencies);
+		if (result is error?) {
+			return <@untainted> result;
+		}
+	} else if (action == "test") {
+		return <@untainted> test(<@untainted> iName, instances, startDependencies, shareDependencies);
+	}
 }`
-	} else {
-		return "", errors.New("invalid action:" + action)
 	}
 
 	originalFilePath, _ := filepath.Abs(file)

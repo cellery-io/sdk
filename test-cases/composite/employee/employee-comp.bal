@@ -1,4 +1,3 @@
-import ballerina/io;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {

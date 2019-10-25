@@ -49,9 +49,6 @@ import org.ballerinalang.jvm.types.BPackage;
 import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.ballerinalang.jvm.values.MapValueImpl;
-import org.ballerinalang.model.values.BBoolean;
-import org.ballerinalang.model.values.BMap;
-import org.ballerinalang.model.values.BString;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +71,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static io.cellery.CelleryConstants.CELLERY;
 import static io.cellery.CelleryConstants.CELLERY_PKG_NAME;
 import static io.cellery.CelleryConstants.CELLERY_PKG_ORG;
 import static io.cellery.CelleryConstants.CELLERY_PKG_VERSION;
@@ -151,7 +149,7 @@ public class CreateInstance {
             }
         }
         String destinationPath = cellImageDir + File.separator +
-                "artifacts" + File.separator + "io/cellery";
+                "artifacts" + File.separator + CELLERY;
 
         String cellYAMLPath = destinationPath + File.separator + cellName + CelleryConstants.YAML;
         Composite composite;
@@ -187,8 +185,8 @@ public class CreateInstance {
                 rootCellInfo.put(ORG, rootMeta.getOrg());
                 rootCellInfo.put(NAME, rootMeta.getName());
                 rootCellInfo.put(VERSION, rootMeta.getVer());
-                rootCellInfo.put(INSTANCE_NAME, new BString(rootMeta.getInstanceName()));
-                rootCellInfo.put(IS_ROOT, new BBoolean(true));
+                rootCellInfo.put(INSTANCE_NAME, rootMeta.getInstanceName());
+                rootCellInfo.put(IS_ROOT, true);
                 bmap = BallerinaValues.createRecordValue(new BPackage(CELLERY_PKG_ORG,
                         CELLERY_PKG_NAME, CELLERY_PKG_VERSION), CelleryConstants.INSTANCE_STATE_DEFINITION);
                 bmap.put("iName", rootCellInfo);
@@ -217,12 +215,12 @@ public class CreateInstance {
 
                 if (startDependencies) {
                     dependencyInfo.forEach((alias, info) -> {
-                        String depInstanceName =
-                                ((BString) ((BMap) info).getMap().get(CelleryConstants.INSTANCE_NAME)).stringValue();
-                        String depKind = ((BString) ((BMap) info).getMap().get(CelleryConstants.KIND)).stringValue();
+                        final MapValue infoMap = (MapValue) info;
+                        String depInstanceName = infoMap.getStringValue(CelleryConstants.INSTANCE_NAME);
+                        String depKind = infoMap.getStringValue(CelleryConstants.KIND);
                         bmap = BallerinaValues.createRecordValue(new BPackage(CELLERY_PKG_ORG,
                                 CELLERY_PKG_NAME, CELLERY_PKG_VERSION), CelleryConstants.INSTANCE_STATE_DEFINITION);
-                        bmap.put("iName", info);
+                        bmap.put("iName", infoMap);
                         bmap.put("isRunning", isInstanceRunning(depInstanceName, depKind));
                         bmap.put("alias", alias);
                         bValueArray.add(runCount.getAndIncrement(), bmap);
@@ -462,8 +460,7 @@ public class CreateInstance {
                 envVar.setValue(value.replace(CelleryConstants.INSTANCE_NAME_PLACEHOLDER, instanceName));
                 dependencyInfo.forEach((alias, info) -> {
                     String aliasPlaceHolder = "{{" + alias + "}}";
-                    String depInstanceName =
-                            ((BString) ((BMap) info).getMap().get(CelleryConstants.INSTANCE_NAME)).stringValue();
+                    String depInstanceName = ((MapValue) info).getStringValue(CelleryConstants.INSTANCE_NAME);
                     if (value.contains(aliasPlaceHolder)) {
                         envVar.setValue(value.replace(aliasPlaceHolder, depInstanceName));
                     }
@@ -479,13 +476,13 @@ public class CreateInstance {
      * @param composite      Cell definition
      * @param dependencyInfo dependency alias information map
      */
-    private static void updateDependencyAnnotations(Composite composite, Map dependencyInfo) {
+    private static void updateDependencyAnnotations(Composite composite, MapValue dependencyInfo) {
         Gson gson = new Gson();
         Dependency[] dependencies = gson.fromJson(composite.getMetadata().getAnnotations()
                 .get(CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES), Dependency[].class);
         Arrays.stream(dependencies).forEach(dependency -> {
-            dependency.setInstance(((BString) ((BMap) dependencyInfo.get(dependency.getAlias())).getMap().get(
-                    CelleryConstants.INSTANCE_NAME)).stringValue());
+            dependency.setInstance(dependencyInfo.getMapValue(dependency.getAlias())
+                    .getStringValue(CelleryConstants.INSTANCE_NAME));
             dependency.setAlias(null);
         });
         composite.getMetadata().getAnnotations().put(CelleryConstants.ANNOTATION_CELL_IMAGE_DEPENDENCIES,
@@ -502,7 +499,7 @@ public class CreateInstance {
             ImageComponent component = new ImageComponent();
             MapValue attributeMap = (MapValue) componentValue;
             // Set mandatory fields.
-            component.setName(((BString) attributeMap.get("name")).stringValue());
+            component.setName(attributeMap.getStringValue("name"));
 
             //Process modifiable fields
             if (attributeMap.containsKey(CelleryConstants.PROBES)) {
@@ -655,9 +652,7 @@ public class CreateInstance {
      * @throws Exception if cell start fails
      */
     private static void startInstance(String org, String name, String version, String cellInstanceName, String
-            dependentCells,
-                                      boolean shareDependencies, Map<String, String> environmentVariables) throws
-            IOException {
+            dependentCells, boolean shareDependencies, Map<String, String> environmentVariables) throws IOException {
         Path imageDir = Paths.get(System.getProperty("user.home"), ".cellery", "repo", org, name, version,
                 name + ".zip");
         if (!fileExists(imageDir.toString())) {
@@ -668,12 +663,16 @@ public class CreateInstance {
         unzip(imageDir.toString(), tempBalFileDir.toString());
         String tempBalFile = getFilesByExtension(tempBalFileDir + File.separator + "src", "bal").
                 get(0).toString();
-        String ballerinaMain = "public function main(string action, cellery:ImageName iName, map<cellery:ImageName>" +
+        String ballerinaMain = "public function main(string action, cellery:ImageName iName, map<cellery:ImageName> " +
                 "instances, boolean startDependencies, boolean shareDependencies) returns error? {\n" +
-                "\tcellery:InstanceState[]|error? result = run(iName, instances, startDependencies, " +
+                "\tif(action == \"build\") {\n" +
+                "\t\treturn <@untainted> build(<@untainted> iName);\n" +
+                "\t} else if (action == \"run\") {\n" +
+                "\t\t cellery:InstanceState[]|error? result = run(<@untainted> iName, instances, startDependencies, " +
                 "shareDependencies);\n" +
-                "\tif (result is error?) {\n" +
-                "\t\treturn result;\n" +
+                "\t\tif (result is error?) {\n" +
+                "\t\t\treturn <@untainted> result;\n" +
+                "\t\t}\n" +
                 "\t}\n" +
                 "}";
         appendToFile(ballerinaMain, tempBalFile);
@@ -753,7 +752,7 @@ public class CreateInstance {
      *
      * @param dependencyLinks links to the dependent cells
      */
-    private static void finalizeDependencyTree(Node<Meta> node, Map<?, ?> dependencyLinks) throws
+    private static void finalizeDependencyTree(Node<Meta> node, MapValue dependencyLinks) throws
             BallerinaCelleryException {
         String cellImage = node.getData().getOrg() + File.separator + node.getData().getName() + ":" +
                 node.getData().getVer();
@@ -773,8 +772,8 @@ public class CreateInstance {
         } else if (dependencyLinks.containsKey(node.getData().getAlias())) {
             // Check if there is a dependency Alias equal to the key of dependency cell
             // If there exists an alias assign its instance name as the dependent cell instance name
-            String instanceName = ((BString) (((BMap) (dependencyLinks.get(node.getData().getAlias()))).getMap().
-                    get(CelleryConstants.INSTANCE_NAME))).stringValue();
+            String instanceName = dependencyLinks.getMapValue(node.getData().getAlias())
+                    .getStringValue(CelleryConstants.INSTANCE_NAME);
             String kind = node.getData().getKind();
             node.getData().setInstanceName(instanceName);
             if (isInstanceRunning(instanceName, kind)) {
