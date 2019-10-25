@@ -63,9 +63,8 @@ install: install-lang install-cli install-docs-view
 
 .PHONY: build-lang
 build-lang:
-	cd ${PROJECT_ROOT}/components/module-cellery; \
+	cd ${PROJECT_ROOT}/components; \
 	mvn clean install;
-	ballerina build -a -c;
 
 .PHONY: build-cli
 build-cli:

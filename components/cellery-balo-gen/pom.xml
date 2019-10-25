@@ -11,27 +11,76 @@
     <artifactId>cellery-balo-gen</artifactId>
     <build>
         <plugins>
+            <!--            <plugin>-->
+            <!--                <groupId>org.apache.maven.plugins</groupId>-->
+            <!--                <artifactId>maven-dependency-plugin</artifactId>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <id>unpack</id>-->
+            <!--                        <phase>validate</phase>-->
+            <!--                        <goals>-->
+            <!--                            <goal>unpack</goal>-->
+            <!--                        </goals>-->
+            <!--                        <configuration>-->
+            <!--                            <artifactItems>-->
+            <!--                                <artifactItem>-->
+            <!--                                    <groupId>org.ballerinalang</groupId>-->
+            <!--                                    <artifactId>jballerina-tools</artifactId>-->
+            <!--                                    <version>${ballerina.lang.version}</version>-->
+            <!--                                    <type>zip</type>-->
+            <!--                                    <outputDirectory>${project.build.directory}/extracted-distribution/-->
+            <!--                                    </outputDirectory>-->
+            <!--                                </artifactItem>-->
+            <!--                            </artifactItems>-->
+            <!--                        </configuration>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>1.4.2</version>
                 <executions>
                     <execution>
-                        <id>unpack</id>
+                        <id>download-ballerina</id>
                         <phase>validate</phase>
                         <goals>
-                            <goal>unpack</goal>
+                            <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.ballerinalang</groupId>
-                                    <artifactId>jballerina-tools</artifactId>
-                                    <version>${ballerina.lang.version}</version>
-                                    <type>zip</type>
-                                    <outputDirectory>${project.build.directory}/extracted-distribution/
-                                    </outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
+                            <url>
+                                https://product-dist.ballerina.io/downloads/${ballerina.lang.version}/ballerina-${ballerina.lang.version}.zip
+                            </url>
+                            <unpack>true</unpack>
+                            <outputDirectory>${project.build.directory}/extracted-distribution</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>
+                                ${project.build.directory}/extracted-distribution/ballerina-${ballerina.lang.version}/bre/lib
+                            </outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/resources/jars</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>ballerina-packerina-1.0.1.jar</include>
+                                        <include>ballerina-rt-1.0.1.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
                         </configuration>
                     </execution>
                 </executions>
