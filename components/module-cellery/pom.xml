@@ -22,7 +22,7 @@
 
     <parent>
         <groupId>io.cellery</groupId>
-        <version>0.4.0-SNAPSHOT</version>
+        <version>0.5.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
         <artifactId>cellery-component-parent</artifactId>
     </parent>
@@ -101,7 +101,6 @@
                 <artifactId>commons-lang3</artifactId>
                 <version>3.8</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
@@ -120,36 +119,6 @@
         <org.gson.version>2.8.5</org.gson.version>
         <swagger.parser.version>2.0.8</swagger.parser.version>
     </properties>
-    <profiles>
-        <profile>
-            <id>ballerina-build</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.6.0</version>
-                        <executions>
-                            <execution>
-                                <id>ballerina-build</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <executable>ballerina</executable>
-                            <arguments>
-                                <argument>compile</argument>
-                                <!--<argument>jms</argument>-->
-                            </arguments>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
     <build>
         <plugins>
             <plugin>

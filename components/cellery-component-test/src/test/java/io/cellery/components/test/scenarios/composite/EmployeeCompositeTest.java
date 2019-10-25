@@ -61,11 +61,13 @@ public class EmployeeCompositeTest {
 
     @Test(groups = "build")
     public void compileCellBuild() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "employee-comp" + CelleryTestConstants.BAL,
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH,
+                "employee-comp" + CelleryTestConstants.BAL,
                 cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + CelleryTestConstants.YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        composite = CelleryUtils.readCompositeYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + CelleryTestConstants.YAML).toString());
+        composite = CelleryUtils.readCompositeYaml(CELLERY_PATH.resolve(cellImageInfo.getName()
+                + CelleryTestConstants.YAML).toString());
     }
 
     @Test(groups = "build")
@@ -81,8 +83,10 @@ public class EmployeeCompositeTest {
     @Test(groups = "build")
     public void validateBuildTimeMetaData() {
         Assert.assertEquals(composite.getMetadata().getName(), cellImageInfo.getName());
-        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CelleryTestConstants.CELLERY_IMAGE_ORG), cellImageInfo.getOrg());
-        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CelleryTestConstants.CELLERY_IMAGE_NAME), cellImageInfo.getName());
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CelleryTestConstants.CELLERY_IMAGE_ORG),
+                cellImageInfo.getOrg());
+        Assert.assertEquals(composite.getMetadata().getAnnotations().get(CelleryTestConstants.CELLERY_IMAGE_NAME),
+                cellImageInfo.getName());
         Assert.assertEquals(composite.getMetadata().getAnnotations().get(CelleryTestConstants.CELLERY_IMAGE_VERSION),
                 cellImageInfo.getVer());
     }
@@ -107,12 +111,14 @@ public class EmployeeCompositeTest {
     }
 
     @Test(groups = "run")
-    public void compileCellRun() throws IOException, InterruptedException  {
+    public void compileCellRun() throws IOException, InterruptedException {
         String tmpDir = LangTestUtils.createTempImageDir(SOURCE_DIR_PATH, cellImageInfo.getName());
         Path tempPath = Paths.get(tmpDir);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "employee-comp" + CelleryTestConstants.BAL,
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH,
+                "employee-comp" + CelleryTestConstants.BAL,
                 cellImageInfo, dependencyCells, tmpDir), 0);
-        File newYaml = tempPath.resolve(CelleryTestConstants.ARTIFACTS).resolve(CelleryTestConstants.CELLERY).resolve(cellImageInfo.getName() + CelleryTestConstants.YAML).toFile();
+        File newYaml = tempPath.resolve(CelleryTestConstants.ARTIFACTS).resolve(CelleryTestConstants.CELLERY)
+                .resolve(cellImageInfo.getName() + CelleryTestConstants.YAML).toFile();
         runtimeComposite = CelleryUtils.readCompositeYaml(newYaml.getAbsolutePath());
         Assert.assertNotNull(runtimeComposite);
     }
@@ -132,10 +138,10 @@ public class EmployeeCompositeTest {
         Assert.assertEquals(runtimeComposite.getMetadata().getName(), cellImageInfo.getInstanceName());
         Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CelleryTestConstants.CELLERY_IMAGE_ORG),
                 cellImageInfo.getOrg());
-        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CelleryTestConstants.CELLERY_IMAGE_NAME),
-                cellImageInfo.getName());
-        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations().get(CelleryTestConstants.CELLERY_IMAGE_VERSION),
-                cellImageInfo.getVer());
+        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations()
+                .get(CelleryTestConstants.CELLERY_IMAGE_NAME), cellImageInfo.getName());
+        Assert.assertEquals(runtimeComposite.getMetadata().getAnnotations()
+                .get(CelleryTestConstants.CELLERY_IMAGE_VERSION), cellImageInfo.getVer());
     }
 
     @Test(groups = "run")
@@ -164,7 +170,8 @@ public class EmployeeCompositeTest {
     @Test(groups = "build")
     public void validateMetadataJSON() throws IOException {
         String metadataJsonPath =
-                TARGET_PATH.toAbsolutePath().toString() + File.separator + CelleryTestConstants.CELLERY + File.separator + CelleryTestConstants.METADATA;
+                TARGET_PATH.toAbsolutePath().toString() + File.separator + CelleryTestConstants.CELLERY
+                        + File.separator + CelleryTestConstants.METADATA;
         try (InputStream input = new FileInputStream(metadataJsonPath)) {
             try (InputStreamReader inputStreamReader = new InputStreamReader(input)) {
                 JsonElement parsedJson = new JsonParser().parse(inputStreamReader);

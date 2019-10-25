@@ -20,13 +20,13 @@
 package io.cellery.components.test.scenarios.employee;
 
 import io.cellery.CelleryUtils;
+import io.cellery.components.test.models.CellImageInfo;
+import io.cellery.components.test.utils.LangTestUtils;
 import io.cellery.models.API;
 import io.cellery.models.Cell;
 import io.fabric8.kubernetes.api.model.Container;
 import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
 import org.ballerinax.kubernetes.utils.KubernetesUtils;
-import io.cellery.components.test.models.CellImageInfo;
-import io.cellery.components.test.utils.LangTestUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
