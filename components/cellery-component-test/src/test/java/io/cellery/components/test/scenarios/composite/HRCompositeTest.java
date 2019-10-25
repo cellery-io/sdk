@@ -51,11 +51,13 @@ public class HRCompositeTest {
 
     @Test(groups = "build")
     public void compileCellBuild() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "hr-comp" + CelleryTestConstants.BAL,
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH,
+                "hr-comp" + CelleryTestConstants.BAL,
                 cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + CelleryTestConstants.YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
-        composite = CelleryUtils.readCompositeYaml(CELLERY_PATH.resolve(cellImageInfo.getName() + CelleryTestConstants.YAML).toString());
+        composite = CelleryUtils.readCompositeYaml(CELLERY_PATH.resolve(cellImageInfo.getName()
+                        + CelleryTestConstants.YAML).toString());
     }
 
     @Test(groups = "build")
@@ -97,9 +99,11 @@ public class HRCompositeTest {
         dependencyCells.put("employeeCompDep", employeeDep);
         CellImageInfo stockDep = new CellImageInfo("myorg", "stock-comp", "1.0.0", "stock-inst");
         dependencyCells.put("stockCompDep", stockDep);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "hr-comp" + CelleryTestConstants.BAL, cellImageInfo,
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "hr-comp"
+                        + CelleryTestConstants.BAL, cellImageInfo,
                 dependencyCells, tmpDir), 0);
-        File newYaml = tempPath.resolve(CelleryTestConstants.ARTIFACTS).resolve(CelleryTestConstants.CELLERY).resolve(cellImageInfo.getName() + CelleryTestConstants.YAML).toFile();
+        File newYaml = tempPath.resolve(CelleryTestConstants.ARTIFACTS).resolve(CelleryTestConstants.CELLERY)
+                .resolve(cellImageInfo.getName() + CelleryTestConstants.YAML).toFile();
         runtimeComposite = CelleryUtils.readCompositeYaml(newYaml.getAbsolutePath());
     }
 

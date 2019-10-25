@@ -278,8 +278,7 @@
     </scm>
 
     <properties>
-        <ballerina.lang.version>0.991.0</ballerina.lang.version>
-        <ballerina.source.directory>${project.build.directory}/../src/main/ballerina</ballerina.source.directory>
+        <ballerina.lang.version>1.0.1</ballerina.lang.version>
         <com.fasterxml.jackson.core.annotations.version>2.9.8</com.fasterxml.jackson.core.annotations.version>
         <com.fasterxml.jackson.dataformat.yaml.version>2.9.8</com.fasterxml.jackson.dataformat.yaml.version>
         <docker.generator.version>0.991.0</docker.generator.version>
@@ -297,8 +296,8 @@
     </properties>
 
     <modules>
-        <module>lang</module>
-        <module>cellery-component-test</module>
         <module>module-cellery</module>
+        <module>cellery-balo-gen</module>
+        <module>cellery-component-test</module>
     </modules>
 </project>
