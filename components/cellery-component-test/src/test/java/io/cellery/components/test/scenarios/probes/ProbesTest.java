@@ -27,8 +27,6 @@ import io.cellery.models.Component;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Probe;
-import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
-import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -50,6 +48,7 @@ import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAG
 import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_MESH_VERSION;
 import static io.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static io.cellery.components.test.utils.CelleryTestConstants.YAML;
+import static io.cellery.components.test.utils.LangTestUtils.deleteDirectory;
 
 public class ProbesTest {
 
@@ -258,7 +257,7 @@ public class ProbesTest {
     }
 
     @AfterClass
-    public void cleanUp() throws KubernetesPluginException {
-        KubernetesUtils.deleteDirectory(TARGET_PATH);
+    public void cleanUp() throws IOException {
+        deleteDirectory(TARGET_PATH);
     }
 }
