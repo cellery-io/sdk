@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static io.cellery.CelleryConstants.CELLERY;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
 import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.printDebug;
@@ -298,7 +299,7 @@ public class RunTestSuite {
     }
 
     private static void runImageBasedTest(Cell testCell, String testName) throws BallerinaCelleryException {
-        String targetPath = Paths.get(OUTPUT_DIRECTORY, "io/cellery", testName + CelleryConstants.YAML).toString();
+        String targetPath = Paths.get(OUTPUT_DIRECTORY, CELLERY, testName + CelleryConstants.YAML).toString();
         try {
 
             CelleryUtils.writeToFile(toYaml(testCell), targetPath);
