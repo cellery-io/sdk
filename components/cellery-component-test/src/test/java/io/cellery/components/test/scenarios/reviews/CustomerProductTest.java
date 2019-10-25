@@ -27,8 +27,6 @@ import io.cellery.models.Cell;
 import io.cellery.models.GRPC;
 import io.cellery.models.Ingress;
 import io.fabric8.kubernetes.api.model.Container;
-import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
-import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -51,6 +49,7 @@ import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_MESH
 import static io.cellery.components.test.utils.CelleryTestConstants.PRODUCT_REVIEW;
 import static io.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static io.cellery.components.test.utils.CelleryTestConstants.YAML;
+import static io.cellery.components.test.utils.LangTestUtils.deleteDirectory;
 
 public class CustomerProductTest {
 
@@ -239,7 +238,7 @@ public class CustomerProductTest {
     }
 
     @AfterClass
-    public void cleanUp() throws KubernetesPluginException {
-        KubernetesUtils.deleteDirectory(TARGET_PATH);
+    public void cleanUp() throws IOException {
+        deleteDirectory(TARGET_PATH);
     }
 }

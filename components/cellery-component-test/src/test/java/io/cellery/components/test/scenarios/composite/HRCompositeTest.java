@@ -25,8 +25,6 @@ import io.cellery.components.test.utils.CelleryTestConstants;
 import io.cellery.components.test.utils.LangTestUtils;
 import io.cellery.models.ComponentSpec;
 import io.cellery.models.Composite;
-import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
-import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -37,6 +35,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.cellery.components.test.utils.LangTestUtils.deleteDirectory;
 
 public class HRCompositeTest {
 
@@ -158,8 +158,8 @@ public class HRCompositeTest {
     }
 
     @AfterClass
-    public void cleanUp() throws KubernetesPluginException {
-        KubernetesUtils.deleteDirectory(TARGET_PATH);
+    public void cleanUp() throws IOException {
+        deleteDirectory(TARGET_PATH);
     }
 }
 

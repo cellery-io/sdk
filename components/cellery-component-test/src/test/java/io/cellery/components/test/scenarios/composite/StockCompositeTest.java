@@ -24,8 +24,6 @@ import io.cellery.components.test.models.CellImageInfo;
 import io.cellery.components.test.utils.LangTestUtils;
 import io.cellery.models.ComponentSpec;
 import io.cellery.models.Composite;
-import org.ballerinax.kubernetes.exceptions.KubernetesPluginException;
-import org.ballerinax.kubernetes.utils.KubernetesUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -42,6 +40,7 @@ import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAG
 import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_VERSION;
 import static io.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static io.cellery.components.test.utils.CelleryTestConstants.YAML;
+import static io.cellery.components.test.utils.LangTestUtils.deleteDirectory;
 
 public class StockCompositeTest {
 
@@ -96,8 +95,8 @@ public class StockCompositeTest {
     }
 
     @AfterClass
-    public void cleanUp() throws KubernetesPluginException {
-        KubernetesUtils.deleteDirectory(TARGET_PATH);
+    public void cleanUp() throws IOException {
+        deleteDirectory(TARGET_PATH);
     }
 }
 

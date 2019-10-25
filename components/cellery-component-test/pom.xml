@@ -67,7 +67,7 @@
                     <argLine>${jacoco.agent.argLine}</argLine>
                     <systemPropertyVariables>
                         <ballerina.pack>
-                            ${project.basedir}/../cellery-balo-gen/target/extracted-distributions/jballerina-tools-${ballerina.lang.version}/bin
+                            ${project.basedir}/../cellery-balo-gen/target/extracted-distribution/ballerina-${ballerina.lang.version}/bin
                         </ballerina.pack>
                         <sample.dir>
                             ${project.build.directory}/../../../test-cases

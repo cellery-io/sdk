@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -117,6 +118,19 @@ public class LangTestUtils {
     }
 
     /**
+     * Delete a given directory.
+     *
+     * @param path path to the directory
+     * @throws IOException if an error occurs while deleting
+     */
+    public static void deleteDirectory(Path path) throws IOException {
+        Path pathToBeDeleted = path.toAbsolutePath();
+        if (Files.exists(pathToBeDeleted)) {
+            Files.walk(pathToBeDeleted).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
+    }
+
+    /**
      * Compile and Executes the run function of the Cell file with env variables.
      *
      * @param sourceDirectory Ballerina source directory
@@ -175,7 +189,7 @@ public class LangTestUtils {
         ProcessBuilder pb;
         if (action.equals(BUILD)) {
             pb = new ProcessBuilder(BALLERINA_COMMAND, RUN,
-                    balExecutable, action, imgData, "{}");
+                    balExecutable, action, imgData, "{}", "false", "false");
         } else {
             pb = new ProcessBuilder(BALLERINA_COMMAND, RUN,
                     balExecutable, action, imgData, instanceData, "false", "false");
@@ -329,26 +343,20 @@ public class LangTestUtils {
         }
         Path executableBalPath = targetDir.resolve(executableBalName);
         Files.copy(sourcePath.resolve(fileName), executableBalPath);
-        String balMain;
-        if (action.equals(BUILD)) {
-            balMain = "\npublic function main(string action, cellery:ImageName iName, " +
-                    "map<cellery:ImageName> " +
-                    "instances) returns error? {\n" +
-                    "\treturn build(iName);\n" +
-                    "}\n";
-        } else if (action.equals(RUN)) {
-            balMain = "\npublic function main(string action, cellery:ImageName iName, " +
-                    "map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) " +
-                    "returns error? {\n" +
-                    "\tcellery:InstanceState[]|error? result = " +
-                    "run(iName, instances, startDependencies, shareDependencies);\n" +
-                    "\tif (result is error?) {\n" +
-                    "\t\treturn result;\n" +
-                    "\t}" +
-                    "}\n";
-        } else {
-            throw new IllegalArgumentException("Cell action is not supported");
-        }
+        String balMain = "public function main(string action, cellery:ImageName iName, map<cellery:ImageName> " +
+                "instances, boolean startDependencies, boolean shareDependencies) returns error? {\n" +
+                "\tif (action == \"build\") {\n" +
+                "\t\treturn <@untainted> build(<@untainted>iName);\n" +
+                "\t} else if (action == \"run\") {\n" +
+                "\t\tcellery:InstanceState[] | error? result = run(<@untainted>iName, instances, startDependencies, " +
+                "shareDependencies);\n" +
+                "\t\tif (result is error?) {\n" +
+                "\t\t\treturn <@untainted> result;\n" +
+                "\t\t}\n" +
+                "\t} else if (action == \"test\") {\n" +
+                "\t\treturn <@untainted> test(<@untainted> iName, instances, startDependencies, shareDependencies);\n" +
+                "\t}\n" +
+                "}";
         Files.write(executableBalPath, balMain.getBytes(), StandardOpenOption.APPEND);
         return executableBalPath.toAbsolutePath().toString();
     }
