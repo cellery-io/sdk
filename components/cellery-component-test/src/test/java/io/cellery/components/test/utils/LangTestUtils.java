@@ -353,9 +353,7 @@ public class LangTestUtils {
                 "\t\tif (result is error?) {\n" +
                 "\t\t\treturn <@untainted> result;\n" +
                 "\t\t}\n" +
-                "\t} else if (action == \"test\") {\n" +
-                "\t\treturn <@untainted> test(<@untainted> iName, instances, startDependencies, shareDependencies);\n" +
-                "\t}\n" +
+                "\t} \n" +
                 "}";
         Files.write(executableBalPath, balMain.getBytes(), StandardOpenOption.APPEND);
         return executableBalPath.toAbsolutePath().toString();

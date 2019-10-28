@@ -13,38 +13,3 @@ target = "java8"
   artafactId = "cellery-utils"
   version = "0.4.0"
   groupId = "io.cellery"
-
-  [[platform.libraries]]
-  module = "json"
-  path = "./cellery-utils/target/classes/lib/json-20180813.jar"
-  artafactId = "json"
-  version = "20180813"
-  groupId = "org.json"
-
-  [[platform.libraries]]
-  module = "kubernetes-client"
-  path = "./cellery-utils/target/classes/lib/kubernetes-client-4.3.0.jar"
-  artafactId = "kubernetes-client"
-  version = "4.3.0"
-  groupId = "io.fabric8"
-
-  [[platform.libraries]]
-  module = "docker"
-  path = "./cellery-utils/target/classes/lib/docker-generator-1.0.1.jar"
-  artafactId = "docker-generator"
-  version = "1.0.1"
-  groupId = "org.ballerinax.docker"
-
-  [[platform.libraries]]
-  module = "commons-lang3"
-  path = "./cellery-utils/target/classes/lib/commons-lang3-3.8.jar"
-  artafactId = "commons-lang3"
-  version = "3.8"
-  groupId = "org.apache.commons"
-
-  [[platform.libraries]]
-  module = "commons-lang"
-  path = "./cellery-utils/target/classes/lib/commons-lang-2.6.jar"
-  artafactId = "commons-lang"
-  version = "2.6"
-  groupId = "commons-lang"
