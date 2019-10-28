@@ -29,6 +29,7 @@ In addition, here are some other documents you may wish to read:
 - [How to code cells?](docs/cellery-syntax.md) - explains how Cellery cells are written.
 - [CLI commands](docs/cli-reference.md) - reference for CLI commands.
 - [Samples](https://github.com/wso2-cellery/samples) - a collection of useful samples.
+- [Kubernetes Resources Overview](docs/kubernetes-resources.md) - explains Kubernetes resources used by the Cellery.
 - [Blogs](https://medium.com/wso2-cellery) - a collection of useful integration and user stories. 
 - [Cellery community](docs/community.md) - describes how to get involved and contribute to the Cellery project.
 - [Cellery roadmap](https://github.com/wso2-cellery/sdk/wiki) - provides the roadmap of the Cellery project.
