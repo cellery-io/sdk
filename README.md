@@ -13,7 +13,8 @@ Build, run, and manage code-first composites on Kubernetes.
 - For in-depth information about how to use Cellery, visit [https://wso2-cellery.github.io/](https://wso2-cellery.github.io/).                                 
 - To ask questions and get assistance from our community, use [Slack](https://join.slack.com/t/wso2-cellery/shared_invite/enQtNzkwMzI4NjE2MDA1LThkZTI2ZjQ2OWEzNmIwZWQ5ZDg3MGFmNWZiYmY3MWVmZTRiMjdjZDZlMmUyNmY4YmNmYjQ0MDRlZDEzNDg3N2U) or [cellery-dev mailing list](mailto:wso2-cellery-dev@googlegroups.com).
 - To learn how to participate in our overall community, visit [our community page](docs/community.md).
-- To explore already existing Cellery images, visit [cellery hub](https://hub.cellery.io/)
+- To understand the usecases and integrations of Cellery, visit [our blogs](https://medium.com/wso2-cellery).
+- To explore already existing Cellery images, visit [cellery hub](https://hub.cellery.io/).
 
 In this README:
 
@@ -28,6 +29,7 @@ In addition, here are some other documents you may wish to read:
 - [How to code cells?](docs/cellery-syntax.md) - explains how Cellery cells are written.
 - [CLI commands](docs/cli-reference.md) - reference for CLI commands.
 - [Samples](https://github.com/wso2-cellery/samples) - a collection of useful samples.
+- [Blogs](https://medium.com/wso2-cellery) - a collection of useful integration and user stories. 
 - [Cellery community](docs/community.md) - describes how to get involved and contribute to the Cellery project.
 - [Cellery roadmap](https://github.com/wso2-cellery/sdk/wiki) - provides the roadmap of the Cellery project.
 
