@@ -9,7 +9,6 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import ballerina/io;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
