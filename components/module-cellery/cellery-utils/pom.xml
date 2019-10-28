@@ -54,6 +54,12 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>org.ballerinax.kubernetes</groupId>
+            <artifactId>kubernetes-extension</artifactId>
+            <version>${ballerina.lang.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.26</version>
@@ -68,12 +74,12 @@
         <dependency>
             <groupId>io.fabric8</groupId>
             <artifactId>kubernetes-model</artifactId>
-            <version>4.3.1</version>
+            <version>${fabric8.kubernetes.version}</version>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
             <artifactId>kubernetes-client</artifactId>
-            <version>${fabric8.kubernetes.client.version}</version>
+            <version>${fabric8.kubernetes.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -125,6 +131,164 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${mvn.shade.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <minimizeJar>true</minimizeJar>
+                            <artifactSet>
+                                <includes>
+                                    <incldue>com.spotify:docker-client</incldue>
+                                    <include>com.fasterxml.jackson.datatype:jackson-datatype-guava</include>
+                                    <include>com.fasterxml.jackson.jaxrs:jackson-jaxrs-base</include>
+                                    <include>com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider</include>
+                                    <include>com.fasterxml.jackson.core:jackson-annotations</include>
+                                    <include>com.fasterxml.jackson.core:jackson-core</include>
+                                    <include>com.fasterxml.jackson.core:jackson-databind</include>
+                                    <include>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml</include>
+                                    <include>com.github.jnr:jffi</include>
+                                    <include>com.github.jnr:jnr-constants</include>
+                                    <include>com.github.jnr:jnr-enxio</include>
+                                    <include>com.github.jnr:jnr-ffi</include>
+                                    <include>com.github.jnr:jnr-posix</include>
+                                    <include>com.github.jnr:jnr-unixsocket</include>
+                                    <include>commons-codec:commons-codec</include>
+                                    <include>commons-io:commons-io</include>
+                                    <include>io.fabric8:*</include>
+                                    <inculde>javax.annotation:javax.annotation-api</inculde>
+                                    <include>javax.validation:validation-api</include>
+                                    <include>javax.ws.rs:javax.ws.rs-api</include>
+                                    <include>joda-time:joda-time</include>
+                                    <include>org.apache.commons:commons-compress</include>
+                                    <include>org.apache.httpcomponents:httpclient</include>
+                                    <include>org.apache.httpcomponents:httpcore</include>
+                                    <include>org.ballerinax.docker:docker-generator</include>
+                                    <include>org.glassfish.hk2.external:javax.inject</include>
+                                    <include>org.glassfish.hk2:hk2-api</include>
+                                    <include>org.glassfish.hk2:hk2-locator</include>
+                                    <include>org.glassfish.hk2:hk2-utils</include>
+                                    <include>org.glassfish.jersey.bundles.repackaged:jersey-guava</include>
+                                    <include>org.glassfish.jersey.connectors:jersey-apache-connector</include>
+                                    <include>org.glassfish.jersey.core:jersey-client</include>
+                                    <include>org.glassfish.jersey.core:jersey-common</include>
+                                    <include>org.glassfish.jersey.ext:jersey-entity-filtering</include>
+                                    <include>org.glassfish.jersey.media:jersey-media-json-jackson</include>
+                                    <include>org.ow2.asm:asm</include>
+                                    <include>org.bouncycastle:bcpkix-jdk15on</include>
+                                    <include>org.bouncycastle:bcprov-jdk15on</include>
+                                    <include>com.google.guava:guava</include>
+                                    <include>org.yaml:snakeyaml</include>
+                                </includes>
+                                <excludes>
+                                    <exclude>commons-lang:commons-lang</exclude>
+                                    <exclude>org.ballerinalang:ballerina-builtin</exclude>
+                                    <exclude>org.ballerinalang:ballerina-core</exclude>
+                                    <exclude>org.ballerinalang:ballerina-http</exclude>
+                                    <exclude>org.ballerinalang:ballerina-lang</exclude>
+                                    <exclude>org.ballerinalang:ballerina-launcher</exclude>
+                                    <exclude>org.ballerinalang:ballerina-logging</exclude>
+                                    <exclude>org.ballerinalang:ballerina-mime</exclude>
+                                    <exclude>org.ballerinalang:ballerina-runtime</exclude>
+                                    <exclude>org.bsc.maven:maven-processor-plugin</exclude>
+                                    <exclude>org.slf4j:slf4j-api</exclude>
+                                    <exclude>org.slf4j:slf4j-jdk14</exclude>
+                                    <exclude>org.testng:testng</exclude>
+                                    <exclude>org.wso2.msf4j:jaxrs-delegates</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>org.glassfish.jersey.core:jersey-client</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.glassfish.jersey.core:jersey-common</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.glassfish.hk2:hk2-locator</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.glassfish.hk2:hk2-utils</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.glassfish.hk2:hk2-api</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.github.jnr:jffi</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.github.jnr:jnr-unixsocket</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.github.jnr:jnr-ffi</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.github.jnr:jnr-constants</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.github.jnr:jnr-enxio</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.github.jnr:jnr-posix</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.spotify:docker-client</artifact>
+                                    <includes>
+                                        <include>**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
