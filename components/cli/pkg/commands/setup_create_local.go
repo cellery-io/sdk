@@ -111,7 +111,10 @@ func RunSetupCreateLocal(isCompleteSelected, forceDownload, confirmed bool) {
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to extract vm", err)
 	}
-	vbox.InstallVM(isCompleteSelected)
+	err = vbox.InstallVM(isCompleteSelected)
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to install vm", err)
+	}
 	runtime.WaitFor(false, false)
 }
 
