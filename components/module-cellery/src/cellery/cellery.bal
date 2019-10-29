@@ -662,6 +662,19 @@ public function createCellImage(CellImage | Composite image, ImageName imageName
 # + shareDependencies - Whether to share dependencies
 # + return - error optional
 public function createInstance(CellImage | Composite image, ImageName iName, map<ImageName> instances,
+boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) {
+    return trap createInstanceExternal(image, iName, instances, startDependencies, shareDependencies);
+}
+
+# Update the cell aritifacts with runtime changes
+#
+# + image - The cell image definition
+# + iName - The cell instance name
+# + instances - The cell instance dependencies
+# + startDependencies - Whether to start dependencies
+# + shareDependencies - Whether to share dependencies
+# + return - error optional
+public function createInstanceExternal(CellImage | Composite image, ImageName iName, map<ImageName> instances,
 boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) = @java:Method {
     class: "io.cellery.impl.CreateInstance"
 } external;
