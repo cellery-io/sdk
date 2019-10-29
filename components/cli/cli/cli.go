@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,26 +16,30 @@
  * under the License.
  */
 
-package main
+package cli
 
 import (
-	"github.com/spf13/cobra"
-
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"io"
+	"os"
 )
 
-func newListCommand(kubeCli kubernetes.KubeCli) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list <command>",
-		Short: "List cell information",
-	}
+// Cli represents the cellery command line client.
+type Cli interface {
+	Out() io.Writer
+}
 
-	cmd.AddCommand(
-		newListInstancesCommand(kubeCli),
-		newListImagesCommand(),
-		newListIngressesCommand(),
-		newListComponentsCommand(),
-		newListDependenciesCommand(),
-	)
-	return cmd
+// CelleryCli is an instance of the cellery command line client.
+// Instances of the client can be returned from NewCelleryCli.
+type CelleryCli struct {
+}
+
+// NewCelleryCli returns a CelleryCli instance.
+func NewCelleryCli() *CelleryCli {
+	cli := &CelleryCli{}
+	return cli
+}
+
+// Out returns the writer used for the stdout.
+func (cli *CelleryCli) Out() io.Writer {
+	return os.Stdout
 }

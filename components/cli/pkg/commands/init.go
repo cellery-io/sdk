@@ -21,6 +21,7 @@ package commands
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -29,6 +30,56 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
+
+const CellTemplate = "import ballerina/config;\n" +
+	"import celleryio/cellery;\n" +
+	"\n" +
+	"public function build(cellery:ImageName iName) returns error? {\n" +
+	"    // Hello Component\n" +
+	"    // This Components exposes the HTML hello world page\n" +
+	"    cellery:Component helloComponent = {\n" +
+	"        name: \"hello\",\n" +
+	"        source: {\n" +
+	"            image: \"wso2cellery/samples-hello-world-webapp\"\n" +
+	"        },\n" +
+	"        ingresses: {\n" +
+	"            webUI: <cellery:WebIngress>{ // Web ingress will be always exposed globally.\n" +
+	"                port: 80,\n" +
+	"                gatewayConfig: {\n" +
+	"                    vhost: \"hello-world.com\",\n" +
+	"                    context: \"/\"\n" +
+	"                }\n" +
+	"            }\n" +
+	"        },\n" +
+	"        envVars: {\n" +
+	"            HELLO_NAME: { value: \"Cellery\" }\n" +
+	"        }\n" +
+	"    };\n" +
+	"\n" +
+	"    // Cell Initialization\n" +
+	"    cellery:CellImage helloCell = {\n" +
+	"        components: {\n" +
+	"            helloComp: helloComponent\n" +
+	"        }\n" +
+	"    };\n" +
+	"    return cellery:createImage(helloCell, untaint iName);\n" +
+	"}\n" +
+	"\n" +
+	"public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {\n" +
+	"    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);\n" +
+	"    string vhostName = config:getAsString(\"VHOST_NAME\");\n" +
+	"    if (vhostName !== \"\") {\n" +
+	"        cellery:WebIngress web = <cellery:WebIngress>helloCell.components.helloComp.ingresses.webUI;" +
+	"\n" +
+	"        web.gatewayConfig.vhost = vhostName;\n" +
+	"    }\n" +
+	"\n" +
+	"    string helloName = config:getAsString(\"HELLO_NAME\");\n" +
+	"    if (helloName !== \"\") {\n" +
+	"        helloCell.components.helloComp.envVars.HELLO_NAME.value = helloName;\n" +
+	"    }\n" +
+	"    return cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);\n" +
+	"}\n"
 
 func RunInit(projectName string) {
 	prefix := util.CyanBold("?")
@@ -59,64 +110,21 @@ func RunInit(projectName string) {
 			util.ExitWithErrorMessage("Error occurred while initializing the project", err)
 		}
 	}
-
-	cellTemplate := "import ballerina/config;\n" +
-		"import celleryio/cellery;\n" +
-		"\n" +
-		"public function build(cellery:ImageName iName) returns error? {\n" +
-		"    // Hello Component\n" +
-		"    // This Components exposes the HTML hello world page\n" +
-		"    cellery:Component helloComponent = {\n" +
-		"        name: \"hello\",\n" +
-		"        source: {\n" +
-		"            image: \"wso2cellery/samples-hello-world-webapp\"\n" +
-		"        },\n" +
-		"        ingresses: {\n" +
-		"            webUI: <cellery:WebIngress>{ // Web ingress will be always exposed globally.\n" +
-		"                port: 80,\n" +
-		"                gatewayConfig: {\n" +
-		"                    vhost: \"hello-world.com\",\n" +
-		"                    context: \"/\"\n" +
-		"                }\n" +
-		"            }\n" +
-		"        },\n" +
-		"        envVars: {\n" +
-		"            HELLO_NAME: { value: \"Cellery\" }\n" +
-		"        }\n" +
-		"    };\n" +
-		"\n" +
-		"    // Cell Initialization\n" +
-		"    cellery:CellImage helloCell = {\n" +
-		"        components: {\n" +
-		"            helloComp: helloComponent\n" +
-		"        }\n" +
-		"    };\n" +
-		"    return cellery:createImage(helloCell, untaint iName);\n" +
-		"}\n" +
-		"\n" +
-		"public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {\n" +
-		"    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);\n" +
-		"    string vhostName = config:getAsString(\"VHOST_NAME\");\n" +
-		"    if (vhostName !== \"\") {\n" +
-		"        cellery:WebIngress web = <cellery:WebIngress>helloCell.components.helloComp.ingresses.webUI;" +
-		"\n" +
-		"        web.gatewayConfig.vhost = vhostName;\n" +
-		"    }\n" +
-		"\n" +
-		"    string helloName = config:getAsString(\"HELLO_NAME\");\n" +
-		"    if (helloName !== \"\") {\n" +
-		"        helloCell.components.helloComp.envVars.HELLO_NAME.value = helloName;\n" +
-		"    }\n" +
-		"    return cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);\n" +
-		"}\n"
-
 	currentDir, err := os.Getwd()
 	if err != nil {
 		util.ExitWithErrorMessage("Error in getting current directory location", err)
 	}
+	writer, projectDir := createBalFile(currentDir, projectName)
+	writeCellTemplate(writer, CellTemplate)
+	util.PrintSuccessMessage(fmt.Sprintf("Initialized project in directory: %s", util.Faint(projectDir)))
+	util.PrintWhatsNextMessage("build the image",
+		"cellery build "+projectName+"/"+projectName+".bal"+" organization/image_name:version")
+}
 
+// createBalFile creates a bal file at the current location.
+func createBalFile(currentDir, projectName string) (*os.File, string) {
 	projectDir := filepath.Join(currentDir, projectName)
-	err = util.CreateDir(projectDir)
+	err := util.CreateDir(projectDir)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to initialize project", err)
 	}
@@ -125,23 +133,18 @@ func RunInit(projectName string) {
 	if err != nil {
 		util.ExitWithErrorMessage("Error in creating Ballerina File", err)
 	}
-	defer func() {
-		err = balFile.Close()
-		if err != nil {
-			util.ExitWithErrorMessage("Failed to clean up", err)
-		}
-	}()
-	balW := bufio.NewWriter(balFile)
-	_, err = balW.WriteString(cellTemplate)
+	return balFile, projectDir
+}
+
+// writeCellTemplate writes the content to a bal file.
+func writeCellTemplate(writer io.Writer, cellTemplate string) {
+	balW := bufio.NewWriter(writer)
+	_, err := balW.WriteString(cellTemplate)
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to create cell file", err)
+		util.ExitWithErrorMessage("Failed to create writer for cell file", err)
 	}
 	_ = balW.Flush()
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to create cell file", err)
+		util.ExitWithErrorMessage("Failed to cleanup writer for cell file", err)
 	}
-
-	util.PrintSuccessMessage(fmt.Sprintf("Initialized project in directory: %s", util.Faint(projectDir)))
-	util.PrintWhatsNextMessage("build the image",
-		"cellery build "+projectName+"/"+projectName+".bal"+" organization/image_name:version")
 }

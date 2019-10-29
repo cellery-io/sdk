@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,26 +16,34 @@
  * under the License.
  */
 
-package main
+package test
 
 import (
-	"github.com/spf13/cobra"
-
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"bytes"
+	"io"
 )
 
-func newListCommand(kubeCli kubernetes.KubeCli) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list <command>",
-		Short: "List cell information",
-	}
+type MockCli struct {
+	out       io.Writer
+	outBuffer *bytes.Buffer
+}
 
-	cmd.AddCommand(
-		newListInstancesCommand(kubeCli),
-		newListImagesCommand(),
-		newListIngressesCommand(),
-		newListComponentsCommand(),
-		newListDependenciesCommand(),
-	)
-	return cmd
+// NewMockCli returns a mock cli for the cli.Cli interface.
+func NewMockCli() *MockCli {
+	outBuffer := new(bytes.Buffer)
+	cli := &MockCli{
+		out:       outBuffer,
+		outBuffer: outBuffer,
+	}
+	return cli
+}
+
+// Out returns the output stream (stdout) the cli should write on.
+func (cli *MockCli) Out() io.Writer {
+	return cli.out
+}
+
+// OutBuffer returns the stdout buffer.
+func (cli *MockCli) OutBuffer() *bytes.Buffer {
+	return cli.outBuffer
 }
