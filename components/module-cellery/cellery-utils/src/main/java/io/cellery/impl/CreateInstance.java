@@ -118,7 +118,7 @@ public class CreateInstance {
     private static Map dependencyTreeTable;
     private static boolean shareDependencies;
 
-    public static ArrayValue createInstance(MapValue image, MapValue iName, MapValue userDependencyLinks,
+    public static ArrayValue createInstanceExternal(MapValue image, MapValue iName, MapValue userDependencyLinks,
                                             boolean startDependencies, boolean shareDependencies)
             throws BallerinaCelleryException {
         uniqueInstances = new HashMap();
