@@ -60,55 +60,56 @@ func RunInit(projectName string) {
 		}
 	}
 
-	cellTemplate := "import ballerina/config;\n" +
-		"import celleryio/cellery;\n" +
-		"\n" +
-		"public function build(cellery:ImageName iName) returns error? {\n" +
-		"    // Hello Component\n" +
-		"    // This Components exposes the HTML hello world page\n" +
-		"    cellery:Component helloComponent = {\n" +
-		"        name: \"hello\",\n" +
-		"        source: {\n" +
-		"            image: \"wso2cellery/samples-hello-world-webapp\"\n" +
-		"        },\n" +
-		"        ingresses: {\n" +
-		"            webUI: <cellery:WebIngress>{ // Web ingress will be always exposed globally.\n" +
-		"                port: 80,\n" +
-		"                gatewayConfig: {\n" +
-		"                    vhost: \"hello-world.com\",\n" +
-		"                    context: \"/\"\n" +
-		"                }\n" +
-		"            }\n" +
-		"        },\n" +
-		"        envVars: {\n" +
-		"            HELLO_NAME: { value: \"Cellery\" }\n" +
-		"        }\n" +
-		"    };\n" +
-		"\n" +
-		"    // Cell Initialization\n" +
-		"    cellery:CellImage helloCell = {\n" +
-		"        components: {\n" +
-		"            helloComp: helloComponent\n" +
-		"        }\n" +
-		"    };\n" +
-		"    return cellery:createImage(helloCell, untaint iName);\n" +
-		"}\n" +
-		"\n" +
-		"public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {\n" +
-		"    cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);\n" +
-		"    string vhostName = config:getAsString(\"VHOST_NAME\");\n" +
-		"    if (vhostName !== \"\") {\n" +
-		"        cellery:WebIngress web = <cellery:WebIngress>helloCell.components.helloComp.ingresses.webUI;" +
-		"\n" +
-		"        web.gatewayConfig.vhost = vhostName;\n" +
-		"    }\n" +
-		"\n" +
-		"    string helloName = config:getAsString(\"HELLO_NAME\");\n" +
-		"    if (helloName !== \"\") {\n" +
-		"        helloCell.components.helloComp.envVars.HELLO_NAME.value = helloName;\n" +
-		"    }\n" +
-		"    return cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);\n" +
-		"}\n"
+	cellTemplate := `
+import ballerina/config;
+import celleryio/cellery;
+
+public function build(cellery:ImageName iName) returns error? {
+    // Hello Component
+    // This Components exposes the HTML hello world page
+    cellery:Component helloComponent = {
+        name: "hello",
+        src: {
+            image: "wso2cellery/samples-hello-world-webapp"
+        },
+        ingresses: {
+            webUI: <cellery:WebIngress>{ // Web ingress will be always exposed globally.
+                port: 80,
+                gatewayConfig: {
+                    vhost: "hello-world.com",
+                    context: "/"
+                }
+            }
+        },
+        envVars: {
+            HELLO_NAME: { value: "Cellery" }
+        }
+    };
+
+    // Cell Initialization
+    cellery:CellImage helloCell = {
+        components: {
+            helloComp: helloComponent
+        }
+    };
+    return <@untainted> cellery:createImage(helloCell, iName);
+}
+
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
+    cellery:CellImage helloCell = check cellery:constructCellImage(iName);
+    string vhostName = config:getAsString("VHOST_NAME");
+    if (vhostName !== "") {
+        cellery:WebIngress web = <cellery:WebIngress>helloCell.components["helloComp"]["ingresses"]["webUI"];
+        web.gatewayConfig.vhost = vhostName;
+    }
+
+    string helloName = config:getAsString("HELLO_NAME");
+    if (helloName !== "") {
+        helloCell.components["helloComp"]["envVars"]["HELLO_NAME"].value = helloName;
+    }
+    return <@untainted> cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);
+}
+`
 
 	currentDir, err := os.Getwd()
 	if err != nil {
