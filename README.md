@@ -11,7 +11,10 @@
 Build, run, and manage code-first composites on Kubernetes.
 
 - For in-depth information about how to use Cellery, visit [https://wso2-cellery.github.io/](https://wso2-cellery.github.io/).                                 
-- To ask questions and get assistance from our community, use [Slack](https://join.slack.com/t/wso2-cellery/shared_invite/enQtNzkwMzI4NjE2MDA1LThkZTI2ZjQ2OWEzNmIwZWQ5ZDg3MGFmNWZiYmY3MWVmZTRiMjdjZDZlMmUyNmY4YmNmYjQ0MDRlZDEzNDg3N2U) or [cellery-dev mailing list](mailto:wso2-cellery-dev@googlegroups.com).
+- Engage with our community via, 
+    - [Slack](https://join.slack.com/t/wso2-cellery/shared_invite/enQtNzkwMzI4NjE2MDA1LThkZTI2ZjQ2OWEzNmIwZWQ5ZDg3MGFmNWZiYmY3MWVmZTRiMjdjZDZlMmUyNmY4YmNmYjQ0MDRlZDEzNDg3N2U) 
+    - [Cellery-dev mailing list](mailto:wso2-cellery-dev@googlegroups.com)
+    - [Bi-weekly community call](https://wso2.zoom.us/j/139403337) on Wednesdays at 9:00 AM PDT/9:30 PM IST (Staring from November 6th). 
 - To learn how to participate in our overall community, visit [our community page](docs/community.md).
 - To understand the usecases and integrations of Cellery, visit [our blogs](https://medium.com/wso2-cellery).
 - To explore already existing Cellery images, visit [cellery hub](https://hub.cellery.io/).
@@ -143,7 +146,7 @@ is written in Node.js and it is a simple webapp. In the quick start we will be d
 Now let's look at the steps required to run this cell. 
 
 1. Execute the `cellery run` command that will download the hello-world cell from the `wso2cellery` 
-    organization in [docker hub](https://hub.docker.com/u/wso2cellery) and run the cell.
+    organization in [cellery hub](https://hub.cellery.io/images/wso2cellery/hello-world-cell/latest) and run the cell.
     
     ```
     $ cellery run wso2cellery/hello-world-cell:latest -n hello-world-cell
@@ -152,7 +155,7 @@ Now let's look at the steps required to run this cell.
     You should see the following output:
     
     ```
-    ✔ Connecting to registry-1.docker.io
+    ✔ Connecting to registry.hub.cellery.io
     ✔ Fetching metadata
     ✔ Pulling image wso2cellery/hello-world-cell:latest
     ✔ Saving new Image to the Local Repository
