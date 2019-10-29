@@ -189,6 +189,7 @@
                                     <include>org.bouncycastle:bcprov-jdk15on</include>
                                     <include>com.google.guava:guava</include>
                                     <include>org.yaml:snakeyaml</include>
+                                    <include>org.json:json</include>
                                 </includes>
                                 <excludes>
                                     <exclude>commons-lang:commons-lang</exclude>

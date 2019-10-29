@@ -421,11 +421,12 @@ public class CelleryUtils {
      */
     public static void processEnvVars(MapValue<?, ?> envVars, ImageComponent component) {
         envVars.forEach((k, v) -> {
-            if (StringUtils.isEmpty(((MapValue) v).getStringValue("value"))) {
+            final String value = ((MapValue) v).get("value").toString();
+            if (StringUtils.isEmpty(value)) {
                 //value is empty for envVar
                 component.addEnv(k.toString(), DEFAULT_PARAMETER_VALUE);
             } else {
-                component.addEnv(k.toString(), ((MapValue) v).getStringValue("value"));
+                component.addEnv(k.toString(), value);
             }
         });
     }
