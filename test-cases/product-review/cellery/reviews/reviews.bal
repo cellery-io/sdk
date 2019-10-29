@@ -9,7 +9,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import ballerina/io;
+import ballerina/stringutils;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
@@ -87,18 +87,18 @@ public function build(cellery:ImageName iName) returns error? {
 
     cellery:Reference customerProductRef = cellery:getReference(reviewsComponent, "customerProduct");
     ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers_customerapi_api_url"]);
-    reviewsComponent.envVars.CUSTOMERS_HOST.value = customerComp.url;
-    reviewsComponent.envVars.CUSTOMERS_PORT.value = customerComp.port;
-    reviewsComponent.envVars.CUSTOMERS_CONTEXT.value = customerComp.path;
+    reviewsComponent["envVars"]["CUSTOMERS_HOST"].value = customerComp.url;
+    reviewsComponent["envVars"]["CUSTOMERS_PORT"].value = customerComp.port;
+    reviewsComponent["envVars"]["CUSTOMERS_CONTEXT"].value = <string>customerComp["path"];
 
     ComponentApi productComp = parseApiUrl(<string>customerProductRef["products_productsapi_api_url"]);
-    reviewsComponent.envVars.PRODUCTS_HOST.value = productComp.url;
-    reviewsComponent.envVars.PRODUCTS_PORT.value = productComp.port;
-    reviewsComponent.envVars.PRODUCTS_CONTEXT.value = productComp.path;
+    reviewsComponent["envVars"]["PRODUCTS_HOST"].value = productComp.url;
+    reviewsComponent["envVars"]["PRODUCTS_PORT"].value = productComp.port;
+    reviewsComponent["envVars"]["PRODUCTS_CONTEXT"].value = <string>productComp["path"];
 
     cellery:Reference databaseRef = cellery:getReference(reviewsComponent, "database");
-    reviewsComponent.envVars.DATABASE_PORT.value = <string>databaseRef["mysql_tcp_port"];
-    reviewsComponent.envVars.DATABASE_HOST.value = <string>databaseRef["gateway_host"];
+    reviewsComponent["envVars"]["DATABASE_PORT"].value = <string>databaseRef["mysql_tcp_port"];
+    reviewsComponent["envVars"]["DATABASE_HOST"].value = <string>databaseRef["gateway_host"];
 
     cellery:CellImage reviewCell = {
         components: {
@@ -121,9 +121,9 @@ type ComponentApi record {
 };
 
 function parseApiUrl(string apiUrl) returns ComponentApi {
-    string[] array = apiUrl.split(":");
-    string url = array[1].replaceAll("/", "");
-    string port = array[2].split("/")[0];
-    string path = array[2].split("/")[1];
+    string[] array = stringutils:split(apiUrl, ":");
+    string url = stringutils:replaceAll(array[1], "/", "");
+    string port = stringutils:split(array[2], "/")[0];
+    string path = stringutils:split(array[2], "/")[1];
     return { url: url, port: port, path: path };
 }
