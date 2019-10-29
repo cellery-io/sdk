@@ -20,17 +20,13 @@ Follow the instructions listed below to create your first cell.
 2. The above step will auto generate a Cellery file in the location: hello-world-cell/hello-world-cell.bal with below content. 
 This file is implemented in [Ballerina](https://ballerina.io/) - A Cloud Native Programming Language. However, Ballerina language is used
 for simple assignments to define your applications in Cellery, and hence you do not need to learn or have extensive knowledge in 
-Ballerina language to use Cellery. 
-
-Basically, the cell file consists of three methods, `build`, `run` and `test`, where `build` method will be invoked during `cellery build` operation,  
+Ballerina language to use Cellery. Basically, the cell file consists of three methods, `build`, `run` and `test`, where `build` method will be invoked during `cellery build` operation, 
 `run` method will be invoked during `cellery run` operation and `test` method will be invoked during `cellery test` operation. In each of these method, you define
 what should be occurred for your component/cell/composite.   
 
 3. You define how the your [Cell](cellery-syntax.md#cell) or [Composite](cellery-syntax.md#composite) should be packaged, 
 and the list of components inside it, during the `build` method. At the end of the method, you will be creating the Cell or Composite image via `cellery:createImage()`
-function.
-
-Below shown cell `helloCell` consists of one [component](cellery-syntax.md#component) defined as `helloComponent` and it has one [web ingress](cellery-syntax.md#2-web-ingress) with default vhost `hello-world.com`.
+function. Below shown cell `helloCell` consists of one [component](cellery-syntax.md#component) defined as `helloComponent` and it has one [web ingress](cellery-syntax.md#2-web-ingress) with default vhost `hello-world.com`.
 An environment variable `HELLO_NAME` is expected by `helloComponent` to render the webpage, and it is assigned `Cellery` as default. 
  
     ```ballerina
@@ -84,9 +80,7 @@ An environment variable `HELLO_NAME` is expected by `helloComponent` to render t
     }
     ```
 4. The `run` method will be invoked during the `cellery run` operation, and users can pass environment variables to 
-modify how the cell/composite instance should be created. 
-
-As shown in the above example, the `vhost` parameter in the web ingress and the environment variable `HELLO_NAME` can be modified by resolving the environmental
+modify how the cell/composite instance should be created. As shown in the above example, the `vhost` parameter in the web ingress and the environment variable `HELLO_NAME` can be modified by resolving the environmental
 variables `VHOST_NAME` and `HELLO_NAME` in the runtime. This is performed via having `config:getAsString("<ENV_NAME>")` - a utility function available in [Ballerina](https://ballerina.io/) within the 
 `run` function. The environment variables can be optionally passed via `cellery run <image-name> -e VHOST_NAME=modified.hello.com -e HELLO_NAME=ModifiedCellery`. 
 
@@ -112,9 +106,8 @@ Note `CELLERY_HUB` is your organization name in [Cellery hub](https://hub.celler
 
 6. Note that in the cell file's run method at step-2, it's looking for runtime parameters `VHOST_NAME` and `HELLO_NAME`, 
 and if it's available then it'll will be using those as vhost and greeting name. 
-Therefore run the built Cellery image with `cellery run` command, 
-and pass `my-hello-world.com` for `VHOST_NAME`, and your name for `HELLO_NAME` as shown below. 
-Environment variables can be passed into the Cellery file as explained [here](https://github.com/wso2-cellery/spec).
+Therefore run the built Cellery image with `cellery run` command,  and pass `my-hello-world.com` for `VHOST_NAME`, 
+and your name for `HELLO_NAME` as shown below. Environment variables can be passed into the Cellery file as explained [here](https://github.com/wso2-cellery/spec).
     ```
     $ cellery run <CELLERY_HUB>/hello-world-cell:1.0.0 -e VHOST_NAME=my-hello-world.com -e HELLO_NAME=WSO2 -n my-hello-world
        ✔ Extracting Cell Image  <CELLERY_HUB>/hello-world-cell:1.0.0
