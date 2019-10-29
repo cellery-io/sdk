@@ -404,7 +404,7 @@ public class CreateCellImage {
         Resource resource = new Resource();
         resource.setName(resourceName);
         final MapValue resourceMap = metricsMap.getMapValue(resourceName);
-        final String threshold = resourceMap.getStringValue("threshold");
+        final String threshold = resourceMap.get("threshold").toString();
         if (BTYPE_STRING.equals(resourceMap.getType().getName())) {
             HashMap<String, Object> hs = new HashMap<>();
             hs.put("type", "AverageValue");
@@ -413,7 +413,7 @@ public class CreateCellImage {
         } else {
             HashMap<String, Object> hs = new HashMap<>();
             hs.put("type", "Utilization");
-            hs.put("averageUtilization", Integer.parseInt(threshold));
+            hs.put("averageUtilization", threshold);
             resource.setTarget(hs);
         }
         scalingResourceMetric.setResource(resource);

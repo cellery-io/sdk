@@ -339,20 +339,22 @@ public function createImage(CellImage | Composite image, ImageName iName) return
 
 function validateCell(CellImage | Composite image) {
     image.components.forEach(function (Component component) {
-        map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses =
-        <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>>
-        component?.ingresses;
-        if (!(component["ingresses"] is ()) && ingresses.length() > 1) {
-            error err = error("component: [" + component.name + "] has more than one ingress");
-            panic err;
-        } else if (image.kind == "Composite") {
-            //TODO: Fix this when multiple ingress support is added.
-            var ingress = ingresses[ingresses.keys()[0]];
-            if (ingress is HttpApiIngress || ingress is WebIngress) {
-                string errMsg = "Invalid ingress type in component " + component.name + ". Composites doesn't support HttpApiIngress and WebIngress.";
-                error e = error(errMsg);
-                log:printError("Invalid ingress found ", err = e);
-                panic e;
+        if (!(component["ingresses"] is ())){
+            map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses =
+            <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>>
+            component?.ingresses;
+            if (ingresses.length() > 1) {
+                error err = error("component: [" + component.name + "] has more than one ingress");
+                panic err;
+            } else if (image.kind == "Composite") {
+                //TODO: Fix this when multiple ingress support is added.
+                var ingress = ingresses[ingresses.keys()[0]];
+                if (ingress is HttpApiIngress || ingress is WebIngress) {
+                    string errMsg = "Invalid ingress type in component " + component.name + ". Composites doesn't support HttpApiIngress and WebIngress.";
+                    error e = error(errMsg);
+                    log:printError("Invalid ingress found ", err = e);
+                    panic e;
+                }
             }
         }
         if (!(component["scalingPolicy"] is ()) && (component?.scalingPolicy is AutoScalingPolicy)) {
