@@ -1,4 +1,3 @@
-import ballerina/io;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
@@ -52,4 +51,14 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
     return <@untainted> cellery:createImage(petCell, iName);
+}
+
+// The Cellery Lifecycle Run method which is invoked for creating a Cell Instance.
+//
+// iName - The Image name
+// instances - The map dependency instances of the Cell instance to be created
+// return - The Cell instance
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
+    cellery:CellImage petCell = check cellery:constructCellImage(iName);
+    return <@untainted> cellery:createInstance(petCell, iName, instances, startDependencies, shareDependencies);
 }

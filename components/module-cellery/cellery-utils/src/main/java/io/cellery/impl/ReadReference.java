@@ -64,7 +64,8 @@ public class ReadReference {
                 throw new BallerinaException("Reference file is empty. " + zipFilePath);
             }
         } catch (IOException e) {
-            throw new BallerinaException("Error while reading reference file. " + zipFilePath);
+            throw new BallerinaException("Error while reading reference file:" + zipFilePath + ". \n " +
+                    "Did you pull/build the image " + orgName + "/" + cellName + ":" + cellVersion + "? ");
         }
         MapValue<String, Object> refMap = BallerinaValues.createRecordValue(new BPackage(CELLERY_PKG_ORG,
                 CELLERY_PKG_NAME, CELLERY_PKG_VERSION), CelleryConstants.REFERENCE_DEFINITION);
