@@ -170,6 +170,6 @@
     <modules>
         <module>module-cellery</module>
         <module>cellery-balo-gen</module>
-        <module>cellery-component-test</module>
+<!--        <module>cellery-component-test</module>-->
     </modules>
 </project>
