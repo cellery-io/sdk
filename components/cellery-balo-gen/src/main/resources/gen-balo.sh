@@ -18,15 +18,15 @@
 #!/bin/bash
 echo "Generating Cellery .balo..."
 BALLERINA_DISTRIBUTION_PATH=${1}
-MODULE_CELLERY_PATH="${2}/../module-cellery/"
+MODULE_CELLERY_PATH="${2}/../module-cellery"
 CELLERY_VERSION="0.5.0"
-BALO_CACHE_PATH="~/.ballerina/balo_cache/celleryio/cellery/${CELLERY_VERSION}/"
-BIR_CACHE_PATH="~/.ballerina/bir_cache"
+BALO_CACHE_PATH="${HOME}/.ballerina/balo_cache/celleryio/cellery/${CELLERY_VERSION}/"
+BIR_CACHE_PATH="${HOME}/.ballerina/bir_cache"
 
 EXECUTABLE="${BALLERINA_DISTRIBUTION_PATH}/bin/ballerina"
 cd ${MODULE_CELLERY_PATH}
 ${EXECUTABLE} build -a -c
 mkdir -p ${BALO_CACHE_PATH}
-cp -r "${MODULE_CELLERY_PATH}/target/balo/*" ${BALO_CACHE_PATH}
+cp -r "${MODULE_CELLERY_PATH}/target/balo/cellery-2019r3-java8-0.5.0.balo" ${BALO_CACHE_PATH}
 rm -rf ${BIR_CACHE_PATH}
 
