@@ -14,7 +14,7 @@ Build, run, and manage code-first composites on Kubernetes.
 - Engage with our community via, 
     - [Slack](https://join.slack.com/t/wso2-cellery/shared_invite/enQtNzkwMzI4NjE2MDA1LThkZTI2ZjQ2OWEzNmIwZWQ5ZDg3MGFmNWZiYmY3MWVmZTRiMjdjZDZlMmUyNmY4YmNmYjQ0MDRlZDEzNDg3N2U) 
     - [Cellery-dev mailing list](mailto:wso2-cellery-dev@googlegroups.com)
-    - [Bi-weekly community call](https://wso2.zoom.us/j/139403337) on Wednesdays at 9:00 AM PDT/9:30 PM IST (Staring from November 6th). 
+    - [Bi-weekly community call](https://wso2.zoom.us/j/139403337) on Wednesdays at 9:00 AM PDT/9:30 PM IST (Staring from November 6th). [Subcribe](https://calendar.google.com/calendar?cid=e1mp251ag5nipemhluldtptj8o@group.calendar.google.com) to cellery community calendar to know get notified about our events.   
 - To learn how to participate in our overall community, visit [our community page](docs/community.md).
 - To understand the usecases and integrations of Cellery, visit [our blogs](https://medium.com/wso2-cellery).
 - To explore already existing Cellery images, visit [cellery hub](https://hub.cellery.io/).
