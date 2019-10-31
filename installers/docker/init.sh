@@ -21,7 +21,7 @@
 # Generate required artifacts for ballerina-runtime docker image creation
 
 SOURCE_ROOT=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
-BALLERINA_VERSION=0.991.0
+BALLERINA_VERSION=1.0.1
 BALLERINA_DEB_LOCATION=$SOURCE_ROOT/../../ballerina-linux-installer-x64-$BALLERINA_VERSION.deb
 
 cd $SOURCE_ROOT
@@ -32,5 +32,5 @@ https://product-dist.ballerina.io/downloads/$BALLERINA_VERSION/ballerina-linux-i
 --output $BALLERINA_DEB_LOCATION
 
 cp $BALLERINA_DEB_LOCATION files/
-cp ../ubuntu-x64/target/cellery-ubuntu-x64-*.deb files/cellery-ubuntu-x64.deb
+cp ../ubuntu-x64/target/cellery-ubuntu-x64-*.deb files/
 cp -r ../../components/lang/target/cellery-*.jar files/
