@@ -19,7 +19,7 @@ PROJECT_PKG := github.com/cellery-io/sdk
 GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)
-BALLERINA_VERSION := 0.991.0
+BALLERINA_VERSION ?= 1.0.1
 
 DISTRIBUTION_VERSION ?= master
 DISTRIBUTION_ARTIFACTS := https://github.com/wso2-cellery/distribution/archive/$(DISTRIBUTION_VERSION).zip
@@ -111,7 +111,7 @@ build-ubuntu-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
 	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
-	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION)
+	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION)  $(BALLERINA_VERSION)
 
 .PHONY: build-mac-installer
 build-mac-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-artefacts
