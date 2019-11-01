@@ -153,7 +153,6 @@
         <ballerina.lang.version>1.0.1</ballerina.lang.version>
         <com.fasterxml.jackson.core.annotations.version>2.9.8</com.fasterxml.jackson.core.annotations.version>
         <com.fasterxml.jackson.dataformat.yaml.version>2.9.8</com.fasterxml.jackson.dataformat.yaml.version>
-        <docker.generator.version>0.991.0</docker.generator.version>
         <fabric8.kubernetes.version>4.3.1</fabric8.kubernetes.version>
         <jackson.version>2.9.8</jackson.version>
         <maven.jacoco.plugin.version>0.8.3</maven.jacoco.plugin.version>
@@ -170,6 +169,6 @@
     <modules>
         <module>module-cellery</module>
         <module>cellery-balo-gen</module>
-<!--        <module>cellery-component-test</module>-->
+        <module>cellery-component-test</module>
     </modules>
 </project>
