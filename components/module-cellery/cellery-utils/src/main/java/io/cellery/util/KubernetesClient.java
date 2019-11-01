@@ -39,6 +39,17 @@ public class KubernetesClient {
     }
 
     /**
+     * Deletes a Kubernetes resource.
+     *
+     * @param name Resource name
+     * @param type Resource type
+     */
+    public static void delete(String name, String type) {
+        CelleryUtils.executeShellCommand("kubectl delete " + type + " " + name, null,
+                CelleryUtils::printDebug, CelleryUtils::printWarning);
+    }
+
+    /**
      * Wait for condition.
      *
      * @param condition the condition that is being checked

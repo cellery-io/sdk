@@ -469,29 +469,39 @@ public function getReference(Component component, string dependencyAlias) return
 # Returns the Image Name of the cell
 #
 # + return - ImageName
-public function getCellImage() returns @tainted (ImageName | error) {
+public function getCellImage() returns @tainted ImageName {
     string iNameStr = config:getAsString("IMAGE_NAME", "{org:\"\", name:\"\", ver:\"\", instanceName:\"\"}");
     io:StringReader reader = new (iNameStr);
-    json | error iNameJson = reader.readJson();
-    if (iNameJson is error) {
-        return iNameJson;
+    json | error result = reader.readJson();
+    if (result is error) {
+        log:printError("Error occured while deriving image name ", err = result);
+        panic result;
     }
-    ImageName | error iName = ImageName.constructFrom(<json>iNameJson);
-    return iName;
+    ImageName | error iName = ImageName.constructFrom(<json>result);
+    if (iName is error) {
+        log:printError("Error occured while constructing image name from json", err = iName);
+        panic iName;
+    }
+    return <ImageName>iName;
 }
 
 # Get cell dependencies map
 #
 # + return - map of dependencies ImageName
-public function getDependencies() returns @tainted (map<ImageName> | error) {
+public function getDependencies() returns @tainted map<ImageName> {
     string dependencyStr = config:getAsString("DEPENDENCY_LINKS", "{}");
     io:StringReader reader = new (dependencyStr);
     json | error dependencyJson = reader.readJson();
     if (dependencyJson is error) {
-        return dependencyJson;
+        log:printError("Error occured while deriving dependency links ", err = dependencyJson);
+        panic dependencyJson;
     }
-    map<ImageName> | error instances = map<ImageName>.constructFrom(<json>dependencyJson);
-    return instances;
+    map<ImageName> | error iNameMap = map<ImageName>.constructFrom(<json>dependencyJson);
+    if (iNameMap is error) {
+        log:printError("Error occured while deriving dependency links ", err = iNameMap);
+        panic iNameMap;
+    } 
+    return <map<ImageName>>iNameMap;
 }
 # Returns cell gateway URL of the started cell
 #
@@ -499,7 +509,7 @@ public function getDependencies() returns @tainted (map<ImageName> | error) {
 # + alias - (optional) dependency alias of instance
 # + kind - Composite/Cell and defaults
 # + return - URL of the cell gateway
-public function getGatewayHost(InstanceState[] iNameList, string alias = "", string kind = "Cell") returns (Reference | error) {
+public function getCellEndpoints(InstanceState[] iNameList, string alias = "", string kind = "Cell") returns Reference {
     ImageName iName = {org: "", name: "", ver: ""};
     foreach var inst in iNameList {
         if (inst.alias == "") {
@@ -531,6 +541,10 @@ public function getGatewayHost(InstanceState[] iNameList, string alias = "", str
         }
     }
     Reference | error? ref = resolveReference(<ImageName>iName);
+    if (ref is error) {
+        log:printError("Error occured while resolving reference", err = ref);
+        panic ref;
+    }
     Reference tempRef = <Reference>ref;
     return tempRef;
 }

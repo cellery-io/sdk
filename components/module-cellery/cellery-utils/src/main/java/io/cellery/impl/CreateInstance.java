@@ -75,6 +75,7 @@ import static io.cellery.CelleryConstants.CELLERY;
 import static io.cellery.CelleryConstants.CELLERY_PKG_NAME;
 import static io.cellery.CelleryConstants.CELLERY_PKG_ORG;
 import static io.cellery.CelleryConstants.CELLERY_PKG_VERSION;
+import static io.cellery.CelleryConstants.IMAGE_NAME_ENV_VAR;
 import static io.cellery.CelleryConstants.INSTANCE_NAME;
 import static io.cellery.CelleryConstants.IS_ROOT;
 import static io.cellery.CelleryConstants.KIND;
@@ -197,21 +198,8 @@ public class CreateInstance {
                 displayDependentCellTable();
                 printInfo("Dependency Tree to be Used\n");
                 printDependencyTree();
-                Map<String, String> testEnvVars = new HashMap<>();
 
-                testEnvVars.put(CelleryConstants.IMAGE_NAME_ENV_VAR, rootCellInfo.toString()
-                        .replace(ORG, "\"org\"")
-                        .replace(NAME, "\"name\"")
-                        .replace(VERSION, "\"ver\"")
-                        .replace(INSTANCE_NAME, "\"instanceName\"")
-                        .replace(IS_ROOT, "\"isRoot\""));
-                testEnvVars.put(CelleryConstants.DEPENDENCY_LINKS_ENV_VAR, dependencyInfo.toString()
-                        .replace(ORG, "\"org\"")
-                        .replace(NAME, "\"name\"")
-                        .replace(VERSION, "\"ver\"")
-                        .replace(INSTANCE_NAME, "\"instanceName\"")
-                        .replace(IS_ROOT, "\"isRoot\""));
-                setEnvVarsForTests(testEnvVars);
+                setEnvVarsForTests(constructImageNameObj(rootMeta));
 
                 if (startDependencies) {
                     dependencyInfo.forEach((alias, info) -> {
@@ -288,6 +276,16 @@ public class CreateInstance {
             log.error(error, e);
             throw new BallerinaCelleryException(error + ". " + e.getMessage());
         }
+    }
+
+    private static JSONObject constructImageNameObj(Meta rootMeta) {
+        JSONObject imageName = new JSONObject();
+        imageName.put(ORG, rootMeta.getOrg());
+        imageName.put(NAME, rootMeta.getName());
+        imageName.put(VERSION, rootMeta.getVer());
+        imageName.put(INSTANCE_NAME, rootMeta.getInstanceName());
+        imageName.put(IS_ROOT, true);
+        return imageName;
     }
 
     /**
@@ -860,12 +858,12 @@ public class CreateInstance {
         }
     }
 
-    private static void setEnvVarsForTests(Map<String, String> envVars) throws BallerinaCelleryException {
+    private static void setEnvVarsForTests(JSONObject envVars) throws BallerinaCelleryException {
         Map<String, String> env = System.getenv();
         try {
             Field field = env.getClass().getDeclaredField("m");
             field.setAccessible(true);
-            ((Map<String, String>) field.get(env)).putAll(envVars);
+            ((Map<String, String>) field.get(env)).put(IMAGE_NAME_ENV_VAR, envVars.toString());
             field.setAccessible(false);
         } catch (IllegalAccessException | NoSuchFieldException e) {
             throw new BallerinaCelleryException("Error occurred while creating " + CelleryConstants.BALLERINA_CONF);

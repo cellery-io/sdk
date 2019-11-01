@@ -20,27 +20,29 @@ package commands
 
 import (
 	"bufio"
+	"os/user"
+	"runtime"
+	"strconv"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"regexp"
-	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
-)
 
-const dockerCliCellImageDir = "/home/cellery/.cellery/tmp/cellery-cell-image"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
+)
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)\
 func RunTest(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
@@ -221,15 +223,15 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	cmd := &exec.Cmd{}
 	verboseMode := strconv.FormatBool(verbose)
 
+	balProjectName := "target"
 	balTomlPath := filepath.Join(imageDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_TOML)
-	balLocalRepoPath := filepath.Join(imageDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_LOCAL_REPO)
 	testsPath := filepath.Join(imageDir, constants.ZIP_TESTS)
-	testsRoot := filepath.Join(currentDir, "target")
+	testsRoot := filepath.Join(currentDir, balProjectName)
 	var balModule string
 	if instanceName != "" {
-		balModule = filepath.Join(testsRoot, instanceName)
+		balModule = filepath.Join(testsRoot, constants.ZIP_BALLERINA_SOURCE, instanceName)
 	} else {
-		balModule = filepath.Join(testsRoot, constants.TEMP_TEST_MODULE)
+		balModule = filepath.Join(testsRoot, constants.ZIP_BALLERINA_SOURCE, constants.TEMP_TEST_MODULE)
 	}
 	isTestDirExists, _ := util.FileExists(testsPath)
 	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
@@ -239,20 +241,28 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		return fmt.Errorf("no tests found in the cell image %v", imageTag)
 	}
 	if isTestDirExists {
-		err = util.CleanAndCreateDir(testsRoot)
+		err = util.RemoveDir(testsRoot)
 		if err != nil {
 			util.ExitWithErrorMessage("Error occurred while creating the cell image", err)
 		}
 
 		isBallerinaProject, err = util.FileExists(balTomlPath)
+		if exePath != "" {
+			cmd := exec.Command(exePath, "new", balProjectName)
+			if verbose {
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+			}
+			err = cmd.Run()
+			if err != nil {
+				return fmt.Errorf("error occurred while initializing ballerina project for tests", err)
+			}
+		}
+
 		if isBallerinaProject {
 			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BALLERINA_TOML))
 			if fileCopyError != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Error occurred while copying %s", constants.BALLERINA_TOML), err)
-			}
-			fileCopyError = util.CopyDir(balLocalRepoPath, filepath.Join(testsRoot, constants.BALLERINA_LOCAL_REPO))
-			if fileCopyError != nil {
-				util.ExitWithErrorMessage(fmt.Sprintf("Error occurred while copying %s", constants.BALLERINA_LOCAL_REPO), err)
 			}
 		}
 		fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZIP_TESTS))
@@ -291,107 +301,29 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		if shareDependencies {
 			shareDependenciesFlag = "true"
 		}
-		if isBallerinaProject {
-			fileCopyError := util.CopyFile(tempTestFileName, filepath.Join(balModule, filepath.Base(tempTestFileName)))
-			if fileCopyError != nil {
-				util.ExitWithErrorMessage("Error occurred while copying temp source bal file", err)
-			}
-			cmdArgs = append(cmdArgs, filepath.Base(balModule), "test", string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
-		} else {
-			cmdArgs = append(cmdArgs, tempTestFileName, "test", string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
+		fileCopyError := util.CopyFile(tempTestFileName, filepath.Join(balModule, filepath.Base(tempTestFileName)))
+		if fileCopyError != nil {
+			util.ExitWithErrorMessage("Error occurred while copying temp source bal file", err)
 		}
+		cmdArgs = append(cmdArgs, filepath.Base(balModule), "test", string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
 		util.CleanAndCreateDir(filepath.Join(currentDir, "target", "logs"))
+
 		defer os.Remove(imageDir)
 		cmd.Env = os.Environ()
-		cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 
 		if debug {
-			content := []string{fmt.Sprintf("DEBUG_MODE=\"%s\"\n", verboseMode)}
-			content = append(content, fmt.Sprintf(constants.CELLERY_IMAGE_DIR_ENV_VAR+"=\"%s\"\n", imageDir))
-			for _, envVar := range envVars {
-				content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
-			}
-			content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(string(iName), "\"", "\\\"", -1)))
-			content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
-				strings.Replace(string(dependencyLinksJson), "\"", "\\\"", -1)))
-
-			ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BALLERINA_CONF)
-			isExistsBalConf, err := util.FileExists(ballerinaConf)
-			if err != nil {
-				util.ExitWithErrorMessage("error while checking if "+ballerinaConf+" exists", err)
-			}
-			if isExistsBalConf {
-				err := os.Remove(ballerinaConf)
-				if err != nil {
-					util.ExitWithErrorMessage("error while removing "+ballerinaConf+" file", err)
-				}
-			}
-			_, err = os.Create(ballerinaConf)
-			if err != nil {
-				util.ExitWithErrorMessage("error while creating "+ballerinaConf+" file", err)
-			}
-
-			f, err := os.OpenFile(ballerinaConf, os.O_APPEND|os.O_WRONLY, 0600)
-			if err != nil {
-				util.ExitWithErrorMessage("error while opening "+ballerinaConf, err)
-			}
-
-			defer f.Close()
-
-			for _, element := range content {
-				if _, err = f.WriteString(element); err != nil {
-					util.ExitWithErrorMessage("error while writing properties to "+ballerinaConf, err)
-				}
-			}
-
-			util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
-				fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
-				fmt.Sprintf(util.Faint(
-					" {\n"+
-						"   \"version\": \"0.2.0\",\n"+
-						"   \"configurations\": [\n"+
-						"     ...\n")) +
-
-				fmt.Sprintf(util.Bold(
-					"     {\n"+
-						"\t\"type\": \"ballerina\",\n"+
-						"\t\"request\": \"launch\",\n"+
-						"\t\"name\": \"Cellery Test\",\n"+
-						"\t\"script\": \"${file}\",\n"+
-						"\t\"commandOptions\": [\"--config\", \"%s\"],\n"+
-						"\t\"debugTests\": true\n"+
-						"     },\n"), ballerinaConf) +
-
-				fmt.Sprintf(util.Faint(
-					"     ...\n"+
-						"   ]\n"+
-						" }\n\n")) +
-				fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
+			SetupDebugConfigs(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, assumeYes)
 		} else {
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 			cmd.Env = append(cmd.Env, fmt.Sprintf("DEBUG_MODE=%s", verboseMode))
+			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s", string(iName)))
+			cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s", string(dependencyLinksJson)))
+			cmd.Env = append(cmd.Env, fmt.Sprintf("TEST_MODULE=%s", filepath.Base(balModule)))
 			for _, envVar := range envVars {
-				cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
-			}
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s\n", string(iName)))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s\n", string(dependencyLinksJson)))
-		}
-
-		if !assumeYes && debug {
-			fmt.Printf("%s Do you wish to continue with debugging the tests(Y/n)? ", util.YellowBold("?"))
-			reader := bufio.NewReader(os.Stdin)
-			confirmation, err := reader.ReadString('\n')
-			if err != nil {
-				return err
-			}
-			if strings.ToLower(strings.TrimSpace(confirmation)) == "n" {
-				return fmt.Errorf("Cell testing aborted")
+				cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=%s", envVar.Value))
 			}
 		}
 
-		for _, envVar := range envVars {
-			cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=%s", envVar.Value))
-		}
 		stdoutReader, _ := cmd.StdoutPipe()
 		stdoutScanner := bufio.NewScanner(stdoutReader)
 		go func() {
@@ -412,8 +344,6 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			ballerinaArgs = append(ballerinaArgs, cmdArgs...)
 			RunTelepresenceTests(incell, cmd, ballerinaArgs, imageDir, instanceName, debug)
 		} else {
-			tmpImgDir := dockerCliCellImageDir
-
 			isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(tempTestFileName)))
 			if !isExistsSourceBal {
 				fileCopyError := util.CopyFile(tempTestFileName, filepath.Join(balModule, filepath.Base(tempTestFileName)))
@@ -422,41 +352,23 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				}
 			}
 
-			cliUser, err := user.Current()
-			if err != nil {
-				util.ExitWithErrorMessage("Error while retrieving the current user", err)
-			}
-			exeUid := constants.CELLERY_DOCKER_CLI_USER_ID
+			iNameMarshalled, _ := json.Marshal(string(iName))
+			dependencyLinksMarshalled, _ := json.Marshal(string(dependencyLinksJson))
+			ballerinaArgs := []string{
+				fmt.Sprintf("%s", string(iNameMarshalled)),
+				fmt.Sprintf("%s", string(dependencyLinksMarshalled)),
+				startDependenciesFlag,
+				shareDependenciesFlag}
 
 			var scriptCmds []string
-			if cliUser.Uid != constants.CELLERY_DOCKER_CLI_USER_ID && runtime.GOOS == "linux" {
-				scriptCmds = append(scriptCmds, "useradd", "-m", "-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username, "&&")
-				exeUid = cliUser.Uid
-			}
+			scriptCmds = append(scriptCmds, []string{constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH}...)
+			scriptCmds = append(scriptCmds, cmdArgs...)
+			scriptCmds = append(scriptCmds, ballerinaArgs...)
 
-			iName1, _ := json.Marshal(string(iName))
-			dependencyLinksJson1, _ := json.Marshal(string(dependencyLinksJson))
-
-			scriptCmds = append(scriptCmds, []string{constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
-				filepath.Join(filepath.Base(balModule), filepath.Base(tempTestFileName)),
-				"test", fmt.Sprintf("%s", string(iName1)), fmt.Sprintf("%s", string(dependencyLinksJson1)), startDependenciesFlag, shareDependenciesFlag}...)
 			dockerCommand := []string{"/bin/bash", "-c", fmt.Sprintf("'%s'", strings.Join(scriptCmds, " "))}
-
-			dockerCmdArgs := []string{"-u", exeUid,
-				"-e", constants.CELLERY_IMAGE_DIR_ENV_VAR + "=" + tmpImgDir,
-				"-e", constants.TEST_DEGUB_FLAG + "=" + verboseMode,
-				"-e", fmt.Sprintf("IMAGE_NAME='%s'", string(iName)),
-				"-e", fmt.Sprintf("DEPENDENCY_LINKS='%s'", string(dependencyLinksJson)),
-				"-l", "ballerina-runtime=" + version.BuildVersion(),
-				"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".ballerina,target=/home/cellery/.ballerina",
-				"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".cellery,target=/home/cellery/.cellery",
-				"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".kube,target=/home/cellery/.kube",
-				"--mount", "type=bind,source=" + testsRoot + ",target=/home/cellery/target",
-				"--mount", "type=bind,source=" + imageDir + ",target=" + tmpImgDir,
-				"-w", "/home/cellery/target",
-				"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
-			}
+			dockerCmdArgs := SetupBallerinaDocker(string(iName), string(dependencyLinksJson), verboseMode, imageDir, testsRoot, scriptCmds)
 			dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
+
 			RunDockerTelepresenceTests(incell, cmd, dockerCmdArgs, imageDir, instanceName, debug)
 		}
 
@@ -465,128 +377,42 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			return fmt.Errorf("failed to execute test method in Cell instance %s due to %v", instanceName, err)
 		}
 	} else {
-		if exePath != "" {
-
-			if !isBallerinaProject {
-				cmd = exec.Command(exePath, "init")
-				if verbose {
-					cmd.Stderr = os.Stderr
-					cmd.Stdout = os.Stdout
-				}
-				err = cmd.Run()
-				if err != nil {
-					return fmt.Errorf("error occurred while initializing ballerina project for tests: %v", err)
-				}
-			}
+		isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
+		if !isExistsSourceBal {
 			fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
 			if fileCopyError != nil {
-				util.ExitWithErrorMessage("Error occurred while copying ballerina source file", err)
+				util.ExitWithErrorMessage("Error occurred while copying source bal file", err)
 			}
+		}
+		if exePath != "" {
 			cmd = &exec.Cmd{}
 			cmd.Env = os.Environ()
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 
-			ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BALLERINA_CONF)
-			isExistsBalConf, err := util.FileExists(ballerinaConf)
-			if err != nil {
-				util.ExitWithErrorMessage("error while checking if "+ballerinaConf+" exists", err)
-			}
-			if isExistsBalConf {
-				err := os.Remove(ballerinaConf)
-				if err != nil {
-					util.ExitWithErrorMessage("error while removing "+ballerinaConf+" file", err)
-				}
-			}
 			if debug {
-				content := []string{fmt.Sprintf("DEBUG_MODE=\"%s\"\n", verboseMode)}
-				content = append(content, fmt.Sprintf(constants.CELLERY_IMAGE_DIR_ENV_VAR+"=\"%s\"\n", imageDir))
-				for _, envVar := range envVars {
-					content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
-				}
-				content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(string(iName), "\"", "\\\"", -1)))
-				content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
-					strings.Replace(string(dependencyLinksJson), "\"", "\\\"", -1)))
-
-				_, err = os.Create(ballerinaConf)
-				if err != nil {
-					util.ExitWithErrorMessage("error while creating "+ballerinaConf+" file", err)
-				}
-
-				f, err := os.OpenFile(ballerinaConf, os.O_APPEND|os.O_WRONLY, 0600)
-				if err != nil {
-					util.ExitWithErrorMessage("error while opening "+ballerinaConf, err)
-				}
-
-				defer f.Close()
-
-				for _, element := range content {
-					if _, err = f.WriteString(element); err != nil {
-						util.ExitWithErrorMessage("error while writing properties to "+ballerinaConf, err)
-					}
-				}
-
-				util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
-					fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
-					fmt.Sprintf(util.Faint(
-						" {\n"+
-							"   \"version\": \"0.2.0\",\n"+
-							"   \"configurations\": [\n"+
-							"     ...\n")) +
-
-					fmt.Sprintf(util.Bold(
-						"     {\n"+
-							"\t\"type\": \"ballerina\",\n"+
-							"\t\"request\": \"launch\",\n"+
-							"\t\"name\": \"Cellery Test\",\n"+
-							"\t\"script\": \"${file}\",\n"+
-							"\t\"commandOptions\": [\"--config\", \"%s\"],\n"+
-							"\t\"debugTests\": true\n"+
-							"     },\n"), ballerinaConf) +
-
-					fmt.Sprintf(util.Faint(
-						"     ...\n"+
-							"   ]\n"+
-							" }\n\n")) +
-					fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
+				SetupDebugConfigs(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, assumeYes)
 
 			} else {
 				cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 				cmd.Env = append(cmd.Env, fmt.Sprintf("DEBUG_MODE=%s", verboseMode))
+				cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s", string(iName)))
+				cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s", string(dependencyLinksJson)))
+				cmd.Env = append(cmd.Env, fmt.Sprintf("TEST_MODULE=%s", filepath.Base(balModule)))
 				for _, envVar := range envVars {
-					cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
+					cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=\"%s\"", envVar.Value))
 				}
-				cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s\n", string(iName)))
-				cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s\n", string(dependencyLinksJson)))
 			}
 
-			if !assumeYes && debug {
-				fmt.Printf("%s Do you wish to continue with debugging the tests (Y/n)? ", util.YellowBold("?"))
-				reader := bufio.NewReader(os.Stdin)
-				confirmation, err := reader.ReadString('\n')
-				if err != nil {
-					return err
-				}
-				if strings.ToLower(strings.TrimSpace(confirmation)) == "n" {
-					return fmt.Errorf("Cell testing aborted")
-				}
-			}
 			cmdArgs := []string{exePath, "test", filepath.Base(balModule)}
-			if incell {
-				cmdArgs = append(cmdArgs, "--groups", "incell")
-			} else {
-				cmdArgs = append(cmdArgs, "--disable-groups", "incell")
-			}
+			//if incell {
+			//	cmdArgs = append(cmdArgs, "--groups", "incell")
+			//} else {
+			//	cmdArgs = append(cmdArgs, "--disable-groups", "incell")
+			//}
 			RunTelepresenceTests(incell, cmd, cmdArgs, imageDir, instanceName, debug)
 		} else {
-			tmpImgDir := dockerCliCellImageDir
-
-			isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
-			if !isExistsSourceBal {
-				fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
-				if fileCopyError != nil {
-					util.ExitWithErrorMessage("Error occurred while copying temp source bal file", err)
-				}
-			}
+			tmpImgDir := "/home/cellery/.cellery/tmp/cellery-cell-image"
+			var scriptCmds []string
 
 			cliUser, err := user.Current()
 			if err != nil {
@@ -594,12 +420,11 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			}
 			exeUid := constants.CELLERY_DOCKER_CLI_USER_ID
 
-			var scriptCmds []string
 			if cliUser.Uid != constants.CELLERY_DOCKER_CLI_USER_ID && runtime.GOOS == "linux" {
 				scriptCmds = append(scriptCmds, "useradd", "-m", "-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username, "&&")
 				exeUid = cliUser.Uid
 			}
-
+			//TODO: UPDATE BALLERINA TEST RUN FOR DOCKER BASED PATH
 			scriptCmds = append(scriptCmds, []string{constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "init", "&&"}...)
 			scriptCmds = append(scriptCmds, []string{constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "test", filepath.Base(balModule)}...)
 			dockerCommand := []string{"/bin/bash", "-c", fmt.Sprintf("'%s'", strings.Join(scriptCmds, " "))}
@@ -764,4 +589,119 @@ func RunDockerTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, im
 		StopTelepresence(dstYamlFile)
 		util.ExitWithErrorMessage("error occurred while waiting for tests to complete", err)
 	}
+}
+
+func SetupDebugConfigs(iName string, verboseMode string, imageDir string, dependencyLinks string, envVars []*environmentVariable, assumeYes bool) error {
+	content := []string{fmt.Sprintf("DEBUG_MODE=\"%s\"\n", verboseMode)}
+	content = append(content, fmt.Sprintf(constants.CELLERY_IMAGE_DIR_ENV_VAR+"=\"%s\"\n", imageDir))
+	for _, envVar := range envVars {
+		content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
+	}
+	content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(iName, "\"", "\\\"", -1)))
+	content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
+		strings.Replace(dependencyLinks, "\"", "\\\"", -1)))
+
+	ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BALLERINA_CONF)
+	isExistsBalConf, err := util.FileExists(ballerinaConf)
+	if err != nil {
+		util.ExitWithErrorMessage("error while checking if "+ballerinaConf+" exists", err)
+	}
+	if isExistsBalConf {
+		err := os.Remove(ballerinaConf)
+		if err != nil {
+			util.ExitWithErrorMessage("error while removing "+ballerinaConf+" file", err)
+		}
+	}
+	_, err = os.Create(ballerinaConf)
+	if err != nil {
+		util.ExitWithErrorMessage("error while creating "+ballerinaConf+" file", err)
+	}
+
+	f, err := os.OpenFile(ballerinaConf, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		util.ExitWithErrorMessage("error while opening "+ballerinaConf, err)
+	}
+
+	defer f.Close()
+
+	for _, element := range content {
+		if _, err = f.WriteString(element); err != nil {
+			util.ExitWithErrorMessage("error while writing properties to "+ballerinaConf, err)
+		}
+	}
+
+	util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
+		fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
+		fmt.Sprintf(util.Faint(
+			" {\n"+
+				"   \"version\": \"0.2.0\",\n"+
+				"   \"configurations\": [\n"+
+				"     ...\n")) +
+
+		fmt.Sprintf(util.Bold(
+			"     {\n"+
+				"\t\"type\": \"ballerina\",\n"+
+				"\t\"request\": \"launch\",\n"+
+				"\t\"name\": \"Cellery Test\",\n"+
+				"\t\"script\": \"${file}\",\n"+
+				"\t\"commandOptions\": [\"--b7a.config=%s\"],\n"+
+				"\t\"debugTests\": true\n"+
+				"     },\n"), ballerinaConf) +
+
+		fmt.Sprintf(util.Faint(
+			"     ...\n"+
+				"   ]\n"+
+				" }\n\n")) +
+		fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
+
+	if !assumeYes {
+		fmt.Printf("%s Do you wish to continue with debugging the tests (Y/n)? ", util.YellowBold("?"))
+		reader := bufio.NewReader(os.Stdin)
+		confirmation, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		if strings.ToLower(strings.TrimSpace(confirmation)) == "n" {
+			return fmt.Errorf("Cell testing aborted")
+		}
+	}
+	return nil
+}
+
+func SetupBallerinaDocker(iName string, dependencyLinks string, verboseMode string,
+	imageDir string, testsRoot string, ballerinaArgs []string) []string {
+
+	tmpImgDir := "/home/cellery/.cellery/tmp/cellery-cell-image"
+	var scriptCmds []string
+
+	cliUser, err := user.Current()
+	if err != nil {
+		util.ExitWithErrorMessage("Error while retrieving the current user", err)
+	}
+	exeUid := constants.CELLERY_DOCKER_CLI_USER_ID
+
+	if cliUser.Uid != constants.CELLERY_DOCKER_CLI_USER_ID && runtime.GOOS == "linux" {
+		scriptCmds = append(scriptCmds, "useradd", "-m", "-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username, "&&")
+		exeUid = cliUser.Uid
+	}
+
+	scriptCmds = append(scriptCmds, ballerinaArgs...)
+	dockerCommand := []string{"/bin/bash", "-c", fmt.Sprintf("'%s'", strings.Join(scriptCmds, " "))}
+
+	dockerCmdArgs := []string{"-u", exeUid,
+		"-e", constants.CELLERY_IMAGE_DIR_ENV_VAR + "=" + tmpImgDir,
+		"-e", constants.TEST_DEGUB_FLAG + "=" + verboseMode,
+		"-e", fmt.Sprintf("IMAGE_NAME='%s'", iName),
+		"-e", fmt.Sprintf("DEPENDENCY_LINKS='%s'", dependencyLinks),
+		"-l", "ballerina-runtime=" + version.BuildVersion(),
+		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".ballerina,target=/home/cellery/.ballerina",
+		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".cellery,target=/home/cellery/.cellery",
+		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".kube,target=/home/cellery/.kube",
+		"--mount", "type=bind,source=" + testsRoot + ",target=/home/cellery/target",
+		"--mount", "type=bind,source=" + imageDir + ",target=" + tmpImgDir,
+		"-w", "/home/cellery/target",
+		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
+	}
+	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
+	return dockerCmdArgs
 }

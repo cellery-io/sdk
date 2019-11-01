@@ -34,27 +34,23 @@ import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.PodSpec;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ballerinalang.jvm.util.exceptions.BallerinaException;
 import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.MapValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static io.cellery.CelleryConstants.CELLERY;
 import static io.cellery.CelleryConstants.IMAGE_SOURCE;
+import static io.cellery.CelleryConstants.TEST_MODULE_ENV_VAR;
 import static io.cellery.CelleryUtils.getValidName;
 import static io.cellery.CelleryUtils.printDebug;
 import static io.cellery.CelleryUtils.printInfo;
@@ -86,20 +82,24 @@ public class RunTestSuite {
         int bound = tests.size();
         for (int index = 0; index < bound; index++) {
             final MapValue testInfo = (MapValue) tests.get(index);
-            String name = testInfo.getStringValue(CelleryConstants.NAME);
-            String instanceName = nameStruct.getStringValue(CelleryConstants.INSTANCE_NAME);
+            String testName = testInfo.getStringValue(CelleryConstants.NAME);
             Test test = new Test();
-            test.setName(name);
+            test.setName(testName);
             MapValue sourceMap = testInfo.getMapValue(IMAGE_SOURCE);
             if ("FileSource".equals(sourceMap.getType().getName())) {
                 test.setSource(sourceMap.getStringValue("filepath"));
-                runInlineTest(instanceName);
+                runInlineTests();
             } else {
-                test.setSource(sourceMap.getStringValue("image"));
-                MapValue envMap = testInfo.getMapValue("envVars");
-                CelleryUtils.processEnvVars(envMap, test);
-                Cell testCell = generateTestCell(test, nameStruct);
-                runImageBasedTest(testCell, test.getName());
+                try {
+                    test.setSource(sourceMap.getStringValue("image"));
+                    MapValue envMap = testInfo.getMapValue("envVars");
+                    CelleryUtils.processEnvVars(envMap, test);
+                    Cell testCell = generateTestCell(test, nameStruct);
+                    runImageBasedTest(testCell, test.getName());
+                } catch (Exception e) {
+                    deleteTestCell(testName);
+                    throw new BallerinaCelleryException(e.getMessage());
+                }
             }
         }
     }
@@ -197,59 +197,20 @@ public class RunTestSuite {
     }
 
     /**
-     * Deletes the test cell.
+     * Deletes the cell created for running tests.
      *
      * @param instanceName test cell name
      */
     private static void deleteTestCell(String instanceName) {
         printInfo("Deleting test cell " + instanceName);
-        CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,
-                CelleryUtils::printDebug, CelleryUtils::printWarning);
+        KubernetesClient.delete(instanceName, "cells.mesh.cellery.io");
     }
 
-    private static void runInlineTest(String module) throws BallerinaCelleryException {
+    private static void runInlineTests() throws BallerinaCelleryException {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
-        String srcDir = Paths.get(System.getenv(CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR), "src").toString();
-        List<File> sourceBalList = CelleryUtils.getFilesByExtension(srcDir, "bal");
-        if (!(sourceBalList.size() > 0)) {
-            throw new BallerinaCelleryException("no bal files not found in " + srcDir);
-        }
-        String sourceBal = sourceBalList.get(0).toString();
-
-        if (Files.exists(workingDir.resolve(CelleryConstants.TEMP_TEST_MODULE))) {
-            module = CelleryConstants.TEMP_TEST_MODULE;
-        }
-
-        if (Paths.get(sourceBal).getFileName() != null) {
-            Path sourcebalFileName = Paths.get(sourceBal).getFileName();
-            Path destBalFilePath = workingDir.resolve(module).resolve(sourcebalFileName);
-
-            List<File> destBalFileList = new ArrayList<>(FileUtils.listFiles(
-                    workingDir.resolve(module).toFile(), new String[]{"bal"}, false));
-            if (!(destBalFileList.size() > 0)) {
-                try {
-                    Files.copy(Paths.get(sourceBal), destBalFilePath, StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException e) {
-                    throw new BallerinaException(e);
-                }
-            } else {
-                printDebug("Found bal file: " + destBalFilePath);
-            }
-
-        } else {
-            String err = "Unable to find source bal file in " + srcDir;
-            printWarning(err);
-            throw new BallerinaException(err);
-        }
-
-        if (Files.notExists(workingDir.resolve("Ballerina.toml"))) {
-            CelleryUtils.executeShellCommand("ballerina init", workingDir, CelleryUtils::printInfo,
-                    CelleryUtils::printWarning);
-        }
-
+        String testModule = System.getenv(TEST_MODULE_ENV_VAR);
         CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System
-                .getenv(), "ballerina", "test", module);
-
+                .getenv(), "ballerina", "test", testModule);
 
     }
 
