@@ -25,6 +25,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/ballerina"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
@@ -50,7 +52,7 @@ func newCliCommand(cli cli.Cli, kubeCli kubernetes.KubeCli) *cobra.Command {
 
 	cmd.AddCommand(
 		newCompletionCommand(cmd),
-		newBuildCommand(),
+		newBuildCommand(cli),
 		newVersionCommand(),
 		newInitCommand(),
 		newRunCommand(),
@@ -83,12 +85,28 @@ func newCliCommand(cli cli.Cli, kubeCli kubernetes.KubeCli) *cobra.Command {
 func main() {
 	celleryCli := cli.NewCelleryCli()
 	celleryKubeCli := kubernetes.NewCelleryKubeCli()
+	var ballerinaExecutor ballerina.BalExecutor
+	moduleMgr := &util.BLangManager{}
+	// Initially assume ballerina is installed locally and try to get the ballerina executable path.
+	ballerinaExecutor = ballerina.NewLocalBalExecutor()
+	ballerinaExecutablePath, err := ballerinaExecutor.ExecutablePath()
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to get ballerina executable path", err)
+	}
+	if len(ballerinaExecutablePath) > 0 {
+		ballerinaExecutor = ballerina.NewLocalBalExecutor()
+	} else {
+		// if ballerina is not installed locally, use docker.
+		ballerinaExecutor = ballerina.NewDockerBalExecutor()
+	}
+	celleryCli.BallerinaExecutor = ballerinaExecutor
+
 	util.CreateCelleryDirStructure()
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")
 
 	// Creating the log directory if it does not exist
-	err := util.CreateDir(logFileDirectory)
+	err = util.CreateDir(logFileDirectory)
 	if err != nil {
 		log.Printf("Failed to create log file: %v", err)
 	}
@@ -110,7 +128,6 @@ func main() {
 	}
 
 	// copy cellery installation artifacts to user repo
-	moduleMgr := &util.BLangManager{}
 	if err := moduleMgr.Init(); err != nil {
 		util.ExitWithErrorMessage("Unable to copy cellery installation artifacts to user repo", err)
 	}

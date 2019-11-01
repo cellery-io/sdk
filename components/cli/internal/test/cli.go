@@ -21,21 +21,25 @@ package test
 import (
 	"bytes"
 	"io"
+
+	"github.com/cellery-io/sdk/components/cli/ballerina"
+	"github.com/cellery-io/sdk/components/cli/cli"
 )
 
 type MockCli struct {
-	out       io.Writer
-	outBuffer *bytes.Buffer
+	out               io.Writer
+	outBuffer         *bytes.Buffer
+	BallerinaExecutor ballerina.BalExecutor
 }
 
 // NewMockCli returns a mock cli for the cli.Cli interface.
 func NewMockCli() *MockCli {
 	outBuffer := new(bytes.Buffer)
-	cli := &MockCli{
+	mockCli := &MockCli{
 		out:       outBuffer,
 		outBuffer: outBuffer,
 	}
-	return cli
+	return mockCli
 }
 
 // Out returns the output stream (stdout) the cli should write on.
@@ -46,4 +50,23 @@ func (cli *MockCli) Out() io.Writer {
 // OutBuffer returns the stdout buffer.
 func (cli *MockCli) OutBuffer() *bytes.Buffer {
 	return cli.outBuffer
+}
+
+// ExecuteTask mocks function execution.
+func (cli *MockCli) ExecuteTask(startMessage, errorMessage, successMessage string, function func() error) error {
+	err := function()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// FileSystem returns a mock FileSystemManager instance.
+func (cli *MockCli) FileSystem() cli.FileSystemManager {
+	return NewMockFileSystem()
+}
+
+// BalExecutor returns a mock ballerina.BalExecutor instance.
+func (cli *MockCli) BalExecutor() ballerina.BalExecutor {
+	return cli.BallerinaExecutor
 }
