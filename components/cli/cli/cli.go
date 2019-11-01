@@ -19,27 +19,69 @@
 package cli
 
 import (
+	"fmt"
 	"io"
 	"os"
+
+	"github.com/cellery-io/sdk/components/cli/ballerina"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // Cli represents the cellery command line client.
 type Cli interface {
 	Out() io.Writer
+	ExecuteTask(startMessage, errorMessage, successMessage string, function func() error) error
+	FileSystem() FileSystemManager
+	BalExecutor() ballerina.BalExecutor
 }
 
 // CelleryCli is an instance of the cellery command line client.
 // Instances of the client can be returned from NewCelleryCli.
 type CelleryCli struct {
+	fileSystemManager FileSystemManager
+	BallerinaExecutor ballerina.BalExecutor
 }
 
 // NewCelleryCli returns a CelleryCli instance.
 func NewCelleryCli() *CelleryCli {
-	cli := &CelleryCli{}
+	cli := &CelleryCli{
+		fileSystemManager: NewCelleryFileSystem(),
+	}
 	return cli
 }
 
 // Out returns the writer used for the stdout.
 func (cli *CelleryCli) Out() io.Writer {
 	return os.Stdout
+}
+
+// ExecuteTask executes a function.
+// It starts a spinner upon starting function execution.
+// Spinner exits with a success message (optional) if the function execution was successful.
+// Spinner exists with an error message (optional) if the function execution failed.
+func (cli *CelleryCli) ExecuteTask(startMessage, errorMessage, successMessage string, function func() error) error {
+	spinner := util.StartNewSpinner(startMessage)
+	err := function()
+	if err != nil {
+		spinner.Stop(false)
+		if errorMessage != "" {
+			fmt.Println(errorMessage)
+		}
+		return err
+	}
+	spinner.Stop(true)
+	if successMessage != "" {
+		fmt.Println(successMessage)
+	}
+	return nil
+}
+
+// FileSystem returns FileSystemManager instance.
+func (cli *CelleryCli) FileSystem() FileSystemManager {
+	return cli.fileSystemManager
+}
+
+// BalExecutor returns ballerina.BalExecutor instance.
+func (cli *CelleryCli) BalExecutor() ballerina.BalExecutor {
+	return cli.BallerinaExecutor
 }

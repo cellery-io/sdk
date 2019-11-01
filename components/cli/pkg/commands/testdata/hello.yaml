@@ -1,0 +1,57 @@
+---
+apiVersion: "mesh.cellery.io/v1alpha2"
+kind: "Cell"
+metadata:
+  annotations:
+    mesh.cellery.io/cell-image-org: "myorg"
+    mesh.cellery.io/cell-image-name: "aaa"
+    mesh.cellery.io/cell-image-version: "1.0.0"
+    mesh.cellery.io/cell-dependencies: "[]"
+  labels: {}
+  name: "aaa"
+spec:
+  components:
+  - metadata:
+      annotations: {}
+      labels: {}
+      name: "hello"
+    spec:
+      type: "Deployment"
+      template:
+        containers:
+        - env:
+          - name: "HELLO_NAME"
+            value: "Cellery"
+          image: "wso2cellery/samples-hello-world-webapp"
+          name: "hello"
+          ports:
+          - containerPort: 80
+      ports:
+      - name: "hello"
+        port: 80
+        protocol: "http"
+        targetContainer: "hello"
+        targetPort: 80
+      configurations: []
+      secrets: []
+      volumeClaims: []
+  gateway:
+    spec:
+      ingress:
+        extensions:
+          clusterIngress:
+            host: "hello-world.com"
+            tls: {}
+        http:
+        - port: 80
+          context: "/"
+          global: false
+          authenticate: false
+          destination:
+            host: "hello"
+            port: 80
+        grpc: []
+        tcp: []
+  sts:
+    spec:
+      unsecuredPaths: []

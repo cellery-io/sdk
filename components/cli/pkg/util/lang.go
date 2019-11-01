@@ -94,12 +94,10 @@ func (langMgr *BLangManager) GetExecutablePath() (string, error) {
 	}()
 	err := cmd.Start()
 	if err != nil {
-		log.Printf("failed to start ballerina version command due to %v", err)
 		return getBallerinaExecutablePath()
 	}
 	err = cmd.Wait()
 	if err != nil {
-		log.Printf("failed waiting for ballerina version command due to %v", err)
 		return getBallerinaExecutablePath()
 	}
 	if strings.Contains(balVersionCmdOutput, "Ballerina") {

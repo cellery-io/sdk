@@ -21,16 +21,16 @@ package main
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // newBuildCommand creates a cobra command which can be invoked to build a cell image from a cell file
-func newBuildCommand() *cobra.Command {
+func newBuildCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build <cell-file>",
 		Short: "Build an immutable cell image with the required dependencies",
@@ -49,8 +49,11 @@ func newBuildCommand() *cobra.Command {
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunBuild(args[1], args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := commands.RunBuild(cli, args[1], args[0]); err != nil {
+				return fmt.Errorf("error running cellery build, %v", err)
+			}
+			return nil
 		},
 		Example: "  cellery build employee.bal cellery-samples/employee:1.0.0",
 	}
