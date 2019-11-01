@@ -41,7 +41,7 @@ func (langMgr *BLangManager) Init() error {
 	installPath := filepath.Join(CelleryInstallationDir(), "repo")
 	var paths []string
 	var err error
-	celleryModPath := filepath.Join(installPath, "celleryio", "cellery", "*", "cellery.zip")
+	celleryModPath := filepath.Join(installPath, "celleryio", "cellery", "*", "cellery-*.balo")
 	if paths, err = filepath.Glob(celleryModPath); err != nil {
 		return err
 	}
