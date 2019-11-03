@@ -153,11 +153,13 @@ public type Component record {|
 public type TCPIngress record {|
     int backendPort;
     int gatewayPort?;
+    string ingressTypeTCP = "TCPIngress";
 |};
 
 public type GRPCIngress record {|
     *TCPIngress;
     string protoFile?;
+    string ingressType = "GRPCIngress";
 |};
 
 public type HttpApiIngress record {|
@@ -165,6 +167,7 @@ public type HttpApiIngress record {|
     string context?;
     ApiDefinition definition?;
     string apiVersion = "0.1";    // Default api version for 0.1
+    string ingressType = "HttpApiIngress";
     Expose expose?;
     boolean authenticate = true;
 |};
@@ -172,10 +175,12 @@ public type HttpApiIngress record {|
 public type WebIngress record {|
     int port;
     GatewayConfig gatewayConfig;
+    string ingressType = "WebIngress";
 |};
 
 public type HttpPortIngress record {|
     int port;
+    string ingressType = "HttpPortIngress";
 |};
 
 public type HttpsPortIngress record {|
@@ -187,6 +192,7 @@ public type GatewayConfig record {|
     string context = "/";
     TLS tls?;
     OIDC oidc?;
+    string ingressType = "GatewayConfig";
 |};
 
 public type URI record {|
