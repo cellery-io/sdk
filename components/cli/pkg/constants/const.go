@@ -34,6 +34,7 @@ const CLI_ARG_ENV_VAR_PATTERN = "(((?P<instance>" + CELLERY_ID_PATTERN + "):" +
 const GROUP_NAME = "mesh.cellery.io"
 
 const CELL_IMAGE_EXT = ".zip"
+const JSON_EXT = ".json"
 
 const CENTRAL_REGISTRY_HOST = "registry.hub.cellery.io"
 const CENTRAL_REGISTRY_HOST_REGX = "^.*registry.hub.cellery.(io|net)$"
@@ -77,6 +78,7 @@ const GCP_SQL_DISK_SIZE_GB = 20
 const ZIP_BALLERINA_SOURCE = "src"
 const ZIP_ARTIFACTS = "artifacts"
 const ZIP_TESTS = "tests"
+const ZIP_META_SUFFIX = "_meta"
 
 const CELLERY_HOME_DOCS_VIEW_DIR = "docs-view"
 
@@ -136,3 +138,8 @@ const CELLERY_DOCKER_CLI_USER_ID = "1000"
 const TELEPRESENCE_EXEC_PATH = "telepresence-0.101/bin/"
 
 const IP_ADDRESS_PATTERN = "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
+
+const HTTP_API_INGRESS = "HttpApiIngress"
+const WEB_INGRESS = "WebIngress"
+const GRPC_INGRESS = "GRPCIngress"
+const TCP_INGRESS = "TCPIngress"
