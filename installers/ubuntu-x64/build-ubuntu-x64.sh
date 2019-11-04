@@ -45,6 +45,7 @@ fi
 TARGET_DIRECTORY="target"
 INSTALLATION_DIRECTORY="cellery-ubuntu-x64-"${1}
 CELLERY_VERSION=${2}
+CELLERY_VERSION_NUM="${CELLERY_VERSION/-SNAPSHOT/}"
 SUPPORTED_B7A_VERSION=${3}
 DATE=`date +%Y-%m-%d`
 TIME=`date +%H:%M:%S`
@@ -155,8 +156,8 @@ copyBuildDirectories() {
     cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
     cp -R $RESOURCE_LOCATION/telepresence-* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
 
-    mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/b7a-libs/${BALLERINA_RUNTIME}/balo_cache/celleryio/cellery/${CELLERY_VERSION}
-    cp ../../components/module-cellery/target/balo/cellery-2019r3-java8-0.5.0.balo ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/b7a-libs/${BALLERINA_RUNTIME}/balo_cache/celleryio/cellery/${CELLERY_VERSION}
+    mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/b7a-libs/${BALLERINA_RUNTIME}/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
+    cp ../../components/module-cellery/target/balo/cellery-2019r3-java8-${CELLERY_VERSION_NUM}.balo ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/b7a-libs/${BALLERINA_RUNTIME}/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
 
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin
     cp ../../components/build/cellery ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/local/bin

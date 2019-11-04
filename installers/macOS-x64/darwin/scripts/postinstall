@@ -20,29 +20,23 @@
 
 #echo "Post installation process started"
 PRODUCT_HOME=/Library/Cellery
-BALLERINA_RUNTIME="ballerina-0.991.0"
+BALLERINA_RUNTIME="ballerina-1.0.1"
 CELLERY_VERSION=__CELLERY_VERSION__
 
 # Change permissions in home directory
 cd ${PRODUCT_HOME}
 chmod -R 755 .
-chmod 0644 repo/celleryio/cellery/*/cellery.zip
 [ -d /usr/local/bin ] || mkdir /usr/local/bin
 
 # Add cellery shortcut to /usr/local/bin
 rm -f /usr/local/bin/cellery
 ln -s ${PRODUCT_HOME}/cellery /usr/local/bin/cellery
-#echo "Post installation process finished"
 
-BRE_LIB_PATH="/Library/Ballerina/ballerina-0.991.0/bre/lib/"
-if [ -d $BRE_LIB_PATH ]
+B7A_HOME="/Library/Ballerina/ballerina-1.0.1"
+if [ ! -d ${B7A_HOME} ]
 then
-    #Remove stale cellery-*.jar files if exists.
-    rm -f $BRE_LIB_PATH/cellery-*.jar
-    cp /Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib/cellery-${CELLERY_VERSION}.jar ${BRE_LIB_PATH}
-else
 #Pull docker based Ballerina cli.
-    echo "Ballerina 0.991.0 is not installed"
+    echo "Ballerina 1.0.1 is not installed"
     echo "Installing docker based Cellery CLI."
     docker_status=$(/usr/local/bin/docker info 2>&1 1>/dev/null)
     if [[ $? -eq 0 ]]; then
