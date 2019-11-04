@@ -90,7 +90,6 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.cellery.CelleryConstants.BTYPE_STRING;
 import static io.cellery.CelleryConstants.CELL;
 import static io.cellery.CelleryConstants.CELLS;
 import static io.cellery.CelleryConstants.COMPONENTS;
@@ -405,7 +404,7 @@ public class CreateCellImage {
         resource.setName(resourceName);
         final MapValue resourceMap = metricsMap.getMapValue(resourceName);
         final String threshold = resourceMap.get("threshold").toString();
-        if (BTYPE_STRING.equals(resourceMap.getType().getName())) {
+        if ("Value".equals(resourceMap.getType().getName())) {
             HashMap<String, Object> hs = new HashMap<>();
             hs.put("type", "AverageValue");
             hs.put("averageValue", threshold);

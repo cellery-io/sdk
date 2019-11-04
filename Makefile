@@ -78,8 +78,8 @@ build-docs-view:
 
 .PHONY: install-lang
 install-lang:
-	cd ${PROJECT_ROOT}/components/lang; \
-	bash copy-libs.sh;
+	cd ${PROJECT_ROOT}/components; \
+    mvn clean install -Dmaven.test.skip=true;
 
 .PHONY: install-cli
 install-cli:
