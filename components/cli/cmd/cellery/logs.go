@@ -51,8 +51,11 @@ func newLogsCommand() *cobra.Command {
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunLogs(args[0], component, syslog)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := commands.RunLogs(args[0], component, syslog); err != nil {
+				return fmt.Errorf("error running cellery log, %v", err)
+			}
+			return nil
 		},
 		Example: "  cellery logs employee\n" +
 			"  cellery logs employee -c salary",

@@ -22,10 +22,9 @@ import (
 	"fmt"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunLogs(cellName, componentName string, sysLog bool) {
+func RunLogs(cellName, componentName string, sysLog bool) error {
 	if componentName == "" {
 		var logs string
 		var err error
@@ -36,21 +35,22 @@ func RunLogs(cellName, componentName string, sysLog bool) {
 		}
 
 		if err != nil {
-			util.ExitWithErrorMessage(fmt.Sprintf("Error getting logs for instance %s", cellName), err)
+			return fmt.Errorf(fmt.Sprintf("Error getting logs for instance %s", cellName), err)
 		}
 		if logs == "" {
-			util.ExitWithErrorMessage(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find cell "+
+			return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find cell "+
 				"instance %s", cellName))
 		}
 	} else {
 		logs, err := kubectl.GetComponentLogs(cellName, componentName)
 		if err != nil {
-			util.ExitWithErrorMessage(fmt.Sprintf("Error getting logs for component %s of instance %s",
+			return fmt.Errorf(fmt.Sprintf("Error getting logs for component %s of instance %s",
 				componentName, cellName), err)
 		}
 		if logs == "" {
-			util.ExitWithErrorMessage(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component "+
+			return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component "+
 				"%s of cell instance %s", componentName, cellName))
 		}
 	}
+	return nil
 }
