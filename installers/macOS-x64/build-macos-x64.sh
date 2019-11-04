@@ -49,6 +49,7 @@ fi
 TARGET_DIRECTORY="target"
 INST_VERSION=${1}
 CELLERY_VERSION=${2}
+CELLERY_VERSION_NUM="${CELLERY_VERSION/-SNAPSHOT/}"
 PRODUCT="cellery"
 INSTALLATION_DIRECTORY="cellery-ubuntu-x64-"${INST_VERSION}
 DATE=`date +%Y-%m-%d`
@@ -58,7 +59,8 @@ BINARY_SIZE="0 MB"
 #k8s artifacts folder
 K8S_DIRECTORY="k8s-artefacts"
 RESOURCE_LOCATION=files
-BALLERINA_RUNTIME="ballerina-0.991.0"
+SUPPORTED_B7A_VERSION=${3}
+BALLERINA_RUNTIME="ballerina-${SUPPORTED_B7A_VERSION}"
 
 #Functions
 go_to_dir() {
@@ -170,9 +172,12 @@ copyBuildDirectory() {
     cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
     cp -R $RESOURCE_LOCATION/telepresence-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
 
-    mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib
-    cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib/
-    cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
+    #mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib
+    #cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib/
+    #cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
+
+    mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
+    cp ../../components/module-cellery/target/balo/cellery-2019r3-java8-0.5.0.balo ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
 
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/docs-view
     cp -R ../../components/docs-view/build/* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/docs-view

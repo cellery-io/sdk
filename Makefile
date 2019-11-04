@@ -111,7 +111,7 @@ build-ubuntu-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
 	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
-	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION)  $(BALLERINA_VERSION)
+	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION) $(BALLERINA_VERSION)
 
 .PHONY: build-mac-installer
 build-mac-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-artefacts
@@ -119,7 +119,7 @@ build-mac-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-art
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
 	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
-	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION); \
+	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION) $(BALLERINA_VERSION); \
 	cd target/darwinpkg/Library/Cellery && zip -r cellery-$(VERSION).zip .
 
 .PHONY: cleanup-installers
