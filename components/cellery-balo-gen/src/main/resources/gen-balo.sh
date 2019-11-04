@@ -16,17 +16,25 @@
 # under the License.
 #
 #!/bin/bash
-echo "Generating Cellery .balo..."
+set -e
+
+echo "Generating Cellery .balo"
 BALLERINA_DISTRIBUTION_PATH=${1}
-MODULE_CELLERY_PATH="${2}/../module-cellery"
+echo "BALLERINA DISTRIBUTION PATH: ${BALLERINA_DISTRIBUTION_PATH}"
+CELLERY_MODULE_PATH="${2}/../module-cellery"
+echo "CELLERY MODULE PATH: ${CELLERY_MODULE_PATH}"
 CELLERY_VERSION="0.5.0"
 BALO_CACHE_PATH="${HOME}/.ballerina/balo_cache/celleryio/cellery/${CELLERY_VERSION}/"
-BIR_CACHE_PATH="${HOME}/.ballerina/bir_cache"
+BIR_CACHE_PATH="${HOME}/.ballerina/bir_cache-${CELLERY_VERSION}"
+JAR_CACHE_PATH="${HOME}/.ballerina/jar_cache-${CELLERY_VERSION}"
 
 EXECUTABLE="${BALLERINA_DISTRIBUTION_PATH}/bin/ballerina"
-cd ${MODULE_CELLERY_PATH}
+cd ${CELLERY_MODULE_PATH}
 ${EXECUTABLE} build -a -c
 mkdir -p ${BALO_CACHE_PATH}
-cp -r "${MODULE_CELLERY_PATH}/target/balo/cellery-2019r3-java8-0.5.0.balo" ${BALO_CACHE_PATH}
+echo ${BALO_CACHE_PATH}
+rm -f "${BALO_CACHE_PATH}/cellery-2019r3-java8-0.5.0.balo"
+cp -rf "${CELLERY_MODULE_PATH}/target/balo/cellery-2019r3-java8-0.5.0.balo" ${BALO_CACHE_PATH}
 rm -rf ${BIR_CACHE_PATH}
+rm -rf ${JAR_CACHE_PATH}
 
