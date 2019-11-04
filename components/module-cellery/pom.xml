@@ -29,7 +29,6 @@
 
     <artifactId>module-cellery</artifactId>
     <packaging>pom</packaging>
-    <version>0.4.0</version>
     <name>Ballerina Cellery Module</name>
     <modelVersion>4.0.0</modelVersion>
 

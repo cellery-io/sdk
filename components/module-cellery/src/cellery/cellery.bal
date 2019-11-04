@@ -454,8 +454,7 @@ public function getReference(Component component, string dependencyAlias) return
         panic ref;
     }
     if (ref is ()) {
-        error err = error("Empty reference for dependency `" + dependencyAlias + "`.\n
-        Did you pull/build cell image denoted by alias `" + dependencyAlias + "`? ");
+        error err = error("Empty reference for dependency `" + dependencyAlias + "`.\n Did you pull/build cell image denoted by alias `" + dependencyAlias + "`? ");
         panic err;
     }
     return <Reference>ref;
