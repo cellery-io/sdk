@@ -63,38 +63,6 @@ type progressWriter struct {
 	display bool
 }
 
-type Cell struct {
-	Component map[string]ComponentDetail `json:"components"`
-	Kind      string                     `json:"kind"`
-}
-
-type ComponentDetail struct {
-	Ingress       map[string]IngressDetail `json:"ingresses"`
-	ComponentName string                   `json:"name"`
-}
-
-type IngressDetail struct {
-	Ingresstype    string                     `json:"ingressType"`
-	IngressTypeTCP string                     `json:"ingressTypeTCP"`
-	ApiVersion     string                     `json:"apiVersion"`
-	Port           int                        `json:"port"`
-	Context        string                     `json:"context"`
-	Expose         string                     `json:"expose"`
-	Definitions    map[string][]Resource      `json:"definition"`
-	GatewayPort    int                        `json:"gatewayPort"`
-	GatewayConfig  GatewayConfig `json:"gatewayConfig"`
-}
-
-type GatewayConfig struct {
-	Context string `json:"context"`
-	Vhost   string `json:"vhost"`
-}
-
-type Resource struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
-}
-
 func (pw *progressWriter) init(s3ObjectSize int64) {
 	if pw.display {
 		pw.bar = pb.StartNew(int(s3ObjectSize))

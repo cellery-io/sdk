@@ -51,8 +51,6 @@ func RunListIngresses(name string) {
 func displayInstanceApisTable(instanceName string) {
 	var canBeComposite bool
 	cell, err := kubectl.GetCell(instanceName)
-	image := cell.CellMetaData.Annotations.Organization + "/" + cell.CellMetaData.Annotations.Name + ":" +
-		cell.CellMetaData.Annotations.Version
 	if err != nil {
 		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
 			canBeComposite = true
@@ -60,13 +58,11 @@ func displayInstanceApisTable(instanceName string) {
 			util.ExitWithErrorMessage("Failed to check available Cells", err)
 		}
 	} else {
-		displayCellImageApisTable(image)
+		displayCellInstanceApisTable(cell, instanceName)
 	}
 
 	if canBeComposite {
 		composite, err := kubectl.GetComposite(instanceName)
-		image := composite.CompositeMetaData.Annotations.Organization + "/" +
-			composite.CompositeMetaData.Annotations.Name + ":" + composite.CompositeMetaData.Annotations.Version
 		if err != nil {
 			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
 				util.ExitWithErrorMessage("Failed to retrieve ingresses of "+instanceName,
@@ -75,7 +71,7 @@ func displayInstanceApisTable(instanceName string) {
 				util.ExitWithErrorMessage("Failed to check available Composites", err)
 			}
 		} else {
-			displayCompositeImageApisTable(image)
+			displayCompositeInstanceApisTable(composite)
 		}
 	}
 }
@@ -197,8 +193,8 @@ func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 	table.Render()
 }
 
-func displayImageApisTable(cellImageName string) {
-	cellYamlContent := image.ReadCellImageYaml(cellImageName)
+func displayImageApisTable(imageName string) {
+	cellYamlContent := image.ReadCellImageYaml(imageName)
 	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {
@@ -206,32 +202,38 @@ func displayImageApisTable(cellImageName string) {
 	}
 
 	if cellImageContent.Kind == "Cell" {
-		displayCellImageApisTable(cellImageName)
+		displayCellImageApisTable(imageName)
 	} else if cellImageContent.Kind == "Composite" {
-		displayCompositeImageApisTable(cellImageName)
+		displayCompositeImageApisTable(imageName)
 	}
 }
 
 func displayCompositeImageApisTable(compositeImageContent string) {
-	cell := getIngressValues(compositeImageContent)
+	cell, err := getIngressValues(compositeImageContent)
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while displaying composite image ingress", err)
+	}
 	var tableData [][]string
 	for _, componentDetail := range cell.Component {
 		for _, ingressInfo := range componentDetail.Ingress {
-			//if ingressInfo.Ingresstype == "HttpPortIngress" {
 			var ingressData []string
 			ingressData = append(ingressData, componentDetail.ComponentName)
 			if ingressInfo.IngressTypeTCP == constants.TCP_INGRESS {
 				ingressData = append(ingressData, ingressInfo.IngressTypeTCP)
 			} else {
-				ingressData = append(ingressData, ingressInfo.Ingresstype)
+				ingressData = append(ingressData, ingressInfo.IngressType)
 			}
-			ingressData = append(ingressData, strconv.Itoa(ingressInfo.Port))
+			if (int(ingressInfo.Port)) == 0 {
+				ingressData = append(ingressData, "--")
+			} else {
+				ingressData = append(ingressData, strconv.Itoa(int(ingressInfo.Port)))
+			}
 			if ingressInfo.IngressTypeTCP == constants.TCP_INGRESS {
 				ingressData = append(ingressData, fmt.Sprintf("%s_%s, %s_tcp_%s", componentDetail.ComponentName,
-					"host", componentDetail.ComponentName, "port"))
+					constants.HOST, componentDetail.ComponentName, constants.PORT))
 			} else {
 				ingressData = append(ingressData, fmt.Sprintf("%s_%s, %s_%s", componentDetail.ComponentName,
-					"host", componentDetail.ComponentName, "port"))
+					constants.HOST, componentDetail.ComponentName, constants.PORT))
 			}
 			tableData = append(tableData, ingressData)
 		}
@@ -259,76 +261,54 @@ func displayCompositeImageApisTable(compositeImageContent string) {
 }
 
 func displayCellImageApisTable(cellImageContent string) {
-	cell := getIngressValues(cellImageContent)
+	cell, err := getIngressValues(cellImageContent)
+	if err != nil {
+		util.ExitWithErrorMessage("Error occurred while displaying cell image ingress", err)
+	}
 	var tableData [][]string
 	for _, componentDetail := range cell.Component {
 		for ingress, ingressInfo := range componentDetail.Ingress {
+			var ingressData []string
 			if ingressInfo.Expose == "global" {
 				ingressInfo.Expose = "true"
 			} else {
 				ingressInfo.Expose = "false"
 			}
-			if ingressInfo.Ingresstype == constants.HTTP_API_INGRESS && ingressInfo.Context != "" {
-				for _, resourcesValue := range ingressInfo.Definitions {
+			if ingressInfo.IngressType == constants.HTTP_API_INGRESS && ingressInfo.Context != "" {
+				for _, resourcesValue := range ingressInfo.Definition {
 					for _, resource := range resourcesValue {
-						var ingressData []string
-						ingressData = append(ingressData, componentDetail.ComponentName)
-						ingressData = append(ingressData, ingressInfo.IngressTypeTCP)
-						ingressData = append(ingressData, ingressInfo.Context)
-						ingressData = append(ingressData, ingressInfo.ApiVersion)
-						ingressData = append(ingressData, strconv.Itoa(ingressInfo.Port))
-						ingressData = append(ingressData, resource.Path)
-						ingressData = append(ingressData, resource.Method)
-						ingressData = append(ingressData, ingressInfo.Expose)
-						ingressData = append(ingressData, "N/A")
-						ingressData = append(ingressData, fmt.Sprintf("%s_%s_%s",
-							componentDetail.ComponentName, ingress, "api_url"))
+						ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType,
+							ingressInfo.Context, ingressInfo.ApiVersion, strconv.Itoa(int(ingressInfo.Port)),
+							resource.Path, resource.Method, ingressInfo.Expose, constants.N_A,
+							fmt.Sprintf("%s_%s_%s", componentDetail.ComponentName, ingress, "api_url")}
 						tableData = append(tableData, ingressData)
-						//fmt.Printf("component[%s] ingress type[%s] context[%s] version[%s] port[%d] resource[%s] method[%s] exposed[true] ingressKey[%s]\n", componentDetail.ComponentName, ingressInfo.Ingresstype, ingressInfo.Context, ingressInfo.ApiVersion, ingressInfo.Port, resource.Path, resource.Method, fmt.Sprintf("%s_%s_%s", componentDetail.ComponentName, ingress, "api_url"))
 					}
 				}
-			} else if ingressInfo.Ingresstype == constants.WEB_INGRESS {
-				var ingressData []string
-				ingressData = append(ingressData, componentDetail.ComponentName)
-				ingressData = append(ingressData, ingressInfo.Ingresstype)
-				ingressData = append(ingressData, ingressInfo.GatewayConfig.Context)
-				ingressData = append(ingressData, ingressInfo.ApiVersion)
-				ingressData = append(ingressData, strconv.Itoa(ingressInfo.Port))
-				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, ingressInfo.Expose)
-				ingressData = append(ingressData, ingressInfo.GatewayConfig.Vhost)
-				ingressData = append(ingressData, "N/A")
+			} else if ingressInfo.IngressType == constants.WEB_INGRESS {
+				ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType,
+					ingressInfo.GatewayConfig.Context, ingressInfo.ApiVersion, strconv.Itoa(int(ingressInfo.Port)),
+					constants.N_A, constants.N_A, ingressInfo.Expose, ingressInfo.GatewayConfig.Vhost, constants.N_A}
 				tableData = append(tableData, ingressData)
-				//fmt.Printf("component[%s] ingress type[%s] context[%s] version[%s] port[%d] resource[%s] method[%s] exposed[true] ingressKey[%s]\n", componentDetail.ComponentName, ingressInfo.Ingresstype, ingressInfo.Context, ingressInfo.ApiVersion, ingressInfo.Port, resource.Path, resource.Method, fmt.Sprintf("%s_%s_%s", componentDetail.ComponentName, ingress, "api_url"))
 
-			} else if ingressInfo.Ingresstype == constants.GRPC_INGRESS {
-				var ingressData []string
-				ingressData = append(ingressData, componentDetail.ComponentName)
-				ingressData = append(ingressData, ingressInfo.Ingresstype)
-				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, ingressInfo.ApiVersion)
-				ingressData = append(ingressData, strconv.Itoa(ingressInfo.GatewayPort))
-				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, ingressInfo.GatewayConfig.Vhost)
-				ingressData = append(ingressData, fmt.Sprintf("%s, %s_%s", "gateway_host",
-					componentDetail.ComponentName, "grpc_port"))
+			} else if ingressInfo.IngressType == constants.GRPC_INGRESS {
+				ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType, constants.N_A,
+					constants.N_A, strconv.Itoa(ingressInfo.GatewayPort), constants.N_A, constants.N_A, constants.N_A,
+					ingressInfo.GatewayConfig.Vhost,
+					fmt.Sprintf("%s, %s_%s", constants.GATEWAY_HOST, componentDetail.ComponentName, "grpc_port")}
 				tableData = append(tableData, ingressData)
+
 			} else if ingressInfo.IngressTypeTCP == constants.TCP_INGRESS {
-				var ingressData []string
-				ingressData = append(ingressData, componentDetail.ComponentName)
-				ingressData = append(ingressData, ingressInfo.IngressTypeTCP)
-				ingressData = append(ingressData, ingressInfo.Context)
-				ingressData = append(ingressData, ingressInfo.ApiVersion)
-				ingressData = append(ingressData, strconv.Itoa(ingressInfo.Port))
-				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, "N/A")
-				ingressData = append(ingressData, ingressInfo.Expose)
-				ingressData = append(ingressData, ingressInfo.GatewayConfig.Vhost)
-				ingressData = append(ingressData, fmt.Sprintf("%s_tcp_%s",
-					componentDetail.ComponentName, "port"))
+				if (int(ingressInfo.Port)) == 0 {
+					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressTypeTCP, constants.N_A,
+						constants.N_A, "--", constants.N_A, constants.N_A, ingressInfo.Expose,
+						ingressInfo.GatewayConfig.Vhost, fmt.Sprintf("%s, %s_tcp_%s", constants.GATEWAY_HOST,
+							componentDetail.ComponentName, constants.PORT)}
+				} else {
+					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressTypeTCP, constants.N_A,
+						constants.N_A, strconv.Itoa(int(ingressInfo.Port)), constants.N_A, constants.N_A,
+						ingressInfo.Expose, ingressInfo.GatewayConfig.Vhost,
+						fmt.Sprintf("%s, %s_tcp_%s", constants.GATEWAY_HOST, componentDetail.ComponentName, constants.PORT)}
+				}
 				tableData = append(tableData, ingressData)
 			}
 		}
@@ -367,31 +347,29 @@ func displayCellImageApisTable(cellImageContent string) {
 	table.Render()
 }
 
-func getIngressValues(cellImageContent string) util.Cell {
-	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageContent))
+func getIngressValues(cellImageContent string) (kubectl.Cell, error) {
 	parsedCellImage, err := image.ParseImageTag(cellImageContent)
-	imageDir, err := ExtractImage(parsedCellImage, false, spinner)
+	imageDir, err := ExtractImage(parsedCellImage, false)
 	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while extracting image", err)
+		return kubectl.Cell{}, fmt.Errorf("error occurred while extracting image: %s", err)
 	}
 
 	jsonFile, err := os.Open(fmt.Sprintf("%s/%s/%s/%s%s%s", imageDir, constants.ZIP_ARTIFACTS, constants.CELLERY,
 		parsedCellImage.ImageName, constants.ZIP_META_SUFFIX, constants.JSON_EXT))
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while reading image_meta file", err)
+		return kubectl.Cell{}, fmt.Errorf("error occurred while reading image_meta file: %s", err)
 	}
 	byteValue, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while reading json data from image_meta file", err)
+		return kubectl.Cell{}, fmt.Errorf("error occurred while reading json data from image_meta file: %s", err)
 	}
-	res := util.Cell{}
-	err = json.Unmarshal(byteValue, &res)
+	cell := kubectl.Cell{}
+	err = json.Unmarshal(byteValue, &cell)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while unmarshalling json data from image_meta file", err)
+		return kubectl.Cell{}, fmt.Errorf("error occurred while unmarshalling json data "+
+			"from image_meta file: %s", err)
 	}
-	fmt.Printf("\n\n\n")
-	return res
+	return cell, nil
 }
 
 func getGlobalUrlContext(globalContext string, cellInstanceName string) string {
