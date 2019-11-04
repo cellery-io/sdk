@@ -100,10 +100,10 @@ const CELLERY_INSTALLATION_PATH_MAC = "/Library/Cellery"
 const CELLERY_INSTALLATION_PATH_UBUNTU = "/usr/share/cellery"
 const CELLERY_EXECUTABLE_PATH = "/runtime/executable/"
 
-const BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-1.0.1"
-const BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-1.0.1"
+const BALLERINA_VERSION = "1.0.3"
+const BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-" + BALLERINA_VERSION
+const BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-" + BALLERINA_VERSION
 const BALLERINA_EXECUTABLE_PATH = "/bin/"
-const BALLERINA_VERSION = "1.0.1"
 const BALLERINA_CONF = "ballerina.conf"
 const BALLERINA_TOML = "Ballerina.toml"
 const BALLERINA_LOCAL_REPO = ".ballerina/"
