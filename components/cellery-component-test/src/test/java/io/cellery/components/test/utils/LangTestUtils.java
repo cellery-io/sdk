@@ -213,7 +213,9 @@ public class LangTestUtils {
                 errStr.append((char) c);
             }
             if (errStr.toString().contains("i/o timeout") ||
-                    errStr.toString().contains("exited with exit code 127")) {
+                    errStr.toString().contains("exited with exit code 127") ||
+                    errStr.toString().contains("connect: connection refused")) {
+                // Ignore connection refused errors.
                 exitCode = 0;
                 isIgnoreErr = true;
             }
