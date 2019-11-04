@@ -53,7 +53,7 @@ func (balExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error 
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
-	cmd := exec.Command(exePath, "run", fileName, "build", string(iName), "{}")
+	cmd := exec.Command(exePath, "run", fileName, "build", string(iName), "{}", "false", "false")
 	err = cmd.Start()
 	if err != nil {
 		return fmt.Errorf("error occurred while starting to build image, %v", err)
