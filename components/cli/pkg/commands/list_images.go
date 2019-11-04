@@ -91,7 +91,7 @@ func getImagesArray() []imageData {
 			}
 			for _, version := range versions {
 				zipFile := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", organization, project,
-					version, project+".zip")
+					version, project+cellImageExt)
 				zipFileExists, err := util.FileExists(zipFile)
 				if err != nil {
 					util.ExitWithErrorMessage("Error checking if zip file exists", err)

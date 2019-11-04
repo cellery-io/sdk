@@ -91,7 +91,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 		return err
 	}
 	// Create the artifacts zip file
-	artifactsZip := parsedCellImage.ImageName + ".zip"
+	artifactsZip := parsedCellImage.ImageName + cellImageExt
 	if err = cli.ExecuteTask("Creating cell image zip file", "Failed to create temporary baf file",
 		"", func() error {
 			err := createArtifactsZip(cli, artifactsZip, projectDir, fileName)
@@ -272,7 +272,7 @@ func extractDependenciesFromMetaData(dependencyMetadata *image.MetaData, cellIma
 	}
 	// Reading the dependency's metadata
 	var metadataJsonContent []byte
-	if metadataJsonContent, err = ioutil.ReadFile(filepath.Join(tempPath, "artifacts", "cellery", "metadata.json")); err != nil {
+	if metadataJsonContent, err = ioutil.ReadFile(filepath.Join(tempPath, artifacts, "cellery", "metadata.json")); err != nil {
 		return nil, fmt.Errorf("metadata.json file not found for dependency: %s, %v", dependencyImage,
 			err)
 	}
@@ -316,32 +316,32 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 		return err
 	}
 	targetDir := filepath.Join(projectDir, "target")
-	if err = util.CopyDir(targetDir, filepath.Join(projectDir, constants.ZIP_ARTIFACTS)); err != nil {
+	if err = util.CopyDir(targetDir, filepath.Join(projectDir, artifacts)); err != nil {
 		return fmt.Errorf("error occurred copying artifacts directory, %v", err)
 	}
-	if err = util.CleanOrCreateDir(filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE)); err != nil {
+	if err = util.CleanOrCreateDir(filepath.Join(projectDir, src)); err != nil {
 		return fmt.Errorf("error occurred while creating src directory, %v", err)
 	}
-	if err = util.CopyFile(fileName, filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE, filepath.Base(fileName))); err != nil {
+	if err = util.CopyFile(fileName, filepath.Join(projectDir, src, filepath.Base(fileName))); err != nil {
 		return fmt.Errorf("error occurred copying bal file to src directory, %v", err)
 	}
 	balTomlParent := filepath.Dir(filepath.Dir(filepath.Join(currentDir, fileName)))
 	var balTomlfileExist bool
-	if balTomlfileExist, err = util.FileExists(filepath.Join(balTomlParent, constants.BALLERINA_TOML)); err != nil {
+	if balTomlfileExist, err = util.FileExists(filepath.Join(balTomlParent, ballerinaToml)); err != nil {
 		return fmt.Errorf("error occurred while checking if Ballerina.toml exists, %v", err)
 	}
 	if balTomlfileExist {
-		if err = util.CopyFile(filepath.Join(balTomlParent, constants.BALLERINA_TOML),
-			filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_TOML)); err != nil {
-			return fmt.Errorf("error occured while copying the %s, %v", constants.BALLERINA_TOML, err)
+		if err = util.CopyFile(filepath.Join(balTomlParent, ballerinaToml),
+			filepath.Join(projectDir, src, ballerinaToml)); err != nil {
+			return fmt.Errorf("error occured while copying the %s, %v", ballerinaToml, err)
 		}
-		if err = util.CopyDir(filepath.Join(balTomlParent, constants.BALLERINA_LOCAL_REPO),
-			filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_LOCAL_REPO)); err != nil {
-			return fmt.Errorf("error occured while copying the %s, %v", constants.BALLERINA_LOCAL_REPO, err)
+		if err = util.CopyDir(filepath.Join(balTomlParent, ballerinaLocalRepo),
+			filepath.Join(projectDir, src, ballerinaLocalRepo)); err != nil {
+			return fmt.Errorf("error occured while copying the %s, %v", ballerinaLocalRepo, err)
 		}
 	}
 	isTestDirExists, _ := util.FileExists(constants.ZIP_TESTS)
-	folders := []string{constants.ZIP_ARTIFACTS, constants.ZIP_BALLERINA_SOURCE}
+	folders := []string{artifacts, src}
 
 	if isTestDirExists {
 		folders = append(folders, constants.ZIP_TESTS)
@@ -350,7 +350,7 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 	if err = util.RecursiveZip(nil, folders, artifactsZip); err != nil {
 		return fmt.Errorf("error occurred while creating the image, %v", err)
 	}
-	_ = os.RemoveAll(filepath.Join(projectDir, constants.ZIP_ARTIFACTS))
-	_ = os.RemoveAll(filepath.Join(projectDir, constants.ZIP_BALLERINA_SOURCE))
+	_ = os.RemoveAll(filepath.Join(projectDir, artifacts))
+	_ = os.RemoveAll(filepath.Join(projectDir, src))
 	return nil
 }

@@ -19,71 +19,62 @@
 package commands
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/ballerina"
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
+
+const celleryEnvVarPrefix = "cellery_env_"
+const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)
 // This also support linking instances to parts of the dependency tree
 // This command also strictly validates whether the requested Cell (and the dependencies are valid)
-
-const celleryEnvVar = "cellery_env_"
-
-func RunRun(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
-	dependencyLinks []string, envVars []string) {
-	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
-	parsedCellImage, err := image.ParseImageTag(cellImageTag)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
+	dependencyLinks []string, envVars []string) error {
+	var err error
+	var parsedCellImage *image.CellImage
+	if parsedCellImage, err = image.ParseImageTag(cellImageTag); err != nil {
+		return fmt.Errorf("error occurred while parsing cell image, %v", err)
 	}
-	imageDir, err := ExtractImage(parsedCellImage, true, spinner)
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while extracting image", err)
+	var imageDir string
+	if err = cli.ExecuteTask("Extracting cell image", "Failed to extract cell image",
+		"", func() error {
+			imageDir, err = ExtractImage(parsedCellImage, true)
+			return err
+		}); err != nil {
+		return err
 	}
-	defer func() {
-		err = os.RemoveAll(imageDir)
-		if err != nil {
-			spinner.Stop(false)
-			util.ExitWithErrorMessage("Error occurred while cleaning up", err)
+	defer func() error {
+		if err = os.RemoveAll(imageDir); err != nil {
+			return fmt.Errorf("error occurred while removing image, %v", err)
 		}
+		return nil
 	}()
-
 	// Reading Cell Image metadata
-	spinner.SetNewAction("Reading Image " + util.Bold(cellImageTag))
-	metadataFileContent, err := ioutil.ReadFile(filepath.Join(imageDir, constants.ZIP_ARTIFACTS, "cellery",
-		"metadata.json"))
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while reading Image metadata", err)
+	var metadataFileContent []byte
+	if metadataFileContent, err = ioutil.ReadFile(filepath.Join(imageDir, artifacts, "cellery",
+		"metadata.json")); err != nil {
+		return fmt.Errorf("error occurred while reading Image metadata, %v", err)
 	}
 	cellImageMetadata := &image.MetaData{}
-	err = json.Unmarshal(metadataFileContent, cellImageMetadata)
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while reading Image metadata", err)
+	if err = json.Unmarshal(metadataFileContent, cellImageMetadata); err != nil {
+		return fmt.Errorf("error occurred while reading Image metadata, %v", err)
 	}
 	var parsedDependencyLinks []*dependencyAliasLink
 	if len(dependencyLinks) > 0 {
 		// Parsing the dependency links list
-		spinner.SetNewAction("Parsing dependency links")
 		for _, link := range dependencyLinks {
 			var dependencyLink *dependencyAliasLink
 			linkSplit := strings.Split(link, ":")
@@ -103,18 +94,16 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
 		}
 	}
-
 	var instanceEnvVars []*environmentVariable
 	if len(envVars) > 0 {
 		// Parsing environment variables
-		spinner.SetNewAction("Parsing environment variables")
 		for _, envVar := range envVars {
 			var targetInstance string
 			var envVarKey string
 			var envVarValue string
 
 			// Parsing the environment variable
-			r := regexp.MustCompile(fmt.Sprintf("^%s$", constants.CLI_ARG_ENV_VAR_PATTERN))
+			r := regexp.MustCompile(fmt.Sprintf("^%s$", celleryArgEnvVarPattern))
 			matches := r.FindStringSubmatch(envVar)
 			if matches != nil {
 				for i, name := range r.SubexpNames() {
@@ -141,7 +130,6 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 			instanceEnvVars = append(instanceEnvVars, parsedEnvVar)
 		}
 	}
-
 	var mainNode *dependencyTreeNode
 	mainNode = &dependencyTreeNode{
 		Instance:  instanceName,
@@ -149,47 +137,104 @@ func RunRun(cellImageTag string, instanceName string, startDependencies bool, sh
 		IsRunning: false,
 		IsShared:  false,
 	}
-
 	rootNodeDependencies := map[string]*dependencyInfo{}
 	for _, link := range parsedDependencyLinks {
 		rootNodeDependencies[link.DependencyAlias] = &dependencyInfo{
 			InstanceName: link.DependencyInstance,
 		}
 	}
-
-	spinner.SetNewAction("Starting main instance " + util.Bold(instanceName))
-	err = startCellInstance(imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
-		rootNodeDependencies, shareDependencies)
-	if err != nil {
-		util.ExitWithErrorMessage("Failed to start Cell instance "+instanceName, err)
+	if err = cli.ExecuteTask(fmt.Sprintf("Starting main instance %v", util.Bold(instanceName)), "Failed to extract cell image",
+		"", func() error {
+			err = startCellInstance(cli, imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
+				rootNodeDependencies, shareDependencies)
+			return err
+		}); err != nil {
+		return err
 	}
-
-	spinner.Stop(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully deployed cell image: %s", util.Bold(cellImageTag)))
 	util.PrintWhatsNextMessage("list running cells", "cellery list instances")
+	return nil
 }
 
-func startCellInstance(imageDir string, instanceName string, runningNode *dependencyTreeNode,
+func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runningNode *dependencyTreeNode,
 	envVars []*environmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo,
 	shareDependencies bool) error {
+	defer os.Remove(imageDir)
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
 		runningNode.MetaData.Version)
-	balFileName, err := util.GetSourceFileName(filepath.Join(imageDir, constants.ZIP_BALLERINA_SOURCE))
+	balFileName, err := util.GetSourceFileName(filepath.Join(imageDir, src))
 	if err != nil {
 		return fmt.Errorf("failed to find source file in Image %s due to %v", imageTag, err)
 	}
-	balFilePath := filepath.Join(imageDir, constants.ZIP_BALLERINA_SOURCE, balFileName)
+	balFilePath := filepath.Join(imageDir, src, balFileName)
+	var tempRunFileName string
+	if tempRunFileName, err = util.CreateTempExecutableBalFile(balFilePath, "run"); err != nil {
+		return fmt.Errorf("error creating temporarily executable bal file, %v", err)
+	}
+	var balEnvVars []ballerina.EnvironmentVariable
+	balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
+		Key:   celleryImageDirEnvVar,
+		Value: imageDir})
+	// Export environment variables defined by user for dependent instances
+	for _, envVar := range envVars {
+		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
+			balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
+				Key:   celleryEnvVarPrefix + envVar.InstanceName + "." + envVar.Key,
+				Value: envVar.Value,
+			})
+		}
+	}
+	var runCommandArgs []string
+	if runCommandArgs, err = runCmdArgs(instanceName, tempRunFileName, dependencyLinks, envVars, runningNode, startDependencies, shareDependencies); err != nil {
+		return fmt.Errorf("failed to get run command arguements, %v", err)
+	}
+	cli.BalExecutor().Run(tempRunFileName, imageDir, runCommandArgs, balEnvVars)
+	if err = os.Remove(tempRunFileName); err != nil {
+		return fmt.Errorf("error removing temp run file %s", tempRunFileName)
+	}
+	return nil
+}
 
-	// run function will be mandatory for all cells
-	// Preparing the dependency instance map
-	dependencyLinksJson, err := json.Marshal(dependencyLinks)
-	if err != nil {
-		return fmt.Errorf("failed to start the Image %s due to %v", imageTag, err)
+// extractImage extracts the image into a temporary directory and returns the path.
+// Cleaning the path after finishing your work is your responsibility.
+func ExtractImage(cellImage *image.CellImage, pullIfNotPresent bool) (string, error) {
+	var err error
+	repoLocation := filepath.Join(util.UserHomeDir(), celleryHome, "repo", cellImage.Organization,
+		cellImage.ImageName, cellImage.ImageVersion)
+	zipLocation := filepath.Join(repoLocation, cellImage.ImageName+cellImageExt)
+	// Pull image if not exist
+	var imageExists bool
+	if imageExists, err = util.FileExists(zipLocation); err != nil {
+		return "", err
 	}
-	tempRunFileName, err := util.CreateTempExecutableBalFile(balFilePath, "run")
-	if err != nil {
-		util.ExitWithErrorMessage("Error executing ballerina file", err)
+	if !imageExists {
+		if pullIfNotPresent {
+			cellImageTag := cellImage.Registry + "/" + cellImage.Organization + "/" + cellImage.ImageName +
+				":" + cellImage.ImageVersion
+			RunPull(cellImageTag, true, "", "")
+		} else {
+			return "", fmt.Errorf("image %s/%s:%s not present on the local repository", cellImage.Organization,
+				cellImage.ImageName, cellImage.ImageVersion)
+		}
 	}
+	// Unzipping image to a temporary location
+	celleryHomeTmp := path.Join(util.UserHomeDir(), celleryHome, "tmp")
+	if _, err := os.Stat(celleryHomeTmp); os.IsNotExist(err) {
+		os.Mkdir(celleryHomeTmp, 0755)
+	}
+	var tempPath string
+	if tempPath, err = ioutil.TempDir(celleryHomeTmp, "cellery-cell-image"); err != nil {
+		return "", err
+	}
+	if err = util.Unzip(zipLocation, tempPath); err != nil {
+		return "", err
+	}
+	return tempPath, nil
+}
+
+// runCmdArgs returns the run command arguments.
+func runCmdArgs(instanceName, tempRunFileName string, dependencyLinks map[string]*dependencyInfo, envVars []*environmentVariable, runningNode *dependencyTreeNode, startDependencies, shareDependencies bool) ([]string, error) {
+	var err error
 	// Preparing the run command arguments
 	cmdArgs := []string{"run"}
 	for _, envVar := range envVars {
@@ -205,9 +250,14 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 		InstanceName: instanceName,
 		IsRoot:       true,
 	}
-	iName, err := json.Marshal(imageNameStruct)
+	var iName []byte
+	if iName, err = json.Marshal(imageNameStruct); err != nil {
+		return cmdArgs, fmt.Errorf("error in generating cellery:CellImageName construct, %v", err)
+	}
+	// Preparing the dependency instance map
+	dependencyLinksJson, err := json.Marshal(dependencyLinks)
 	if err != nil {
-		util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
+		return cmdArgs, fmt.Errorf("failed to prepare dependency info map %v", err)
 	}
 	var startDependenciesFlag = "false"
 	if startDependencies {
@@ -219,181 +269,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 	}
 	cmdArgs = append(cmdArgs, tempRunFileName, "run", string(iName), string(dependencyLinksJson),
 		startDependenciesFlag, shareDependenciesFlag)
-
-	// Calling the run function
-	moduleMgr := &util.BLangManager{}
-	exePath, err := moduleMgr.GetExecutablePath()
-	if err != nil {
-		util.ExitWithErrorMessage("Failed to get executable path", err)
-	}
-
-	cmd := &exec.Cmd{}
-
-	if len(exePath) > 0 {
-		cmd = exec.Command(exePath, cmdArgs...)
-	} else {
-		currentDir, err := os.Getwd()
-		if err != nil {
-			util.ExitWithErrorMessage("Error in determining working directory", err)
-		}
-
-		//Retrieve the cellery cli docker instance status.
-		cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime="+version.BuildVersion(),
-			"--filter", "label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
-
-		containerId, err := cmdDockerPs.Output()
-		if err != nil {
-			util.ExitWithErrorMessage("Docker Run Error", err)
-		}
-
-		if string(containerId) == "" {
-
-			cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+version.BuildVersion(),
-				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
-				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
-				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
-				"wso2cellery/ballerina-runtime:"+version.BuildVersion(), "sleep", "600",
-			)
-
-			containerId, err = cmdDockerRun.Output()
-			if err != nil {
-				util.ExitWithErrorMessage("Docker Run Error", err)
-			}
-			time.Sleep(5 * time.Second)
-		}
-
-		cliUser, err := user.Current()
-		if err != nil {
-			util.ExitWithErrorMessage("Error while retrieving the current user", err)
-		}
-
-		exeUid := constants.CELLERY_DOCKER_CLI_USER_ID
-
-		if cliUser.Uid != constants.CELLERY_DOCKER_CLI_USER_ID && runtime.GOOS == "linux" {
-			cmdUserExist := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)),
-				"id", "-u", cliUser.Username)
-			_, errUserExist := cmdUserExist.Output()
-			if errUserExist != nil {
-				cmdUserAdd := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)), "useradd", "-m",
-					"-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username)
-
-				_, errUserAdd := cmdUserAdd.Output()
-				if errUserAdd != nil {
-					util.ExitWithErrorMessage("Error in adding Cellery execution user", errUserAdd)
-				}
-			}
-			exeUid = cliUser.Uid
-		}
-
-		cmdArgs = append(cmdArgs, "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
-
-		re := regexp.MustCompile(`^.*cellery-cell-image`)
-		tempRunFileName = re.ReplaceAllString(tempRunFileName, "/home/cellery/.cellery/tmp/cellery-cell-image")
-		dockerImageDir := re.ReplaceAllString(imageDir, "/home/cellery/.cellery/tmp/cellery-cell-image")
-
-		cmd = exec.Command("docker", "exec", "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+dockerImageDir)
-		shellEnvs := os.Environ()
-		// check if any env var prepended with `CELLERY` exists. If so, set them to docker exec command.
-		if len(shellEnvs) != 0 {
-			for _, shellEnv := range shellEnvs {
-				if strings.HasPrefix(shellEnv, "CELLERY") {
-					cmd.Args = append(cmd.Args, "-e", shellEnv)
-				}
-			}
-		}
-		// set any explicitly passed env vars in cellery run command to the docker exec.
-		// This will override any env vars with identical names (prefixed with 'CELLERY') set previously.
-		if len(envVars) != 0 {
-			for _, envVar := range envVars {
-				if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
-					cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
-				}
-			}
-		}
-		cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", exeUid,
-			strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run", tempRunFileName, "run",
-			string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
-	}
-	defer os.Remove(imageDir)
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
-	// Export environment variables defined by user for dependent instances
-	for _, envVar := range envVars {
-		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
-			cmd.Env = append(cmd.Env, celleryEnvVar+envVar.InstanceName+"."+envVar.Key+"="+envVar.Value)
-		}
-	}
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	go func() {
-		for stdoutScanner.Scan() {
-			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stdoutScanner.Text())
-		}
-	}()
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stderrScanner.Text())
-		}
-	}()
-	err = cmd.Start()
-	if err != nil {
-		return fmt.Errorf("failed to execute run method in Cell instance %s due to %v", instanceName, err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return fmt.Errorf("failed to execute run method in Cell instance %s due to %v", instanceName, err)
-	}
-	_ = os.Remove(tempRunFileName)
-	return nil
-}
-
-// extractImage extracts the image into a temporary directory and returns the path.
-// Cleaning the path after finishing your work is your responsibility.
-func ExtractImage(cellImage *image.CellImage, pullIfNotPresent bool, spinner *util.Spinner) (string, error) {
-	repoLocation := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", cellImage.Organization,
-		cellImage.ImageName, cellImage.ImageVersion)
-	zipLocation := filepath.Join(repoLocation, cellImage.ImageName+constants.CELL_IMAGE_EXT)
-
-	// Pull image if not exist
-	imageExists, err := util.FileExists(zipLocation)
-	if err != nil {
-		return "", err
-	}
-	if !imageExists {
-		if pullIfNotPresent {
-			if spinner != nil {
-				spinner.Pause()
-			}
-			cellImageTag := cellImage.Registry + "/" + cellImage.Organization + "/" + cellImage.ImageName +
-				":" + cellImage.ImageVersion
-			RunPull(cellImageTag, true, "", "")
-			fmt.Println()
-			if spinner != nil {
-				spinner.Resume()
-			}
-		} else {
-			return "", fmt.Errorf("image %s/%s:%s not present on the local repository", cellImage.Organization,
-				cellImage.ImageName, cellImage.ImageVersion)
-		}
-	}
-
-	// Unzipping image to a temporary location
-	celleryHomeTmp := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp")
-	if _, err := os.Stat(celleryHomeTmp); os.IsNotExist(err) {
-		os.Mkdir(celleryHomeTmp, 0755)
-	}
-
-	tempPath, err := ioutil.TempDir(celleryHomeTmp, "cellery-cell-image")
-	if err != nil {
-		return "", err
-	}
-	err = util.Unzip(zipLocation, tempPath)
-	if err != nil {
-		return "", nil
-	}
-	return tempPath, nil
+	return cmdArgs, nil
 }
 
 // dependencyAliasLink is used to store the link information provided by the user

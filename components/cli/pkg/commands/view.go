@@ -76,7 +76,7 @@ func RunView(cellImage string) {
 		util.ExitWithErrorMessage("Error occurred while unpacking Cell Image", err)
 	}
 
-	metadataFileContent, err := ioutil.ReadFile(filepath.Join(tempPath, "artifacts", "cellery", "metadata.json"))
+	metadataFileContent, err := ioutil.ReadFile(filepath.Join(tempPath, artifacts, "cellery", "metadata.json"))
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while reading Cell metadata", err)
 	}

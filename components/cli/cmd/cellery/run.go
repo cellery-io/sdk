@@ -22,15 +22,15 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 )
 
-func newRunCommand() *cobra.Command {
+func newRunCommand(cli cli.Cli) *cobra.Command {
 	var name string
 	var startDependencies bool
 	var shareAllInstances bool
@@ -72,8 +72,11 @@ func newRunCommand() *cobra.Command {
 			}
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunRun(args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := commands.RunRun(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars); err != nil {
+				return fmt.Errorf("error running cellery run, %v", err)
+			}
+			return nil
 		},
 		Example: "  cellery run cellery-samples/hr:1.0.0 -n hr-inst\n" +
 			"  cellery run cellery-samples/hr:1.0.0 -n hr-inst\n" +

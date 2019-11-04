@@ -54,7 +54,7 @@ func RunPush(cellImage string, username string, password string) {
 	parsedCellImage, err := image.ParseImageTag(cellImage)
 	//Read docker images from metadata.json
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImage))
-	imageDir, err := ExtractImage(parsedCellImage, false, spinner)
+	imageDir, err := ExtractImage(parsedCellImage, false)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while extracting image", err)

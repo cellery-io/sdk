@@ -55,7 +55,7 @@ func newCliCommand(cli cli.Cli, kubeCli kubernetes.KubeCli) *cobra.Command {
 		newBuildCommand(cli),
 		newVersionCommand(),
 		newInitCommand(),
-		newRunCommand(),
+		newRunCommand(cli),
 		newTerminateCommand(),
 		newListCommand(kubeCli),
 		newDescribeCommand(),

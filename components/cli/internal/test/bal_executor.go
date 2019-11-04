@@ -21,24 +21,37 @@ package test
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/cellery-io/sdk/components/cli/ballerina"
 )
 
 type MockBalExecutor struct {
 	CurrentDir string
 }
 
+// NewMockBalExecutor returns a MockBalExecutor instance.
+func NewMockBalExecutor() *MockBalExecutor {
+	balExecutor := &MockBalExecutor{}
+	return balExecutor
+}
+
 // Build mocks execution of ballerina build on an executable bal file.
-func (baleExecutor *MockBalExecutor) Build(fileName string, iName []byte) error {
-	_, err := os.Create(filepath.Join(baleExecutor.CurrentDir, "metadata.json"))
+func (balExecutor *MockBalExecutor) Build(fileName string, iName []byte) error {
+	_, err := os.Create(filepath.Join(balExecutor.CurrentDir, "metadata.json"))
 	return err
 }
 
+// Build mocks execution of ballerina run on an executable bal file.
+func (balExecutor *MockBalExecutor) Run(balFile, imageDir string, args []string, envVars []ballerina.EnvironmentVariable) error {
+	return nil
+}
+
 // Version returns the mock ballerina version.
-func (baleExecutor *MockBalExecutor) Version() (string, error) {
+func (balExecutor *MockBalExecutor) Version() (string, error) {
 	return "", nil
 }
 
 // ExecutablePath returns mock ballerina executable path.
-func (baleExecutor *MockBalExecutor) ExecutablePath() (string, error) {
+func (balExecutor *MockBalExecutor) ExecutablePath() (string, error) {
 	return "", nil
 }

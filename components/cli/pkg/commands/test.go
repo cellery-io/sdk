@@ -20,29 +20,27 @@ package commands
 
 import (
 	"bufio"
-	"os/user"
-	"runtime"
-	"strconv"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"regexp"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
+
+const dockerCliCellImageDir = "/home/cellery/.cellery/tmp/cellery-cell-image"
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)\
 func RunTest(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
@@ -52,7 +50,7 @@ func RunTest(cellImageTag string, instanceName string, startDependencies bool, s
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
-	imageDir, err := ExtractImage(parsedCellImage, true, spinner)
+	imageDir, err := ExtractImage(parsedCellImage, true)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while extracting image", err)
@@ -414,7 +412,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			ballerinaArgs = append(ballerinaArgs, cmdArgs...)
 			RunTelepresenceTests(incell, cmd, ballerinaArgs, imageDir, instanceName, debug)
 		} else {
-			tmpImgDir := "/home/cellery/.cellery/tmp/cellery-cell-image"
+			tmpImgDir := dockerCliCellImageDir
 
 			isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(tempTestFileName)))
 			if !isExistsSourceBal {
@@ -580,7 +578,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			}
 			RunTelepresenceTests(incell, cmd, cmdArgs, imageDir, instanceName, debug)
 		} else {
-			tmpImgDir := "/home/cellery/.cellery/tmp/cellery-cell-image"
+			tmpImgDir := dockerCliCellImageDir
 
 			isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
 			if !isExistsSourceBal {

@@ -70,7 +70,7 @@ func RunExtractResources(cellImage string, outputPath string) {
 	}
 
 	// Copying the image resources to the provided output directory
-	resourcesDir, err := filepath.Abs(filepath.Join(tempPath, "artifacts", "resources"))
+	resourcesDir, err := filepath.Abs(filepath.Join(tempPath, artifacts, "resources"))
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while extracting the image resources", err)
 	}

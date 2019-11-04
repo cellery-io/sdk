@@ -33,6 +33,7 @@ const ballerina = "ballerina"
 
 type BalExecutor interface {
 	Build(fileName string, iName []byte) error
+	Run(balFile, imageDir string, args []string, envVars []EnvironmentVariable) error
 	Version() (string, error)
 	ExecutablePath() (string, error)
 }
@@ -47,8 +48,8 @@ func NewLocalBalExecutor() *LocalBalExecutor {
 }
 
 // Build executes ballerina build on an executable bal file.
-func (baleExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error {
-	exePath, err := baleExecutor.ExecutablePath()
+func (balExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error {
+	exePath, err := balExecutor.ExecutablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
@@ -64,8 +65,46 @@ func (baleExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error
 	return nil
 }
 
+// Run executes ballerina run on an executable bal file.
+func (balExecutor *LocalBalExecutor) Run(balFile, imageDir string, args []string, envVars []EnvironmentVariable) error {
+	exePath, err := balExecutor.ExecutablePath()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path, %v", err)
+	}
+	cmd := exec.Command(exePath, balFile)
+	cmd = exec.Command(exePath, args...)
+	cmd.Env = os.Environ()
+	// Export environment variables defined by user
+	for _, envVar := range envVars {
+		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
+	}
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stdoutScanner.Text())
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stderrScanner.Text())
+		}
+	}()
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("failed starting to execute run method %v", err)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return fmt.Errorf("failed waiting to execute run method %v", err)
+	}
+	return nil
+}
+
 // Version returns the ballerina version.
-func (baleExecutor *LocalBalExecutor) Version() (string, error) {
+func (balExecutor *LocalBalExecutor) Version() (string, error) {
 	version := ""
 	cmd := exec.Command(ballerina, "version")
 	stdoutReader, _ := cmd.StdoutPipe()
@@ -87,10 +126,10 @@ func (baleExecutor *LocalBalExecutor) Version() (string, error) {
 }
 
 // ExecutablePath returns the ballerina executable path.
-func (baleExecutor *LocalBalExecutor) ExecutablePath() (string, error) {
+func (balExecutor *LocalBalExecutor) ExecutablePath() (string, error) {
 	var err error
 	var ballerinaVersion string
-	if ballerinaVersion, err = baleExecutor.Version(); err != nil {
+	if ballerinaVersion, err = balExecutor.Version(); err != nil {
 		return ballerinaInstallationPath()
 	}
 	if strings.Contains(ballerinaVersion, "Ballerina") {
@@ -116,4 +155,10 @@ func ballerinaInstallationPath() (string, error) {
 		}
 	}
 	return exePath + ballerina, nil
+}
+
+// EnvironmentVariable is used to store the environment variables to be passed to the instances
+type EnvironmentVariable struct {
+	Key   string
+	Value string
 }
