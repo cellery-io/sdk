@@ -25,9 +25,16 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunLogs(cellName, componentName string) {
+func RunLogs(cellName, componentName string, sysLog bool) {
 	if componentName == "" {
-		logs, err := kubectl.GetCellLogs(cellName)
+		var logs string
+		var err error
+		if sysLog {
+			logs, err = kubectl.GetCellLogsAllComponents(cellName)
+		} else {
+			logs, err = kubectl.GetCellLogsUserComponents(cellName)
+		}
+
 		if err != nil {
 			util.ExitWithErrorMessage(fmt.Sprintf("Error getting logs for instance %s", cellName), err)
 		}

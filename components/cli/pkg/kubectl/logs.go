@@ -27,7 +27,20 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 )
 
-func GetCellLogs(cellName string) (string, error) {
+func GetCellLogsUserComponents(cellName string) (string, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"logs",
+		"-l",
+		constants.GROUP_NAME+"/cell="+cellName+","+constants.GROUP_NAME+"/component",
+		"--all-containers=true",
+	)
+	displayVerboseOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	fmt.Print(string(out))
+	return string(out), err
+}
+
+func GetCellLogsAllComponents(cellName string) (string, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"logs",
 		"-l",

@@ -30,6 +30,7 @@ import (
 
 func newLogsCommand() *cobra.Command {
 	var component string
+	var syslog bool
 	cmd := &cobra.Command{
 		Use:   "logs <instance-name>",
 		Short: "Displays logs for either the cell instance, or a component of a running cell instance.",
@@ -51,11 +52,12 @@ func newLogsCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunLogs(args[0], component)
+			commands.RunLogs(args[0], component, syslog)
 		},
 		Example: "  cellery logs employee\n" +
 			"  cellery logs employee -c salary",
 	}
 	cmd.Flags().StringVarP(&component, "component", "c", "", "component of the cell")
+	cmd.Flags().BoolVarP(&syslog, "syslog", "s", false, "view system logs")
 	return cmd
 }
