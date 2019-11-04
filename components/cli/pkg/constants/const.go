@@ -111,7 +111,7 @@ const BALLERINA_TOML = "Ballerina.toml"
 const BALLERINA_LOCAL_REPO = ".ballerina/"
 const TEMP_TEST_MODULE = "tmp"
 
-const DOCKER_CLI_BALLERINA_EXECUTABLE_PATH = "/usr/lib/ballerina/ballerina-1.0.1/bin/ballerina"
+const DOCKER_CLI_BALLERINA_EXECUTABLE_PATH = "/usr/lib/ballerina/ballerina-"+BALLERINA_VERSION+"/bin/ballerina"
 
 const WSO2_APIM_HOST = "https://wso2-apim-gateway"
 

@@ -114,8 +114,9 @@ public class CelleryConstants {
     public static final String CELLERY_ENV_VARIABLE = "cellery_env_";
     public static final String MESH_CELLERY_IO = "mesh.cellery.io";
 
-    public static final String BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-1.0.1";
-    public static final String BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-1.0.1";
+    public static final String BALLERINA_VERSION = "1.0.3";
+    public static final String BALLERINA_INSTALLATION_PATH_MAC = "/Library/Ballerina/ballerina-" + BALLERINA_VERSION;
+    public static final String BALLERINA_INSTALLATION_PATH_UBUNTU = "/usr/lib/ballerina/ballerina-" + BALLERINA_VERSION;
     public static final String BALLERINA_EXECUTABLE_PATH = "/bin/";
-    public static final String BALLERINA_VERSION = "1.0.1";
+
 }

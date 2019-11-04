@@ -162,6 +162,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <spotify.docker.client.version>8.15.0</spotify.docker.client.version>
         <testng.version>6.14.3</testng.version>
+        <swagger.parser.version>2.0.8</swagger.parser.version>
         <io.jsonwebtoken.version>0.9.1</io.jsonwebtoken.version>
     </properties>
 

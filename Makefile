@@ -19,7 +19,7 @@ PROJECT_PKG := github.com/cellery-io/sdk
 GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)
-BALLERINA_VERSION ?= 1.0.1
+BALLERINA_VERSION ?= 1.0.3
 
 DISTRIBUTION_VERSION ?= master
 DISTRIBUTION_ARTIFACTS := https://github.com/wso2-cellery/distribution/archive/$(DISTRIBUTION_VERSION).zip

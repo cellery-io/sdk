@@ -20,7 +20,7 @@
 
 #echo "Post installation process started"
 PRODUCT_HOME=/Library/Cellery
-BALLERINA_RUNTIME="ballerina-1.0.1"
+BALLERINA_RUNTIME="ballerina-1.0.3"
 CELLERY_VERSION=__CELLERY_VERSION__
 
 # Change permissions in home directory
@@ -32,11 +32,11 @@ chmod -R 755 .
 rm -f /usr/local/bin/cellery
 ln -s ${PRODUCT_HOME}/cellery /usr/local/bin/cellery
 
-B7A_HOME="/Library/Ballerina/ballerina-1.0.1"
+B7A_HOME="/Library/Ballerina/ballerina-1.0.3"
 if [ ! -d ${B7A_HOME} ]
 then
 #Pull docker based Ballerina cli.
-    echo "Ballerina 1.0.1 is not installed"
+    echo "Ballerina 1.0.3 is not installed"
     echo "Installing docker based Cellery CLI."
     docker_status=$(/usr/local/bin/docker info 2>&1 1>/dev/null)
     if [[ $? -eq 0 ]]; then
