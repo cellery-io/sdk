@@ -9,7 +9,6 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import ballerina/io;
 import celleryio/cellery;
 
 public function build(cellery:ImageName iName) returns error? {
@@ -49,4 +48,9 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
     return <@untainted> cellery:createImage(mysqlComposite, iName);
+}
+
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
+    cellery:Composite mysqlComposite = check cellery:constructImage(iName);
+    return <@untainted> cellery:createInstance(mysqlComposite, iName, instances, startDependencies, shareDependencies);
 }
