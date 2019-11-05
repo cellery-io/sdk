@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 )
@@ -59,7 +60,7 @@ func TestStartCellInstance(t *testing.T) {
 		IsShared:  false,
 		MetaData:  cellImageMetadata,
 	}
-	var instanceEnvVars []*environmentVariable
+	var instanceEnvVars []*ballerina.EnvironmentVariable
 	rootNodeDependencies := map[string]*dependencyInfo{}
 	err = startCellInstance(mockCli, imageDir, "hello", mainNode, instanceEnvVars, false,
 		rootNodeDependencies, false)

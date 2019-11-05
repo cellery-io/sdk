@@ -94,7 +94,7 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 			parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
 		}
 	}
-	var instanceEnvVars []*environmentVariable
+	var instanceEnvVars []*ballerina.EnvironmentVariable
 	if len(envVars) > 0 {
 		// Parsing environment variables
 		for _, envVar := range envVars {
@@ -122,7 +122,7 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 			if targetInstance == "" {
 				targetInstance = instanceName
 			}
-			parsedEnvVar := &environmentVariable{
+			parsedEnvVar := &ballerina.EnvironmentVariable{
 				InstanceName: targetInstance,
 				Key:          envVarKey,
 				Value:        envVarValue,
@@ -157,7 +157,7 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 }
 
 func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runningNode *dependencyTreeNode,
-	envVars []*environmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo,
+	envVars []*ballerina.EnvironmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo,
 	shareDependencies bool) error {
 	defer os.Remove(imageDir)
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
@@ -188,7 +188,7 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 	if runCommandArgs, err = runCmdArgs(instanceName, tempRunFileName, dependencyLinks, envVars, runningNode, startDependencies, shareDependencies); err != nil {
 		return fmt.Errorf("failed to get run command arguements, %v", err)
 	}
-	cli.BalExecutor().Run(tempRunFileName, imageDir, runCommandArgs, balEnvVars)
+	cli.BalExecutor().Run(imageDir, instanceName, envVars, tempRunFileName, runCommandArgs)
 	if err = os.Remove(tempRunFileName); err != nil {
 		return fmt.Errorf("error removing temp run file %s", tempRunFileName)
 	}
@@ -233,10 +233,10 @@ func ExtractImage(cellImage *image.CellImage, pullIfNotPresent bool) (string, er
 }
 
 // runCmdArgs returns the run command arguments.
-func runCmdArgs(instanceName, tempRunFileName string, dependencyLinks map[string]*dependencyInfo, envVars []*environmentVariable, runningNode *dependencyTreeNode, startDependencies, shareDependencies bool) ([]string, error) {
+func runCmdArgs(instanceName, tempRunFileName string, dependencyLinks map[string]*dependencyInfo, envVars []*ballerina.EnvironmentVariable, runningNode *dependencyTreeNode, startDependencies, shareDependencies bool) ([]string, error) {
 	var err error
 	// Preparing the run command arguments
-	cmdArgs := []string{"run"}
+	var cmdArgs []string
 	for _, envVar := range envVars {
 		// Setting root instance environment variables
 		if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
@@ -267,8 +267,7 @@ func runCmdArgs(instanceName, tempRunFileName string, dependencyLinks map[string
 	if shareDependencies {
 		shareDependenciesFlag = "true"
 	}
-	cmdArgs = append(cmdArgs, tempRunFileName, "run", string(iName), string(dependencyLinksJson),
-		startDependenciesFlag, shareDependenciesFlag)
+	cmdArgs = append(cmdArgs, string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
 	return cmdArgs, nil
 }
 

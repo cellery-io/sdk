@@ -31,10 +31,12 @@ import (
 )
 
 const ballerina = "ballerina"
+const celleryEnvVar = "cellery_env_"
+const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
 
 type BalExecutor interface {
 	Build(fileName string, iName []byte) error
-	Run(balFile, imageDir string, args []string, envVars []EnvironmentVariable) error
+	Run(imageDir string, instanceName string, envVars []*EnvironmentVariable, tempRunFileName string, args []string) error
 	Version() (string, error)
 	ExecutablePath() (string, error)
 }
@@ -55,12 +57,18 @@ func (balExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error 
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
 	cmd := exec.Command(exePath, "run", fileName, "build", string(iName), "{}", "false", "false")
-	execError := ""
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stdoutScanner.Text())
+		}
+	}()
 	stderrReader, _ := cmd.StderrPipe()
 	stderrScanner := bufio.NewScanner(stderrReader)
 	go func() {
 		for stderrScanner.Scan() {
-			execError += stderrScanner.Text()
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stderrScanner.Text())
 		}
 	}()
 	var stdout, stderr bytes.Buffer
@@ -82,17 +90,22 @@ func (balExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error 
 }
 
 // Run executes ballerina run on an executable bal file.
-func (balExecutor *LocalBalExecutor) Run(balFile, imageDir string, args []string, envVars []EnvironmentVariable) error {
+func (balExecutor *LocalBalExecutor) Run(imageDir string, instanceName string,
+	envVars []*EnvironmentVariable, tempRunFileName string, args []string) error {
+	cmd := &exec.Cmd{}
 	exePath, err := balExecutor.ExecutablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
-	cmd := exec.Command(exePath, balFile)
-	cmd = exec.Command(exePath, args...)
+	cmd = exec.Command(exePath, "run", tempRunFileName, "run")
+	cmd.Args = append(cmd.Args, args...)
 	cmd.Env = os.Environ()
-	// Export environment variables defined by user
+	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
+	// Export environment variables defined by user for dependent instances
 	for _, envVar := range envVars {
-		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
+		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
+			cmd.Env = append(cmd.Env, celleryEnvVar+envVar.InstanceName+"."+envVar.Key+"="+envVar.Value)
+		}
 	}
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
@@ -175,6 +188,7 @@ func ballerinaInstallationPath() (string, error) {
 
 // EnvironmentVariable is used to store the environment variables to be passed to the instances
 type EnvironmentVariable struct {
-	Key   string
-	Value string
+	InstanceName string
+	Key          string
+	Value        string
 }

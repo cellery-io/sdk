@@ -20,6 +20,7 @@ package ballerina
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -35,8 +36,7 @@ import (
 
 const homeCellery = "/home/cellery"
 const dockerCliUserId = "1000"
-const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
-const dockerCliBallerinaExecutablePath = "/usr/lib/ballerina/ballerina-0.991.0/bin/ballerina"
+const dockerCliBallerinaExecutablePath = "/usr/lib/ballerina/ballerina-1.0.3/bin/ballerina"
 const dockerCliCellImageDir = "/home/cellery/.cellery/tmp/cellery-cell-image"
 
 type DockerBalExecutor struct {
@@ -128,7 +128,25 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, iName []byte) error
 	re := regexp.MustCompile("^" + currentDir + "/")
 	balFilePath := re.ReplaceAllString(fileName, "")
 	cmd := exec.Command("docker", "exec", "-w", homeCellery+"/src", "-u", cliUser.Uid,
-		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath, "run", balFilePath, "build", string(iName), "{}")
+		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath, "run", balFilePath, "build",
+		string(iName), "{}", "false", "false")
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stdoutScanner.Text())
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stderrScanner.Text())
+		}
+	}()
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err = cmd.Start()
 	if err != nil {
 		return fmt.Errorf("error occurred while starting to build image, %v", err)
@@ -141,7 +159,9 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, iName []byte) error
 }
 
 // Run executes ballerina run when ballerina is not installed.
-func (balExecutor *DockerBalExecutor) Run(balFile, imageDir string, args []string, envVars []EnvironmentVariable) error {
+func (balExecutor *DockerBalExecutor) Run(imageDir string, instanceName string,
+	envVars []*EnvironmentVariable, tempRunFileName string, args []string) error {
+
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error in determining working directory, %v", err)
@@ -189,8 +209,11 @@ func (balExecutor *DockerBalExecutor) Run(balFile, imageDir string, args []strin
 		}
 		exeUid = cliUser.Uid
 	}
+	var cmdArgs []string
+	cmdArgs = append(cmdArgs, "-e", celleryImageDirEnvVar+"="+imageDir)
+
 	re := regexp.MustCompile(`^.*cellery-cell-image`)
-	balFile = re.ReplaceAllString(balFile, dockerCliCellImageDir)
+	tempRunFileName = re.ReplaceAllString(tempRunFileName, dockerCliCellImageDir)
 	dockerImageDir := re.ReplaceAllString(imageDir, dockerCliCellImageDir)
 
 	cmd := exec.Command("docker", "exec", "-e", celleryImageDirEnvVar+"="+dockerImageDir)
@@ -207,17 +230,37 @@ func (balExecutor *DockerBalExecutor) Run(balFile, imageDir string, args []strin
 	// This will override any env vars with identical names (prefixed with 'CELLERY') set previously.
 	if len(envVars) != 0 {
 		for _, envVar := range envVars {
-			cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+			if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
+				cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+			}
 		}
 	}
 	cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", exeUid,
 		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath)
+	cmd.Args = append(cmd.Args, "run", tempRunFileName, "run")
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
 	// Export environment variables defined by user for dependent instances
 	for _, envVar := range envVars {
-		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
+		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
+			cmd.Env = append(cmd.Env, celleryEnvVar+envVar.InstanceName+"."+envVar.Key+"="+envVar.Value)
+		}
 	}
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stdoutScanner.Text())
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stderrScanner.Text())
+		}
+	}()
 	err = cmd.Start()
 	if err != nil {
 		return fmt.Errorf("failed starting to execute run method %v", err)
