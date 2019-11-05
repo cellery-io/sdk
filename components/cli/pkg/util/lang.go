@@ -38,7 +38,7 @@ type BLangManager struct{}
 
 func (langMgr *BLangManager) Init() error {
 	// if the module is not present in the cellery installation directory, skip trying to copy
-	installPath := filepath.Join(CelleryInstallationDir(), "balo_cache")
+	installPath := filepath.Join(CelleryInstallationDir(), "b7a-libs", "balo_cache")
 	var paths []string
 	var err error
 	celleryModPath := filepath.Join(installPath, "celleryio", "cellery", "*", "cellery-*.balo")
