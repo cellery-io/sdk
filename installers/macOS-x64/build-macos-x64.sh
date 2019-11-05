@@ -115,8 +115,8 @@ getBallerinaHome() {
 }
 
 buildBallerinaNatives() {
-    go_to_dir ../../components/lang/
-    mvn clean install
+    go_to_dir ../../components/
+    mvn clean install -Dmaven.test.skip=true
     popd >/dev/null 2>&1
 }
 

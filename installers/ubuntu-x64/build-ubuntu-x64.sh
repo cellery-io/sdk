@@ -86,8 +86,8 @@ getBallerinaHome() {
 }
 
 buildBallerinaNatives() {
-    go_to_dir ../../components/lang/
-    mvn clean install
+    go_to_dir ../../components/
+    mvn clean install -Dmaven.test.skip=true
     popd >/dev/null 2>&1
 }
 
@@ -132,10 +132,9 @@ buildDocsView() {
 
 getProductSize() {
     CELLERY_SIZE=$(du -s ../../components/build/cellery | awk '{print $1}')
-    CELLERY_JAR_SIZE=$(du -s ../../components/lang/target/cellery-*.jar | awk '{print $1}')
-    CELLERY_REPO_SIZE=$(du -s ../../components/lang/target/generated-balo/ | awk '{print $1}')
+    CELLERY_BALO_SIZE=$(du -s ../../components/module-cellery/target/balo/cellery-*.balo | awk '{print $1}')
 
-    BINARY_SIZE_KB=$((CELLERY_SIZE + CELLERY_JAR_SIZE + CELLERY_REPO_SIZE))
+    BINARY_SIZE_KB=$((CELLERY_SIZE + CELLERY_BALO_SIZE))
     BINARY_SIZE_MB=$((BINARY_SIZE_KB/1024))
 
     BINARY_SIZE=${BINARY_SIZE_MB}
