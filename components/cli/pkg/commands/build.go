@@ -296,7 +296,7 @@ func createTempBalFile(cli cli.Cli, fileName string) (string, error) {
 		return "", fmt.Errorf("error getting current directory: %v", err)
 	}
 	targetDir := filepath.Join(projectDir, "target")
-	_ = os.RemoveAll(targetDir)
+	_ = os.Remove(targetDir)
 	if tempBuildFileName, err = util.CreateTempExecutableBalFile(fileName, "build"); err != nil {
 		return "", fmt.Errorf("error creating executable bal file: %v", err)
 	}

@@ -20,6 +20,7 @@ package ballerina
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -54,14 +55,29 @@ func (balExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error 
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
 	cmd := exec.Command(exePath, "run", fileName, "build", string(iName), "{}", "false", "false")
+	execError := ""
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			execError += stderrScanner.Text()
+		}
+	}()
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err = cmd.Start()
 	if err != nil {
-		return fmt.Errorf("error occurred while starting to build image, %v", err)
+		errStr := string(stderr.Bytes())
+		return fmt.Errorf("error occurred while starting to build image, %v", errStr)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return fmt.Errorf("error occurred while waiting to build image, %v", err)
+		errStr := string(stderr.Bytes())
+		return fmt.Errorf("error occurred while waiting to build image, %v", errStr)
 	}
+	outStr := string(stdout.Bytes())
+	fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", outStr)
 	return nil
 }
 

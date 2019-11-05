@@ -481,9 +481,11 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 	var newFileName = strings.Replace(balFileName, ".bal", "", 1) + "_" + action + ".bal"
 	originalFileDir := filepath.Dir(originalFilePath)
 	targetAbs := filepath.Join(originalFileDir, "target")
-	err = os.Mkdir(targetAbs, 0777)
-	if err != nil {
-		return "", err
+	if _, err := os.Stat(targetAbs); os.IsNotExist(err) {
+		err = os.Mkdir(targetAbs, 0777)
+		if err != nil {
+			return "", err
+		}
 	}
 	targetFilePath := filepath.Join(targetAbs, newFileName)
 	err = ioutil.WriteFile(targetFilePath, []byte(newFileContent), 0644)
