@@ -24,20 +24,23 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 type MockCli struct {
 	out               io.Writer
 	outBuffer         *bytes.Buffer
 	BallerinaExecutor ballerina.BalExecutor
+	kubecli           kubernetes.KubeCli
 }
 
 // NewMockCli returns a mock cli for the cli.Cli interface.
-func NewMockCli() *MockCli {
+func NewMockCli(kubeCli *MockKubeCli) *MockCli {
 	outBuffer := new(bytes.Buffer)
 	mockCli := &MockCli{
 		out:       outBuffer,
 		outBuffer: outBuffer,
+		kubecli:   kubeCli,
 	}
 	return mockCli
 }
@@ -69,4 +72,9 @@ func (cli *MockCli) FileSystem() cli.FileSystemManager {
 // BalExecutor returns a mock ballerina.BalExecutor instance.
 func (cli *MockCli) BalExecutor() ballerina.BalExecutor {
 	return cli.BallerinaExecutor
+}
+
+// KubeCli returns mock kubernetes.KubeCli instance.
+func (cli *MockCli) KubeCli() kubernetes.KubeCli {
+	return cli.kubecli
 }

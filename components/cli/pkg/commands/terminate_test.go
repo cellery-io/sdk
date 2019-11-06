@@ -19,45 +19,55 @@
 package commands
 
 import (
-	"testing"
-
-	"github.com/google/go-cmp/cmp"
-
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"testing"
 )
 
-func TestGetCellTableData(t *testing.T) {
+func TestTerminateInstance(t *testing.T) {
+	mockCluster := kubernetes.Cells{
+		Items: []kubernetes.Cell{
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "employee",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "stock",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+		},
+	}
 	tests := []struct {
 		name        string
 		want        string
-		MockKubeCli *test.MockKubeCli
+		MockCli *test.MockCli
+		instances []string
+		terminateAll bool
 	}{
 		{
-			name: "list instances with single cell instance",
+			name: "terminate single existing cell instance",
 			want: "employee",
-			MockKubeCli: test.NewMockKubeCli(kubernetes.Cells{
-				Items: []kubernetes.Cell{
-					{
-						CellMetaData: kubernetes.K8SMetaData{
-							Name:              "employee",
-							CreationTimestamp: "2019-10-18T11:40:36Z",
-						},
-					},
-				},
-			},
-			kubernetes.Composites{}),
+			MockCli: test.NewMockCli(test.NewMockKubeCli(mockCluster, kubernetes.Composites{})),
+			instances:[]string{"employee"},
+			terminateAll:false,
+		},
+		{
+			name: "terminate all cell instances",
+			want: "employee",
+			MockCli: test.NewMockCli(test.NewMockKubeCli(mockCluster, kubernetes.Composites{})),
+			instances:[]string{},
+			terminateAll:true,
 		},
 	}
 	for _, testIteration := range tests {
 		t.Run(testIteration.name, func(t *testing.T) {
-			tableData, err := getCellTableData(testIteration.MockKubeCli)
+			err := RunTerminate(testIteration.MockCli, testIteration.instances, testIteration.terminateAll)
 			if err != nil {
-				t.Errorf("error in getCellTableData")
-			}
-			got := tableData[0][0]
-			if diff := cmp.Diff(testIteration.want, got); diff != "" {
-				t.Errorf("getCellTableData (-want, +got)\n%v", diff)
+				t.Errorf("getCellTableData err, %v", err)
 			}
 		})
 	}

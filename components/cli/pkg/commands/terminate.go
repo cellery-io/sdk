@@ -21,20 +21,20 @@ package commands
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunTerminate(terminatingInstances []string, terminateAll bool) {
-	runningInstances, err := runtime.GetInstancesNames()
-	if err != nil {
-		util.ExitWithErrorMessage("Error getting running cell instances", err)
+func RunTerminate(cli cli.Cli, terminatingInstances []string, terminateAll bool) error {
+	var err error
+	var runningInstances []string
+	if runningInstances, err = cli.KubeCli().GetInstancesNames(); err != nil {
+		return fmt.Errorf("error getting running cell instances, %v", err)
 	}
-	// Delete all running instances
 	if terminateAll {
+		// Terminate all running instances
 		for _, runningInstance := range runningInstances {
-			terminateInstance(runningInstance)
+			terminateInstance(cli, runningInstance)
 		}
 	} else {
 		// Check if any given instance is not running
@@ -42,30 +42,31 @@ func RunTerminate(terminatingInstances []string, terminateAll bool) {
 			if util.ContainsInStringArray(runningInstances, terminatingInstance) {
 				continue
 			} else {
-				util.ExitWithErrorMessage("Error terminating cell instances", fmt.Errorf("instance: %s does not exist", terminatingInstance))
+				return fmt.Errorf("error terminating cell instances, %v", fmt.Errorf("instance: %s does " +
+					"not exist", terminatingInstance))
 			}
 		}
 		// If all given instances are running terminate them all
 		for _, terminatingInstance := range terminatingInstances {
-			terminateInstance(terminatingInstance)
+			terminateInstance(cli, terminatingInstance)
 		}
 	}
+	return nil
 }
 
-func terminateInstance(instance string) {
-	output, err := kubectl.DeleteResource("cell", instance)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while stopping the cell instance: "+instance, fmt.Errorf(output))
+func terminateInstance(cli cli.Cli, instance string) error {
+	var err error
+	var output string
+	if output, err = cli.KubeCli().DeleteResource("cell", instance); err != nil {
+		return fmt.Errorf("error occurred while stopping the cell instance %s, %v", instance, fmt.Errorf(output))
 	}
-
-	output, err = kubectl.DeleteResource("composite", instance)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while stopping the composite instance: "+instance, fmt.Errorf(output))
+	if output, err = cli.KubeCli().DeleteResource("composite", instance); err != nil {
+		return fmt.Errorf("error occurred while stopping the composite instance %s, %v", instance, fmt.Errorf(output))
 	}
 	// Delete the TLS Secret
 	secretName := instance + "--tls-secret"
-	output, err = kubectl.DeleteResource("secret", secretName)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while deleting the secret: "+secretName, fmt.Errorf(output))
+	if output, err = cli.KubeCli().DeleteResource("secret", secretName); err != nil {
+		return fmt.Errorf("error occurred while deleting the secret: %s, %v", secretName, fmt.Errorf(output))
 	}
+	return nil
 }

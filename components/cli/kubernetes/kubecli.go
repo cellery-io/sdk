@@ -29,6 +29,10 @@ import (
 // KubeCli represents kubernetes client.
 type KubeCli interface {
 	GetCells() ([]Cell, error)
+	SetVerboseMode(enable bool)
+	DeleteResource(kind, instance string) (string, error)
+	GetComposites() (Composites, error)
+	GetInstancesNames() ([]string, error)
 }
 
 type CelleryKubeCli struct {
@@ -49,6 +53,7 @@ func (kubecli *CelleryKubeCli) GetCells() ([]Cell, error) {
 		"-o",
 		"json",
 	)
+	displayVerboseOutput(cmd)
 	jsonOutput := Cells{}
 	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
@@ -56,4 +61,58 @@ func (kubecli *CelleryKubeCli) GetCells() ([]Cell, error) {
 	}
 	err = json.Unmarshal(out, &jsonOutput)
 	return jsonOutput.Items, err
+}
+
+func (kubecli *CelleryKubeCli) GetComposites() (Composites, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"get",
+		"composites",
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := Composites{}
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	if err != nil {
+		return jsonOutput, err
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput, err
+}
+
+func (kubecli *CelleryKubeCli)DeleteResource(kind, instance string) (string, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"delete",
+		kind,
+		instance,
+		"--ignore-not-found",
+	)
+	displayVerboseOutput(cmd)
+	return osexec.GetCommandOutput(cmd)
+}
+
+func (kubecli *CelleryKubeCli) SetVerboseMode(enable bool) {
+	verboseMode = enable
+}
+
+
+func (kubecli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
+	var instances []string
+	runningCellInstances, err := kubecli.GetCells()
+	if err != nil {
+		return nil, err
+	}
+	runningCompositeInstances, err := kubecli.GetComposites()
+	if err != nil {
+		return nil, err
+	}
+	for _, runningInstance := range runningCellInstances {
+		instances = append(instances, runningInstance.CellMetaData.Name)
+	}
+	for _, runningInstance := range runningCompositeInstances.Items {
+		instances = append(instances, runningInstance.CompositeMetaData.Name)
+	}
+	return instances, nil
 }

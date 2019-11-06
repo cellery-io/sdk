@@ -255,7 +255,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			}
 			err = cmd.Run()
 			if err != nil {
-				return fmt.Errorf("error occurred while initializing ballerina project for tests", err)
+				return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
 			}
 		}
 

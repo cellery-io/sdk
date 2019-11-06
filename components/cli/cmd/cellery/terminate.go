@@ -21,10 +21,11 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newTerminateCommand() *cobra.Command {
+func newTerminateCommand(cli cli.Cli) *cobra.Command {
 	var terminateAll = false
 	cmd := &cobra.Command{
 		Use:     "terminate <instance1> <instance2> <instance-3>",
@@ -40,7 +41,7 @@ func newTerminateCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunTerminate(args, terminateAll)
+			commands.RunTerminate(cli, args, terminateAll)
 		},
 		Example: "  cellery terminate employee\n" +
 			"  cellery terminate pet-fe pet-be\n" +

@@ -18,16 +18,20 @@
 
 package test
 
-import "github.com/cellery-io/sdk/components/cli/kubernetes"
+import (
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
+)
 
 type MockKubeCli struct {
 	cells kubernetes.Cells
+	composites kubernetes.Composites
 }
 
 // NewMockKubeCli returns a mock cli for the cli.KubeCli interface.
-func NewMockKubeCli(cells kubernetes.Cells) *MockKubeCli {
+func NewMockKubeCli(cells kubernetes.Cells, composites kubernetes.Composites) *MockKubeCli {
 	cli := &MockKubeCli{
 		cells: cells,
+		composites:composites,
 	}
 	return cli
 }
@@ -35,4 +39,26 @@ func NewMockKubeCli(cells kubernetes.Cells) *MockKubeCli {
 // GetCells returns cell instances array.
 func (kubecli *MockKubeCli) GetCells() ([]kubernetes.Cell, error) {
 	return kubecli.cells.Items, nil
+}
+
+func (kubecli *MockKubeCli) GetComposites() (kubernetes.Composites, error) {
+	return kubecli.composites, nil
+}
+
+func (kubecli *MockKubeCli)DeleteResource(kind, instance string) (string, error) {
+	return "", nil
+}
+
+func (kubecli *MockKubeCli)SetVerboseMode(enable bool) {
+}
+
+func (kubecli *MockKubeCli) GetInstancesNames() ([]string, error) {
+	var instanceNames []string
+	for _, cell := range kubecli.cells.Items {
+		instanceNames = append(instanceNames, cell.CellMetaData.Name)
+	}
+	for _, composites := range kubecli.composites.Items {
+		instanceNames = append(instanceNames, composites.CompositeMetaData.Name)
+	}
+	return instanceNames, nil
 }

@@ -25,25 +25,22 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/ballerina"
-
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func newCliCommand(cli cli.Cli, kubeCli kubernetes.KubeCli) *cobra.Command {
+func newCliCommand(cli cli.Cli) *cobra.Command {
 	var verboseMode = false
 	var insecureMode = false
 	cmd := &cobra.Command{
 		Use:   "cellery <command>",
 		Short: "Manage immutable cell based applications",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			kubectl.SetVerboseMode(verboseMode)
+			cli.KubeCli().SetVerboseMode(verboseMode)
 			if insecureMode {
 				http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 			}
@@ -56,8 +53,8 @@ func newCliCommand(cli cli.Cli, kubeCli kubernetes.KubeCli) *cobra.Command {
 		newVersionCommand(),
 		newInitCommand(),
 		newRunCommand(cli),
-		newTerminateCommand(),
-		newListCommand(kubeCli),
+		newTerminateCommand(cli),
+		newListCommand(cli),
 		newDescribeCommand(),
 		newStatusCommand(),
 		newLogsCommand(),
@@ -84,7 +81,6 @@ func newCliCommand(cli cli.Cli, kubeCli kubernetes.KubeCli) *cobra.Command {
 
 func main() {
 	celleryCli := cli.NewCelleryCli()
-	celleryKubeCli := kubernetes.NewCelleryKubeCli()
 	var ballerinaExecutor ballerina.BalExecutor
 	moduleMgr := &util.BLangManager{}
 	// Initially assume ballerina is installed locally and try to get the ballerina executable path.
@@ -132,7 +128,7 @@ func main() {
 		util.ExitWithErrorMessage("Unable to copy cellery installation artifacts to user repo", err)
 	}
 
-	cmd := newCliCommand(celleryCli, celleryKubeCli)
+	cmd := newCliCommand(celleryCli)
 	if err := cmd.Execute(); err != nil {
 		util.ExitWithErrorMessage("Error executing cellery main function", err)
 	}

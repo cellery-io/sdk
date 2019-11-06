@@ -87,7 +87,7 @@ var expectedTempBalFileContent = "import ballerina/config;\n" +
 	"\n}"
 
 func TestCreateTempBalFile(t *testing.T) {
-	mockCli := test.NewMockCli()
+	mockCli := test.NewMockCli(nil)
 	currentDir, _ := mockCli.FileSystem().CurrentDir()
 	tmpBal, err := os.Create(filepath.Join(currentDir, "hello.bal"))
 	defer func() { os.RemoveAll(currentDir) }()
@@ -110,7 +110,7 @@ func TestCreateTempBalFile(t *testing.T) {
 }
 
 func TestExecuteTempBalFile(t *testing.T) {
-	mockCli := test.NewMockCli()
+	mockCli := test.NewMockCli(nil)
 	currentDir, _ := mockCli.FileSystem().CurrentDir()
 	mockBalExecutor := &test.MockBalExecutor{
 		CurrentDir: currentDir,
@@ -134,7 +134,7 @@ func TestExecuteTempBalFile(t *testing.T) {
 }
 
 func TestGenerateMetaData(t *testing.T) {
-	mockCli := test.NewMockCli()
+	mockCli := test.NewMockCli(nil)
 	projectDir, _ := mockCli.FileSystem().CurrentDir()
 	targetDir := filepath.Join(projectDir, "target")
 	os.MkdirAll(filepath.Join(targetDir, "cellery"), os.ModePerm)

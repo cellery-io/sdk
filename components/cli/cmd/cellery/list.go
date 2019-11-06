@@ -21,17 +21,17 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/cli"
 )
 
-func newListCommand(kubeCli kubernetes.KubeCli) *cobra.Command {
+func newListCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list <command>",
 		Short: "List cell information",
 	}
 
 	cmd.AddCommand(
-		newListInstancesCommand(kubeCli),
+		newListInstancesCommand(cli),
 		newListImagesCommand(),
 		newListIngressesCommand(),
 		newListComponentsCommand(),

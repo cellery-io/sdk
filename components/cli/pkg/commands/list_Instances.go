@@ -25,18 +25,25 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunListInstances(kubeCli kubernetes.KubeCli) {
-	displayCellTable(kubeCli)
+func RunListInstances(cli cli.Cli) error {
+	if err := displayCellTable(cli); err != nil {
+		return fmt.Errorf("error displaying cell table, %v", err)
+	}
 	displayCompositeTable()
+	return nil
 }
 
-func displayCellTable(kubeCli kubernetes.KubeCli) {
-	tableData := getCellTableData(kubeCli)
+func displayCellTable(cli cli.Cli) error {
+	tableData, err := getCellTableData(cli.KubeCli())
+	if err != nil {
+		return fmt.Errorf("error getting cell table data, %v", err)
+	}
 	if len(tableData) > 0 {
 		fmt.Printf("\n %s\n", util.Bold("Cell Instances:"))
 		table := tablewriter.NewWriter(os.Stdout)
@@ -64,8 +71,9 @@ func displayCellTable(kubeCli kubernetes.KubeCli) {
 		table.AppendBulk(tableData)
 		table.Render()
 	} else {
-		fmt.Println("No running cell instances.")
+		fmt.Println(cli.Out(), "No running cell instances.")
 	}
+	return nil
 }
 
 func displayCompositeTable() {
@@ -115,11 +123,11 @@ func displayCompositeTable() {
 	}
 }
 
-func getCellTableData(kubeCli kubernetes.KubeCli) [][]string {
+func getCellTableData(kubecli kubernetes.KubeCli) ([][]string, error) {
 	var tableData [][]string
-	cells, err := kubeCli.GetCells()
+	cells, err := kubecli.GetCells()
 	if err != nil {
-		util.ExitWithErrorMessage("Error getting information of cells", err)
+		return nil, fmt.Errorf("error getting information of cells, %v", err)
 	}
 	for i := 0; i < len(cells); i++ {
 		age := util.GetDuration(util.ConvertStringToTime(cells[i].CellMetaData.CreationTimestamp))
@@ -131,5 +139,5 @@ func getCellTableData(kubeCli kubernetes.KubeCli) [][]string {
 		tableRecord := []string{instance, cellImage, status, gateway, strconv.Itoa(components), age}
 		tableData = append(tableData, tableRecord)
 	}
-	return tableData
+	return tableData, nil
 }

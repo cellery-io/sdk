@@ -24,6 +24,7 @@ import (
 	"os"
 
 	"github.com/cellery-io/sdk/components/cli/ballerina"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -33,12 +34,14 @@ type Cli interface {
 	ExecuteTask(startMessage, errorMessage, successMessage string, function func() error) error
 	FileSystem() FileSystemManager
 	BalExecutor() ballerina.BalExecutor
+	KubeCli() kubernetes.KubeCli
 }
 
 // CelleryCli is an instance of the cellery command line client.
 // Instances of the client can be returned from NewCelleryCli.
 type CelleryCli struct {
 	fileSystemManager FileSystemManager
+	kubecli           kubernetes.KubeCli
 	BallerinaExecutor ballerina.BalExecutor
 }
 
@@ -46,6 +49,7 @@ type CelleryCli struct {
 func NewCelleryCli() *CelleryCli {
 	cli := &CelleryCli{
 		fileSystemManager: NewCelleryFileSystem(),
+		kubecli:           kubernetes.NewCelleryKubeCli(),
 	}
 	return cli
 }
@@ -84,4 +88,9 @@ func (cli *CelleryCli) FileSystem() FileSystemManager {
 // BalExecutor returns ballerina.BalExecutor instance.
 func (cli *CelleryCli) BalExecutor() ballerina.BalExecutor {
 	return cli.BallerinaExecutor
+}
+
+// KubeCli returns kubernetes.KubeCli instance.
+func (cli *CelleryCli) KubeCli() kubernetes.KubeCli {
+	return cli.kubecli
 }
