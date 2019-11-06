@@ -316,7 +316,8 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 	if err = util.CopyFile(fileName, filepath.Join(projectDir, src, filepath.Base(fileName))); err != nil {
 		return fmt.Errorf("error occurred copying bal file to src directory, %v", err)
 	}
-	balTomlParent := filepath.Dir(filepath.Dir(filepath.Join(currentDir, fileName)))
+	balParent := filepath.Dir(filepath.Join(fileName))
+	balTomlParent := filepath.Dir(balParent)
 	var balTomlfileExist bool
 	if balTomlfileExist, err = util.FileExists(filepath.Join(balTomlParent, ballerinaToml)); err != nil {
 		return fmt.Errorf("error occurred while checking if Ballerina.toml exists, %v", err)
@@ -331,11 +332,15 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 			return fmt.Errorf("error occured while copying the %s, %v", ballerinaLocalRepo, err)
 		}
 	}
-	isTestDirExists, _ := util.FileExists(zipTests)
-	folders := []string{filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifacts), filepath.Join(cli.FileSystem().WorkingDirRelativePath(), src)}
+	isTestDirExists, _ := util.FileExists(filepath.Join(balParent, constants.ZIP_TESTS))
+	folders := []string{artifacts, src}
 
 	if isTestDirExists {
-		folders = append(folders, zipTests)
+		if err = util.CopyDir(filepath.Join(balParent, constants.ZIP_TESTS),
+			filepath.Join(projectDir, constants.ZIP_TESTS)); err != nil {
+			return fmt.Errorf("error occured while copying the %s, %v", constants.ZIP_TESTS, err)
+		}
+		folders = append(folders, constants.ZIP_TESTS)
 	}
 	// Todo: Check if WorkingDirRelativePath could be omitted.
 	// For actual scenario WorkingDirRelativePath == ""
