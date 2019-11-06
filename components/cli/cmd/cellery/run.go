@@ -28,6 +28,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newRunCommand(cli cli.Cli) *cobra.Command {
@@ -72,11 +73,10 @@ func newRunCommand(cli cli.Cli) *cobra.Command {
 			}
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := commands.RunRun(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars); err != nil {
-				return fmt.Errorf("error running cellery run, %v", err)
+				util.ExitWithErrorMessage("Cellery run command failed", err)
 			}
-			return nil
 		},
 		Example: "  cellery run cellery-samples/hr:1.0.0 -n hr-inst\n" +
 			"  cellery run cellery-samples/hr:1.0.0 -n hr-inst\n" +

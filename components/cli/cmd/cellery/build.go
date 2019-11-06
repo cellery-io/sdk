@@ -49,11 +49,10 @@ func newBuildCommand(cli cli.Cli) *cobra.Command {
 			}
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := commands.RunBuild(cli, args[1], args[0]); err != nil {
-				return fmt.Errorf("error running cellery build, %v", err)
+				util.ExitWithErrorMessage("Cellery build command failed", err)
 			}
-			return nil
 		},
 		Example: "  cellery build employee.bal cellery-samples/employee:1.0.0",
 	}

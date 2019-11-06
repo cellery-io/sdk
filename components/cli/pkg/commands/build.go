@@ -304,9 +304,13 @@ func createTempBalFile(cli cli.Cli, fileName string) (string, error) {
 }
 
 func executeTempBalFile(ballerinaExecutor ballerina.BalExecutor, tempBuildFileName string, iName []byte) error {
-	err := ballerinaExecutor.Build(tempBuildFileName, iName)
-	_ = os.Remove(tempBuildFileName)
-	return err
+	if err := ballerinaExecutor.Build(tempBuildFileName, iName); err != nil {
+		return err
+	}
+	if err := os.Remove(tempBuildFileName); err != nil {
+		return err
+	}
+	return nil
 }
 
 func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) error {

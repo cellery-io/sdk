@@ -188,7 +188,9 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 	if runCommandArgs, err = runCmdArgs(instanceName, tempRunFileName, dependencyLinks, envVars, runningNode, startDependencies, shareDependencies); err != nil {
 		return fmt.Errorf("failed to get run command arguements, %v", err)
 	}
-	cli.BalExecutor().Run(imageDir, instanceName, envVars, tempRunFileName, runCommandArgs)
+	if err = cli.BalExecutor().Run(imageDir, instanceName, envVars, tempRunFileName, runCommandArgs); err != nil {
+		return fmt.Errorf("failed to run bal file, %v", err)
+	}
 	if err = os.Remove(tempRunFileName); err != nil {
 		return fmt.Errorf("error removing temp run file %s", tempRunFileName)
 	}
