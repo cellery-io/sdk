@@ -33,4 +33,4 @@ https://product-dist.ballerina.io/downloads/$BALLERINA_VERSION/ballerina-linux-i
 
 cp $BALLERINA_DEB_LOCATION files/
 cp ../ubuntu-x64/target/cellery-ubuntu-x64-*.deb files/
-cp -r ../../components/lang/target/cellery-*.jar files/
+cp -r ../../components/module-cellery/target/balo/cellery-*.balo files/

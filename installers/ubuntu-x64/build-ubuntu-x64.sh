@@ -174,6 +174,10 @@ setCelleryVersion() {
     sed -i -E "s/__CELLERY_VERSION__/${CELLERY_VERSION}/g" resources/DEBIAN/control
 }
 
+setB7aVersion() {
+    sed -i -E "s/__SUPPORTED_B7A_VERSION__/${SUPPORTED_B7A_VERSION}/g" resources/DEBIAN/postinst
+}
+
 #Pre-requisites
 command -v mvn -v >/dev/null 2>&1 || {
     log_warn "Apache Maven was not found. Please install Maven first."
@@ -188,6 +192,7 @@ command -v ballerina >/dev/null 2>&1 || {
 log_info "Installer Generating process started."
 
 setCelleryVersion
+setB7aVersion
 buildBallerinaNatives
 buildCelleryCLI
 buildDocsView
