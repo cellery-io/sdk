@@ -48,30 +48,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.ballerinalang</groupId>
-            <artifactId>ballerina-lang</artifactId>
-            <version>${ballerina.lang.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.ballerinax.kubernetes</groupId>
-            <artifactId>kubernetes-extension</artifactId>
-            <version>${ballerina.lang.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <scope>test</scope>
-            <version>6.14.3</version>
-        </dependency>
-        <dependency>
             <groupId>io.fabric8</groupId>
             <artifactId>kubernetes-model</artifactId>
             <version>${fabric8.kubernetes.version}</version>
@@ -116,25 +92,6 @@
     </dependencies>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/classes/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>${mvn.shade.plugin.version}</version>
@@ -193,7 +150,8 @@
                                 </includes>
                                 <excludes>
                                     <exclude>commons-lang:commons-lang</exclude>
-                                    <exclude>org.ballerinalang:ballerina-builtin</exclude>
+                                    <exclude>org.projectlombok:lombok</exclude>
+                                    <exclude>org.ballerinalang:*</exclude>
                                     <exclude>org.ballerinalang:ballerina-core</exclude>
                                     <exclude>org.ballerinalang:ballerina-http</exclude>
                                     <exclude>org.ballerinalang:ballerina-lang</exclude>
