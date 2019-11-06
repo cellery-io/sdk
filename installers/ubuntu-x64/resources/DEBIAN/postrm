@@ -1,8 +1,7 @@
 #!/bin/bash
 
 CELLERY_VERSION=__CELLERY_VERSION__
-SUPPORTED_B7A_VERSION="0.991.0"
-
+CELLERY_VERSION_NUM="${CELLERY_VERSION/-SNAPSHOT/}"
 if [ $1 = 'remove' ] && [ -L /usr/local/bin/cellery ]
 then
   sudo rm /usr/local/bin/cellery
@@ -13,28 +12,9 @@ then
 	echo "Remove configuration files."
 	sudo rm /usr/local/bin/cellery
 fi
+# Remove Cellery installation.
 sudo rm -rf /usr/share/cellery/
 
-B7A_BIN_PATH=$(which ballerina)
-if [ -L "${B7A_BIN_PATH}" ]; then
-    B7A_BIN_PATH=$(readlink $B7A_BIN_PATH)
-fi
+echo "Remove ~/.ballerina/balo_cache/celleryio/cellery/0.5.0/cellery-2019r3-java8-${CELLERY_VERSION_NUM}.balo to
+      complete the Cellery uninstallation."
 
-B7A_VERSION=$($B7A_BIN_PATH -v)
-if [ ! -f ${B7A_BIN_PATH} ]; then
-    B7A_BIN_PATH="/usr/lib/ballerina/ballerina-${SUPPORTED_B7A_VERSION}/bin"
-    echo "Failed to find the ballerina home directory, falling back to the default installation path."
-fi
-
-if [[ "${B7A_VERSION}" =~ "${SUPPORTED_B7A_VERSION}" ]]; then
-    BIN_FOLDER="/bin/ballerina"
-    BALLERINA_HOME="${B7A_BIN_PATH/$BIN_FOLDER/}"
-    CELLERY_JAR="${BALLERINA_HOME}/bre/lib/cellery-${CELLERY_VERSION}.jar"
-fi
-
-if [ -f "${CELLERY_JAR}" ]; then
-        rm -f ${CELLERY_JAR}
-        echo "Removed the Cellery jar ${CELLERY_JAR} from the Ballerina."
-else
-	rm -f "/usr/lib/ballerina/ballerina-${SUPPORTED_B7A_VERSION}/bre/lib/cellery-${CELLERY_VERSION}.jar"
-fi

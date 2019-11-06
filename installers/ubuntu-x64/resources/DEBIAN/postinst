@@ -29,12 +29,11 @@ if [ ! -f ${B7A_BIN_PATH} ]; then
 fi
 
 if [[ "${B7A_VERSION}" =~ "${SUPPORTED_B7A_VERSION}" ]]; then
-    echo "B7A version $B7A_VERSION"
-    echo "Correct B7A version installed."
-    echo "User needs to copy /usr/share/cellery/b7a-libs/ballerina-${SUPPORTED_B7A_VERSION}/balo_cache/celleryio/cellery/${CELLERY_VERSION}/cellery-2019r3-java8-0.5.0.balo to ~/.ballerina/balo_cache/celleryio/cellery/0.5.0"
+    echo "Installed Ballerina version is $B7A_VERSION."
+    echo "Correct Cellery b7a runtime version installed."
 else
 #Pull docker based Ballerina cli.
-    echo "Ballerina ${SUPPORTED_B7A_VERSION} is not installed"
+    echo "Ballerina ${SUPPORTED_B7A_VERSION} is not installed."
     echo "Installing docker based Cellery CLI."
     docker_status=$(docker info 2>&1 1>/dev/null)
     if [[ $? -eq 0 ]]; then
@@ -44,4 +43,4 @@ else
         echo "Local Docker service is not ready. Installer can not pull the docker based Cellery CLI image."
     fi
 fi
-echo "Post installation process finished"
+echo "Post installation process finished."

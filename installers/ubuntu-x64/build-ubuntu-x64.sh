@@ -171,6 +171,7 @@ createInstaller() {
 
 setCelleryVersion() {
     sed -i -E "s/__CELLERY_VERSION__/${CELLERY_VERSION}/g" resources/DEBIAN/postinst
+    sed -i -E "s/__CELLERY_VERSION__/${CELLERY_VERSION}/g" resources/DEBIAN/postrm
     sed -i -E "s/__CELLERY_VERSION__/${CELLERY_VERSION}/g" resources/DEBIAN/control
 }
 
