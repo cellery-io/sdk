@@ -28,25 +28,31 @@ import (
 )
 
 func TestGetCellTableData(t *testing.T) {
+	cells := kubernetes.Cells{
+		Items: []kubernetes.Cell{
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "employee",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "stock",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+		},
+	}
 	tests := []struct {
 		name        string
 		want        string
 		MockKubeCli *test.MockKubeCli
 	}{
 		{
-			name: "list instances with single cell instance",
-			want: "employee",
-			MockKubeCli: test.NewMockKubeCli(kubernetes.Cells{
-				Items: []kubernetes.Cell{
-					{
-						CellMetaData: kubernetes.K8SMetaData{
-							Name:              "employee",
-							CreationTimestamp: "2019-10-18T11:40:36Z",
-						},
-					},
-				},
-			},
-			kubernetes.Composites{}),
+			name:        "list instances with single cell instance",
+			want:        "employee",
+			MockKubeCli: test.NewMockKubeCli(test.WithCells(cells)),
 		},
 	}
 	for _, testIteration := range tests {

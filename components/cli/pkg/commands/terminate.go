@@ -42,7 +42,7 @@ func RunTerminate(cli cli.Cli, terminatingInstances []string, terminateAll bool)
 			if util.ContainsInStringArray(runningInstances, terminatingInstance) {
 				continue
 			} else {
-				return fmt.Errorf("error terminating cell instances, %v", fmt.Errorf("instance: %s does " +
+				return fmt.Errorf("error terminating cell instances, %v", fmt.Errorf("instance: %s does "+
 					"not exist", terminatingInstance))
 			}
 		}

@@ -19,12 +19,81 @@
 package commands
 
 import (
+	"testing"
+
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
-	"testing"
 )
 
-func TestTerminateInstance(t *testing.T) {
+func TestTerminateInstanceSuccess(t *testing.T) {
+	cells := kubernetes.Cells{
+		Items: []kubernetes.Cell{
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "employee",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "stock",
+					CreationTimestamp: "2019-10-19T11:40:36Z",
+				},
+			},
+		},
+	}
+	composites := kubernetes.Composites{
+		Items: []kubernetes.Composite{
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "hr",
+					CreationTimestamp: "2019-10-20T11:40:36Z",
+				},
+			},
+		},
+	}
+	tests := []struct {
+		name         string
+		MockCli      *test.MockCli
+		instances    []string
+		terminateAll bool
+	}{
+		{
+			name:         "terminate single existing cell instance",
+			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))),
+			instances:    []string{"employee"},
+			terminateAll: false,
+		},
+		{
+			name:         "terminate single existing composite instance",
+			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))),
+			instances:    []string{"hr"},
+			terminateAll: false,
+		},
+		{
+			name:         "terminate multiple existing instances",
+			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))),
+			instances:    []string{"stock", "hr"},
+			terminateAll: false,
+		},
+		{
+			name:         "terminate all instances",
+			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))),
+			instances:    []string{},
+			terminateAll: true,
+		},
+	}
+	for _, testIteration := range tests {
+		t.Run(testIteration.name, func(t *testing.T) {
+			err := RunTerminate(testIteration.MockCli, testIteration.instances, testIteration.terminateAll)
+			if err != nil {
+				t.Errorf("getCellTableData err, %v", err)
+			}
+		})
+	}
+}
+
+func TestTerminateInstanceFailure(t *testing.T) {
 	mockCluster := kubernetes.Cells{
 		Items: []kubernetes.Cell{
 			{
@@ -42,32 +111,26 @@ func TestTerminateInstance(t *testing.T) {
 		},
 	}
 	tests := []struct {
-		name        string
-		want        string
-		MockCli *test.MockCli
-		instances []string
+		name         string
+		want         string
+		MockCli      *test.MockCli
+		instances    []string
 		terminateAll bool
 	}{
 		{
-			name: "terminate single existing cell instance",
-			want: "employee",
-			MockCli: test.NewMockCli(test.NewMockKubeCli(mockCluster, kubernetes.Composites{})),
-			instances:[]string{"employee"},
-			terminateAll:false,
-		},
-		{
-			name: "terminate all cell instances",
-			want: "employee",
-			MockCli: test.NewMockCli(test.NewMockKubeCli(mockCluster, kubernetes.Composites{})),
-			instances:[]string{},
-			terminateAll:true,
+			name:         "terminate non existing instance",
+			want:         "foo",
+			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(mockCluster))),
+			instances:    []string{"foo"},
+			terminateAll: false,
 		},
 	}
 	for _, testIteration := range tests {
 		t.Run(testIteration.name, func(t *testing.T) {
-			err := RunTerminate(testIteration.MockCli, testIteration.instances, testIteration.terminateAll)
-			if err != nil {
-				t.Errorf("getCellTableData err, %v", err)
+			actual := RunTerminate(testIteration.MockCli, testIteration.instances, testIteration.terminateAll)
+			expected := "error terminating cell instances, instance: foo does not exist"
+			if actual.Error() != expected {
+				t.Errorf("getCellTableData err, %v", actual.Error())
 			}
 		})
 	}

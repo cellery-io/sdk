@@ -20,9 +20,10 @@ package kubernetes
 
 import (
 	"fmt"
-	"github.com/fatih/color"
 	"os/exec"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 var verboseMode = false
@@ -35,7 +36,6 @@ func getCommandString(cmd *exec.Cmd) string {
 	commandArgs = append(commandArgs, cmd.Args...)
 	return strings.Join(commandArgs, " ")
 }
-
 
 func displayVerboseOutput(cmd *exec.Cmd) {
 	// If running on verbose mode expose the kubectl commands.

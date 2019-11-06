@@ -20,7 +20,9 @@ package kubernetes
 
 import (
 	"encoding/json"
+	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
@@ -31,8 +33,10 @@ type KubeCli interface {
 	GetCells() ([]Cell, error)
 	SetVerboseMode(enable bool)
 	DeleteResource(kind, instance string) (string, error)
-	GetComposites() (Composites, error)
+	GetComposites() ([]Composite, error)
 	GetInstancesNames() ([]string, error)
+	GetCell(cellName string) (Cell, error)
+	GetComposite(compositeName string) (Composite, error)
 }
 
 type CelleryKubeCli struct {
@@ -63,7 +67,7 @@ func (kubecli *CelleryKubeCli) GetCells() ([]Cell, error) {
 	return jsonOutput.Items, err
 }
 
-func (kubecli *CelleryKubeCli) GetComposites() (Composites, error) {
+func (kubecli *CelleryKubeCli) GetComposites() ([]Composite, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"get",
@@ -75,13 +79,61 @@ func (kubecli *CelleryKubeCli) GetComposites() (Composites, error) {
 	jsonOutput := Composites{}
 	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	if err != nil {
-		return jsonOutput, err
+		return jsonOutput.Items, err
 	}
 	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput.Items, err
+}
+
+func (kubecli *CelleryKubeCli) GetCell(cellName string) (Cell, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"cells",
+		cellName,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	jsonOutput := Cell{}
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return jsonOutput, fmt.Errorf("cell instance %s not found", cellName)
+		}
+		return jsonOutput, fmt.Errorf("unknown error: %v", err)
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	if err != nil {
+		return jsonOutput, err
+	}
 	return jsonOutput, err
 }
 
-func (kubecli *CelleryKubeCli)DeleteResource(kind, instance string) (string, error) {
+func (kubecli *CelleryKubeCli) GetComposite(compositeName string) (Composite, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		"composite",
+		compositeName,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	jsonOutput := Composite{}
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return jsonOutput, fmt.Errorf("composite instance %s not found", compositeName)
+		}
+		return jsonOutput, fmt.Errorf("unknown error: %v", err)
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	if err != nil {
+		return jsonOutput, err
+	}
+	return jsonOutput, err
+}
+
+func (kubecli *CelleryKubeCli) DeleteResource(kind, instance string) (string, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"delete",
@@ -97,7 +149,6 @@ func (kubecli *CelleryKubeCli) SetVerboseMode(enable bool) {
 	verboseMode = enable
 }
 
-
 func (kubecli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
 	var instances []string
 	runningCellInstances, err := kubecli.GetCells()
@@ -111,7 +162,7 @@ func (kubecli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
 	for _, runningInstance := range runningCellInstances {
 		instances = append(instances, runningInstance.CellMetaData.Name)
 	}
-	for _, runningInstance := range runningCompositeInstances.Items {
+	for _, runningInstance := range runningCompositeInstances {
 		instances = append(instances, runningInstance.CompositeMetaData.Name)
 	}
 	return instances, nil

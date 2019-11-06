@@ -56,7 +56,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newTerminateCommand(cli),
 		newListCommand(cli),
 		newDescribeCommand(),
-		newStatusCommand(),
+		newStatusCommand(cli),
 		newLogsCommand(),
 		newLoginCommand(),
 		newLogoutCommand(),

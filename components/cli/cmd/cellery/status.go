@@ -24,11 +24,12 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func newStatusCommand() *cobra.Command {
+func newStatusCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status <instance-name>",
 		Short: "Performs a health check of a cell.",
@@ -44,7 +45,7 @@ func newStatusCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunStatus(args[0])
+			commands.RunStatus(cli, args[0])
 		},
 		Example: "  cellery status employee",
 	}
