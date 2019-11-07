@@ -129,8 +129,8 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, iName []byte) error
 	re := regexp.MustCompile("^" + currentDir + "/")
 	balFilePath := re.ReplaceAllString(fileName, "")
 	cmd := exec.Command("docker", "exec", "-w", homeCellery+"/src", "-u", cliUser.Uid,
-		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath, "run", filepath.Join(homeCellery, "src", balFilePath), "build",
-		string(iName), "{}", "false", "false")
+		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath, "run",
+		filepath.Join(homeCellery, "src", balFilePath), "build", string(iName), "{}", "false", "false")
 	var stderr bytes.Buffer
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
