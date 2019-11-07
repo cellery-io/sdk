@@ -88,20 +88,6 @@ else
   echo "[3/4] [ERROR] Could not delete cellery" >&2
 fi
 
-#remove cellery jar from ballerina
-BRE_LIB_PATH="/Library/Ballerina/ballerina-0.991.0/bre/lib/"
-if [ -d $BRE_LIB_PATH ]
-then
-    sudo rm -f $BRE_LIB_PATH/cellery-*.jar
-    if [ $? -eq 0 ]
-    then
-      echo "[4/4] [DONE] Successfully deleted cellery jars from ballerina lib"
-    else
-      echo "[4/4] [ERROR] Could not delete cellery jars from ballerina lib" >&2
-    fi
-else
-    echo "[4/4] [DONE] No ballerina installation found"
-fi
 
 echo "Cellery uninstall process finished"
 exit 0

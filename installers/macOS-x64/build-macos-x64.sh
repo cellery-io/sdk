@@ -164,17 +164,10 @@ copyBuildDirectory() {
     cp ../../components/build/cellery ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery
     chmod -R 755 ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery
 
-    #Copy ballerina to /Library/Ballerina
-    #getBallerinaHome
-    #mkdir -p ${TARGET_DIRECTORY}/darwinpkg/${HOME_BALLERINA}/bre/lib/
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
 
     cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
     cp -R $RESOURCE_LOCATION/telepresence-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
-
-    #mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib
-    #cp ../../components/lang/target/cellery-*.jar ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/bre-libs/${BALLERINA_RUNTIME}/bre/lib/
-    #cp -R ../../components/lang/target/generated-balo/repo/celleryio ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
 
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
     cp ../../components/module-cellery/target/balo/cellery-2019r3-java8-0.5.0.balo ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
