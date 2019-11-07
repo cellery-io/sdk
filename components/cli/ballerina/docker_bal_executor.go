@@ -232,9 +232,7 @@ func (balExecutor *DockerBalExecutor) Run(imageDir string, instanceName string,
 	// This will override any env vars with identical names (prefixed with 'CELLERY') set previously.
 	if len(envVars) != 0 {
 		for _, envVar := range envVars {
-			if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
-				cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
-			}
+			cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
 		}
 	}
 	cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", exeUid,
@@ -243,11 +241,10 @@ func (balExecutor *DockerBalExecutor) Run(imageDir string, instanceName string,
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
-	// Export environment variables defined by user for dependent instances
+	// Export environment variables defined by user
+	// Todo: check if setting env vars to cmd.Env is redundant
 	for _, envVar := range envVars {
-		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
-			cmd.Env = append(cmd.Env, celleryEnvVar+envVar.InstanceName+"."+envVar.Key+"="+envVar.Value)
-		}
+		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
 	}
 	var stderr bytes.Buffer
 	stdoutReader, _ := cmd.StdoutPipe()

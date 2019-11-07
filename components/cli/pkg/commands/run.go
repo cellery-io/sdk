@@ -143,7 +143,8 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 			InstanceName: link.DependencyInstance,
 		}
 	}
-	if err = cli.ExecuteTask(fmt.Sprintf("Starting main instance %v", util.Bold(instanceName)), "Failed to extract cell image",
+	if err = cli.ExecuteTask(fmt.Sprintf("Starting main instance %v", util.Bold(instanceName)),
+		fmt.Sprintf("Failed to start main instance %v", util.Bold(instanceName)),
 		"", func() error {
 			err = startCellInstance(cli, imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
 				rootNodeDependencies, shareDependencies)
@@ -175,8 +176,16 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 	balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
 		Key:   celleryImageDirEnvVar,
 		Value: imageDir})
-	// Export environment variables defined by user for dependent instances
+	// Setting environment variables
 	for _, envVar := range envVars {
+		// Export environment variables defined by user for root instance
+		if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
+			balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
+				Key:   envVar.Key,
+				Value: envVar.Value,
+			})
+		}
+		// Export environment variables defined by user for dependent instances
 		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
 			balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
 				Key:   celleryEnvVarPrefix + envVar.InstanceName + "." + envVar.Key,
@@ -185,7 +194,7 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 		}
 	}
 	var runCommandArgs []string
-	if runCommandArgs, err = runCmdArgs(instanceName, tempRunFileName, dependencyLinks, envVars, runningNode, startDependencies, shareDependencies); err != nil {
+	if runCommandArgs, err = runCmdArgs(instanceName, dependencyLinks, runningNode, startDependencies, shareDependencies); err != nil {
 		return fmt.Errorf("failed to get run command arguements, %v", err)
 	}
 	if err = cli.BalExecutor().Run(imageDir, instanceName, envVars, tempRunFileName, runCommandArgs); err != nil {
@@ -235,16 +244,11 @@ func ExtractImage(cellImage *image.CellImage, pullIfNotPresent bool) (string, er
 }
 
 // runCmdArgs returns the run command arguments.
-func runCmdArgs(instanceName, tempRunFileName string, dependencyLinks map[string]*dependencyInfo, envVars []*ballerina.EnvironmentVariable, runningNode *dependencyTreeNode, startDependencies, shareDependencies bool) ([]string, error) {
+func runCmdArgs(instanceName string, dependencyLinks map[string]*dependencyInfo, runningNode *dependencyTreeNode,
+	startDependencies, shareDependencies bool) ([]string, error) {
 	var err error
 	// Preparing the run command arguments
 	var cmdArgs []string
-	for _, envVar := range envVars {
-		// Setting root instance environment variables
-		if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
-			cmdArgs = append(cmdArgs, "-e", envVar.Key+"="+envVar.Value)
-		}
-	}
 	var imageNameStruct = &dependencyInfo{
 		Organization: runningNode.MetaData.Organization,
 		Name:         runningNode.MetaData.Name,

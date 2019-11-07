@@ -98,11 +98,9 @@ func (balExecutor *LocalBalExecutor) Run(imageDir string, instanceName string,
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
-	// Export environment variables defined by user for dependent instances
+	// Export environment variables defined by user
 	for _, envVar := range envVars {
-		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
-			cmd.Env = append(cmd.Env, celleryEnvVar+envVar.InstanceName+"."+envVar.Key+"="+envVar.Value)
-		}
+		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
 	}
 	var stderr bytes.Buffer
 	stdoutReader, _ := cmd.StdoutPipe()
