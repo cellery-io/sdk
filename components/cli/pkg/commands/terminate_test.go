@@ -52,6 +52,7 @@ func TestTerminateInstanceSuccess(t *testing.T) {
 			},
 		},
 	}
+	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))
 	tests := []struct {
 		name         string
 		MockCli      *test.MockCli
@@ -60,25 +61,25 @@ func TestTerminateInstanceSuccess(t *testing.T) {
 	}{
 		{
 			name:         "terminate single existing cell instance",
-			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))),
+			MockCli:      test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instances:    []string{"employee"},
 			terminateAll: false,
 		},
 		{
 			name:         "terminate single existing composite instance",
-			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))),
+			MockCli:      test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instances:    []string{"hr"},
 			terminateAll: false,
 		},
 		{
 			name:         "terminate multiple existing instances",
-			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))),
+			MockCli:      test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instances:    []string{"stock", "hr"},
 			terminateAll: false,
 		},
 		{
 			name:         "terminate all instances",
-			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))),
+			MockCli:      test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instances:    []string{},
 			terminateAll: true,
 		},
@@ -94,7 +95,7 @@ func TestTerminateInstanceSuccess(t *testing.T) {
 }
 
 func TestTerminateInstanceFailure(t *testing.T) {
-	mockCluster := kubernetes.Cells{
+	cells := kubernetes.Cells{
 		Items: []kubernetes.Cell{
 			{
 				CellMetaData: kubernetes.K8SMetaData{
@@ -110,6 +111,7 @@ func TestTerminateInstanceFailure(t *testing.T) {
 			},
 		},
 	}
+	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells))
 	tests := []struct {
 		name         string
 		want         string
@@ -120,7 +122,7 @@ func TestTerminateInstanceFailure(t *testing.T) {
 		{
 			name:         "terminate non existing instance",
 			want:         "foo",
-			MockCli:      test.NewMockCli(test.NewMockKubeCli(test.WithCells(mockCluster))),
+			MockCli:      test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instances:    []string{"foo"},
 			terminateAll: false,
 		},

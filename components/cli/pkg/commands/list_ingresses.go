@@ -28,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
@@ -39,12 +41,12 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-func RunListIngresses(name string) {
+func RunListIngresses(cli cli.Cli, name string) {
 	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
 	if instancePattern {
 		displayInstanceApisTable(name)
 	} else {
-		displayImageApisTable(name)
+		displayImageApisTable(cli, name)
 	}
 }
 
@@ -193,7 +195,7 @@ func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
 	table.Render()
 }
 
-func displayImageApisTable(imageName string) {
+func displayImageApisTable(cli cli.Cli, imageName string) {
 	cellYamlContent := image.ReadCellImageYaml(imageName)
 	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
@@ -202,14 +204,14 @@ func displayImageApisTable(imageName string) {
 	}
 
 	if cellImageContent.Kind == "Cell" {
-		displayCellImageApisTable(imageName)
+		displayCellImageApisTable(cli, imageName)
 	} else if cellImageContent.Kind == "Composite" {
-		displayCompositeImageApisTable(imageName)
+		displayCompositeImageApisTable(cli, imageName)
 	}
 }
 
-func displayCompositeImageApisTable(compositeImageContent string) {
-	cell, err := getIngressValues(compositeImageContent)
+func displayCompositeImageApisTable(cli cli.Cli, compositeImageContent string) {
+	cell, err := getIngressValues(cli, compositeImageContent)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while displaying composite image ingress", err)
 	}
@@ -260,8 +262,8 @@ func displayCompositeImageApisTable(compositeImageContent string) {
 	table.Render()
 }
 
-func displayCellImageApisTable(cellImageContent string) {
-	cell, err := getIngressValues(cellImageContent)
+func displayCellImageApisTable(cli cli.Cli, cellImageContent string) {
+	cell, err := getIngressValues(cli, cellImageContent)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while displaying cell image ingress", err)
 	}
@@ -347,9 +349,9 @@ func displayCellImageApisTable(cellImageContent string) {
 	table.Render()
 }
 
-func getIngressValues(cellImageContent string) (kubectl.Cell, error) {
+func getIngressValues(cli cli.Cli, cellImageContent string) (kubectl.Cell, error) {
 	parsedCellImage, err := image.ParseImageTag(cellImageContent)
-	imageDir, err := ExtractImage(parsedCellImage, false)
+	imageDir, err := ExtractImage(cli, parsedCellImage, false)
 	if err != nil {
 		return kubectl.Cell{}, fmt.Errorf("error occurred while extracting image: %s", err)
 	}

@@ -87,8 +87,12 @@ var expectedTempBalFileContent = "import ballerina/config;\n" +
 	"\n}"
 
 func TestCreateTempBalFile(t *testing.T) {
-	mockCli := test.NewMockCli(nil)
-	currentDir, _ := mockCli.FileSystem().CurrentDir()
+	currentDir, err := ioutil.TempDir("", "current-dir")
+	if err != nil {
+		t.Errorf("failed to create mock current dir")
+	}
+	mockFileSystem := test.NewMockFileSystem(test.SetCurrentDir(currentDir))
+	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem))
 	tmpBal, err := os.Create(filepath.Join(currentDir, "hello.bal"))
 	defer func() { os.RemoveAll(currentDir) }()
 	err = ioutil.WriteFile(tmpBal.Name(), []byte(expectedInitContent), 0644)
@@ -110,14 +114,16 @@ func TestCreateTempBalFile(t *testing.T) {
 }
 
 func TestExecuteTempBalFile(t *testing.T) {
-	mockCli := test.NewMockCli(nil)
-	currentDir, _ := mockCli.FileSystem().CurrentDir()
+	currentDir, err := ioutil.TempDir("", "current-dir")
+	if err != nil {
+		t.Errorf("failed to create mock current dir")
+	}
 	mockBalExecutor := &test.MockBalExecutor{
 		CurrentDir: currentDir,
 	}
 	defer func() { os.RemoveAll(currentDir) }()
 	executableBal, _ := os.Create(filepath.Join(currentDir, "executable.bal"))
-	err := executeTempBalFile(mockBalExecutor, executableBal.Name(), []byte("test"))
+	err = executeTempBalFile(mockBalExecutor, executableBal.Name(), []byte("test"))
 	if err != nil {
 		t.Errorf("Failed to run executable bal file: %v", err)
 	}
@@ -134,8 +140,13 @@ func TestExecuteTempBalFile(t *testing.T) {
 }
 
 func TestGenerateMetaData(t *testing.T) {
-	mockCli := test.NewMockCli(nil)
-	projectDir, _ := mockCli.FileSystem().CurrentDir()
+	currentDir, err := ioutil.TempDir("", "current-dir")
+	if err != nil {
+		t.Errorf("failed to create mock current dir")
+	}
+	mockFileSystem := test.NewMockFileSystem(test.SetCurrentDir(currentDir))
+	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem))
+	projectDir := mockCli.FileSystem().CurrentDir()
 	targetDir := filepath.Join(projectDir, "target")
 	os.MkdirAll(filepath.Join(targetDir, "cellery"), os.ModePerm)
 	defer func() { os.RemoveAll(projectDir) }()
@@ -169,7 +180,7 @@ func TestGenerateMetaData(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to write to mock yaml file: %v", err)
 	}
-	err = generateMetaData(cellImage, projectDir)
+	err = generateMetaData(mockCli, cellImage, projectDir)
 	if err != nil {
 		t.Errorf("Failed to generate metadata: %v", err)
 	}

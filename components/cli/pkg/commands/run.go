@@ -51,7 +51,7 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 	var imageDir string
 	if err = cli.ExecuteTask("Extracting cell image", "Failed to extract cell image",
 		"", func() error {
-			imageDir, err = ExtractImage(parsedCellImage, true)
+			imageDir, err = ExtractImage(cli, parsedCellImage, true)
 			return err
 		}); err != nil {
 		return err
@@ -208,7 +208,7 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 
 // extractImage extracts the image into a temporary directory and returns the path.
 // Cleaning the path after finishing your work is your responsibility.
-func ExtractImage(cellImage *image.CellImage, pullIfNotPresent bool) (string, error) {
+func ExtractImage(cli cli.Cli, cellImage *image.CellImage, pullIfNotPresent bool) (string, error) {
 	var err error
 	repoLocation := filepath.Join(util.UserHomeDir(), celleryHome, "repo", cellImage.Organization,
 		cellImage.ImageName, cellImage.ImageVersion)
@@ -222,7 +222,7 @@ func ExtractImage(cellImage *image.CellImage, pullIfNotPresent bool) (string, er
 		if pullIfNotPresent {
 			cellImageTag := cellImage.Registry + "/" + cellImage.Organization + "/" + cellImage.ImageName +
 				":" + cellImage.ImageVersion
-			RunPull(cellImageTag, true, "", "")
+			RunPull(cli, cellImageTag, true, "", "")
 		} else {
 			return "", fmt.Errorf("image %s/%s:%s not present on the local repository", cellImage.Organization,
 				cellImage.ImageName, cellImage.ImageVersion)

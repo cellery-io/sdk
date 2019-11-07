@@ -24,6 +24,8 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
@@ -45,14 +47,14 @@ import (
 )
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)\
-func RunTest(cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
+func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, incell bool) {
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
 	parsedCellImage, err := image.ParseImageTag(cellImageTag)
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
 	}
-	imageDir, err := ExtractImage(parsedCellImage, true)
+	imageDir, err := ExtractImage(cli, parsedCellImage, true)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error occurred while extracting image", err)

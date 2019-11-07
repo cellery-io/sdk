@@ -21,8 +21,6 @@ package commands
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,43 +32,32 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
-
-	"github.com/docker/distribution/manifest"
-	"github.com/docker/distribution/manifest/schema1"
-	"github.com/docker/libtrust"
-	"github.com/nokia/docker-registry-client/registry"
-	"github.com/opencontainers/go-digest"
-
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // RunPush parses the cell image name to recognize the Cellery Registry (A Docker Registry), Organization and version
 // and pushes to the Cellery Registry
-func RunPush(cellImage string, username string, password string) {
+func RunPush(cli cli.Cli, cellImage string, username string, password string) error {
 	parsedCellImage, err := image.ParseImageTag(cellImage)
 	//Read docker images from metadata.json
-	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImage))
-	imageDir, err := ExtractImage(parsedCellImage, false)
+	imageDir, err := ExtractImage(cli, parsedCellImage, false)
 	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while extracting image", err)
+		return fmt.Errorf("error occurred while extracting image, %v", err)
 	}
 	metadataFileContent, err := ioutil.ReadFile(filepath.Join(imageDir, constants.ZIP_ARTIFACTS, "cellery",
 		"metadata.json"))
 	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while reading Cell Image metadata", err)
+		return fmt.Errorf("error occurred while reading Cell Image metadata, %v", err)
 	}
 	cellImageMetadata := &image.MetaData{}
 	err = json.Unmarshal(metadataFileContent, cellImageMetadata)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+		return fmt.Errorf("error occurred while parsing cell image, %v", err)
 	}
-	spinner.Stop(true)
 	var registryCredentials = &credentials.RegistryCredentials{
 		Registry: parsedCellImage.Registry,
 		Username: username,
@@ -86,8 +73,7 @@ func RunPush(cellImage string, username string, password string) {
 	if !isCredentialsPresent {
 		credManager, err = credentials.NewCredManager()
 		if err != nil {
-			util.ExitWithErrorMessage("Unable to use a Credentials Manager, "+
-				"please use inline flags instead", err)
+			return fmt.Errorf("unable to use a Credentials Manager, please use inline flags instead, %v", err)
 		}
 		savedCredentials, err := credManager.GetCredentials(parsedCellImage.Registry)
 		if err == nil && savedCredentials.Username != "" && savedCredentials.Password != "" {
@@ -97,7 +83,6 @@ func RunPush(cellImage string, username string, password string) {
 			isCredentialsPresent = false
 		}
 	}
-
 	var dockerImagesToBePushed []string
 	for _, componentMetadata := range cellImageMetadata.Components {
 		if componentMetadata.IsDockerPushRequired {
@@ -106,14 +91,14 @@ func RunPush(cellImage string, username string, password string) {
 	}
 	if isCredentialsPresent {
 		// Pushing the image using the saved credentials
-		err = pushImage(parsedCellImage, registryCredentials.Username, registryCredentials.Password)
+		err = pushImage(cli, parsedCellImage, registryCredentials.Username, registryCredentials.Password)
 		if err != nil {
-			util.ExitWithErrorMessage("Failed to push image", err)
+			return fmt.Errorf("failed to push image, %v", err)
 		}
 		pushDockerImages(dockerImagesToBePushed)
 	} else {
 		// Pushing image without credentials
-		err = pushImage(parsedCellImage, "", "")
+		err = pushImage(cli, parsedCellImage, "", "")
 		if err != nil {
 			if strings.Contains(err.Error(), "401") {
 				log.Printf("Unauthorized to push Cell image. Trying to login")
@@ -134,7 +119,7 @@ func RunPush(cellImage string, username string, password string) {
 				}
 				regex, err := regexp.Compile(constants.CENTRAL_REGISTRY_HOST_REGX)
 				if err != nil {
-					util.ExitWithErrorMessage("Error occurred while compiling the registry regex", err)
+					return fmt.Errorf("error occurred while compiling the registry regex, %v", err)
 				}
 				if regex.MatchString(parsedCellImage.Registry) {
 					isAuthorized = make(chan bool)
@@ -146,15 +131,15 @@ func RunPush(cellImage string, username string, password string) {
 				}
 				if err != nil {
 					finalizeChannelCalls(false)
-					util.ExitWithErrorMessage("Failed to acquire credentials", err)
+					return fmt.Errorf("failed to acquire credentials, %v", err)
 				}
 				finalizeChannelCalls(true)
 				fmt.Println()
 
 				// Trying to push the image again with the provided credentials
-				err = pushImage(parsedCellImage, registryCredentials.Username, registryCredentials.Password)
+				err = pushImage(cli, parsedCellImage, registryCredentials.Username, registryCredentials.Password)
 				if err != nil {
-					util.ExitWithErrorMessage("Failed to push image", err)
+					return fmt.Errorf("failed to push image, %v", err)
 				}
 				pushDockerImages(dockerImagesToBePushed)
 
@@ -170,7 +155,7 @@ func RunPush(cellImage string, username string, password string) {
 					}
 				}
 			} else {
-				util.ExitWithErrorMessage("Failed to pull image", err)
+				return fmt.Errorf("failed to pull image, %v", err)
 			}
 		} else {
 			pushDockerImages(dockerImagesToBePushed)
@@ -178,12 +163,12 @@ func RunPush(cellImage string, username string, password string) {
 	}
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully pushed cell image: %s", util.Bold(cellImage)))
 	util.PrintWhatsNextMessage("pull the image", "cellery pull "+cellImage)
+	return nil
 }
 
-func pushDockerImages(dockerImages []string) {
+func pushDockerImages(dockerImages []string) error {
 	log.Printf("Pushing docker images [%s]", strings.Join(dockerImages, ", "))
 	for _, elem := range dockerImages {
-		spinner := util.StartNewSpinner("Pushing Docker image " + util.Bold(elem))
 		cmd := exec.Command("docker", "push", elem)
 		execError := ""
 		stderrReader, _ := cmd.StderrPipe()
@@ -198,147 +183,69 @@ func pushDockerImages(dockerImages []string) {
 		cmd.Stderr = &stderr
 		err := cmd.Start()
 		if err != nil {
-			spinner.Stop(false)
 			errStr := string(stderr.Bytes())
 			fmt.Printf("%s\n", errStr)
-			util.ExitWithErrorMessage("Error occurred while pushing Docker image", err)
+			return fmt.Errorf("error occurred while pushing Docker image, %v", err)
 		}
 		err = cmd.Wait()
 		if err != nil {
-			spinner.Stop(false)
 			fmt.Println()
 			fmt.Printf("\x1b[31;1m\nPush Failed.\x1b[0m %v \n", execError)
 			fmt.Println("\x1b[31;1m======================\x1b[0m")
 			errStr := string(stderr.Bytes())
 			fmt.Printf("\x1b[31;1m%s\x1b[0m", errStr)
-			util.ExitWithErrorMessage("Error occurred while pushing cell image", err)
+			return fmt.Errorf("error occurred while pushing cell image, %v", err)
 		}
-		spinner.Stop(true)
 	}
+	return nil
 }
 
-func pushImage(parsedCellImage *image.CellImage, username string, password string) error {
+func pushImage(cli cli.Cli, parsedCellImage *image.CellImage, username string, password string) error {
 	log.Printf("Pushing image %s/%s:%s to registry %s", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.Registry)
 	repository := parsedCellImage.Organization + "/" + parsedCellImage.ImageName
 	cellImage := parsedCellImage.Registry + "/" + repository + ":" + parsedCellImage.ImageVersion
 
-	spinner := util.StartNewSpinner(fmt.Sprintf("Connecting to %s", util.Bold(parsedCellImage.Registry)))
-	defer func() {
-		spinner.Stop(true)
-	}()
-
-	// Initiating a connection to Cellery Registry
-	hub, err := registry.New("https://"+parsedCellImage.Registry, username, password)
-	if err != nil {
-		spinner.Stop(false)
-		return fmt.Errorf("failed to initialize connection to Cellery Registry %v", err)
-	}
-
 	imageName := fmt.Sprintf("%s/%s:%s", parsedCellImage.Organization, parsedCellImage.ImageName,
 		parsedCellImage.ImageVersion)
-	spinner.SetNewAction(fmt.Sprintf("Reading image %s from the Local Repository", util.Bold(imageName)))
-
+	fmt.Println(fmt.Sprintf("\nReading image %s from the Local Repository", util.Bold(imageName)))
 	// Reading the cell image
-	cellImageFilePath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
+	cellImageFilePath := filepath.Join(cli.FileSystem().Repository(), parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	// Checking if the image is present in the local repo
 	isImagePresent, _ := util.FileExists(cellImageFilePath)
 	if !isImagePresent {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage(fmt.Sprintf("Failed to push image %s", util.Bold(cellImage)),
+		return fmt.Errorf(fmt.Sprintf("Failed to push image %s", util.Bold(cellImage)),
 			errors.New("image not Found"))
 	}
 
 	cellImageFile, err := os.Open(cellImageFilePath)
 	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while reading the cell image", err)
+		return fmt.Errorf("error occurred while reading the cell image, %v", err)
 	}
 	if cellImageFile != nil {
-		defer func() {
+		defer func() error {
 			err := cellImageFile.Close()
 			if err != nil {
-				spinner.Stop(false)
-				util.ExitWithErrorMessage("Error occurred while opening the cell image", err)
+				return fmt.Errorf("error occurred while opening the cell image, %v", err)
 			}
+			return nil
 		}()
 	}
 	cellImageFileBytes, err := ioutil.ReadAll(cellImageFile)
 	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while reading the cell image", err)
+		return fmt.Errorf("error occurred while reading the cell image, %v", err)
 	}
-
-	// Creating the Cell Image Digest (Docker file Layer digest)
-	hash := sha256.New()
-	hash.Write(cellImageFileBytes)
-	sha256sum := hex.EncodeToString(hash.Sum(nil))
-	cellImageDigest := digest.NewDigestFromEncoded(digest.SHA256, sha256sum)
-
-	// Checking if the the Cell Image already exists in the registry
-	spinner.SetNewAction(fmt.Sprintf("Checking if the image %s already exists in the Registry", util.Bold(imageName)))
-	cellImageDigestExists, err := hub.HasBlob(repository, cellImageDigest)
-	if err != nil {
-		spinner.Stop(false)
-		return err
+	if err := cli.ExecuteTask("Pushing cell image", "Failed to push image",
+		"", func() error {
+			err = cli.Registry().Push(parsedCellImage, cellImageFileBytes, username, password)
+			if err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+		return fmt.Errorf("error pushing image, %v", err)
 	}
-
-	// Pushing the cell image if it is not already uploaded
-	if !cellImageDigestExists {
-		spinner.SetNewAction(fmt.Sprintf("Pushing image %s", util.Bold(imageName)))
-
-		// Read stream of files
-		err = hub.UploadBlob(repository, cellImageDigest, bytes.NewReader(cellImageFileBytes), nil)
-		if err != nil {
-			spinner.Stop(false)
-			return err
-		}
-		log.Printf("Successfully uploaded %s cell image to registry %s", cellImage, parsedCellImage.Registry)
-	} else {
-		spinner.SetNewAction(fmt.Sprintf("Using already existing image %s in %s Registry", util.Bold(imageName),
-			util.Bold(parsedCellImage.Registry)))
-		log.Printf("%s cell image already exists in registry %s", cellImage, parsedCellImage.Registry)
-	}
-
-	// Creating a Docker manifest to be uploaded
-	cellImageManifest := &schema1.Manifest{
-		Name: repository,
-		Versioned: manifest.Versioned{
-			SchemaVersion: 1,
-			MediaType:     schema1.MediaTypeSignedManifest,
-		},
-		Tag:          parsedCellImage.ImageVersion,
-		Architecture: "amd64",
-		FSLayers: []schema1.FSLayer{
-			{BlobSum: cellImageDigest},
-		},
-		History: []schema1.History{
-			{},
-		},
-	}
-
-	// Signing the Docker Manifest
-	key, err := libtrust.GenerateECP256PrivateKey()
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while pushing the cell image", err)
-	}
-	signedCellImageManifest, err := schema1.Sign(cellImageManifest, key)
-	if err != nil {
-		spinner.Stop(false)
-		util.ExitWithErrorMessage("Error occurred while pushing the cell image", err)
-	}
-
-	// Uploading the manifest to the Cellery Registry (Docker Registry)
-	err = hub.PutManifest(repository, parsedCellImage.ImageVersion, signedCellImageManifest)
-	if err != nil {
-		spinner.Stop(false)
-		return err
-	}
-
-	spinner.Stop(true)
-	fmt.Printf("\nImage Digest : %s\n", util.Bold(cellImageDigest))
 	return nil
 }

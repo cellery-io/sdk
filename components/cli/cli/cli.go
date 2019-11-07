@@ -25,6 +25,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/pkg/registry"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -35,6 +36,7 @@ type Cli interface {
 	FileSystem() FileSystemManager
 	BalExecutor() ballerina.BalExecutor
 	KubeCli() kubernetes.KubeCli
+	Registry() registry.Registry
 }
 
 // CelleryCli is an instance of the cellery command line client.
@@ -43,15 +45,30 @@ type CelleryCli struct {
 	fileSystemManager FileSystemManager
 	kubecli           kubernetes.KubeCli
 	BallerinaExecutor ballerina.BalExecutor
+	registry          registry.Registry
 }
 
 // NewCelleryCli returns a CelleryCli instance.
-func NewCelleryCli() *CelleryCli {
+func NewCelleryCli(opts ...func(*CelleryCli)) *CelleryCli {
 	cli := &CelleryCli{
-		fileSystemManager: NewCelleryFileSystem(),
-		kubecli:           kubernetes.NewCelleryKubeCli(),
+		kubecli: kubernetes.NewCelleryKubeCli(),
+	}
+	for _, opt := range opts {
+		opt(cli)
 	}
 	return cli
+}
+
+func SetRegistry(registry registry.Registry) func(*CelleryCli) {
+	return func(cli *CelleryCli) {
+		cli.registry = registry
+	}
+}
+
+func SetFileSystem(manager FileSystemManager) func(*CelleryCli) {
+	return func(cli *CelleryCli) {
+		cli.fileSystemManager = manager
+	}
 }
 
 // Out returns the writer used for the stdout.
@@ -93,4 +110,9 @@ func (cli *CelleryCli) BalExecutor() ballerina.BalExecutor {
 // KubeCli returns kubernetes.KubeCli instance.
 func (cli *CelleryCli) KubeCli() kubernetes.KubeCli {
 	return cli.kubecli
+}
+
+// KubeCli returns kubernetes.KubeCli instance.
+func (cli *CelleryCli) Registry() registry.Registry {
+	return cli.registry
 }

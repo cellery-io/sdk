@@ -31,7 +31,7 @@ import (
 
 func TestStartCellInstance(t *testing.T) {
 	mockBalExecutor := test.NewMockBalExecutor()
-	mockCli := test.NewMockCli(nil)
+	mockCli := test.NewMockCli()
 	mockCli.BallerinaExecutor = mockBalExecutor
 	imageDir, err := ioutil.TempDir("", "temp")
 	if err != nil {

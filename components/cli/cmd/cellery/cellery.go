@@ -30,6 +30,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/registry"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -60,13 +61,13 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newLogsCommand(),
 		newLoginCommand(),
 		newLogoutCommand(),
-		newPushCommand(),
-		newPullCommand(),
+		newPushCommand(cli),
+		newPullCommand(cli),
 		newSetupCommand(),
 		newExtractResourcesCommand(),
 		newInspectCommand(),
 		newViewCommand(),
-		newTestCommand(),
+		newTestCommand(cli),
 		newDeleteImageCommand(),
 		newExportPolicyCommand(),
 		newApplyPolicyCommand(),
@@ -80,7 +81,11 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 }
 
 func main() {
-	celleryCli := cli.NewCelleryCli()
+	fileSystem, err := cli.NewCelleryFileSystem()
+	if err != nil {
+		util.ExitWithErrorMessage("Error configuring cellery file system", err)
+	}
+	celleryCli := cli.NewCelleryCli(cli.SetRegistry(registry.NewCelleryRegistry()), cli.SetFileSystem(fileSystem))
 	var ballerinaExecutor ballerina.BalExecutor
 	moduleMgr := &util.BLangManager{}
 	// Initially assume ballerina is installed locally and try to get the ballerina executable path.

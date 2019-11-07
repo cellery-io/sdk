@@ -50,6 +50,7 @@ func TestGetCellSummary(t *testing.T) {
 			},
 		},
 	}
+	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells))
 	tests := []struct {
 		name              string
 		MockCli           *test.MockCli
@@ -59,14 +60,14 @@ func TestGetCellSummary(t *testing.T) {
 	}{
 		{
 			name:              "status of ready cell instance",
-			MockCli:           test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells))),
+			MockCli:           test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instance:          "employee",
 			expectedStatus:    "Ready",
 			expectedTimeStamp: "2019-10-18T11:40:36Z",
 		},
 		{
 			name:              "status of not ready composite instance",
-			MockCli:           test.NewMockCli(test.NewMockKubeCli(test.WithCells(cells))),
+			MockCli:           test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instance:          "stock",
 			expectedStatus:    "Not Ready",
 			expectedTimeStamp: "2019-10-20T11:40:36Z",
@@ -108,6 +109,7 @@ func TestGetCompositeSummary(t *testing.T) {
 			},
 		},
 	}
+	mockKubeCli := test.NewMockKubeCli(test.WithComposites(composites))
 	tests := []struct {
 		name              string
 		MockCli           *test.MockCli
@@ -117,14 +119,14 @@ func TestGetCompositeSummary(t *testing.T) {
 	}{
 		{
 			name:              "status of ready composite instance",
-			MockCli:           test.NewMockCli(test.NewMockKubeCli(test.WithComposites(composites))),
+			MockCli:           test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instance:          "hr",
 			expectedStatus:    "Ready",
 			expectedTimeStamp: "2019-10-18T11:40:36Z",
 		},
 		{
 			name:              "status of not ready composite instance",
-			MockCli:           test.NewMockCli(test.NewMockKubeCli(test.WithComposites(composites))),
+			MockCli:           test.NewMockCli(test.SetKubeCli(mockKubeCli)),
 			instance:          "job",
 			expectedStatus:    "Not Ready",
 			expectedTimeStamp: "2019-10-20T11:40:36Z",

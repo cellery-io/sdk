@@ -20,31 +20,47 @@ package cli
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 )
 
+const celleryHome = ".cellery"
+
 type FileSystemManager interface {
-	CurrentDir() (string, error)
+	CurrentDir() string
 	UserHome() (string, error)
+	Repository() string
 }
 
 type celleyFileSystem struct {
+	currentDir string
 }
 
 // NewCelleryFileSystem returns a celleyFileSystem instance.
-func NewCelleryFileSystem() *celleyFileSystem {
-	fs := &celleyFileSystem{}
-	return fs
+func NewCelleryFileSystem() (*celleyFileSystem, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	fs := &celleyFileSystem{
+		currentDir: currentDir,
+	}
+	return fs, nil
 }
 
 // CurrentDir returns the current directory.
-func (fs *celleyFileSystem) CurrentDir() (string, error) {
-	return os.Getwd()
+func (fs *celleyFileSystem) CurrentDir() string {
+	return fs.currentDir
 }
 
 // UserHome returns user home.
 func (fs *celleyFileSystem) UserHome() (string, error) {
 	return userHomeDir(), nil
+}
+
+// UserHome returns user home.
+func (fs *celleyFileSystem) Repository() string {
+	return filepath.Join(userHomeDir(), celleryHome, "repo")
 }
 
 func userHomeDir() string {

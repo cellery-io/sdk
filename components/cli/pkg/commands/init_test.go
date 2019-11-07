@@ -92,7 +92,7 @@ func TestInitcreateBalFile(t *testing.T) {
 }
 
 func TestInitWriteCellTemplate(t *testing.T) {
-	mockCli := test.NewMockCli(nil)
+	mockCli := test.NewMockCli()
 	writeCellTemplate(mockCli.Out(), CellTemplate)
 	got := mockCli.OutBuffer().String()
 	if diff := cmp.Diff(expectedInitContent, got); diff != "" {

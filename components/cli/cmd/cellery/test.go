@@ -22,15 +22,15 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 )
 
-func newTestCommand() *cobra.Command {
+func newTestCommand(cli cli.Cli) *cobra.Command {
 	var name string
 	var debug bool
 	var verbose bool
@@ -77,7 +77,7 @@ func newTestCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunTest(args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
+			commands.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
 				assumeYes, debug, verbose, incell)
 		},
 		Example: "  cellery test cellery-samples/hr:1.0.0 -n hr-inst\n" +

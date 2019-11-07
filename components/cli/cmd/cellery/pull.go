@@ -21,14 +21,14 @@ package main
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 )
 
-func newPullCommand() *cobra.Command {
+func newPullCommand(cli cli.Cli) *cobra.Command {
 	var username string
 	var password string
 	var isSilent bool
@@ -50,7 +50,7 @@ func newPullCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunPull(args[0], isSilent, username, password)
+			commands.RunPull(cli, args[0], isSilent, username, password)
 		},
 		Example: "  cellery pull cellery-samples/employee:1.0.0\n" +
 			"  cellery pull registry.foo.io/cellery-samples/employee:1.0.0",

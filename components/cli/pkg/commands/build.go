@@ -42,12 +42,9 @@ import (
 // This also copies the relevant ballerina files to the ballerina repo directory.
 func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	var err error
-	var projectDir string
+	projectDir := cli.FileSystem().CurrentDir()
 	var parsedCellImage *image.CellImage
 	var iName []byte
-	if projectDir, err = cli.FileSystem().CurrentDir(); err != nil {
-		return err
-	}
 	if parsedCellImage, err = image.ParseImageTag(tag); err != nil {
 		return fmt.Errorf("error occurred while parsing image, %v", err)
 	}
@@ -85,7 +82,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	// Generate metadata
 	if err = cli.ExecuteTask("Generating metadata", "Failed to generate metadata",
 		"", func() error {
-			err := generateMetaData(parsedCellImage, projectDir)
+			err := generateMetaData(cli, parsedCellImage, projectDir)
 			return err
 		}); err != nil {
 		return err
@@ -131,7 +128,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 }
 
 // generateMetaData generates the metadata file for cellery
-func generateMetaData(cellImage *image.CellImage, projectDir string) error {
+func generateMetaData(cli cli.Cli, cellImage *image.CellImage, projectDir string) error {
 	targetDir := filepath.Join(projectDir, "target")
 	var err error
 	var metadataJSON []byte
@@ -166,14 +163,14 @@ func generateMetaData(cellImage *image.CellImage, projectDir string) error {
 	}
 	for componentName, componentMetadata := range metadata.Components {
 		for alias, dependencyMetadata := range componentMetadata.Dependencies.Cells {
-			if dependencyMetadata, err = extractDependenciesFromMetaData(dependencyMetadata, cellImage); err != nil {
+			if dependencyMetadata, err = extractDependenciesFromMetaData(cli, dependencyMetadata, cellImage); err != nil {
 				return fmt.Errorf("error extracting cell dependencies from meta of image %s", cellImage)
 			}
 			metadata.Components[componentName].Dependencies.Cells[alias] = dependencyMetadata
 		}
 
 		for alias, dependencyMetadata := range componentMetadata.Dependencies.Composites {
-			if dependencyMetadata, err = extractDependenciesFromMetaData(dependencyMetadata, cellImage); err != nil {
+			if dependencyMetadata, err = extractDependenciesFromMetaData(cli, dependencyMetadata, cellImage); err != nil {
 				return fmt.Errorf("error extracting composite dependencies from meta of image %s", cellImage)
 			}
 			metadata.Components[componentName].Dependencies.Composites[alias] = dependencyMetadata
@@ -241,7 +238,7 @@ func generateMetaData(cellImage *image.CellImage, projectDir string) error {
 	return nil
 }
 
-func extractDependenciesFromMetaData(dependencyMetadata *image.MetaData, cellImage *image.CellImage) (*image.MetaData, error) {
+func extractDependenciesFromMetaData(cli cli.Cli, dependencyMetadata *image.MetaData, cellImage *image.CellImage) (*image.MetaData, error) {
 	var err error
 	cellImageZip := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
 		dependencyMetadata.Organization, dependencyMetadata.Name, dependencyMetadata.Version,
@@ -257,7 +254,7 @@ func extractDependenciesFromMetaData(dependencyMetadata *image.MetaData, cellIma
 		return nil, fmt.Errorf("error checking if dependency exists, %v", err)
 	}
 	if !dependencyExists {
-		RunPull(dependencyImage, true, "", "")
+		RunPull(cli, dependencyImage, true, "", "")
 	}
 	// Create temp directory
 	currentTime := time.Now()
@@ -289,12 +286,9 @@ func extractDependenciesFromMetaData(dependencyMetadata *image.MetaData, cellIma
 
 func createTempBalFile(cli cli.Cli, fileName string) (string, error) {
 	var err error
-	var projectDir string
 	var tempBuildFileName string
 	// First clean target directory if exists
-	if projectDir, err = cli.FileSystem().CurrentDir(); err != nil {
-		return "", fmt.Errorf("error getting current directory: %v", err)
-	}
+	projectDir := cli.FileSystem().CurrentDir()
 	targetDir := filepath.Join(projectDir, "target")
 	_ = os.Remove(targetDir)
 	if tempBuildFileName, err = util.CreateTempExecutableBalFile(fileName, "build"); err != nil {
@@ -315,10 +309,7 @@ func executeTempBalFile(ballerinaExecutor ballerina.BalExecutor, tempBuildFileNa
 
 func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) error {
 	var err error
-	var currentDir string
-	if currentDir, err = cli.FileSystem().CurrentDir(); err != nil {
-		return err
-	}
+	currentDir := cli.FileSystem().CurrentDir()
 	targetDir := filepath.Join(projectDir, "target")
 	if err = util.CopyDir(targetDir, filepath.Join(projectDir, artifacts)); err != nil {
 		return fmt.Errorf("error occurred copying artifacts directory, %v", err)

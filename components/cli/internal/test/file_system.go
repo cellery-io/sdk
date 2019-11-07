@@ -22,21 +22,43 @@ import (
 	"io/ioutil"
 )
 
-type mockFileSystem struct {
-}
-
-// CurrentDir returns the current directory.
-func (fs *mockFileSystem) CurrentDir() (string, error) {
-	return ioutil.TempDir("", "cellery-current-dir")
-}
-
-// UserHome returns the user home.
-func (fs *mockFileSystem) UserHome() (string, error) {
-	return ioutil.TempDir("", "user-home")
+type MockFileSystem struct {
+	currentDir string
+	repository string
 }
 
 // NewMockFileSystem returns a mockFileSystem instance.
-func NewMockFileSystem() *mockFileSystem {
-	fs := &mockFileSystem{}
+func NewMockFileSystem(opts ...func(*MockFileSystem)) *MockFileSystem {
+	fs := &MockFileSystem{}
+	for _, opt := range opts {
+		opt(fs)
+	}
 	return fs
+}
+
+func SetRepository(repository string) func(*MockFileSystem) {
+	return func(fs *MockFileSystem) {
+		fs.repository = repository
+	}
+}
+
+func SetCurrentDir(currentDir string) func(*MockFileSystem) {
+	return func(fs *MockFileSystem) {
+		fs.currentDir = currentDir
+	}
+}
+
+// CurrentDir returns the current directory.
+func (fs *MockFileSystem) CurrentDir() string {
+	return fs.currentDir
+}
+
+// UserHome returns the user home.
+func (fs *MockFileSystem) UserHome() (string, error) {
+	return ioutil.TempDir("", "user-home")
+}
+
+// UserHome returns user home.
+func (fs *MockFileSystem) Repository() string {
+	return fs.repository
 }

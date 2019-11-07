@@ -33,7 +33,7 @@ func newListCommand(cli cli.Cli) *cobra.Command {
 	cmd.AddCommand(
 		newListInstancesCommand(cli),
 		newListImagesCommand(),
-		newListIngressesCommand(),
+		newListIngressesCommand(cli),
 		newListComponentsCommand(),
 		newListDependenciesCommand(),
 	)

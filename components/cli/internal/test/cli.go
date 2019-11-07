@@ -25,24 +25,47 @@ import (
 	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/pkg/registry"
 )
 
 type MockCli struct {
 	out               io.Writer
 	outBuffer         *bytes.Buffer
 	BallerinaExecutor ballerina.BalExecutor
-	kubecli           kubernetes.KubeCli
+	kubeCli           kubernetes.KubeCli
+	registry          registry.Registry
+	manager           cli.FileSystemManager
 }
 
 // NewMockCli returns a mock cli for the cli.Cli interface.
-func NewMockCli(kubeCli *MockKubeCli) *MockCli {
+func NewMockCli(opts ...func(*MockCli)) *MockCli {
 	outBuffer := new(bytes.Buffer)
 	mockCli := &MockCli{
 		out:       outBuffer,
 		outBuffer: outBuffer,
-		kubecli:   kubeCli,
+	}
+	for _, opt := range opts {
+		opt(mockCli)
 	}
 	return mockCli
+}
+
+func SetKubeCli(kubecli kubernetes.KubeCli) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.kubeCli = kubecli
+	}
+}
+
+func SetRegistry(registry registry.Registry) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.registry = registry
+	}
+}
+
+func SetFileSystem(manager cli.FileSystemManager) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.manager = manager
+	}
 }
 
 // Out returns the output stream (stdout) the cli should write on.
@@ -66,7 +89,7 @@ func (cli *MockCli) ExecuteTask(startMessage, errorMessage, successMessage strin
 
 // FileSystem returns a mock FileSystemManager instance.
 func (cli *MockCli) FileSystem() cli.FileSystemManager {
-	return NewMockFileSystem()
+	return cli.manager
 }
 
 // BalExecutor returns a mock ballerina.BalExecutor instance.
@@ -76,5 +99,10 @@ func (cli *MockCli) BalExecutor() ballerina.BalExecutor {
 
 // KubeCli returns mock kubernetes.KubeCli instance.
 func (cli *MockCli) KubeCli() kubernetes.KubeCli {
-	return cli.kubecli
+	return cli.kubeCli
+}
+
+// KubeCli returns kubernetes.KubeCli instance.
+func (cli *MockCli) Registry() registry.Registry {
+	return cli.registry
 }

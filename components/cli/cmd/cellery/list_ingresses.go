@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
@@ -29,7 +31,7 @@ import (
 )
 
 // newApisCommand creates a cobra command which can be invoked to get the APIs exposed by a cell
-func newListIngressesCommand() *cobra.Command {
+func newListIngressesCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ingresses <instance-name|cell-image-name>",
 		Aliases: []string{"ingress", "ing"},
@@ -49,7 +51,7 @@ func newListIngressesCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunListIngresses(args[0])
+			commands.RunListIngresses(cli, args[0])
 		},
 		Example: "  cellery list ingresses employee\n" +
 			"  cellery list ingresses cellery-samples/employee:1.0.0\n",

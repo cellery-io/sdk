@@ -21,13 +21,14 @@ package main
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
-	"github.com/spf13/cobra"
 )
 
-func newPushCommand() *cobra.Command {
+func newPushCommand(cli cli.Cli) *cobra.Command {
 	var username string
 	var password string
 	cmd := &cobra.Command{
@@ -48,7 +49,7 @@ func newPushCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunPush(args[0], username, password)
+			commands.RunPush(cli, args[0], username, password)
 		},
 		Example: "  cellery push cellery-samples/employee:1.0.0\n" +
 			"  cellery push registry.foo.io/cellery-samples/employee:1.0.0",
