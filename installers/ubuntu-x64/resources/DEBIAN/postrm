@@ -15,6 +15,6 @@ fi
 # Remove Cellery installation.
 sudo rm -rf /usr/share/cellery/
 
-echo "Remove ~/.ballerina/balo_cache/celleryio/cellery/0.5.0/cellery-2019r3-java8-${CELLERY_VERSION_NUM}.balo to
-      complete the Cellery uninstallation."
+echo "Remove ~/.ballerina/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}/cellery-2019r3-java8-${CELLERY_VERSION_NUM}.balo to
+complete the Cellery uninstallation."
 

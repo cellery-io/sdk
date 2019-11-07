@@ -20,8 +20,10 @@ B7A_BIN_PATH=$(which ballerina)
 if [ -L "${B7A_BIN_PATH}" ]; then
     B7A_BIN_PATH=$(readlink $B7A_BIN_PATH)
 fi
-
-B7A_VERSION=$($B7A_BIN_PATH -v)
+B7A_VERSION=""
+if [ -f "${B7A_BIN_PATH}" ]; then
+    B7A_VERSION=$($B7A_BIN_PATH -v)
+fi
 if [ ! -f ${B7A_BIN_PATH} ]; then
     B7A_BIN_PATH="/usr/lib/ballerina/${BALLERINA_RUNTIME}/bin"
     echo "Failed to find the ballerina home directory, falling back to the default installation path."
