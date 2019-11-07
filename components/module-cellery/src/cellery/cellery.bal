@@ -503,6 +503,7 @@ public function getDependencies() returns @tainted map<ImageName> {
     } 
     return <map<ImageName>>iNameMap;
 }
+
 # Returns cell gateway URL of the started cell
 #
 # + iNameList - list of InstanceState
@@ -547,6 +548,21 @@ public function getCellEndpoints(InstanceState[] iNameList, string alias = "", s
     }
     Reference tempRef = <Reference>ref;
     return tempRef;
+}
+
+public function runDockerTest(string image, map<Env> envVars) returns (error?){
+    Test petBeDockerTest = {
+        name: "pet-be-test",
+        src: {
+            image: "docker.io/wso2cellery/pet-be-tests"
+        },
+        envVars: envVars
+    };
+    TestSuite petBeTestSuite = {
+        tests: [petBeDockerTest]
+    };
+
+    return runTestSuite(getCellImage(), petBeTestSuite);
 }
 
 function parseCellDependency(string alias) returns ImageName {
@@ -741,7 +757,7 @@ public function runInstances(ImageName iName, map<ImageName> instances) returns 
     class: "io.cellery.impl.RunInstances"
 } external;
 
-public function runTestSuite(InstanceState[] instances, TestSuite testSuite) returns (error?) = @java:Method {
+public function runTestSuite(ImageName iName, TestSuite testSuite) returns (error?) = @java:Method {
     class: "io.cellery.impl.RunTestSuite"
 } external;
 

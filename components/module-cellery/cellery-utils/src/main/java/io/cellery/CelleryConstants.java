@@ -46,7 +46,6 @@ public class CelleryConstants {
     public static final String VERSION = "ver";
     public static final String INSTANCE_NAME = "instanceName";
     public static final String IS_ROOT = "isRoot";
-    public static final String TEMP_TEST_MODULE = "tmp";
     public static final String BTYPE_STRING = "string";
     public static final String MAX_REPLICAS = "maxReplicas";
     public static final String CONCURRENCY_TARGET = "concurrencyTarget";
@@ -108,8 +107,7 @@ public class CelleryConstants {
     public static final String CELLERY_API_VERSION = "mesh.cellery.io/v1alpha2";
     public static final String CENTRAL_REGISTRY_HOST = "registry.hub.cellery.io";
     public static final String BALLERINA_TOML = "Ballerina.toml";
-    public static final String BALLERINA_CONF = "ballerina.conf";
-    public static final String DEBUG_BALLERINA_CONF = Paths.get(CELLERY_HOME_PATH, "tmp", BALLERINA_CONF).toString();
+    public static final String DEBUG_BALLERINA_CONF = "ballerina.conf";
 
     public static final String CELLERY_ENV_VARIABLE = "cellery_env_";
     public static final String MESH_CELLERY_IO = "mesh.cellery.io";

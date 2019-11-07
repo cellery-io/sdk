@@ -139,14 +139,17 @@ public class CreateInstance {
         }
         String cellImageDir = System.getenv(CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR);
         if (cellImageDir == null) {
-            try (InputStream inputStream = new FileInputStream(CelleryConstants.DEBUG_BALLERINA_CONF)) {
+            String balConfPath = Paths.get(System.getProperty("user.dir"),
+                    CelleryConstants.DEBUG_BALLERINA_CONF).toString();
+            printDebug(CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR +
+                    " environment variable is not set. Reading value from " + balConfPath);
+            try (InputStream inputStream = new FileInputStream(balConfPath)) {
                 Properties properties = new Properties();
                 properties.load(inputStream);
                 cellImageDir = properties.getProperty(CelleryConstants.CELLERY_IMAGE_DIR_ENV_VAR).replaceAll("\"",
                         "");
             } catch (IOException e) {
-                throw new BallerinaCelleryException("unable to read Ballerina conf " +
-                        CelleryConstants.DEBUG_BALLERINA_CONF);
+                throw new BallerinaCelleryException("unable to read Ballerina conf " + balConfPath);
             }
         }
         String destinationPath = cellImageDir + File.separator +
@@ -866,7 +869,7 @@ public class CreateInstance {
             ((Map<String, String>) field.get(env)).put(IMAGE_NAME_ENV_VAR, envVars.toString());
             field.setAccessible(false);
         } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new BallerinaCelleryException("Error occurred while creating " + CelleryConstants.BALLERINA_CONF);
+            throw new BallerinaCelleryException("Error occurred while updating env variable: " + IMAGE_NAME_ENV_VAR);
         }
     }
 

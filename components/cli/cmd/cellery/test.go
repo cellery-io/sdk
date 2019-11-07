@@ -20,6 +20,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"path/filepath"
 	"regexp"
 
 	"github.com/spf13/cobra"
@@ -32,6 +34,7 @@ import (
 
 func newTestCommand(cli cli.Cli) *cobra.Command {
 	var name string
+	var projLocation string
 	var debug bool
 	var verbose bool
 	var incell bool
@@ -74,12 +77,23 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 						"[<instance>:]<key>=<value>, received %s", envVar)
 				}
 			}
+
+			if debug {
+				if projLocation == "" {
+					return fmt.Errorf("expects a Ballerina project. Use --project-location or -p to specify the project location")
+				} else {
+					isExists, err := util.FileExists(filepath.Join(projLocation, constants.BALLERINA_TOML))
+					if err != nil || !isExists {
+						return fmt.Errorf("expects a Ballerina project location, recieved %s", projLocation)
+					}
+				}
+			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			image2.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
-				assumeYes, debug, verbose, incell)
-		},
+        	commands.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
+        		assumeYes, debug, verbose, incell, projLocation)
+        },
 		Example: "  cellery test cellery-samples/hr:1.0.0 -n hr-inst\n" +
 			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst -y\n" +
 			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst --assume-yes\n" +
@@ -87,7 +101,7 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 			" -l stock:stock-inst \n" +
 			" -v\n" +
 			" --debug\n" +
-			" --incell",
+			" -p ~/cellery-samples/cells/employee-portal/hr_proj",
 	}
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Name of the cell instance")
 	cmd.Flags().BoolVarP(&assumeYes, "assume-yes", "y", false,
@@ -103,6 +117,7 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Run on verbose mode")
 	cmd.Flags().BoolVar(&debug, "debug", false, "Enable test debug mode")
+	cmd.Flags().StringVarP(&projLocation, "project-location", "p", "", "Ballerina Project location")
 	cmd.Flags().BoolVar(&incell, "incell", false, "Enable in-cell testing")
 	return cmd
 }

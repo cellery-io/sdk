@@ -29,6 +29,8 @@ ENV USER_HOME=/home/${USER}
 RUN groupadd --system -g ${USER_GROUP_ID} ${USER_GROUP} && \
     useradd --system --create-home --home-dir ${USER_HOME} --no-log-init -g ${USER_GROUP_ID} -u ${USER_ID} ${USER}
 
+COPY files/test.sh ${USER_HOME}/test.sh
+
 COPY files/*.deb ${USER_HOME}/debdir/
 RUN dpkg -i ${USER_HOME}/debdir/ballerina-linux-installer-x64-1.0.3.deb
 RUN dpkg -i ${USER_HOME}/debdir/cellery-ubuntu-x64-*.deb

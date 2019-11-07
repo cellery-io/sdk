@@ -20,6 +20,15 @@ package image
 
 import (
 	"bufio"
+	"os/user"
+	"strconv"
+
+	"github.com/cellery-io/sdk/components/cli/cli"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
+
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -43,7 +52,7 @@ import (
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)\
 func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
-	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, incell bool) {
+	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, incell bool, projLocation string) {
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
 	parsedCellImage, err := image.ParseImageTag(cellImageTag)
 	if err != nil {
@@ -174,19 +183,19 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 
 	spinner.Stop(true)
 	err = startTestCellInstance(imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
-		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes)
+		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes, projLocation, )
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to test Cell instance"+instanceName, err)
+		util.ExitWithErrorMessage("Failed to test Cell instance "+instanceName, err)
 	}
 	//Remove Ballerina toml and local repo to avoid failing cellery build and run
 	os.Remove(constants.BallerinaToml)
-	os.RemoveAll(constants.BallerinaLocalRepo)
+	os.Remove(constants.BallerinaConf)
 	util.PrintSuccessMessage(fmt.Sprintf("Completed running tests for instance %s", util.Bold(instanceName)))
 }
 
 func startTestCellInstance(imageDir string, instanceName string, runningNode *dependencyTreeNode,
 	envVars []*environmentVariable, startDependencies bool, shareDependencies bool, dependencyLinks map[string]*dependencyInfo,
-	verbose bool, debug bool, incell bool, assumeYes bool) error {
+	verbose bool, debug bool, incell bool, assumeYes bool, projLocation string) error {
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
 		runningNode.MetaData.Version)
 	balFileName, err := util.GetSourceFileName(filepath.Join(imageDir, constants.ZipBallerinaSource))
@@ -194,11 +203,6 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 		return fmt.Errorf("failed to find source file in Image %s due to %v", imageTag, err)
 	}
 	balFilePath := filepath.Join(imageDir, constants.ZipBallerinaSource, balFileName)
-
-	containsTestFunction, err := util.TestMethodExists(balFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to check whether test function exists in Image %s due to %v", imageTag, err)
-	}
 
 	currentDir, err := os.Getwd()
 	if err != nil {
@@ -209,67 +213,6 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	dependencyLinksJson, err := json.Marshal(dependencyLinks)
 	if err != nil {
 		return fmt.Errorf("failed to start the Cell Image %s due to %v", imageTag, err)
-	}
-
-	// Calling the test function
-	moduleMgr := &util.BLangManager{}
-	exePath, err := moduleMgr.GetExecutablePath()
-	if err != nil {
-		util.ExitWithErrorMessage("Failed to get executable path", err)
-	}
-	cmd := &exec.Cmd{}
-	verboseMode := strconv.FormatBool(verbose)
-
-	balProjectName := "target"
-	balTomlPath := filepath.Join(imageDir, constants.ZipBallerinaSource, constants.BallerinaToml)
-	testsPath := filepath.Join(imageDir, constants.ZipTests)
-	testsRoot := filepath.Join(currentDir, balProjectName)
-	var balModule string
-	if instanceName != "" {
-		balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
-	} else {
-		balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
-	}
-	isTestDirExists, _ := util.FileExists(testsPath)
-	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
-	var isBallerinaProject bool
-
-	if !isTestDirExists && !containsTestFunction {
-		return fmt.Errorf("no tests found in the cell image %v", imageTag)
-	}
-	if isTestDirExists {
-		err = util.RemoveDir(testsRoot)
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while creating the cell image", err)
-		}
-
-		isBallerinaProject, err = util.FileExists(balTomlPath)
-		if exePath != "" {
-			cmd := exec.Command(exePath, "new", balProjectName)
-			if verbose {
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-			}
-			err = cmd.Run()
-			if err != nil {
-				return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
-			}
-		}
-
-		if isBallerinaProject {
-			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
-			if fileCopyError != nil {
-				util.ExitWithErrorMessage(fmt.Sprintf("Error occurred while copying %s", constants.BallerinaToml), err)
-			}
-		}
-		fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZipTests))
-		if fileCopyError != nil {
-			util.ExitWithErrorMessage("Error occurred while copying tests folder", err)
-		}
-		err = os.Chdir(testsRoot)
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while changing working directory", err)
-		}
 	}
 
 	var imageNameStruct = &dependencyInfo{
@@ -283,167 +226,147 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	if err != nil {
 		util.ExitWithErrorMessage("Error in generating cellery:CellImageName construct", err)
 	}
-	if containsTestFunction {
-		tempTestFileName, err := util.CreateTempExecutableBalFile(balFilePath, "test")
-		if err != nil {
-			util.ExitWithErrorMessage("Error executing ballerina file", err)
-		}
-		// Preparing the run command arguments
-		cmdArgs := []string{"run"}
-		var startDependenciesFlag = "false"
-		if startDependencies {
-			startDependenciesFlag = "true"
-		}
-		var shareDependenciesFlag = "false"
-		if shareDependencies {
-			shareDependenciesFlag = "true"
-		}
-		fileCopyError := util.CopyFile(tempTestFileName, filepath.Join(balModule, filepath.Base(tempTestFileName)))
-		if fileCopyError != nil {
-			util.ExitWithErrorMessage("Error occurred while copying temp source bal file", err)
-		}
-		cmdArgs = append(cmdArgs, filepath.Base(balModule), "test", string(iName), string(dependencyLinksJson), startDependenciesFlag, shareDependenciesFlag)
-		util.CleanAndCreateDir(filepath.Join(currentDir, "target", "logs"))
 
-		defer os.Remove(imageDir)
-		cmd.Env = os.Environ()
+	// Get Ballerina Installation if exists
+	moduleMgr := &util.BLangManager{}
+	exePath, err := moduleMgr.GetExecutablePath()
+	if err != nil {
+		util.ExitWithErrorMessage("Failed to get executable path", err)
+	}
+	cmd := &exec.Cmd{}
+	verboseMode := strconv.FormatBool(verbose)
 
-		if debug {
-			SetupDebugConfigs(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, assumeYes)
+	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
+	if !debug {
+		// Construct test artifact names
+		balProjectName := constants.TARGET_DIR_NAME
+		balTomlPath := filepath.Join(imageDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_TOML)
+		testsPath := filepath.Join(imageDir, constants.ZIP_TESTS)
+		testsRoot := filepath.Join(currentDir, balProjectName)
+		var balModule string
+
+		if instanceName != "" {
+			balModule = filepath.Join(testsRoot, constants.ZIP_BALLERINA_SOURCE, instanceName)
 		} else {
-			cmd.Env = append(cmd.Env, constants.CelleryImageDirEnvVar+"="+imageDir)
-			cmd.Env = append(cmd.Env, fmt.Sprintf("DEBUG_MODE=%s", verboseMode))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s", string(iName)))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s", string(dependencyLinksJson)))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("TEST_MODULE=%s", filepath.Base(balModule)))
-			for _, envVar := range envVars {
-				cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=%s", envVar.Value))
-			}
+			balModule = filepath.Join(testsRoot, constants.ZIP_BALLERINA_SOURCE, constants.TEMP_TEST_MODULE)
+		}
+		isTestDirExists, _ := util.FileExists(testsPath)
+		var isBallerinaProject bool
+
+		//TODO: check if bal file contains @test
+		if !isTestDirExists {
+			return fmt.Errorf("no tests found in the cell image %v", imageTag)
 		}
 
-		stdoutReader, _ := cmd.StdoutPipe()
-		stdoutScanner := bufio.NewScanner(stdoutReader)
-		go func() {
-			for stdoutScanner.Scan() {
-				fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stdoutScanner.Text())
-			}
-		}()
-		stderrReader, _ := cmd.StderrPipe()
-		stderrScanner := bufio.NewScanner(stderrReader)
-		go func() {
-			for stderrScanner.Scan() {
-				fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stderrScanner.Text())
-			}
-		}()
+		err = util.RemoveDir(testsRoot)
+		if err != nil {
+			return fmt.Errorf("Error occurred while deleting filepath, %s", err)
+		}
 
+		// Create Ballerina project
+		isBallerinaProject, err = util.FileExists(balTomlPath)
 		if exePath != "" {
-			ballerinaArgs := []string{exePath}
-			ballerinaArgs = append(ballerinaArgs, cmdArgs...)
-			RunTelepresenceTests(incell, cmd, ballerinaArgs, imageDir, instanceName, debug)
-		} else {
-			isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(tempTestFileName)))
-			if !isExistsSourceBal {
-				fileCopyError := util.CopyFile(tempTestFileName, filepath.Join(balModule, filepath.Base(tempTestFileName)))
-				if fileCopyError != nil {
-					util.ExitWithErrorMessage("Error occurred while copying temp source bal file", err)
-				}
+			cmd := exec.Command(exePath, "new", balProjectName)
+			if verbose {
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
 			}
-
-			iNameMarshalled, _ := json.Marshal(string(iName))
-			dependencyLinksMarshalled, _ := json.Marshal(string(dependencyLinksJson))
-			ballerinaArgs := []string{
-				fmt.Sprintf("%s", string(iNameMarshalled)),
-				fmt.Sprintf("%s", string(dependencyLinksMarshalled)),
-				startDependenciesFlag,
-				shareDependenciesFlag}
-
-			var scriptCmds []string
-			scriptCmds = append(scriptCmds, []string{constants.DockerCliBallerinaExecutablePath}...)
-			scriptCmds = append(scriptCmds, cmdArgs...)
-			scriptCmds = append(scriptCmds, ballerinaArgs...)
-
-			dockerCommand := []string{"/bin/bash", "-c", fmt.Sprintf("'%s'", strings.Join(scriptCmds, " "))}
-			dockerCmdArgs := SetupBallerinaDocker(string(iName), string(dependencyLinksJson), verboseMode, imageDir, testsRoot, scriptCmds)
-			dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
-
-			RunDockerTelepresenceTests(incell, cmd, dockerCmdArgs, imageDir, instanceName, debug)
+			err = cmd.Run()
+			if err != nil {
+				return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
+			}
+		} else {
+			err = util.CleanOrCreateDir(testsRoot)
+			if err != nil {
+				util.ExitWithErrorMessage(fmt.Sprintf("Error occurred while creating %s", testsRoot), err)
+			}
 		}
 
-		_ = os.Remove(tempTestFileName)
+		// Copy artifacts for running tests
+		if isBallerinaProject {
+			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
+			if fileCopyError != nil {
+				return fmt.Errorf("error occurred while copying file, %s", err)
+				util.ExitWithErrorMessage(fmt.Sprintf("Error occurred while copying %s", constants.BallerinaToml), err)
+			}
+		}
+		fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZipTests))
+		if fileCopyError != nil {
+			return fmt.Errorf("error occurred while copying tests folder, %s", err)
+		}
+
+		err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
 		if err != nil {
-			return fmt.Errorf("failed to execute test method in Cell instance %s due to %v", instanceName, err)
+			return fmt.Errorf("error occurred while creating %s", filepath.Join(testsRoot, "logs"), err)
 		}
-	} else {
+
+		// Change working dir to Bal project
+		err = os.Chdir(testsRoot)
+		if err != nil {
+			return fmt.Errorf("error occurred while changing working directory, %s", err)
+		}
+
 		isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
 		if !isExistsSourceBal {
 			fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
 			if fileCopyError != nil {
-				util.ExitWithErrorMessage("Error occurred while copying source bal file", err)
+				return fmt.Errorf("error occurred while copying source bal file, %s", err)
 			}
 		}
-		if exePath != "" {
+
+		if exePath == "" {
+			mntImageDir := strings.Replace(imageDir, util.UserHomeDir(), "/home/cellery", 1)
+			err = CreateBallerinaConf(string(iName), verboseMode, mntImageDir, string(dependencyLinksJson), envVars, testsRoot)
+			if err != nil {
+				return fmt.Errorf("error occurred while creating the ballerina.conf, %s", err)
+			}
+			err = RunDockerTelepresenceTests(incell, cmd, testsRoot, imageDir, instanceName)
+			if err != nil{
+				StopTelepresence(telepresenceYamlPath)
+				return fmt.Errorf("error occured while running tests in ballerina docker image, %s", err)
+			}
+		} else {
+			err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, testsRoot)
+			if err != nil {
+				return fmt.Errorf("Error occurred while creating the ballerina.conf, %s", err)
+			}
 			cmd = &exec.Cmd{}
 			cmd.Env = os.Environ()
 			cmd.Env = append(cmd.Env, constants.CelleryImageDirEnvVar+"="+imageDir)
 
-			if debug {
-				SetupDebugConfigs(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, assumeYes)
-
-			} else {
-				cmd.Env = append(cmd.Env, constants.CelleryImageDirEnvVar+"="+imageDir)
-				cmd.Env = append(cmd.Env, fmt.Sprintf("DEBUG_MODE=%s", verboseMode))
-				cmd.Env = append(cmd.Env, fmt.Sprintf("IMAGE_NAME=%s", string(iName)))
-				cmd.Env = append(cmd.Env, fmt.Sprintf("DEPENDENCY_LINKS=%s", string(dependencyLinksJson)))
-				cmd.Env = append(cmd.Env, fmt.Sprintf("TEST_MODULE=%s", filepath.Base(balModule)))
-				for _, envVar := range envVars {
-					cmd.Env = append(cmd.Env, fmt.Sprintf(envVar.Key+"=\"%s\"", envVar.Value))
-				}
-			}
-
-			cmdArgs := []string{exePath, "test", filepath.Base(balModule)}
 			//if incell {
 			//	cmdArgs = append(cmdArgs, "--groups", "incell")
 			//} else {
 			//	cmdArgs = append(cmdArgs, "--disable-groups", "incell")
 			//}
-			RunTelepresenceTests(incell, cmd, cmdArgs, imageDir, instanceName, debug)
+			err = RunTelepresenceTests(incell, cmd, exePath, imageDir, instanceName, debug)
+			if err != nil{
+				StopTelepresence(telepresenceYamlPath)
+				return fmt.Errorf("error occured while running tests, %s", err)
+			}
+		}
+	} else {
+		if exePath == "" {
+			return fmt.Errorf("Ballerina should be installed to debug tests.")
 		} else {
-			tmpImgDir := "/home/cellery/.cellery/tmp/cellery-cell-image"
-			var scriptCmds []string
-
-			cliUser, err := user.Current()
+			balProj, err := filepath.Abs(projLocation)
 			if err != nil {
-				util.ExitWithErrorMessage("Error while retrieving the current user", err)
+				return fmt.Errorf("error occurred while retrieving absolute path of project, %s", err)
 			}
-			exeUid := constants.CelleryDockerCliUserId
-
-			if cliUser.Uid != constants.CelleryDockerCliUserId && runtime.GOOS == "linux" {
-				scriptCmds = append(scriptCmds, "useradd", "-m", "-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username, "&&")
-				exeUid = cliUser.Uid
+			PromtConfirmation(assumeYes, balProj)
+			err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, balProj)
+			if err != nil {
+				return fmt.Errorf("error occurred while creating the ballerina.conf, %s", err)
 			}
-			//TODO: UPDATE BALLERINA TEST RUN FOR DOCKER BASED PATH
-			scriptCmds = append(scriptCmds, []string{constants.DockerCliBallerinaExecutablePath, "init", "&&"}...)
-			scriptCmds = append(scriptCmds, []string{constants.DockerCliBallerinaExecutablePath, "test", filepath.Base(balModule)}...)
-			dockerCommand := []string{"/bin/bash", "-c", fmt.Sprintf("'%s'", strings.Join(scriptCmds, " "))}
+			cmd = &exec.Cmd{}
+			cmd.Env = os.Environ()
+			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 
-			dockerCmdArgs := []string{"-u", exeUid,
-				"-e", constants.CelleryImageDirEnvVar + "=" + tmpImgDir,
-				"-e", constants.TestDegubFlag + "=" + verboseMode,
-				"-e", fmt.Sprintf("IMAGE_NAME='%s'", string(iName)),
-				"-e", fmt.Sprintf("DEPENDENCY_LINKS='%s'", string(dependencyLinksJson)),
-				"-l", "ballerina-runtime=" + version.BuildVersion(),
-				"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".ballerina,target=/home/cellery/.ballerina",
-				"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".cellery,target=/home/cellery/.cellery",
-				"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".kube,target=/home/cellery/.kube",
-				"--mount", "type=bind,source=" + testsRoot + ",target=/home/cellery/target",
-				"--mount", "type=bind,source=" + imageDir + ",target=" + tmpImgDir,
-				"-w", "/home/cellery/target",
-				"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
+			err = RunTelepresenceTests(incell, cmd, exePath, imageDir, instanceName, debug)
+			if err != nil{
+				StopTelepresence(telepresenceYamlPath)
+				return fmt.Errorf("error occured while running tests, %s", err)
 			}
-			dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
-
-			fmt.Println(dockerCmdArgs)
-			RunDockerTelepresenceTests(incell, cmd, dockerCmdArgs, imageDir, instanceName, debug)
 		}
 	}
 	StopTelepresence(telepresenceYamlPath)
@@ -458,51 +381,18 @@ func StopTelepresence(filepath string) error {
 	return nil
 }
 
-func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir string, instanceName string, debug bool) {
-	var srcYamlFile string
-	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
-	var deploymentName string
-	var spinner *util.Spinner
-	var spinnerMsg string
-	if incell {
-		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-deployment.yaml")
-		err := util.CopyFile(srcYamlFile, dstYamlFile)
-		if err != nil {
-			util.ExitWithErrorMessage(fmt.Sprintf("error while copying telepresene k8s artifact to %s", imageDir), err)
-		}
-		util.ReplaceInFile(dstYamlFile, "{{cell}}", instanceName, -1)
-		deploymentName = instanceName + "--telepresence"
-		spinnerMsg = "Creating telepresence deployment"
-	} else {
-		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-cell.yaml")
-		err := util.CopyFile(srcYamlFile, dstYamlFile)
-		if err != nil {
-			util.ExitWithErrorMessage(fmt.Sprintf("error while copying telepresene k8s artifact to %s", imageDir), err)
-		}
-		deploymentName = "telepresence--telepresence-deployment"
-		spinnerMsg = "Creating telepresence instance"
-	}
-	kubernetes.ApplyFile(dstYamlFile)
-	spinner = util.StartNewSpinner(spinnerMsg)
-	time.Sleep(5 * time.Second)
-	err := kubernetes.WaitForDeployment("available", 900, deploymentName, "default")
+func RunTelepresenceTests(incell bool, cmd *exec.Cmd, exePath string, imageDir string, instanceName string, debug bool) error {
+	deploymentName, err := CreateTelepresenceDeployment(incell, imageDir, instanceName)
 	if err != nil {
-		util.ExitWithErrorMessage(fmt.Sprintf("error waiting for telepresence deployment %v to be available", deploymentName), err)
+		return fmt.Errorf("error occurred while creating telepresence deployment", err)
 	}
 
-	if !incell {
-		err = kubernetes.WaitForCell("Ready", 30*60, "telepresence", "default")
-		if err != nil {
-			util.ExitWithErrorMessage("error waiting for instance telepresence to be ready", err)
-		}
-	}
-	spinner.Stop(true)
-
-	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
-	var telArgs = []string{telepresenceExecPath, "--deployment", deploymentName}
+	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TELEPRESENCE_EXEC_PATH, "/telepresence")
+	var telArgs = []string{telepresenceExecPath, "--deployment", *deploymentName}
 	if !debug {
+		balArgs := []string{exePath, "test", "--all"}
 		telArgs = append(telArgs, "--run")
-		telArgs = append(telArgs, cmdArgs...)
+		telArgs = append(telArgs, balArgs...)
 	}
 
 	cmd.Path = telepresenceExecPath
@@ -512,65 +402,33 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
-		StopTelepresence(dstYamlFile)
-		util.ExitWithErrorMessage("error occurred while running tests", err)
+		return fmt.Errorf("error occurred while running tests", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		StopTelepresence(dstYamlFile)
-		util.ExitWithErrorMessage("error occurred while waiting for tests to complete", err)
+		return fmt.Errorf("error occurred while waiting for tests to complete", err)
 	}
+	return nil
 }
 
-func RunDockerTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir string, instanceName string, debug bool) {
-	var srcYamlFile string
-	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
-	var deploymentName string
-	var spinner *util.Spinner
-	var spinnerMsg string
-	if incell {
-		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-deployment.yaml")
-		err := util.CopyFile(srcYamlFile, dstYamlFile)
-		if err != nil {
-			util.ExitWithErrorMessage(fmt.Sprintf("error while copying telepresene k8s artifact to %s", imageDir), err)
-		}
-		util.ReplaceInFile(dstYamlFile, "{{cell}}", instanceName, -1)
-		deploymentName = instanceName + "--telepresence"
-		spinnerMsg = "Creating telepresence deployment"
-	} else {
-		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-cell.yaml")
-		err := util.CopyFile(srcYamlFile, dstYamlFile)
-		if err != nil {
-			util.ExitWithErrorMessage(fmt.Sprintf("error while copying telepresene k8s artifact to %s", imageDir), err)
-		}
-		deploymentName = "telepresence--telepresence-deployment"
-		spinnerMsg = "Creating telepresence instance"
-	}
-	kubernetes.ApplyFile(dstYamlFile)
-	spinner = util.StartNewSpinner(spinnerMsg)
-	time.Sleep(5 * time.Second)
-	err := kubernetes.WaitForDeployment("available", 900, deploymentName, "default")
+func RunDockerTelepresenceTests(incell bool, cmd *exec.Cmd, testsRoot string, imageDir string, instanceName string) error {
+
+	deploymentName, err := CreateTelepresenceDeployment(incell, imageDir, instanceName)
 	if err != nil {
-		util.ExitWithErrorMessage(fmt.Sprintf("error waiting for telepresence deployment %v to be available", deploymentName), err)
+		return fmt.Errorf("error occurred while creating telepresence deployment", err)
 	}
 
-	if !incell {
-		err = kubernetes.WaitForCell("Ready", 30*60, "telepresence", "default")
-		if err != nil {
-			util.ExitWithErrorMessage("error waiting for instance telepresence to be ready", err)
-		}
-	}
-	spinner.Stop(true)
-
-	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
-	var telArgs = []string{telepresenceExecPath, "--deployment", deploymentName}
-	if !debug {
-		telArgs = append(telArgs, "--docker-run")
-		telArgs = append(telArgs, cmdArgs...)
-	}
+	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TELEPRESENCE_EXEC_PATH, "/telepresence")
+	var telArgs = []string{telepresenceExecPath, "--deployment", *deploymentName}
+	dockerCmdArgs := ConstructDockerArgs(testsRoot, imageDir)
+	telArgs = append(telArgs, "--docker-run")
+	telArgs = append(telArgs, dockerCmdArgs...)
 
 	bashArgs := []string{"/bin/bash", "-c", strings.Join(telArgs, " ")}
 
+	cmd.Env = os.Environ()
+	imageDir = strings.Replace(imageDir, util.UserHomeDir(), "/home/cellery", 1)
+	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
 	cmd.Path = "/bin/bash"
 	cmd.Args = bashArgs
 	cmd.Stdout = os.Stdout
@@ -578,81 +436,29 @@ func RunDockerTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, im
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
-		StopTelepresence(dstYamlFile)
-		util.ExitWithErrorMessage("error occurred while running tests", err)
+		return fmt.Errorf("error occurred while running tests", err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		StopTelepresence(dstYamlFile)
-		util.ExitWithErrorMessage("error occurred while waiting for tests to complete", err)
+		return fmt.Errorf("error occurred while waiting for tests to complete", err)
 	}
+	return nil
 }
 
-func SetupDebugConfigs(iName string, verboseMode string, imageDir string, dependencyLinks string, envVars []*environmentVariable, assumeYes bool) error {
-	content := []string{fmt.Sprintf("DEBUG_MODE=\"%s\"\n", verboseMode)}
-	content = append(content, fmt.Sprintf(constants.CelleryImageDirEnvVar+"=\"%s\"\n", imageDir))
-	for _, envVar := range envVars {
-		content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
-	}
-	content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(iName, "\"", "\\\"", -1)))
-	content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
-		strings.Replace(dependencyLinks, "\"", "\\\"", -1)))
-
-	ballerinaConf := filepath.Join(util.UserHomeCelleryDir(), constants.TMP, constants.BallerinaConf)
-	isExistsBalConf, err := util.FileExists(ballerinaConf)
-	if err != nil {
-		util.ExitWithErrorMessage("error while checking if "+ballerinaConf+" exists", err)
-	}
-	if isExistsBalConf {
-		err := os.Remove(ballerinaConf)
-		if err != nil {
-			util.ExitWithErrorMessage("error while removing "+ballerinaConf+" file", err)
-		}
-	}
-	_, err = os.Create(ballerinaConf)
-	if err != nil {
-		util.ExitWithErrorMessage("error while creating "+ballerinaConf+" file", err)
-	}
-
-	f, err := os.OpenFile(ballerinaConf, os.O_APPEND|os.O_WRONLY, 0600)
-	if err != nil {
-		util.ExitWithErrorMessage("error while opening "+ballerinaConf, err)
-	}
-
-	defer f.Close()
-
-	for _, element := range content {
-		if _, err = f.WriteString(element); err != nil {
-			util.ExitWithErrorMessage("error while writing properties to "+ballerinaConf, err)
-		}
-	}
-
-	util.PrintInfoMessage(util.Bold("Add the following to the launch configuration to debug tests\n") +
-		fmt.Sprintf(util.CyanBold("--------------------------------------------------------------------------------------\n\n")) +
-		fmt.Sprintf(util.Faint(
-			" {\n"+
-				"   \"version\": \"0.2.0\",\n"+
-				"   \"configurations\": [\n"+
-				"     ...\n")) +
-
-		fmt.Sprintf(util.Bold(
-			"     {\n"+
-				"\t\"type\": \"ballerina\",\n"+
-				"\t\"request\": \"launch\",\n"+
-				"\t\"name\": \"Cellery Test\",\n"+
-				"\t\"script\": \"${file}\",\n"+
-				"\t\"commandOptions\": [\"--b7a.config=%s\"],\n"+
-				"\t\"debugTests\": true\n"+
-				"     },\n"), ballerinaConf) +
-
-		fmt.Sprintf(util.Faint(
-			"     ...\n"+
-				"   ]\n"+
-				" }\n\n")) +
-		fmt.Sprintln(util.CyanBold("--------------------------------------------------------------------------------------")))
-
+func PromtConfirmation(assumeYes bool, balProj string) error {
 	if !assumeYes {
-		fmt.Printf("%s Do you wish to continue with debugging the tests (Y/n)? ", util.YellowBold("?"))
+		balConf := filepath.Join(balProj, constants.BALLERINA_CONF)
+		var debugMsg string
+		isExists, err := util.FileExists(balConf)
+		if err != nil {
+			return fmt.Errorf("error occured while checking if %s exists,", balConf, err )
+		}
+		if isExists {
+			debugMsg = constants.BALLERINA_CONF + " already exists in project location: "+ balProj + ". This will be overridden to debug tests. "
+		} else {
+			debugMsg = constants.BALLERINA_CONF + " file will be created in your Ballerina project to debug tests."
+		}
+		fmt.Printf("%s " + util.Bold(debugMsg+ "Do you wish to continue with debugging the tests (Y/n)? "), util.YellowBold("?"))
 		reader := bufio.NewReader(os.Stdin)
 		confirmation, err := reader.ReadString('\n')
 		if err != nil {
@@ -665,40 +471,110 @@ func SetupDebugConfigs(iName string, verboseMode string, imageDir string, depend
 	return nil
 }
 
-func SetupBallerinaDocker(iName string, dependencyLinks string, verboseMode string,
-	imageDir string, testsRoot string, ballerinaArgs []string) []string {
+func CreateBallerinaConf(iName string, verboseMode string, imageDir string, dependencyLinks string,
+	envVars []*environmentVariable, balProj string) error {
 
-	tmpImgDir := "/home/cellery/.cellery/tmp/cellery-cell-image"
-	var scriptCmds []string
+	content := []string{fmt.Sprintf("DEBUG_MODE=\"%s\"\n", verboseMode)}
+	content = append(content, fmt.Sprintf(constants.CelleryImageDirEnvVar+"=\"%s\"\n", imageDir))
+	for _, envVar := range envVars {
+		content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
+	}
+	content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(iName, "\"", "\\\"", -1)))
+	content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
+		strings.Replace(dependencyLinks, "\"", "\\\"", -1)))
 
+	ballerinaConfPath := filepath.Join(balProj, constants.BALLERINA_CONF)
+
+	isExistsBalConf, err := util.FileExists(ballerinaConfPath)
+	if err != nil {
+		return err
+	}
+	if isExistsBalConf {
+		err := os.Remove(ballerinaConfPath)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = os.Create(ballerinaConfPath)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(ballerinaConfPath, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	for _, element := range content {
+		if _, err = f.WriteString(element); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ConstructDockerArgs(testsRoot string, imageDir string) []string {
 	cliUser, err := user.Current()
 	if err != nil {
 		util.ExitWithErrorMessage("Error while retrieving the current user", err)
 	}
-	exeUid := constants.CelleryDockerCliUserId
 
-	if cliUser.Uid != constants.CelleryDockerCliUserId && runtime.GOOS == "linux" {
-		scriptCmds = append(scriptCmds, "useradd", "-m", "-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username, "&&")
-		exeUid = cliUser.Uid
-	}
-
-	scriptCmds = append(scriptCmds, ballerinaArgs...)
-	dockerCommand := []string{"/bin/bash", "-c", fmt.Sprintf("'%s'", strings.Join(scriptCmds, " "))}
-
-	dockerCmdArgs := []string{"-u", exeUid,
-		"-e", constants.CelleryImageDirEnvVar + "=" + tmpImgDir,
-		"-e", constants.TestDegubFlag + "=" + verboseMode,
-		"-e", fmt.Sprintf("IMAGE_NAME='%s'", iName),
-		"-e", fmt.Sprintf("DEPENDENCY_LINKS='%s'", dependencyLinks),
+	dockerCmdArgs := []string{"-u", cliUser.Uid,
 		"-l", "ballerina-runtime=" + version.BuildVersion(),
+		"-e", fmt.Sprintf("CELLERY_IMAGE_DIR=%s", strings.Replace(imageDir, util.UserHomeDir(), "/home/cellery", 1)),
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".ballerina,target=/home/cellery/.ballerina",
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".cellery,target=/home/cellery/.cellery",
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".kube,target=/home/cellery/.kube",
-		"--mount", "type=bind,source=" + testsRoot + ",target=/home/cellery/target",
-		"--mount", "type=bind,source=" + imageDir + ",target=" + tmpImgDir,
-		"-w", "/home/cellery/target",
+		"--mount", "type=bind,source=" + testsRoot + ",target=/home/cellery/tmp",
+		"-w", "/home/cellery/",
 		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
 	}
+
+	dockerCommand := []string{"./test.sh", cliUser.Uid}
 	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
 	return dockerCmdArgs
+}
+
+func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName string) (*string, error) {
+	var srcYamlFile string
+	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
+	var deploymentName string
+	var spinner *util.Spinner
+	var spinnerMsg string
+	if incell {
+		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-deployment.yaml")
+		err := util.CopyFile(srcYamlFile, dstYamlFile)
+		if err != nil {
+			return nil, fmt.Errorf("error while copying telepresene k8s artifact to %s", imageDir, err)
+		}
+		util.ReplaceInFile(dstYamlFile, "{{cell}}", instanceName, -1)
+		deploymentName = instanceName + "--telepresence"
+		spinnerMsg = "Creating telepresence deployment"
+	} else {
+		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-cell.yaml")
+		err := util.CopyFile(srcYamlFile, dstYamlFile)
+		if err != nil {
+			return nil, fmt.Errorf("error while copying telepresene k8s artifact to %s", imageDir, err)
+		}
+		deploymentName = "telepresence--telepresence-deployment"
+		spinnerMsg = "Creating telepresence instance"
+	}
+	kubectl.ApplyFile(dstYamlFile)
+	spinner = util.StartNewSpinner(spinnerMsg)
+	time.Sleep(5 * time.Second)
+	err := kubectl.WaitForDeployment("available", 900, deploymentName, "default")
+	if err != nil {
+		return nil, fmt.Errorf("error waiting for telepresence deployment %v to be available", deploymentName, err)
+	}
+
+	if !incell {
+		err = kubectl.WaitForCell("Ready", 30*60, "telepresence", "default")
+		if err != nil {
+			return nil, fmt.Errorf("error waiting for instance telepresence to be ready", err)
+		}
+	}
+	spinner.Stop(true)
+	return &deploymentName, nil
 }

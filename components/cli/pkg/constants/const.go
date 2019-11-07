@@ -106,7 +106,7 @@ const BallerinaInstallationPathUbuntu = "/usr/lib/ballerina/ballerina-" + Baller
 const BallerinaExecutablePath = "/bin/"
 const BallerinaConf = "ballerina.conf"
 const BallerinaToml = "Ballerina.toml"
-const BallerinaLocalRepo = ".ballerina/"
+const TARGET_DIR_NAME = "target"
 const TempTestModule = "tmp"
 
 const DockerCliBallerinaExecutablePath = "/usr/lib/ballerina/ballerina-" + BallerinaVersion + "/bin/ballerina"

@@ -64,21 +64,12 @@ public class RunTestSuite {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir");
     private static final Logger log = LoggerFactory.getLogger(RunTestSuite.class);
 
-    public static void runTestSuite(ArrayValue instanceList, MapValue testSuite) throws BallerinaCelleryException {
-        int bound = instanceList.size();
-        for (int index = 0; index < bound; index++) {
-            MapValue instance = (MapValue) instanceList.get(index);
-            MapValue iName = instance.getMapValue("iName");
-            String alias = iName.getStringValue("alias");
-            if (StringUtils.isEmpty(alias)) {
-                //Root instance alias is empty.
-                ArrayValue tests = testSuite.getArrayValue("tests");
-                executeTests(tests, instance);
-            }
-        }
+    public static void runTestSuite(MapValue iName, MapValue testSuite) throws BallerinaCelleryException {
+        ArrayValue tests = testSuite.getArrayValue("tests");
+        executeTests(tests, iName);
     }
 
-    private static void executeTests(ArrayValue tests, MapValue nameStruct) throws BallerinaCelleryException {
+    private static void executeTests(ArrayValue tests, MapValue iName) throws BallerinaCelleryException {
         int bound = tests.size();
         for (int index = 0; index < bound; index++) {
             final MapValue testInfo = (MapValue) tests.get(index);
@@ -94,7 +85,7 @@ public class RunTestSuite {
                     test.setSource(sourceMap.getStringValue("image"));
                     MapValue envMap = testInfo.getMapValue("envVars");
                     CelleryUtils.processEnvVars(envMap, test);
-                    Cell testCell = generateTestCell(test, nameStruct);
+                    Cell testCell = generateTestCell(test, iName);
                     runImageBasedTest(testCell, test.getName());
                 } catch (Exception e) {
                     deleteTestCell(testName);
@@ -214,12 +205,12 @@ public class RunTestSuite {
 
     }
 
-    private static Cell generateTestCell(Test test, MapValue nameStruct) {
+    private static Cell generateTestCell(Test test, MapValue iName) {
         Image cellImage = new Image();
         cellImage.setCellName(test.getName());
         cellImage.setTest(test);
-        cellImage.setOrgName(nameStruct.getStringValue(CelleryConstants.ORG));
-        cellImage.setCellVersion(nameStruct.getStringValue(CelleryConstants.VERSION));
+        cellImage.setOrgName(iName.getStringValue(CelleryConstants.ORG));
+        cellImage.setCellVersion(iName.getStringValue(CelleryConstants.VERSION));
 
         List<Component> componentList = new ArrayList<>();
 
