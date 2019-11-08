@@ -21,17 +21,18 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newListImagesCommand() *cobra.Command {
+func newListImagesCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "images",
 		Short:   "List cell images",
 		Aliases: []string{"image", "img"},
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunImage()
+			commands.RunImage(cli)
 		},
 		Example: "  cellery list images",
 	}

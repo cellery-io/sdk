@@ -21,10 +21,11 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newDeleteImageCommand() *cobra.Command {
+func newDeleteImageCommand(cli cli.Cli) *cobra.Command {
 	var deleteAll = false
 	var regex = ""
 	cmd := &cobra.Command{
@@ -40,7 +41,7 @@ func newDeleteImageCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunDeleteImage(args, regex, deleteAll)
+			commands.RunDeleteImage(cli, args, regex, deleteAll)
 		},
 		Example: "  cellery delete cellery-samples/employee:1.0.0  my-org/hr:1.0.0\n" +
 			"  cellery delete cellery-samples/employee:1.0.0 --regex '.*/employee:.*'\n" +

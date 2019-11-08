@@ -28,16 +28,11 @@ import (
 	"github.com/docker/go-units"
 	"github.com/olekukonko/tablewriter"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-type Component struct {
-	name, dockerImage   string
-	ports               []int
-	deployment, service string
-}
 type imageData struct {
 	name    string
 	size    string
@@ -45,11 +40,14 @@ type imageData struct {
 	kind    string
 }
 
-func RunImage() {
+func RunImage(cli cli.Cli) error {
 	var data [][]string
-	images := getImagesArray()
-	for _, image := range images {
-		data = append(data, []string{image.name, image.size, image.created, image.kind})
+	images, err := getImagesArray(cli)
+	if err != nil {
+		return fmt.Errorf("error getting images arrays, %v", err)
+	}
+	for _, i := range images {
+		data = append(data, []string{i.name, i.size, i.created, i.kind})
 	}
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"IMAGE", "SIZE", "CREATED", "KIND"})
@@ -70,31 +68,31 @@ func RunImage() {
 		tablewriter.Colors{})
 	table.AppendBulk(data)
 	table.Render()
+	return nil
 }
 
-func getImagesArray() []imageData {
+func getImagesArray(cli cli.Cli) ([]imageData, error) {
 	var images []imageData
-	organizations, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo"))
+	repoLocation := cli.FileSystem().Repository()
+	organizations, err := util.GetSubDirectoryNames(repoLocation)
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, organization := range organizations {
-		projects, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", organization))
+		projects, err := util.GetSubDirectoryNames(filepath.Join(repoLocation, organization))
 		if err != nil {
 			log.Fatal(err)
 		}
 		for _, project := range projects {
-			versions, err := util.GetSubDirectoryNames(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
-				organization, project))
+			versions, err := util.GetSubDirectoryNames(filepath.Join(repoLocation, organization, project))
 			if err != nil {
 				log.Fatal(err)
 			}
 			for _, version := range versions {
-				zipFile := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", organization, project,
-					version, project+cellImageExt)
+				zipFile := filepath.Join(repoLocation, organization, project, version, project+cellImageExt)
 				zipFileExists, err := util.FileExists(zipFile)
 				if err != nil {
-					util.ExitWithErrorMessage("Error checking if zip file exists", err)
+					return nil, fmt.Errorf("error checking if zip file exists, %v", err)
 				}
 				if zipFileExists {
 					size, err := util.GetFileSize(zipFile)
@@ -103,7 +101,7 @@ func getImagesArray() []imageData {
 					}
 					meta, err := image.ReadMetaData(organization, project, version)
 					if err != nil {
-						util.ExitWithErrorMessage("Error while listing images", err)
+						return nil, fmt.Errorf("error while listing images, %v", err)
 					}
 					images = append(images, imageData{
 						fmt.Sprintf("%s/%s:%s", organization, project, version),
@@ -115,5 +113,5 @@ func getImagesArray() []imageData {
 			}
 		}
 	}
-	return images
+	return images, nil
 }
