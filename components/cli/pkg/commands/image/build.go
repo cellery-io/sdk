@@ -90,7 +90,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	artifactsZip := parsedCellImage.ImageName + cellImageExt
 	if err = cli.ExecuteTask("Creating the cell image zip file", "Failed to create the image zip",
 		"", func() error {
-			err := createArtifactsZip(cli, artifactsZip, projectDir, fileName)
+			err := createArtifactsZip(artifactsZip, projectDir, fileName)
 			return err
 		}); err != nil {
 		return err
@@ -294,14 +294,17 @@ func createTempBalFile(cli cli.Cli, fileName string) (string, error) {
 }
 
 func executeTempBalFile(ballerinaExecutor ballerina.BalExecutor, tempBuildFileName string, iName []byte) error {
-	err := ballerinaExecutor.Build(tempBuildFileName, iName)
-	_ = os.Remove(tempBuildFileName)
-	return err
+	if err := ballerinaExecutor.Build(tempBuildFileName, iName); err != nil {
+		return err
+	}
+	if err := os.Remove(tempBuildFileName); err != nil {
+		return err
+	}
+	return nil
 }
 
-func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) error {
+func createArtifactsZip(artifactsZip, projectDir, fileName string) error {
 	var err error
-	currentDir := cli.FileSystem().CurrentDir()
 	targetDir := filepath.Join(projectDir, "target")
 	if err = util.CopyDir(targetDir, filepath.Join(projectDir, artifacts)); err != nil {
 		return fmt.Errorf("error occurred copying artifacts directory, %v", err)

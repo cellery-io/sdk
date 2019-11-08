@@ -456,7 +456,7 @@ func PromtConfirmation(assumeYes bool, balProj string) error {
 		if isExists {
 			debugMsg = constants.BALLERINA_CONF + " already exists in project location: "+ balProj + ". This will be overridden to debug tests. "
 		} else {
-			debugMsg = constants.BALLERINA_CONF + " file will be created in your Ballerina project to debug tests."
+			debugMsg = constants.BALLERINA_CONF + " file will be created in project location: "+ balProj + " to debug tests."
 		}
 		fmt.Printf("%s " + util.Bold(debugMsg+ "Do you wish to continue with debugging the tests (Y/n)? "), util.YellowBold("?"))
 		reader := bufio.NewReader(os.Stdin)

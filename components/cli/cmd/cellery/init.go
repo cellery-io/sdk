@@ -21,26 +21,29 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands/project"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
-func newInitCommand(cli cli.Cli) *cobra.Command {
+func newInitCommand() *cobra.Command {
 	var projectName = ""
+	var testStr = ""
 	cmd := &cobra.Command{
 		Use:   "init [PROJECT_NAME]",
 		Short: "Initialize a cell project",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  cobra.MaximumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) > 0 {
+			if len(args) > 1 {
+				testStr = args[0]
+				projectName = args[1]
+				commands.RunInit(projectName, testStr)
+			} else if len(args) > 0 {
+				testStr = ""
 				projectName = args[0]
+				commands.RunInit(projectName, testStr)
 			}
-			if err := project.RunInit(cli, projectName); err != nil {
-				util.ExitWithErrorMessage("Cellery init command failed", err)
-			}
+
 		},
-		Example: "  cellery init [PROJECT_NAME]",
+		Example: "  cellery init [PROJECT_NAME] or cellery init test [PROJECT_PATH]",
 	}
 	return cmd
 }
