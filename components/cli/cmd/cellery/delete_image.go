@@ -23,6 +23,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newDeleteImageCommand(cli cli.Cli) *cobra.Command {
@@ -41,7 +42,9 @@ func newDeleteImageCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunDeleteImage(cli, args, regex, deleteAll)
+			if err := commands.RunDeleteImage(cli, args, regex, deleteAll); err != nil {
+				util.ExitWithErrorMessage("Cellery delete command failed", err)
+			}
 		},
 		Example: "  cellery delete cellery-samples/employee:1.0.0  my-org/hr:1.0.0\n" +
 			"  cellery delete cellery-samples/employee:1.0.0 --regex '.*/employee:.*'\n" +

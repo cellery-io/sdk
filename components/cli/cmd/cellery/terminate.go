@@ -23,6 +23,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newTerminateCommand(cli cli.Cli) *cobra.Command {
@@ -41,7 +42,9 @@ func newTerminateCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunTerminate(cli, args, terminateAll)
+			if err := commands.RunTerminate(cli, args, terminateAll); err != nil {
+				util.ExitWithErrorMessage("Cellery terminate command failed", err)
+			}
 		},
 		Example: "  cellery terminate employee\n" +
 			"  cellery terminate pet-fe pet-be\n" +

@@ -26,6 +26,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newPushCommand(cli cli.Cli) *cobra.Command {
@@ -49,7 +50,9 @@ func newPushCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunPush(cli, args[0], username, password)
+			if err := commands.RunPush(cli, args[0], username, password); err != nil {
+				util.ExitWithErrorMessage("Cellery push command failed", err)
+			}
 		},
 		Example: "  cellery push cellery-samples/employee:1.0.0\n" +
 			"  cellery push registry.foo.io/cellery-samples/employee:1.0.0",

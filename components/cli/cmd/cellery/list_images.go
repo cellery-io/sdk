@@ -23,6 +23,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newListImagesCommand(cli cli.Cli) *cobra.Command {
@@ -32,7 +33,9 @@ func newListImagesCommand(cli cli.Cli) *cobra.Command {
 		Aliases: []string{"image", "img"},
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunImage(cli)
+			if err := commands.RunImage(cli); err != nil {
+				util.ExitWithErrorMessage("Cellery list images command failed", err)
+			}
 		},
 		Example: "  cellery list images",
 	}

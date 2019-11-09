@@ -27,6 +27,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newDescribeCommand(cli cli.Cli) *cobra.Command {
@@ -49,7 +50,9 @@ func newDescribeCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunDescribe(cli, args[0])
+			if err := commands.RunDescribe(cli, args[0]); err != nil {
+				util.ExitWithErrorMessage("Cellery describe command failed", err)
+			}
 		},
 		Example: "  cellery describe employee\n" +
 			"  cellery describe cellery-samples/employee:1.0.0",

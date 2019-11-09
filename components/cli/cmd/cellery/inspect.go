@@ -26,6 +26,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // newListFilesCommand creates a command which can be invoked to list the files (directory structure) of a cell images.
@@ -46,7 +47,9 @@ func newInspectCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunInspect(cli, args[0])
+			if err := commands.RunInspect(cli, args[0]); err != nil {
+				util.ExitWithErrorMessage("Cellery inspect command failed", err)
+			}
 		},
 		Example: "  cellery inspect cellery-samples/employee:1.0.0",
 	}

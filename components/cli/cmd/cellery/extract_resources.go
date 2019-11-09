@@ -21,6 +21,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -30,7 +31,7 @@ import (
 
 // newExtractResourcesCommand creates a command which can be invoked to extract the cell
 // image resources to a specific directory.
-func newExtractResourcesCommand() *cobra.Command {
+func newExtractResourcesCommand(cli cli.Cli) *cobra.Command {
 	var outputPath string
 	cmd := &cobra.Command{
 		Use:     "extract-resources <organization>/<cell-image>:<version>",
@@ -54,7 +55,9 @@ func newExtractResourcesCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunExtractResources(args[0], outputPath)
+			if err := commands.RunExtractResources(cli, args[0], outputPath); err != nil {
+				util.ExitWithErrorMessage("Cellery extract-resources command failed", err)
+			}
 		},
 		Example: "  cellery extract-resources cellery-samples/employee:1.0.0" +
 			"  cellery extract-resources cellery-samples/employee:1.0.0 -o ./resources",

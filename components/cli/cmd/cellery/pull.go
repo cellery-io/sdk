@@ -26,6 +26,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newPullCommand(cli cli.Cli) *cobra.Command {
@@ -50,7 +51,9 @@ func newPullCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunPull(cli, args[0], isSilent, username, password)
+			if err := commands.RunPull(cli, args[0], isSilent, username, password); err != nil {
+				util.ExitWithErrorMessage("Cellery pull command failed", err)
+			}
 		},
 		Example: "  cellery pull cellery-samples/employee:1.0.0\n" +
 			"  cellery pull registry.foo.io/cellery-samples/employee:1.0.0",
