@@ -21,14 +21,13 @@ package runtime
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 func createPersistentVolume(artifactsPath string, hasNfs bool) error {
 	for _, v := range buildPersistentVolumeYamlPaths(artifactsPath, hasNfs) {
-		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
+		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
 		}

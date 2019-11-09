@@ -19,13 +19,13 @@
 package runtime
 
 import (
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func InstallController(artifactsPath string) error {
 	for _, v := range buildControllerYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFile(v)
+		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
 		}

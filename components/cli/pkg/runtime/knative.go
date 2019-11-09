@@ -24,15 +24,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 func InstallKnativeServing(artifactsPath string) error {
 	for _, v := range buildKnativeYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFile(v)
+		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			time.Sleep(10 * time.Second)
-			err = kubectl.ApplyFile(v)
+			err = kubernetes.ApplyFile(v)
 			if err != nil {
 				return err
 			}
@@ -43,7 +43,7 @@ func InstallKnativeServing(artifactsPath string) error {
 
 func ApplyKnativeCrds(artifactsPath string) error {
 	for _, v := range buildKnativeCrdsYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFile(v)
+		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
 		}
@@ -52,16 +52,16 @@ func ApplyKnativeCrds(artifactsPath string) error {
 }
 
 func deleteKnative() error {
-	out, err := kubectl.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
+	out, err := kubernetes.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
 	if err != nil {
 		return fmt.Errorf("error occurred while deleting the knative apiservice: %s", fmt.Errorf(out))
 	}
-	return kubectl.DeleteNameSpace("knative-serving")
+	return kubernetes.DeleteNameSpace("knative-serving")
 }
 
 func IsKnativeEnabled() (bool, error) {
 	enabled := true
-	_, err := kubectl.GetDeployment("knative-serving", "activator")
+	_, err := kubernetes.GetDeployment("knative-serving", "activator")
 	if err != nil {
 		if strings.Contains(err.Error(), "No resources found") ||
 			strings.Contains(err.Error(), "not found") {

@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package kubectl
+package kubernetes
 
 import (
 	"io/ioutil"

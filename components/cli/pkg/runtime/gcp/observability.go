@@ -21,14 +21,13 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 func CreateObservabilityConfigMaps() error {
 	for _, confMap := range buildObservabilityConfigMaps() {
-		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
+		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -52,7 +51,7 @@ func buildObservabilityConfigMaps() []ConfigMap {
 
 func AddObservability() error {
 	for _, v := range buildObservabilityYamlPaths() {
-		err := kubectl.ApplyFile(v)
+		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
 		}

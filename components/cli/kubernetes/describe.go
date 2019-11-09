@@ -14,34 +14,27 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
  */
 
-package kubectl
+package kubernetes
 
 import (
 	"fmt"
 	"os/exec"
-	"strings"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 )
 
-var verboseMode = false
-
-func SetVerboseMode(enable bool) {
-	verboseMode = enable
-}
-
-func getCommandString(cmd *exec.Cmd) string {
-	var verboseModePrefix = ">>"
-	var commandArgs []string
-	commandArgs = append(commandArgs, verboseModePrefix)
-	commandArgs = append(commandArgs, cmd.Args...)
-	return strings.Join(commandArgs, " ")
-}
-
-func displayVerboseOutput(cmd *exec.Cmd) {
-	// If running on verbose mode expose the kubectl commands.
-	if verboseMode {
-		fmt.Println(verboseColor(getCommandString(cmd)))
-	}
+func Describe(cellName string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"describe",
+		"cells",
+		cellName,
+	)
+	displayVerboseOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	fmt.Print(string(out))
+	return err
 }

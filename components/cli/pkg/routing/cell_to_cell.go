@@ -24,13 +24,13 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 type CellToCellRoute struct {
-	Src           kubectl.Cell
-	CurrentTarget kubectl.Cell
-	NewTarget     kubectl.Cell
+	Src           kubernetes.Cell
+	CurrentTarget kubernetes.Cell
+	NewTarget     kubernetes.Cell
 }
 
 func (router *CellToCellRoute) Check() error {
@@ -57,7 +57,7 @@ func (router *CellToCellRoute) Build(percentage int, isSessionAware bool, routes
 	// if the percentage is 100, the running cell instance now fully depends on the new instance,
 	// hence update the dependency annotation
 	// additionally, if the percentage is 100, include the original gateway service name as an annotation.
-	var modifiedSrcCellInst *kubectl.Cell
+	var modifiedSrcCellInst *kubernetes.Cell
 	var gw []byte
 	if percentage == 100 {
 		modifiedSrcCellInst, err = getModifiedCellInstance(&router.Src, router.CurrentTarget.CellMetaData.Name,
@@ -82,7 +82,7 @@ func (router *CellToCellRoute) Build(percentage int, isSessionAware bool, routes
 	return nil
 }
 
-func writeCellToCellArtifactsToFile(policiesFile string, vs *kubectl.VirtualService, cellInstance *kubectl.Cell, gw []byte) error {
+func writeCellToCellArtifactsToFile(policiesFile string, vs *kubernetes.VirtualService, cellInstance *kubernetes.Cell, gw []byte) error {
 	f, err := os.OpenFile(policiesFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err

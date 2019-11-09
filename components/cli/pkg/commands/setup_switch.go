@@ -21,12 +21,12 @@ package commands
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunSwitchCommand(context string) error {
-	if err := kubectl.UseContext(context); err != nil {
+	if err := kubernetes.UseContext(context); err != nil {
 		util.ExitWithErrorMessage("Failed to switch cluster", err)
 	}
 	return nil

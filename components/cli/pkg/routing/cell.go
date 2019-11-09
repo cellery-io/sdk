@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 const cellOriginalGatewaySvcAnnKey = "mesh.cellery.io/original-gw-svc"
@@ -32,8 +32,8 @@ const k8sMetadata = "metadata"
 const k8sAnnotations = "annotations"
 const instanceIdHeaderName = "x-instance-id"
 
-func buildRoutesForCellTarget(newTarget *kubectl.Cell, src string, currentTarget string, percentage int, isSessionAware bool) (*kubectl.VirtualService, error) {
-	vs, err := kubectl.GetVirtualService(getVsName(src))
+func buildRoutesForCellTarget(newTarget *kubernetes.Cell, src string, currentTarget string, percentage int, isSessionAware bool) (*kubernetes.VirtualService, error) {
+	vs, err := kubernetes.GetVirtualService(getVsName(src))
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func getModifiedGateway(newTarget string, currentTarget string) ([]byte, error) 
 	// this means that this annotation has been set previously, when doing a full traffic shift to the dependency instance.
 	// if so, copy that and use it in the target instance's annotation. this is done because even if there are
 	// series of traffic shifts, the original hostname used in the client cell for the dependency cell is still the same.
-	depGw, err := kubectl.GetGatewayAsMapInterface(getGatewayName(currentTarget))
+	depGw, err := kubernetes.GetGatewayAsMapInterface(getGatewayName(currentTarget))
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func getModifiedGateway(newTarget string, currentTarget string) ([]byte, error) 
 		originalGwAnnotation = getCellGatewayHost(currentTarget)
 	}
 
-	targetGw, err := kubectl.GetGatewayAsMapInterface(getGatewayName(newTarget))
+	targetGw, err := kubernetes.GetGatewayAsMapInterface(getGatewayName(newTarget))
 	if err != nil {
 		return nil, err
 	}
@@ -146,8 +146,8 @@ func getAnnotations(ifs map[string]interface{}) (map[string]string, error) {
 	return annMap, nil
 }
 
-func getModifiedCellInstance(cellInst *kubectl.Cell, currentTarget string, newTarget string, newCellImage string,
-	newVersion string, newOrg string, srcDependencyKind string) (*kubectl.Cell, error) {
+func getModifiedCellInstance(cellInst *kubernetes.Cell, currentTarget string, newTarget string, newCellImage string,
+	newVersion string, newOrg string, srcDependencyKind string) (*kubernetes.Cell, error) {
 	newDepStr, err := getModifiedDependencies(cellInst.CellMetaData.Annotations.Dependencies, currentTarget,
 		newTarget, newCellImage, newVersion, newOrg, srcDependencyKind)
 	if err != nil {
@@ -157,8 +157,8 @@ func getModifiedCellInstance(cellInst *kubectl.Cell, currentTarget string, newTa
 	return cellInst, nil
 }
 
-func getModifiedVsForCellTarget(vs kubectl.VirtualService, dependencyInst string, targetInst string,
-	percentageForTarget int, enableUserBasedSessionAwareness bool) (*kubectl.VirtualService, error) {
+func getModifiedVsForCellTarget(vs kubernetes.VirtualService, dependencyInst string, targetInst string,
+	percentageForTarget int, enableUserBasedSessionAwareness bool) (*kubernetes.VirtualService, error) {
 	// http
 	for i, httpRule := range vs.VsSpec.HTTP {
 		for _, route := range httpRule.Route {
@@ -210,22 +210,22 @@ func getModifiedVsForCellTarget(vs kubectl.VirtualService, dependencyInst string
 	return &vs, nil
 }
 
-func getHttRouteBasedOnInstanceId(httpRule *kubectl.HTTP, sessionHeader string, dependencyInstance string,
-	targetInstance string) (*[]kubectl.HTTPRoute, error) {
+func getHttRouteBasedOnInstanceId(httpRule *kubernetes.HTTP, sessionHeader string, dependencyInstance string,
+	targetInstance string) (*[]kubernetes.HTTPRoute, error) {
 	for _, match := range httpRule.Match {
 		if match.Headers != nil && match.Headers[sessionHeader] != nil {
 			if match.Headers[sessionHeader].Exact == "1" {
-				return &[]kubectl.HTTPRoute{
+				return &[]kubernetes.HTTPRoute{
 					{
-						Destination: kubectl.Destination{
+						Destination: kubernetes.Destination{
 							Host: getCellGatewayHost(dependencyInstance),
 						},
 					},
 				}, nil
 			} else if match.Headers[sessionHeader].Exact == "2" {
-				return &[]kubectl.HTTPRoute{
+				return &[]kubernetes.HTTPRoute{
 					{
-						Destination: kubectl.Destination{
+						Destination: kubernetes.Destination{
 							Host: getCellGatewayHost(targetInstance),
 						},
 					},
@@ -241,7 +241,7 @@ func getHttRouteBasedOnInstanceId(httpRule *kubectl.HTTP, sessionHeader string, 
 	return nil, fmt.Errorf("unable to find accepted value match for %s header", instanceIdHeaderName)
 }
 
-func isSessionHeaderBasedRule(httpRule *kubectl.HTTP, sessionHeader string) bool {
+func isSessionHeaderBasedRule(httpRule *kubernetes.HTTP, sessionHeader string) bool {
 	for _, match := range httpRule.Match {
 		if match.Headers != nil && match.Headers[sessionHeader] != nil {
 			// this is a rule based on session header
@@ -252,27 +252,27 @@ func isSessionHeaderBasedRule(httpRule *kubectl.HTTP, sessionHeader string) bool
 }
 
 func buildPercentageBasedHttpRoutesForCellInstance(dependencyInst string, targetInst string,
-	percentageForTarget int) *[]kubectl.HTTPRoute {
-	var routes []kubectl.HTTPRoute
+	percentageForTarget int) *[]kubernetes.HTTPRoute {
+	var routes []kubernetes.HTTPRoute
 	if percentageForTarget == 100 {
 		// full traffic switch to target, need only one route
-		routes = append(routes, kubectl.HTTPRoute{
-			Destination: kubectl.Destination{
+		routes = append(routes, kubernetes.HTTPRoute{
+			Destination: kubernetes.Destination{
 				Host: getCellGatewayHost(targetInst),
 			},
 			Weight: 100,
 		})
 	} else {
 		// modify the existing Route's weight
-		existingRoute := kubectl.HTTPRoute{
-			Destination: kubectl.Destination{
+		existingRoute := kubernetes.HTTPRoute{
+			Destination: kubernetes.Destination{
 				Host: getCellGatewayHost(dependencyInst),
 			},
 			Weight: 100 - percentageForTarget,
 		}
 		// add the new route
-		newRoute := kubectl.HTTPRoute{
-			Destination: kubectl.Destination{
+		newRoute := kubernetes.HTTPRoute{
+			Destination: kubernetes.Destination{
 				Host: getCellGatewayHost(targetInst),
 			},
 			Weight: percentageForTarget,
@@ -283,28 +283,28 @@ func buildPercentageBasedHttpRoutesForCellInstance(dependencyInst string, target
 	return &routes
 }
 
-func buildTcpRoutes(dependencyInst string, targetInst string, port kubectl.TCPPort, percentageForTarget int) *[]kubectl.TCPRoute {
-	var routes []kubectl.TCPRoute
+func buildTcpRoutes(dependencyInst string, targetInst string, port kubernetes.TCPPort, percentageForTarget int) *[]kubernetes.TCPRoute {
+	var routes []kubernetes.TCPRoute
 	if percentageForTarget == 100 {
 		// full traffic switch to target, need only one route
-		routes = append(routes, kubectl.TCPRoute{
-			Destination: kubectl.TCPDestination{
+		routes = append(routes, kubernetes.TCPRoute{
+			Destination: kubernetes.TCPDestination{
 				Host: getCellGatewayHost(targetInst),
 				Port: port,
 			},
 		})
 	} else {
 		// modify the existing Route's weight
-		existingRoute := kubectl.TCPRoute{
-			Destination: kubectl.TCPDestination{
+		existingRoute := kubernetes.TCPRoute{
+			Destination: kubernetes.TCPDestination{
 				Host: getCellGatewayHost(dependencyInst),
 				Port: port,
 			},
 			Weight: 100 - percentageForTarget,
 		}
 		// add the new route
-		newRoute := kubectl.TCPRoute{
-			Destination: kubectl.TCPDestination{
+		newRoute := kubernetes.TCPRoute{
+			Destination: kubernetes.TCPDestination{
 				Host: getCellGatewayHost(targetInst),
 				Port: port,
 			},
@@ -316,7 +316,7 @@ func buildTcpRoutes(dependencyInst string, targetInst string, port kubectl.TCPPo
 	return &routes
 }
 
-func checkForMatchingApis(currentTarget *kubectl.Cell, newTarget *kubectl.Cell) error {
+func checkForMatchingApis(currentTarget *kubernetes.Cell, newTarget *kubernetes.Cell) error {
 outer:
 	for _, currTargetGwApi := range currentTarget.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis {
 		for _, newTargetGwApi := range newTarget.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis {
@@ -342,6 +342,6 @@ outer:
 	return nil
 }
 
-func doApisVersionsMatch(api1 *kubectl.GatewayHttpApi, api2 *kubectl.GatewayHttpApi) bool {
+func doApisVersionsMatch(api1 *kubernetes.GatewayHttpApi, api2 *kubernetes.GatewayHttpApi) bool {
 	return api1.Version == api2.Version
 }

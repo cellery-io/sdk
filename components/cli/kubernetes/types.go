@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package kubectl
+package kubernetes
 
 // Original Source: https://github.com/kubernetes/client-go/blob/release-8.0/tools/clientcmd/api/types.go
 

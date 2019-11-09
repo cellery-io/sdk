@@ -37,6 +37,7 @@ type KubeCli interface {
 	GetInstancesNames() ([]string, error)
 	GetCell(cellName string) (Cell, error)
 	GetComposite(compositeName string) (Composite, error)
+	GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error)
 }
 
 type CelleryKubeCli struct {
@@ -46,6 +47,10 @@ type CelleryKubeCli struct {
 func NewCelleryKubeCli() *CelleryKubeCli {
 	kubeCli := &CelleryKubeCli{}
 	return kubeCli
+}
+
+func (kubecli *CelleryKubeCli) SetVerboseMode(enable bool) {
+	verboseMode = enable
 }
 
 // GetCells returns mock cell instances array.
@@ -145,10 +150,6 @@ func (kubecli *CelleryKubeCli) DeleteResource(kind, instance string) (string, er
 	return osexec.GetCommandOutput(cmd)
 }
 
-func (kubecli *CelleryKubeCli) SetVerboseMode(enable bool) {
-	verboseMode = enable
-}
-
 func (kubecli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
 	var instances []string
 	runningCellInstances, err := kubecli.GetCells()
@@ -166,4 +167,17 @@ func (kubecli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
 		instances = append(instances, runningInstance.CompositeMetaData.Name)
 	}
 	return instances, nil
+}
+
+func (kubecli *CelleryKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
+	cmd := exec.Command(constants.KUBECTL,
+		"get",
+		instanceKind,
+		InstanceName,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	return []byte(out), err
 }

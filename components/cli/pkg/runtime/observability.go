@@ -23,12 +23,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 func addObservability(artifactsPath string) error {
 	for _, v := range buildObservabilityYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFile(v)
+		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func addObservability(artifactsPath string) error {
 
 func deleteObservability(artifactsPath string) error {
 	for _, v := range buildObservabilityYamlPaths(artifactsPath) {
-		err := kubectl.DeleteFile(v)
+		err := kubernetes.DeleteFile(v)
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func deleteObservability(artifactsPath string) error {
 }
 func IsObservabilityEnabled() (bool, error) {
 	enabled := true
-	_, err := kubectl.GetDeployment("cellery-system", "wso2sp-worker")
+	_, err := kubernetes.GetDeployment("cellery-system", "wso2sp-worker")
 	if err != nil {
 		if strings.Contains(err.Error(), "No resources found") ||
 			strings.Contains(err.Error(), "Error from server (NotFound)") {
@@ -61,7 +61,7 @@ func IsObservabilityEnabled() (bool, error) {
 
 func CreateObservabilityConfigMaps(artifactsPath string) error {
 	for _, confMap := range buildObservabilityConfigMaps(artifactsPath) {
-		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
+		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {
 			return err
 		}

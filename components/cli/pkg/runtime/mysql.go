@@ -21,32 +21,32 @@ package runtime
 import (
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func AddMysql(artifactsPath string, isPersistentVolume bool) error {
 	base := buildArtifactsPath(Mysql, artifactsPath)
 	for _, confMap := range buildMysqlConfigMaps(artifactsPath) {
-		if err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system"); err != nil {
+		if err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system"); err != nil {
 			return err
 		}
 	}
 	if isPersistentVolume {
 		for _, persistentVolumeYaml := range buildPersistentVolumePaths(artifactsPath) {
-			if err := kubectl.ApplyFileWithNamespace(persistentVolumeYaml, "cellery-system"); err != nil {
+			if err := kubernetes.ApplyFileWithNamespace(persistentVolumeYaml, "cellery-system"); err != nil {
 				return err
 			}
 		}
 	}
-	if err := kubectl.ApplyFileWithNamespace(buildMysqlDeploymentPath(artifactsPath, isPersistentVolume), "cellery-system"); err != nil {
+	if err := kubernetes.ApplyFileWithNamespace(buildMysqlDeploymentPath(artifactsPath, isPersistentVolume), "cellery-system"); err != nil {
 		return err
 	}
-	if err := kubectl.WaitForDeployment("available", 900,
+	if err := kubernetes.WaitForDeployment("available", 900,
 		"wso2apim-with-analytics-mysql-deployment", "cellery-system"); err != nil {
 		return err
 	}
-	if err := kubectl.ApplyFileWithNamespace(filepath.Join(base, "mysql-service.yaml"), "cellery-system"); err != nil {
+	if err := kubernetes.ApplyFileWithNamespace(filepath.Join(base, "mysql-service.yaml"), "cellery-system"); err != nil {
 		return err
 	}
 	return nil

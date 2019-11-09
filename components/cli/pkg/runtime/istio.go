@@ -21,12 +21,12 @@ package runtime
 import (
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 func ApplyIstioCrds(artifactsPath string) error {
 	for _, v := range buildIstioCrdsYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFile(v)
+		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
 		}
@@ -37,7 +37,7 @@ func ApplyIstioCrds(artifactsPath string) error {
 
 func InstallIstio(artifactsPath string) error {
 	for _, v := range buildIstioYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFile(v)
+		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
 		}

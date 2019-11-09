@@ -40,8 +40,8 @@ import (
 	"google.golang.org/api/file/v1"
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime/gcp"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -532,7 +532,7 @@ func updateInstance(service *sqladmin.Service, projectId string, instanceName st
 
 func createController(errorMessage string) {
 	// Give permission to the user
-	if err := kubectl.CreateClusterRoleBinding("cluster-admin", accountName); err != nil {
+	if err := kubernetes.CreateClusterRoleBinding("cluster-admin", accountName); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}
 
@@ -549,7 +549,7 @@ func createController(errorMessage string) {
 	time.Sleep(20 * time.Second)
 
 	// Enabling Istio injection
-	if err := kubectl.ApplyLable("namespace", "default", "istio-injection=enabled",
+	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
 		false); err != nil {
 		util.ExitWithErrorMessage(errorMessage, err)
 	}

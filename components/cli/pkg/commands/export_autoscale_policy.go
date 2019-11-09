@@ -27,79 +27,83 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunExportAutoscalePolicies(kind kubectl.InstanceKind, instance string, outputfile string) error {
-	polExportSpinner := util.StartNewSpinner("Exporting autoscale policies")
+func RunExportAutoscalePolicies(cli cli.Cli, kind kubernetes.InstanceKind, instance string, outputfile string) error {
+	var err error
+	var spData, yamlBytes []byte
+	var sp *kubernetes.AutoScalingPolicy
+	if err = cli.ExecuteTask("Retrieving autoscale policy data", "Failed to retrieve autoscale policy data",
+		"", func() error {
+			sp, err = getAutoscalePolicies(cli, kind, instance)
+			return err
+		}); err != nil {
+		return err
+	}
+	fmt.Println(sp)
+	if spData, err = json.Marshal(sp); err != nil {
+		return err
+	}
+	if yamlBytes, err = yaml.JSONToYAML(spData); err != nil {
+		return err
+	}
+	// write to a file
+	file := outputfile
+	if file == "" {
+		if kind == kubernetes.InstanceKindCell {
+			file = filepath.Join("./", fmt.Sprintf("%s-%s-autoscalepolicy.yaml", "cell", instance))
+		} else {
+			file = filepath.Join("./", fmt.Sprintf("%s-%s-autoscalepolicy.yaml", "composite", instance))
+		}
+	} else {
+		if err := ensureDir(file); err != nil {
+			return err
+		}
+	}
+	if err = writeToFile(yamlBytes, file); err != nil {
+		return err
+	}
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully exported autoscale policies for instance %s to %s", instance, file))
+	return nil
+}
+
+func getAutoscalePolicies(cli cli.Cli, kind kubernetes.InstanceKind, instance string) (*kubernetes.AutoScalingPolicy, error) {
+	var err error
+	var data []byte
 	ik := string(kind)
-	data, err := kubectl.GetInstanceBytes(ik, instance)
-	if err != nil {
-		polExportSpinner.Stop(false)
-		return err
+	if data, err = cli.KubeCli().GetInstanceBytes(ik, instance); err != nil {
+		return nil, err
 	}
-	originalResource := &kubectl.ScaleResource{}
-	err = json.Unmarshal(data, originalResource)
-	if err != nil {
-		polExportSpinner.Stop(false)
-		return err
+	originalResource := &kubernetes.ScaleResource{}
+	if err = json.Unmarshal(data, originalResource); err != nil {
+		return nil, err
 	}
-	sp := &kubectl.AutoScalingPolicy{}
+	sp := &kubernetes.AutoScalingPolicy{}
 
 	for _, v := range originalResource.Spec.Components {
-		sp.Components = append(sp.Components, kubectl.ComponentScalePolicy{
+		sp.Components = append(sp.Components, kubernetes.ComponentScalePolicy{
 			Name:          v.Metadata.Name,
 			ScalingPolicy: v.Spec.ScalingPolicy,
 		})
 	}
 
-	if kind == kubectl.InstanceKindCell {
+	if kind == kubernetes.InstanceKindCell {
 		if gwScalePolicyExists(originalResource) {
-			sp.Gateway = kubectl.GwScalePolicy{
+			sp.Gateway = kubernetes.GwScalePolicy{
 				ScalingPolicy: originalResource.Spec.Gateway.Spec.ScalingPolicy,
 			}
 		} else {
-			sp.Gateway = kubectl.GwScalePolicy{
+			sp.Gateway = kubernetes.GwScalePolicy{
 				ScalingPolicy: struct {
 					Replicas int32 `json:"replicas"`
 				}{1},
 			}
 		}
 	}
-
-	spData, err := json.Marshal(sp)
-	if err != nil {
-		polExportSpinner.Stop(false)
-		return err
-	}
-	yamlBytes, err := yaml.JSONToYAML(spData)
-	if err != nil {
-		polExportSpinner.Stop(false)
-		return err
-	}
-	// write to a file
-	file := outputfile
-	if file == "" {
-		if kind == kubectl.InstanceKindCell {
-			file = filepath.Join("./", fmt.Sprintf("%s-%s-autoscalepolicy.yaml", "cell", instance))
-		} else {
-			file = filepath.Join("./", fmt.Sprintf("%s-%s-autoscalepolicy.yaml", "composite", instance))
-		}
-	} else {
-		err := ensureDir(file)
-		if err != nil {
-			return err
-		}
-	}
-	err = writeToFile(yamlBytes, file)
-	if err != nil {
-		polExportSpinner.Stop(false)
-		return err
-	}
-	polExportSpinner.Stop(true)
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully exported autoscale policies for instance %s to %s", instance, file))
-	return nil
+	return sp, err
 }
 
 func ensureDir(path string) error {
@@ -119,6 +123,6 @@ func writeToFile(content []byte, file string) error {
 	return nil
 }
 
-func gwScalePolicyExists(scaleResource *kubectl.ScaleResource) bool {
+func gwScalePolicyExists(scaleResource *kubernetes.ScaleResource) bool {
 	return &scaleResource.Spec.Gateway != nil && scaleResource.Spec.Gateway.Spec.ScalingPolicy != nil
 }

@@ -23,13 +23,13 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 type CellToCompositeRoute struct {
-	Src           kubectl.Cell
-	CurrentTarget kubectl.Composite
-	NewTarget     kubectl.Composite
+	Src           kubernetes.Cell
+	CurrentTarget kubernetes.Composite
+	NewTarget     kubernetes.Composite
 }
 
 func (router *CellToCompositeRoute) Check() error {
@@ -44,8 +44,8 @@ func (router *CellToCompositeRoute) Build(percentage int, isSessionAware bool, r
 	}
 	// if the percentage is 100, the cell instance now fully depends on the new composite instance,
 	// hence update the dependency annotation.
-	var modifiedTargetCompInst *kubectl.Composite
-	var modifiedSrcCellInst *kubectl.Cell
+	var modifiedTargetCompInst *kubernetes.Composite
+	var modifiedSrcCellInst *kubernetes.Cell
 	if percentage == 100 {
 		modifiedSrcCellInst, err = getModifiedCellInstance(&router.Src, router.CurrentTarget.CompositeMetaData.Name, router.NewTarget.CompositeMetaData.Name,
 			router.NewTarget.CompositeMetaData.Annotations.Name, router.NewTarget.CompositeMetaData.Annotations.Version,
@@ -68,7 +68,7 @@ func (router *CellToCompositeRoute) Build(percentage int, isSessionAware bool, r
 	return nil
 }
 
-func writeCellToCompositeArtifactsToFile(policiesFile string, vs *kubectl.VirtualService, cellInstance *kubectl.Cell, compositeInstance *kubectl.Composite) error {
+func writeCellToCompositeArtifactsToFile(policiesFile string, vs *kubernetes.VirtualService, cellInstance *kubernetes.Cell, compositeInstance *kubernetes.Composite) error {
 	f, err := os.OpenFile(policiesFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err

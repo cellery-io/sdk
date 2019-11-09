@@ -28,10 +28,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -75,7 +74,7 @@ func RunSetupStatusCommand() {
 			systemComponent.status = "Enabled"
 		}
 	}
-	clusterName, err = kubectl.GetContext()
+	clusterName, err = kubernetes.GetContext()
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting cluster name", err)
 	}

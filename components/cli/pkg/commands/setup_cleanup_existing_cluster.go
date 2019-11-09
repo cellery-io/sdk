@@ -23,8 +23,8 @@ import (
 
 	"github.com/manifoldco/promptui"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -107,7 +107,7 @@ func RunCleanupExisting(removeKnative, removeIstio, removeIngress, removeHpa, co
 	if confirmCleanup {
 		spinner := util.StartNewSpinner("Cleaning up cluster")
 		if removeKnative {
-			kubectl.DeleteNameSpace("knative-serving")
+			kubernetes.DeleteNameSpace("knative-serving")
 		}
 		cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
 		spinner.Stop(true)
@@ -116,24 +116,24 @@ func RunCleanupExisting(removeKnative, removeIstio, removeIngress, removeHpa, co
 }
 
 func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
-	kubectl.DeleteNameSpace("cellery-system")
+	kubernetes.DeleteNameSpace("cellery-system")
 	if removeKnative {
-		out, err := kubectl.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
+		out, err := kubernetes.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
 		if err != nil {
 			util.ExitWithErrorMessage("Error occurred while deleting the knative apiservice", fmt.Errorf(out))
 		}
-		kubectl.DeleteNameSpace("knative-serving")
+		kubernetes.DeleteNameSpace("knative-serving")
 	}
 	if removeIstio {
-		kubectl.DeleteNameSpace("istio-system")
+		kubernetes.DeleteNameSpace("istio-system")
 	}
 	if removeIngress {
-		kubectl.DeleteNameSpace("ingress-nginx")
+		kubernetes.DeleteNameSpace("ingress-nginx")
 	}
 	if removeHpa {
 		runtime.DeleteComponent(runtime.HPA)
 	}
-	kubectl.DeleteAllCells()
-	kubectl.DeletePersistedVolume("wso2apim-local-pv")
-	kubectl.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
+	kubernetes.DeleteAllCells()
+	kubernetes.DeletePersistedVolume("wso2apim-local-pv")
+	kubernetes.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
 }

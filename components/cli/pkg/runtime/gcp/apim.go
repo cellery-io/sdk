@@ -21,14 +21,13 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 func CreateGlobalGatewayConfigMaps() error {
 	for _, confMap := range buildGlobalGatewayConfigMaps() {
-		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
+		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -50,7 +49,7 @@ func buildGlobalGatewayConfigMaps() []ConfigMap {
 
 func AddApim() error {
 	for _, v := range buildApimYamlPaths() {
-		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
+		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
 		}

@@ -21,14 +21,13 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 func InstallNginx() error {
 	for _, file := range buildNginxYamlPaths() {
-		err := kubectl.ApplyFile(file)
+		err := kubernetes.ApplyFile(file)
 		if err != nil {
 			return err
 		}

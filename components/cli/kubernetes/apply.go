@@ -14,13 +14,38 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
  */
 
-package kubectl
+package kubernetes
 
-import "github.com/fatih/color"
+import (
+	"os"
+	"os/exec"
 
-var verboseColor = color.New(color.FgWhite).Add(color.Bold).SprintFunc()
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+)
 
-const VerboseMode = "verbose"
+func ApplyFileWithNamespace(file, namespace string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"apply",
+		"-f",
+		file,
+		"-n", namespace,
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func ApplyFile(file string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"apply",
+		"-f",
+		file,
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

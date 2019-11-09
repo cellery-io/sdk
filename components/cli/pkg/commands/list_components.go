@@ -24,14 +24,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
+	"github.com/ghodss/yaml"
 	"github.com/olekukonko/tablewriter"
 
-	"github.com/ghodss/yaml"
-
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -60,7 +58,7 @@ func getCellImageCompoents(cellImage string) []string {
 
 func getCellInstanceComponents(cellName string) []string {
 	var components []string
-	services, err := kubectl.GetServices(cellName)
+	services, err := kubernetes.GetServices(cellName)
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting list of components", err)
 	}

@@ -26,11 +26,11 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/mattbaird/jsonpatch"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file string) error {
+func RunApplyAutoscalePolicies(kind kubernetes.InstanceKind, instance string, file string) error {
 	spinner := util.StartNewSpinner("Applying autoscale policies")
 
 	fileData, err := ioutil.ReadFile(file)
@@ -38,7 +38,7 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 		spinner.Stop(false)
 		return err
 	}
-	newScalePolicy := &kubectl.AutoScalingPolicy{}
+	newScalePolicy := &kubernetes.AutoScalingPolicy{}
 	err = yaml.Unmarshal(fileData, &newScalePolicy)
 	if err != nil {
 		spinner.Stop(false)
@@ -46,12 +46,12 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 	}
 
 	ik := string(kind)
-	instanceData, err := kubectl.GetInstanceBytes(ik, instance)
+	instanceData, err := kubernetes.GetInstanceBytes(ik, instance)
 	if err != nil {
 		spinner.Stop(false)
 		return err
 	}
-	originalResource := &kubectl.ScaleResource{}
+	originalResource := &kubernetes.ScaleResource{}
 	err = json.Unmarshal(instanceData, originalResource)
 	if err != nil {
 		spinner.Stop(false)
@@ -77,7 +77,7 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 			}
 		}
 	}
-	if kind == kubectl.InstanceKindCell && newScalePolicy.Gateway.ScalingPolicy != nil {
+	if kind == kubernetes.InstanceKindCell && newScalePolicy.Gateway.ScalingPolicy != nil {
 		overridable, err := isOverridable(originalResource.Spec.Gateway.Spec.ScalingPolicy)
 		if err != nil {
 			return err
@@ -107,7 +107,7 @@ func RunApplyAutoscalePolicies(kind kubectl.InstanceKind, instance string, file 
 		return err
 	}
 
-	err = kubectl.JsonPatch(ik, instance, string(patchBytes))
+	err = kubernetes.JsonPatch(ik, instance, string(patchBytes))
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -123,7 +123,7 @@ func isOverridable(o interface{}) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	hpa := &kubectl.ScalingPolicy{}
+	hpa := &kubernetes.ScalingPolicy{}
 	err = json.Unmarshal(hpaBytes, hpa)
 	if err != nil {
 		return false, err

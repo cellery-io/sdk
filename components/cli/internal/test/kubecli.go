@@ -29,6 +29,9 @@ type MockKubeCli struct {
 	composites kubernetes.Composites
 }
 
+func (kubeCli *MockKubeCli) SetVerboseMode(enable bool) {
+}
+
 type option func(*MockKubeCli)
 
 func WithCells(cells kubernetes.Cells) option {
@@ -53,16 +56,16 @@ func NewMockKubeCli(opts ...option) *MockKubeCli {
 }
 
 // GetCells returns cell instances array.
-func (kubecli *MockKubeCli) GetCells() ([]kubernetes.Cell, error) {
-	return kubecli.cells.Items, nil
+func (kubeCli *MockKubeCli) GetCells() ([]kubernetes.Cell, error) {
+	return kubeCli.cells.Items, nil
 }
 
-func (kubecli *MockKubeCli) GetComposites() ([]kubernetes.Composite, error) {
-	return kubecli.composites.Items, nil
+func (kubeCli *MockKubeCli) GetComposites() ([]kubernetes.Composite, error) {
+	return kubeCli.composites.Items, nil
 }
 
-func (kubecli *MockKubeCli) GetCell(cellName string) (kubernetes.Cell, error) {
-	for _, cell := range kubecli.cells.Items {
+func (kubeCli *MockKubeCli) GetCell(cellName string) (kubernetes.Cell, error) {
+	for _, cell := range kubeCli.cells.Items {
 		if cell.CellMetaData.Name == cellName {
 			return cell, nil
 		}
@@ -70,8 +73,8 @@ func (kubecli *MockKubeCli) GetCell(cellName string) (kubernetes.Cell, error) {
 	return kubernetes.Cell{}, fmt.Errorf("cell %s does not exist", cellName)
 }
 
-func (kubecli *MockKubeCli) GetComposite(compositeName string) (kubernetes.Composite, error) {
-	for _, composite := range kubecli.composites.Items {
+func (kubeCli *MockKubeCli) GetComposite(compositeName string) (kubernetes.Composite, error) {
+	for _, composite := range kubeCli.composites.Items {
 		if composite.CompositeMetaData.Name == compositeName {
 			return composite, nil
 		}
@@ -79,20 +82,21 @@ func (kubecli *MockKubeCli) GetComposite(compositeName string) (kubernetes.Compo
 	return kubernetes.Composite{}, fmt.Errorf("composite %s does not exist", compositeName)
 }
 
-func (kubecli *MockKubeCli) DeleteResource(kind, instance string) (string, error) {
+func (kubeCli *MockKubeCli) DeleteResource(kind, instance string) (string, error) {
 	return "", nil
 }
 
-func (kubecli *MockKubeCli) SetVerboseMode(enable bool) {
-}
-
-func (kubecli *MockKubeCli) GetInstancesNames() ([]string, error) {
+func (kubeCli *MockKubeCli) GetInstancesNames() ([]string, error) {
 	var instanceNames []string
-	for _, cell := range kubecli.cells.Items {
+	for _, cell := range kubeCli.cells.Items {
 		instanceNames = append(instanceNames, cell.CellMetaData.Name)
 	}
-	for _, composites := range kubecli.composites.Items {
+	for _, composites := range kubeCli.composites.Items {
 		instanceNames = append(instanceNames, composites.CompositeMetaData.Name)
 	}
 	return instanceNames, nil
+}
+
+func (kubeCli *MockKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
+	return nil, nil
 }

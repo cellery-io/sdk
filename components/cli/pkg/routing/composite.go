@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 type origComponentData struct {
@@ -31,14 +31,14 @@ type origComponentData struct {
 	ContainerPorts []int32 `json:"containerPorts"`
 }
 
-func buildRoutesForCompositeTarget(src string, newTarget *kubectl.Composite, currentTarget *kubectl.Composite,
-	percentage int) (*kubectl.VirtualService, error) {
+func buildRoutesForCompositeTarget(src string, newTarget *kubernetes.Composite, currentTarget *kubernetes.Composite,
+	percentage int) (*kubernetes.VirtualService, error) {
 	// check if components in previous dependency and this dependency matches
 	if !doComponentsMatch(&currentTarget.CompositeSpec.ComponentTemplates,
 		&newTarget.CompositeSpec.ComponentTemplates) {
 		return nil, fmt.Errorf("all components do not match in current and target composite instances")
 	}
-	vs, err := kubectl.GetVirtualService(getVsName(src))
+	vs, err := kubernetes.GetVirtualService(getVsName(src))
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +51,8 @@ func buildRoutesForCompositeTarget(src string, newTarget *kubectl.Composite, cur
 	return modifiedVs, nil
 }
 
-func getModifiedVsForCompositeTarget(vs *kubectl.VirtualService, dependencyInst string, targetInst string,
-	percentageForTarget int, componentTemplates *[]kubectl.ComponentTemplate) (*kubectl.VirtualService, error) {
+func getModifiedVsForCompositeTarget(vs *kubernetes.VirtualService, dependencyInst string, targetInst string,
+	percentageForTarget int, componentTemplates *[]kubernetes.ComponentTemplate) (*kubernetes.VirtualService, error) {
 	// http
 	for i, httpRule := range vs.VsSpec.HTTP {
 		for _, route := range httpRule.Route {
@@ -75,7 +75,7 @@ func getModifiedVsForCompositeTarget(vs *kubectl.VirtualService, dependencyInst 
 	return vs, nil
 }
 
-func doComponentsMatch(currentDepComponents *[]kubectl.ComponentTemplate, newDepComponents *[]kubectl.ComponentTemplate) bool {
+func doComponentsMatch(currentDepComponents *[]kubernetes.ComponentTemplate, newDepComponents *[]kubernetes.ComponentTemplate) bool {
 	var matchCount int
 	for _, currentDep := range *currentDepComponents {
 		for _, newDep := range *newDepComponents {
@@ -91,8 +91,8 @@ func doComponentsMatch(currentDepComponents *[]kubectl.ComponentTemplate, newDep
 	return false
 }
 
-func getModifiedCompositeSrcInstance(src *kubectl.Composite, currentTarget string, newTarget string, newCellImage string,
-	newVersion string, newOrg string, srcDependencyKind string) (*kubectl.Composite, error) {
+func getModifiedCompositeSrcInstance(src *kubernetes.Composite, currentTarget string, newTarget string, newCellImage string,
+	newVersion string, newOrg string, srcDependencyKind string) (*kubernetes.Composite, error) {
 	newDepStr, err := getModifiedDependencies(src.CompositeMetaData.Annotations.Dependencies, currentTarget,
 		newTarget, newCellImage, newVersion, newOrg, srcDependencyKind)
 	if err != nil {
@@ -102,8 +102,8 @@ func getModifiedCompositeSrcInstance(src *kubectl.Composite, currentTarget strin
 	return src, nil
 }
 
-func getModifiedCompositeTargetInstance(currentTarget *kubectl.Composite,
-	newTarget *kubectl.Composite) (*kubectl.Composite, error) {
+func getModifiedCompositeTargetInstance(currentTarget *kubernetes.Composite,
+	newTarget *kubernetes.Composite) (*kubernetes.Composite, error) {
 	// set the original compositeInst service names as an annotation to the updated compositeInst instance
 	var originalDependencyCompositeServicesAnnotation string
 	var err error
@@ -126,7 +126,7 @@ func getModifiedCompositeTargetInstance(currentTarget *kubectl.Composite,
 }
 
 func appendToDependencyCompositeServiceAnnotaion(instance string, existingValue string,
-	composite *kubectl.Composite) (string, error) {
+	composite *kubernetes.Composite) (string, error) {
 	var origCompData []origComponentData
 	err := json.Unmarshal([]byte(existingValue), &origCompData)
 	if err != nil {
@@ -155,7 +155,7 @@ func appendToDependencyCompositeServiceAnnotaion(instance string, existingValue 
 	return string(svcNames), nil
 }
 
-func getPortsAsIntArray(ports *[]kubectl.Port) []int32 {
+func getPortsAsIntArray(ports *[]kubernetes.Port) []int32 {
 	var intPorts []int32
 	for _, port := range *ports {
 		intPorts = append(intPorts, port.Port)
@@ -164,7 +164,7 @@ func getPortsAsIntArray(ports *[]kubectl.Port) []int32 {
 	return intPorts
 }
 
-func buildDependencyCompositeServiceAnnotaion(composite *kubectl.Composite) (string, error) {
+func buildDependencyCompositeServiceAnnotaion(composite *kubernetes.Composite) (string, error) {
 	var origCompData []origComponentData
 	for _, componentTemplate := range composite.CompositeSpec.ComponentTemplates {
 		origCompData = append(origCompData, origComponentData{
@@ -180,27 +180,27 @@ func buildDependencyCompositeServiceAnnotaion(composite *kubectl.Composite) (str
 }
 
 func buildPercentageBasedHttpRoutesForCompositeInstance(dependencyInst string, targetInst string,
-	compTemplate *kubectl.ComponentTemplate, percentageForTarget int) *[]kubectl.HTTPRoute {
-	var routes []kubectl.HTTPRoute
+	compTemplate *kubernetes.ComponentTemplate, percentageForTarget int) *[]kubernetes.HTTPRoute {
+	var routes []kubernetes.HTTPRoute
 	if percentageForTarget == 100 {
 		// full traffic switch to target, need only one route
-		routes = append(routes, kubectl.HTTPRoute{
-			Destination: kubectl.Destination{
+		routes = append(routes, kubernetes.HTTPRoute{
+			Destination: kubernetes.Destination{
 				Host: getCompositeServiceHost(targetInst, compTemplate.Metadata.Name),
 			},
 			Weight: 100,
 		})
 	} else {
 		// modify the existing Route's weight
-		existingRoute := kubectl.HTTPRoute{
-			Destination: kubectl.Destination{
+		existingRoute := kubernetes.HTTPRoute{
+			Destination: kubernetes.Destination{
 				Host: getCompositeServiceHost(dependencyInst, compTemplate.Metadata.Name),
 			},
 			Weight: 100 - percentageForTarget,
 		}
 		// add the new route
-		newRoute := kubectl.HTTPRoute{
-			Destination: kubectl.Destination{
+		newRoute := kubernetes.HTTPRoute{
+			Destination: kubernetes.Destination{
 				Host: getCompositeServiceHost(targetInst, compTemplate.Metadata.Name),
 			},
 			Weight: percentageForTarget,

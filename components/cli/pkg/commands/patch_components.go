@@ -24,11 +24,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-
 	"github.com/ghodss/yaml"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -171,7 +170,7 @@ const k8sContainerTemplate = "template"
 func RunPatchForSingleComponent(instance string, component string, containerImage string, containerName string, envVars []string) error {
 	spinner := util.StartNewSpinner(fmt.Sprintf("Patching component %s in instance %s", component, instance))
 	var canBeComposite bool
-	_, err := kubectl.GetCell(instance)
+	_, err := kubernetes.GetCell(instance)
 	if err != nil {
 		if notFound, _ := errorpkg.IsCellInstanceNotFoundError(instance, err); notFound {
 			// could be a composite
@@ -187,7 +186,7 @@ func RunPatchForSingleComponent(instance string, component string, containerImag
 	}()
 
 	if canBeComposite {
-		_, err = kubectl.GetComposite(instance)
+		_, err = kubernetes.GetComposite(instance)
 		if err != nil {
 			if notFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instance, err); notFound {
 				// the given instance is neither a cell or a composite
@@ -212,7 +211,7 @@ func RunPatchForSingleComponent(instance string, component string, containerImag
 	}
 
 	// kubectl apply
-	err = kubectl.ApplyFile(artifactFile)
+	err = kubernetes.ApplyFile(artifactFile)
 	if err != nil {
 		spinner.Stop(false)
 		return err
@@ -259,7 +258,7 @@ func getPatchededCellInstanceForSingleComponent(instance string, componentName s
 	if err != nil {
 		return nil, err
 	}
-	cellInstance, err := kubectl.GetCellInstanceAsMapInterface(instance)
+	cellInstance, err := kubernetes.GetCellInstanceAsMapInterface(instance)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +275,7 @@ func getPatchedCompositeInstanceForSingleComponent(instance string, componentNam
 	if err != nil {
 		return nil, err
 	}
-	compositeInst, err := kubectl.GetCompositeInstanceAsMapInterface(instance)
+	compositeInst, err := kubernetes.GetCompositeInstanceAsMapInterface(instance)
 	if err != nil {
 		return nil, err
 	}
@@ -288,11 +287,11 @@ func getPatchedCompositeInstanceForSingleComponent(instance string, componentNam
 	return compositeInst, nil
 }
 
-func convertToPodSpecEnvVars(envVars []string) []kubectl.Env {
-	var podSpecEnvVars []kubectl.Env
+func convertToPodSpecEnvVars(envVars []string) []kubernetes.Env {
+	var podSpecEnvVars []kubernetes.Env
 	for _, envVar := range envVars {
 		key, value := getEnvVarKeyValue(envVar)
-		podSpecEnvVars = append(podSpecEnvVars, kubectl.Env{
+		podSpecEnvVars = append(podSpecEnvVars, kubernetes.Env{
 			Name:  key,
 			Value: value,
 		})
@@ -309,13 +308,13 @@ func validateEnvVars(envVars []string) error {
 	return nil
 }
 
-func getMergedEnvVars(currentContainerSpec interface{}, newEnvVars []kubectl.Env) ([]kubectl.Env, error) {
+func getMergedEnvVars(currentContainerSpec interface{}, newEnvVars []kubernetes.Env) ([]kubernetes.Env, error) {
 	mergedEnvVarsMap := make(map[string]string)
 	envVarBytes, err := yaml.Marshal(currentContainerSpec)
 	if err != nil {
 		return nil, err
 	}
-	var envVars []kubectl.Env
+	var envVars []kubernetes.Env
 	err = yaml.Unmarshal(envVarBytes, &envVars)
 	if err != nil {
 		return nil, err
@@ -330,9 +329,9 @@ func getMergedEnvVars(currentContainerSpec interface{}, newEnvVars []kubectl.Env
 		mergedEnvVarsMap[newEnvVar.Name] = newEnvVar.Value
 	}
 	// now create an array of kind []kubectl.Env from the map
-	var mergedEnvVars []kubectl.Env
+	var mergedEnvVars []kubernetes.Env
 	for mapKey, mapVal := range mergedEnvVarsMap {
-		mergedEnvVars = append(mergedEnvVars, kubectl.Env{
+		mergedEnvVars = append(mergedEnvVars, kubernetes.Env{
 			Name:  mapKey,
 			Value: mapVal,
 		})

@@ -23,12 +23,10 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
-
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -64,7 +62,7 @@ func newApplyCellAutoscalePolicyCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunApplyAutoscalePolicies(kubectl.InstanceKindCell, args[0], args[1])
+			err := commands.RunApplyAutoscalePolicies(kubernetes.InstanceKindCell, args[0], args[1])
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to cell instance %s", args[0]), err)
 			}
@@ -93,7 +91,7 @@ func newApplyCompositeAutoscalePolicyCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunApplyAutoscalePolicies(kubectl.InstanceKindComposite, args[0], args[1])
+			err := commands.RunApplyAutoscalePolicies(kubernetes.InstanceKindComposite, args[0], args[1])
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to composite instance %s", args[0]), err)
 			}

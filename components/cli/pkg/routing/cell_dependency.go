@@ -21,9 +21,8 @@ package routing
 import (
 	"encoding/json"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	errors "github.com/cellery-io/sdk/components/cli/pkg/error"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 const compositeDependencyKind = "Composite"
@@ -57,11 +56,11 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 	if len(sourceInstances) > 0 {
 		for _, srcInst := range sourceInstances {
 			var dependencies []map[string]string
-			inst, err := kubectl.GetCell(srcInst)
+			inst, err := kubernetes.GetCell(srcInst)
 			if err != nil {
 				if notFound, _ := errors.IsCellInstanceNotFoundError(srcInst, err); notFound {
 					// might be a composite, check whether the srcInst is a composite
-					compInst, err := kubectl.GetComposite(srcInst)
+					compInst, err := kubernetes.GetComposite(srcInst)
 					if err != nil {
 						return nil, err
 					}
@@ -107,7 +106,7 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 		}
 	} else {
 		// need to get all cell instances, then check if there are instances which depend on the `newTarget`
-		cellInstances, err := kubectl.GetCells()
+		cellInstances, err := kubernetes.GetCells()
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +130,7 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 			}
 		}
 		// also take all composites, then check if there are instances which depend on the `newTarget`
-		compositeIntsance, err := kubectl.GetComposites()
+		compositeIntsance, err := kubernetes.GetComposites()
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +157,7 @@ func GetRoutes(sourceInstances []string, currentTarget string, newTarget string)
 	return routes, nil
 }
 
-func buildRouteForDependencyOfACell(dependency map[string]string, src *kubectl.Cell, currentTarget string, newTarget string) (Route, error) {
+func buildRouteForDependencyOfACell(dependency map[string]string, src *kubernetes.Cell, currentTarget string, newTarget string) (Route, error) {
 	var route Route = nil
 	if dependency[dependencyKind] == compositeDependencyKind {
 		currentTargetComp, newTargetComp, err := getTargetComposites(currentTarget, newTarget)
@@ -171,11 +170,11 @@ func buildRouteForDependencyOfACell(dependency map[string]string, src *kubectl.C
 			NewTarget:     *newTargetComp,
 		}
 	} else if dependency[dependencyKind] == cellDependencyKind {
-		currentTargetCell, err := kubectl.GetCell(currentTarget)
+		currentTargetCell, err := kubernetes.GetCell(currentTarget)
 		if err != nil {
 			return nil, err
 		}
-		newTargetCell, err := kubectl.GetCell(newTarget)
+		newTargetCell, err := kubernetes.GetCell(newTarget)
 		if err != nil {
 			return nil, err
 		}
@@ -188,7 +187,7 @@ func buildRouteForDependencyOfACell(dependency map[string]string, src *kubectl.C
 	return route, nil
 }
 
-func buildRouteForDependencyOfAComposite(dependency map[string]string, src *kubectl.Composite, currentTarget string, newTarget string) (Route, error) {
+func buildRouteForDependencyOfAComposite(dependency map[string]string, src *kubernetes.Composite, currentTarget string, newTarget string) (Route, error) {
 	var route Route = nil
 	if dependency[dependencyKind] == compositeDependencyKind {
 		currentTargetComp, newTargetComp, err := getTargetComposites(currentTarget, newTarget)
@@ -214,24 +213,24 @@ func buildRouteForDependencyOfAComposite(dependency map[string]string, src *kube
 	return route, nil
 }
 
-func getTargetComposites(currentTarget string, newTarget string) (*kubectl.Composite, *kubectl.Composite, error) {
-	currentTargetComp, err := kubectl.GetComposite(currentTarget)
+func getTargetComposites(currentTarget string, newTarget string) (*kubernetes.Composite, *kubernetes.Composite, error) {
+	currentTargetComp, err := kubernetes.GetComposite(currentTarget)
 	if err != nil {
 		return nil, nil, err
 	}
-	newTargetComp, err := kubectl.GetComposite(newTarget)
+	newTargetComp, err := kubernetes.GetComposite(newTarget)
 	if err != nil {
 		return nil, nil, err
 	}
 	return &currentTargetComp, &newTargetComp, nil
 }
 
-func getTargetCells(currentTarget string, newTarget string) (*kubectl.Cell, *kubectl.Cell, error) {
-	currentTargetCell, err := kubectl.GetCell(currentTarget)
+func getTargetCells(currentTarget string, newTarget string) (*kubernetes.Cell, *kubernetes.Cell, error) {
+	currentTargetCell, err := kubernetes.GetCell(currentTarget)
 	if err != nil {
 		return nil, nil, err
 	}
-	newTargetCell, err := kubectl.GetCell(newTarget)
+	newTargetCell, err := kubernetes.GetCell(newTarget)
 	if err != nil {
 		return nil, nil, err
 	}

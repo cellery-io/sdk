@@ -24,12 +24,6 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -40,10 +34,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
 // RunRun starts Cell instance (along with dependency instances if specified by the user)\
@@ -102,7 +98,7 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 					DependencyInstance: linkSplit[1],
 				}
 			}
-			cellInstance, err := kubectl.GetCell(dependencyLink.DependencyInstance)
+			cellInstance, err := kubernetes.GetCell(dependencyLink.DependencyInstance)
 			if err != nil && !strings.Contains(err.Error(), "not found") {
 				spinner.Stop(false)
 				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
@@ -111,7 +107,7 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 				parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
 				continue
 			}
-			compositeInstance, err := kubectl.GetComposite(dependencyLink.DependencyInstance)
+			compositeInstance, err := kubernetes.GetComposite(dependencyLink.DependencyInstance)
 			if err != nil && !strings.Contains(err.Error(), "not found") {
 				spinner.Stop(false)
 				util.ExitWithErrorMessage("Error occurred while validating dependency links", err)
@@ -456,7 +452,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	return nil
 }
 func StopTelepresence(filepath string) error {
-	err := kubectl.DeleteFile(filepath)
+	err := kubernetes.DeleteFile(filepath)
 	if err != nil {
 		return fmt.Errorf("error occurred while stopping telepresence %s", err)
 	}
@@ -487,16 +483,16 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, imageDir
 		deploymentName = "telepresence--telepresence-deployment"
 		spinnerMsg = "Creating telepresence instance"
 	}
-	kubectl.ApplyFile(dstYamlFile)
+	kubernetes.ApplyFile(dstYamlFile)
 	spinner = util.StartNewSpinner(spinnerMsg)
 	time.Sleep(5 * time.Second)
-	err := kubectl.WaitForDeployment("available", 900, deploymentName, "default")
+	err := kubernetes.WaitForDeployment("available", 900, deploymentName, "default")
 	if err != nil {
 		util.ExitWithErrorMessage(fmt.Sprintf("error waiting for telepresence deployment %v to be available", deploymentName), err)
 	}
 
 	if !incell {
-		err = kubectl.WaitForCell("Ready", 30*60, "telepresence", "default")
+		err = kubernetes.WaitForCell("Ready", 30*60, "telepresence", "default")
 		if err != nil {
 			util.ExitWithErrorMessage("error waiting for instance telepresence to be ready", err)
 		}
@@ -551,16 +547,16 @@ func RunDockerTelepresenceTests(incell bool, cmd *exec.Cmd, cmdArgs []string, im
 		deploymentName = "telepresence--telepresence-deployment"
 		spinnerMsg = "Creating telepresence instance"
 	}
-	kubectl.ApplyFile(dstYamlFile)
+	kubernetes.ApplyFile(dstYamlFile)
 	spinner = util.StartNewSpinner(spinnerMsg)
 	time.Sleep(5 * time.Second)
-	err := kubectl.WaitForDeployment("available", 900, deploymentName, "default")
+	err := kubernetes.WaitForDeployment("available", 900, deploymentName, "default")
 	if err != nil {
 		util.ExitWithErrorMessage(fmt.Sprintf("error waiting for telepresence deployment %v to be available", deploymentName), err)
 	}
 
 	if !incell {
-		err = kubectl.WaitForCell("Ready", 30*60, "telepresence", "default")
+		err = kubernetes.WaitForCell("Ready", 30*60, "telepresence", "default")
 		if err != nil {
 			util.ExitWithErrorMessage("error waiting for instance telepresence to be ready", err)
 		}

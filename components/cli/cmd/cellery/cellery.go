@@ -69,7 +69,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newViewCommand(),
 		newTestCommand(cli),
 		newDeleteImageCommand(cli),
-		newExportPolicyCommand(),
+		newExportPolicyCommand(cli),
 		newApplyPolicyCommand(),
 		newPatchComponentsCommand(),
 		newRouteTrafficCommand(),

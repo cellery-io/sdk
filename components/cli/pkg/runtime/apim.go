@@ -23,12 +23,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 func addApim(artifactsPath string, isPersistentVolume bool) error {
 	for _, v := range buildApimYamlPaths(artifactsPath, isPersistentVolume) {
-		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
+		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func addApim(artifactsPath string, isPersistentVolume bool) error {
 
 func deleteApim(artifactsPath string) error {
 	for _, v := range buildApimYamlPaths(artifactsPath, false) {
-		err := kubectl.DeleteFileWithNamespace(v, "cellery-system")
+		err := kubernetes.DeleteFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -48,7 +48,7 @@ func deleteApim(artifactsPath string) error {
 
 func IsApimEnabled() (bool, error) {
 	enabled := true
-	_, err := kubectl.GetDeployment("cellery-system", "gateway")
+	_, err := kubernetes.GetDeployment("cellery-system", "gateway")
 	if err != nil {
 		if strings.Contains(err.Error(), "No resources found") ||
 			strings.Contains(err.Error(), "Error from server (NotFound)") {
@@ -62,7 +62,7 @@ func IsApimEnabled() (bool, error) {
 
 func CreateGlobalGatewayConfigMaps(artifactsPath string) error {
 	for _, confMap := range buildGlobalGatewayConfigMaps(artifactsPath) {
-		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
+		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {
 			return err
 		}

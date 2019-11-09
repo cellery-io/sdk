@@ -38,8 +38,8 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/cheggaaa/pb.v1"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 var Bold = color.New(color.Bold).SprintFunc()
@@ -336,12 +336,12 @@ func FormatBytesToString(size int64) string {
 }
 
 func MergeKubeConfig(newConfigFile string) error {
-	newConf, err := kubectl.ReadConfig(newConfigFile)
+	newConf, err := kubernetes.ReadConfig(newConfigFile)
 	if err != nil {
 		return err
 	}
 
-	confFile, err := kubectl.DefaultConfigFile()
+	confFile, err := kubernetes.DefaultConfigFile()
 	if err != nil {
 		return err
 	}
@@ -349,7 +349,7 @@ func MergeKubeConfig(newConfigFile string) error {
 	if _, err := os.Stat(confFile); err != nil {
 		if os.IsNotExist(err) {
 			// kube-config does not exist. Create a new one
-			confDir, err := kubectl.DefaultConfigDir()
+			confDir, err := kubernetes.DefaultConfigDir()
 			if err != nil {
 				return err
 			}
@@ -360,18 +360,18 @@ func MergeKubeConfig(newConfigFile string) error {
 					return err
 				}
 			}
-			return kubectl.WriteConfig(confFile, newConf)
+			return kubernetes.WriteConfig(confFile, newConf)
 		} else {
 			return err
 		}
 	}
 
-	oldConf, err := kubectl.ReadConfig(confFile)
+	oldConf, err := kubernetes.ReadConfig(confFile)
 	if err != nil {
 		return err
 	}
-	merged := kubectl.MergeConfig(oldConf, newConf)
-	return kubectl.WriteConfig(confFile, merged)
+	merged := kubernetes.MergeConfig(oldConf, newConf)
+	return kubernetes.WriteConfig(confFile, merged)
 }
 
 func IsCompleteSetupSelected() (bool, bool) {

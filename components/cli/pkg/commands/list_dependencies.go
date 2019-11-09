@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/routing"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
@@ -34,7 +34,7 @@ import (
 func RunListDependencies(instanceName string) error {
 	var depJson string
 	var canBeComposite bool
-	cellInst, err := kubectl.GetCell(instanceName)
+	cellInst, err := kubernetes.GetCell(instanceName)
 	if err != nil {
 		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
 			canBeComposite = true
@@ -46,7 +46,7 @@ func RunListDependencies(instanceName string) error {
 	}
 
 	if canBeComposite {
-		compositeInst, err := kubectl.GetComposite(instanceName)
+		compositeInst, err := kubernetes.GetComposite(instanceName)
 		if err != nil {
 			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
 				util.ExitWithErrorMessage("Failed to retrieve dependencies of "+instanceName,

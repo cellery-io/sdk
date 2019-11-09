@@ -28,17 +28,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/ghodss/yaml"
+	"github.com/olekukonko/tablewriter"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
-	"github.com/olekukonko/tablewriter"
-
-	"github.com/ghodss/yaml"
 )
 
 func RunListIngresses(cli cli.Cli, name string) {
@@ -52,7 +50,7 @@ func RunListIngresses(cli cli.Cli, name string) {
 
 func displayInstanceApisTable(instanceName string) {
 	var canBeComposite bool
-	cell, err := kubectl.GetCell(instanceName)
+	cell, err := kubernetes.GetCell(instanceName)
 	if err != nil {
 		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
 			canBeComposite = true
@@ -64,7 +62,7 @@ func displayInstanceApisTable(instanceName string) {
 	}
 
 	if canBeComposite {
-		composite, err := kubectl.GetComposite(instanceName)
+		composite, err := kubernetes.GetComposite(instanceName)
 		if err != nil {
 			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
 				util.ExitWithErrorMessage("Failed to retrieve ingresses of "+instanceName,
@@ -78,7 +76,7 @@ func displayInstanceApisTable(instanceName string) {
 	}
 }
 
-func displayCompositeInstanceApisTable(composite kubectl.Composite) {
+func displayCompositeInstanceApisTable(composite kubernetes.Composite) {
 	var tableData [][]string
 	for _, component := range composite.CompositeSpec.ComponentTemplates {
 		for _, port := range component.Spec.Ports {
@@ -105,7 +103,7 @@ func displayCompositeInstanceApisTable(composite kubectl.Composite) {
 	table.Render()
 }
 
-func displayCellInstanceApisTable(cell kubectl.Cell, cellInstanceName string) {
+func displayCellInstanceApisTable(cell kubernetes.Cell, cellInstanceName string) {
 	apiArray := cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis
 	var ingressType = "web"
 	globalContext := ""
@@ -349,26 +347,26 @@ func displayCellImageApisTable(cli cli.Cli, cellImageContent string) {
 	table.Render()
 }
 
-func getIngressValues(cli cli.Cli, cellImageContent string) (kubectl.Cell, error) {
+func getIngressValues(cli cli.Cli, cellImageContent string) (kubernetes.Cell, error) {
 	parsedCellImage, err := image.ParseImageTag(cellImageContent)
 	imageDir, err := ExtractImage(cli, parsedCellImage, false)
 	if err != nil {
-		return kubectl.Cell{}, fmt.Errorf("error occurred while extracting image: %s", err)
+		return kubernetes.Cell{}, fmt.Errorf("error occurred while extracting image: %s", err)
 	}
 
 	jsonFile, err := os.Open(fmt.Sprintf("%s/%s/%s/%s%s%s", imageDir, constants.ZIP_ARTIFACTS, constants.CELLERY,
 		parsedCellImage.ImageName, constants.ZIP_META_SUFFIX, constants.JSON_EXT))
 	if err != nil {
-		return kubectl.Cell{}, fmt.Errorf("error occurred while reading image_meta file: %s", err)
+		return kubernetes.Cell{}, fmt.Errorf("error occurred while reading image_meta file: %s", err)
 	}
 	byteValue, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
-		return kubectl.Cell{}, fmt.Errorf("error occurred while reading json data from image_meta file: %s", err)
+		return kubernetes.Cell{}, fmt.Errorf("error occurred while reading json data from image_meta file: %s", err)
 	}
-	cell := kubectl.Cell{}
+	cell := kubernetes.Cell{}
 	err = json.Unmarshal(byteValue, &cell)
 	if err != nil {
-		return kubectl.Cell{}, fmt.Errorf("error occurred while unmarshalling json data "+
+		return kubernetes.Cell{}, fmt.Errorf("error occurred while unmarshalling json data "+
 			"from image_meta file: %s", err)
 	}
 	return cell, nil

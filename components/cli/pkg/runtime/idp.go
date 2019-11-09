@@ -21,12 +21,12 @@ package runtime
 import (
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 func addIdp(artifactsPath string) error {
 	for _, v := range buildIdpYamlPaths(artifactsPath) {
-		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
+		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ func addIdp(artifactsPath string) error {
 
 func deleteIdp(artifactsPath string) error {
 	for _, v := range buildIdpYamlPaths(artifactsPath) {
-		err := kubectl.DeleteFileWithNamespace(v, "cellery-system")
+		err := kubernetes.DeleteFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func deleteIdp(artifactsPath string) error {
 
 func CreateIdpConfigMaps(artifactsPath string) error {
 	for _, confMap := range buildIdpConfigMaps(artifactsPath) {
-		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
+		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {
 			return err
 		}

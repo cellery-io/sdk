@@ -21,16 +21,14 @@ package runtime
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 func CreateCelleryNameSpace() error {
 	for _, v := range buildNameSpaceYamlPaths() {
-		err := kubectl.ApplyFile(v)
+		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
 		}

@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -35,8 +35,8 @@ func RunSetupListClusters() error {
 
 func getContexts() []string {
 	var contexts []string
-	jsonOutput := &kubectl.Config{}
-	output, err := kubectl.GetContexts()
+	jsonOutput := &kubernetes.Config{}
+	output, err := kubernetes.GetContexts()
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting context list", err)
 	}

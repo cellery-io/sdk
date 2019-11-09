@@ -29,8 +29,8 @@ import (
 
 	"github.com/mattbaird/jsonpatch"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -74,11 +74,11 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	}
 
 	if isPersistentVolume && !IsGcpRuntime() {
-		nodeName, err := kubectl.GetMasterNodeName()
+		nodeName, err := kubernetes.GetMasterNodeName()
 		if err != nil {
 			return fmt.Errorf("error getting master node name: %v", err)
 		}
-		if err := kubectl.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
+		if err := kubernetes.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
 			return fmt.Errorf("error applying master node lable: %v", err)
 		}
 	}
@@ -103,7 +103,7 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 
 	// Enabling Istio injection
 	spinner.SetNewAction("Enabling istio injection")
-	if err := kubectl.ApplyLable("namespace", "default", "istio-injection=enabled",
+	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
 		true); err != nil {
 		return fmt.Errorf("error enabling istio injection: %v", err)
 	}
@@ -166,11 +166,11 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	if !isLoadBalancerIngressMode {
 		if nodePortIpAddress != "" {
 			spinner.SetNewAction("Adding node port ip address")
-			originalIngressNginx, err := kubectl.GetService("ingress-nginx", "ingress-nginx")
+			originalIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
 			if err != nil {
 				return fmt.Errorf("error getting original ingress-nginx: %v", err)
 			}
-			updatedIngressNginx, err := kubectl.GetService("ingress-nginx", "ingress-nginx")
+			updatedIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
 			if err != nil {
 				return fmt.Errorf("error getting updated ingress-nginx: %v", err)
 			}
@@ -195,7 +195,7 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 			if err != nil {
 				return fmt.Errorf("error marshalling json patch: %v", err)
 			}
-			kubectl.JsonPatchWithNameSpace("svc", "ingress-nginx", string(patchBytes), "ingress-nginx")
+			kubernetes.JsonPatchWithNameSpace("svc", "ingress-nginx", string(patchBytes), "ingress-nginx")
 		}
 	}
 	spinner.Stop(true)
@@ -389,7 +389,7 @@ func buildArtifactsPath(component SystemComponent, artifactsPath string) string 
 }
 
 func IsGcpRuntime() bool {
-	nodes, err := kubectl.GetNodes()
+	nodes, err := kubernetes.GetNodes()
 	if err != nil {
 		util.ExitWithErrorMessage("failed to check if runtime is gcp", err)
 	}
@@ -404,11 +404,11 @@ func IsGcpRuntime() bool {
 
 func GetInstancesNames() ([]string, error) {
 	var instances []string
-	runningCellInstances, err := kubectl.GetCells()
+	runningCellInstances, err := kubernetes.GetCells()
 	if err != nil {
 		return nil, err
 	}
-	runningCompositeInstances, err := kubectl.GetComposites()
+	runningCompositeInstances, err := kubernetes.GetComposites()
 	if err != nil {
 		return nil, err
 	}
@@ -428,7 +428,7 @@ func WaitFor(checkKnative, hpaEnabled bool) {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error getting waiting time for cluster", err)
 	}
-	err = kubectl.WaitForCluster(wtCluster)
+	err = kubernetes.WaitForCluster(wtCluster)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error while checking cluster status", err)
@@ -437,7 +437,7 @@ func WaitFor(checkKnative, hpaEnabled bool) {
 	spinner.Stop(true)
 
 	spinner = util.StartNewSpinner("Checking runtime status (Istio)...")
-	err = kubectl.WaitForDeployments("istio-system", time.Minute*15)
+	err = kubernetes.WaitForDeployments("istio-system", time.Minute*15)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error while checking runtime status (Istio)", err)
@@ -447,7 +447,7 @@ func WaitFor(checkKnative, hpaEnabled bool) {
 
 	if checkKnative {
 		spinner = util.StartNewSpinner("Checking runtime status (Knative Serving)...")
-		err = kubectl.WaitForDeployments("knative-serving", time.Minute*15)
+		err = kubernetes.WaitForDeployments("knative-serving", time.Minute*15)
 		if err != nil {
 			spinner.Stop(false)
 			util.ExitWithErrorMessage("Error while checking runtime status (Knative Serving)", err)
@@ -458,7 +458,7 @@ func WaitFor(checkKnative, hpaEnabled bool) {
 
 	if hpaEnabled {
 		spinner = util.StartNewSpinner("Checking runtime status (Metrics server)...")
-		err = kubectl.WaitForDeployment("available", 900, "metrics-server", "kube-system")
+		err = kubernetes.WaitForDeployment("available", 900, "metrics-server", "kube-system")
 		if err != nil {
 			spinner.Stop(false)
 			util.ExitWithErrorMessage("Error while checking runtime status (Metrics server)", err)
@@ -473,7 +473,7 @@ func WaitFor(checkKnative, hpaEnabled bool) {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error getting waiting time for cellery system", err)
 	}
-	err = kubectl.WaitForDeployments("cellery-system", wrCellerySysterm)
+	err = kubernetes.WaitForDeployments("cellery-system", wrCellerySysterm)
 	if err != nil {
 		spinner.Stop(false)
 		util.ExitWithErrorMessage("Error while checking runtime status (Cellery)", err)

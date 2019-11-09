@@ -21,14 +21,13 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 )
 
 func CreateIdpConfigMaps() error {
 	for _, confMap := range buildIdpConfigMaps() {
-		err := kubectl.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
+		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {
 			return err
 		}
@@ -38,7 +37,7 @@ func CreateIdpConfigMaps() error {
 
 func CreateIdp() error {
 	for _, v := range buildIdpYamlPaths() {
-		err := kubectl.ApplyFileWithNamespace(v, "cellery-system")
+		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
 		}

@@ -23,17 +23,16 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func newExportAutoscalePolicies() *cobra.Command {
+func newExportAutoscalePolicies(cli cli.Cli) *cobra.Command {
 	var file string
 	cmd := &cobra.Command{
 		Use:   "autoscale <command>",
@@ -41,13 +40,13 @@ func newExportAutoscalePolicies() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringVarP(&file, "file", "f", "", "output file for autoscale policy")
 	cmd.AddCommand(
-		newExportCellAutoscalePolicies(&file),
-		newExportCompositeAutoscalePolicies(&file),
+		newExportCellAutoscalePolicies(cli, &file),
+		newExportCompositeAutoscalePolicies(cli, &file),
 	)
 	return cmd
 }
 
-func newExportCellAutoscalePolicies(file *string) *cobra.Command {
+func newExportCellAutoscalePolicies(cli cli.Cli, file *string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cell <cell_instance_name>",
 		Short: "Export autocale policies for a cell instance",
@@ -66,7 +65,7 @@ func newExportCellAutoscalePolicies(file *string) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunExportAutoscalePolicies(kubectl.InstanceKindCell, args[0], *file)
+			err := commands.RunExportAutoscalePolicies(cli, kubernetes.InstanceKindCell, args[0], *file)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to export autoscale policies from instance %s", args[0]), err)
 			}
@@ -76,7 +75,7 @@ func newExportCellAutoscalePolicies(file *string) *cobra.Command {
 	return cmd
 }
 
-func newExportCompositeAutoscalePolicies(file *string) *cobra.Command {
+func newExportCompositeAutoscalePolicies(cli cli.Cli, file *string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "composite <cell_instance_name>",
 		Short: "Export autocale policies for a composite instance",
@@ -95,7 +94,7 @@ func newExportCompositeAutoscalePolicies(file *string) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunExportAutoscalePolicies(kubectl.InstanceKindComposite, args[0], *file)
+			err := commands.RunExportAutoscalePolicies(cli, kubernetes.InstanceKindComposite, args[0], *file)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to export autoscale policies from instance %s", args[0]), err)
 			}

@@ -21,7 +21,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 func RunLogs(cellName, componentName string, sysLog bool) error {
@@ -29,9 +29,9 @@ func RunLogs(cellName, componentName string, sysLog bool) error {
 		var logs string
 		var err error
 		if sysLog {
-			logs, err = kubectl.GetCellLogsAllComponents(cellName)
+			logs, err = kubernetes.GetCellLogsAllComponents(cellName)
 		} else {
-			logs, err = kubectl.GetCellLogsUserComponents(cellName)
+			logs, err = kubernetes.GetCellLogsUserComponents(cellName)
 		}
 
 		if err != nil {
@@ -42,7 +42,7 @@ func RunLogs(cellName, componentName string, sysLog bool) error {
 				"instance %s", cellName))
 		}
 	} else {
-		logs, err := kubectl.GetComponentLogs(cellName, componentName)
+		logs, err := kubernetes.GetComponentLogs(cellName, componentName)
 		if err != nil {
 			return fmt.Errorf(fmt.Sprintf("Error getting logs for component %s of instance %s",
 				componentName, cellName), err)

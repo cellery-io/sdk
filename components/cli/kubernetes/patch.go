@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package kubectl
+package kubernetes
 
 import (
 	"os"
@@ -25,43 +25,32 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func CreateFile(file string) error {
+func JsonPatch(kind, instance, jsonPatch string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
-		"create",
-		"-f",
-		file,
+		"patch",
+		"--type=json",
+		kind,
+		instance,
+		"-p",
+		jsonPatch,
 	)
 	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
+func JsonPatchWithNameSpace(kind, instance, jsonPatch, nameSpace string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
-		"create",
-		"configmap",
-		name,
-		"--from-file",
-		confFile,
-		"-n", namespace,
-	)
-	displayVerboseOutput(cmd)
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func CreateClusterRoleBinding(clusterRole, user string) error {
-	cmd := exec.Command(
-		constants.KUBECTL,
-		"create",
-		"clusterrolebinding",
-		"cluster-admin-binding",
-		"--clusterrole",
-		clusterRole,
-		"--user",
-		user,
+		"patch",
+		"--type=json",
+		kind,
+		instance,
+		"-p",
+		jsonPatch,
+		"-n",
+		nameSpace,
 	)
 	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr

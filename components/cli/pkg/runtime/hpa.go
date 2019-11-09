@@ -23,12 +23,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
 
 func InstallHPA(artifactsPath string) error {
 	for _, v := range buildHPAYamlPaths(artifactsPath) {
-		err := kubectl.CreateFile(v)
+		err := kubernetes.CreateFile(v)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func InstallHPA(artifactsPath string) error {
 
 func deleteHpa(artifactsPath string) error {
 	for _, v := range buildHPAYamlPaths(artifactsPath) {
-		err := kubectl.DeleteFile(v)
+		err := kubernetes.DeleteFile(v)
 		if err != nil {
 			return err
 		}
@@ -50,9 +50,9 @@ func IsHpaEnabled() (bool, error) {
 	var err error
 	enabled := true
 	if IsGcpRuntime() {
-		_, err = kubectl.GetDeployment("kube-system", "metrics-server-v0.3.1")
+		_, err = kubernetes.GetDeployment("kube-system", "metrics-server-v0.3.1")
 	} else {
-		_, err = kubectl.GetDeployment("kube-system", "metrics-server")
+		_, err = kubernetes.GetDeployment("kube-system", "metrics-server")
 	}
 	if err != nil {
 		if strings.Contains(err.Error(), "No resources found") ||

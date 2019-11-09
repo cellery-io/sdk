@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -32,7 +32,7 @@ func RunDescribe(name string) {
 	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
 	if instancePattern {
 		// If the input of user is an instance describe running cell instance.
-		err := kubectl.Describe(name)
+		err := kubernetes.Describe(name)
 		if err != nil {
 			util.ExitWithErrorMessage("Error describing cell instance", err)
 		}

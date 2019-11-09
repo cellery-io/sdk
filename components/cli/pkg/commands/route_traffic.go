@@ -22,10 +22,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
-
-	//"os"
-
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/routing"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -89,7 +86,7 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 
 	spinner.SetNewAction("Applying modified rules")
 	// perform kubectl apply
-	err = kubectl.ApplyFile(artifactFile)
+	err = kubernetes.ApplyFile(artifactFile)
 	if err != nil {
 		spinner.Stop(false)
 		return err

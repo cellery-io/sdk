@@ -21,9 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -40,10 +39,10 @@ func UpdateNfsServerDetails(ipAddress, fileShare string) error {
 }
 
 func CreatePersistentVolume() error {
-	if err := kubectl.ApplyFileWithNamespace(buildArtifactsPersistentVolumeYamlPath(), "cellery-system"); err != nil {
+	if err := kubernetes.ApplyFileWithNamespace(buildArtifactsPersistentVolumeYamlPath(), "cellery-system"); err != nil {
 		return err
 	}
-	if err := kubectl.ApplyFileWithNamespace(buildArtifactsPersistentVolumeClaimYamlPath(), "cellery-system"); err != nil {
+	if err := kubernetes.ApplyFileWithNamespace(buildArtifactsPersistentVolumeClaimYamlPath(), "cellery-system"); err != nil {
 		return err
 	}
 	return nil

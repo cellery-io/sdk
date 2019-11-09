@@ -26,8 +26,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -64,7 +64,7 @@ func displayCellStatus(instance, cellCreationTime, cellStatus string) error {
 	fmt.Println()
 	fmt.Println("  -COMPONENTS-")
 	fmt.Println()
-	pods, err := kubectl.GetPodsForCell(instance)
+	pods, err := kubernetes.GetPodsForCell(instance)
 	if err != nil {
 		return fmt.Errorf("error getting pods information of cell %s, %v", instance, err)
 	}
@@ -77,7 +77,7 @@ func displayCompositeStatus(instance, cellCreationTime, cellStatus string) error
 	fmt.Println()
 	fmt.Println("  -COMPONENTS-")
 	fmt.Println()
-	pods, err := kubectl.GetPodsForComposite(instance)
+	pods, err := kubernetes.GetPodsForComposite(instance)
 	if err != nil {
 		return fmt.Errorf("error getting pods information of composite %s, %v", instance, err)
 	}
@@ -135,7 +135,7 @@ func displayStatusSummaryTable(cellCreationTime, cellStatus string) error {
 	return nil
 }
 
-func displayStatusDetailedTable(pods kubectl.Pods, cellName string) error {
+func displayStatusDetailedTable(pods kubernetes.Pods, cellName string) error {
 	var tableData [][]string
 	for _, pod := range pods.Items {
 		name := strings.Replace(strings.Split(pod.MetaData.Name, "-deployment-")[0], cellName+"--", "", -1)

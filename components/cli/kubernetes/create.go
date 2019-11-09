@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package kubectl
+package kubernetes
 
 import (
 	"os"
@@ -25,12 +25,26 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func ApplyFileWithNamespace(file, namespace string) error {
+func CreateFile(file string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
-		"apply",
+		"create",
 		"-f",
 		file,
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"create",
+		"configmap",
+		name,
+		"--from-file",
+		confFile,
 		"-n", namespace,
 	)
 	displayVerboseOutput(cmd)
@@ -38,12 +52,16 @@ func ApplyFileWithNamespace(file, namespace string) error {
 	return cmd.Run()
 }
 
-func ApplyFile(file string) error {
+func CreateClusterRoleBinding(clusterRole, user string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
-		"apply",
-		"-f",
-		file,
+		"create",
+		"clusterrolebinding",
+		"cluster-admin-binding",
+		"--clusterrole",
+		clusterRole,
+		"--user",
+		user,
 	)
 	displayVerboseOutput(cmd)
 	cmd.Stderr = os.Stderr
