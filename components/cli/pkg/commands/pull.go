@@ -84,7 +84,8 @@ func RunPull(cli cli.Cli, cellImage string, isSilent bool, username string, pass
 		}
 	}
 	// Validating image compatibility with Cellery installation
-	metadata, err := image.ReadMetaData(parsedCellImage.Organization, parsedCellImage.ImageName,
+	repoLocation := cli.FileSystem().Repository()
+	metadata, err := image.ReadMetaData(repoLocation, parsedCellImage.Organization, parsedCellImage.ImageName,
 		parsedCellImage.ImageVersion)
 	if err != nil {
 		return fmt.Errorf("invalid cell image, %v", err)

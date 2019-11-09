@@ -28,9 +28,9 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func ReadCellImageYaml(cellImage string) []byte {
+func ReadCellImageYaml(repo, cellImage string) []byte {
 	parsedCellImage, err := ParseImageTag(cellImage)
-	cellImageZip := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
+	cellImageZip := path.Join(repo, parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 	// Create tmp directory
 	tmpPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", "imageExtracted")

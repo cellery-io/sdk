@@ -63,9 +63,9 @@ func TestDeleteImageSuccess(t *testing.T) {
 	}
 	for _, testIteration := range tests {
 		t.Run(testIteration.name, func(t *testing.T) {
-			err := RunDeleteImage(mockCli, testIteration.images, testIteration.regex, false)
+			err := RunDeleteImage(mockCli, testIteration.images, testIteration.regex, testIteration.deleteAll)
 			if err != nil {
-				t.Errorf("error in RunDeleteImage")
+				t.Errorf("error in RunDeleteImage, %v", err)
 			}
 		})
 	}

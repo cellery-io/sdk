@@ -47,13 +47,14 @@ func TestGetImagesArray(t *testing.T) {
 		t.Run(testIteration.name, func(t *testing.T) {
 			imagesArray, err := getImagesArray(mockCli)
 			if err != nil {
-				t.Errorf("error in getImagesArray")
-			}
-			if diff := cmp.Diff(testIteration.wantName, imagesArray[0].name); diff != "" {
-				t.Errorf("getImagesArray: name (-want, +got)\n%v", diff)
-			}
-			if diff := cmp.Diff(testIteration.wantKind, imagesArray[0].kind); diff != "" {
-				t.Errorf("getImagesArray: kind (-want, +got)\n%v", diff)
+				t.Errorf("error in getImagesArray, %v", err)
+			} else {
+				if diff := cmp.Diff(testIteration.wantName, imagesArray[0].name); diff != "" {
+					t.Errorf("getImagesArray: name (-want, +got)\n%v", diff)
+				}
+				if diff := cmp.Diff(testIteration.wantKind, imagesArray[0].kind); diff != "" {
+					t.Errorf("getImagesArray: kind (-want, +got)\n%v", diff)
+				}
 			}
 		})
 	}

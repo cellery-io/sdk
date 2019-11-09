@@ -41,9 +41,8 @@ func RunExportAutoscalePolicies(cli cli.Cli, kind kubernetes.InstanceKind, insta
 			sp, err = getAutoscalePolicies(cli, kind, instance)
 			return err
 		}); err != nil {
-		return err
+		return fmt.Errorf("failed to retrieve autoscale policy data, %v", err)
 	}
-	fmt.Println(sp)
 	if spData, err = json.Marshal(sp); err != nil {
 		return err
 	}
@@ -75,11 +74,11 @@ func getAutoscalePolicies(cli cli.Cli, kind kubernetes.InstanceKind, instance st
 	var data []byte
 	ik := string(kind)
 	if data, err = cli.KubeCli().GetInstanceBytes(ik, instance); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get instance bytes, %v", err)
 	}
 	originalResource := &kubernetes.ScaleResource{}
 	if err = json.Unmarshal(data, originalResource); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshall, %v", err)
 	}
 	sp := &kubernetes.AutoScalingPolicy{}
 
@@ -103,7 +102,7 @@ func getAutoscalePolicies(cli cli.Cli, kind kubernetes.InstanceKind, instance st
 			}
 		}
 	}
-	return sp, err
+	return sp, nil
 }
 
 func ensureDir(path string) error {

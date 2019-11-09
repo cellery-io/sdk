@@ -30,6 +30,7 @@ type FileSystemManager interface {
 	CurrentDir() string
 	UserHome() (string, error)
 	Repository() string
+	RemoveAll(path string) error
 }
 
 type celleyFileSystem struct {
@@ -61,6 +62,11 @@ func (fs *celleyFileSystem) UserHome() (string, error) {
 // UserHome returns user home.
 func (fs *celleyFileSystem) Repository() string {
 	return filepath.Join(userHomeDir(), celleryHome, "repo")
+}
+
+// RemoveAll deletes files in a given location.
+func (fs *celleyFileSystem) RemoveAll(path string) error {
+	return os.RemoveAll(path)
 }
 
 func userHomeDir() string {

@@ -24,11 +24,12 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func newListComponentsCommand() *cobra.Command {
+func newListComponentsCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "components <instance-name|cell-image-name>",
 		Short:   "List the components which the cell encapsulates",
@@ -48,7 +49,7 @@ func newListComponentsCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunListComponents(args[0])
+			commands.RunListComponents(cli, args[0])
 		},
 		Example: "  cellery list components employee\n" +
 			"  cellery list components cellery-samples/employee:1.0.0",

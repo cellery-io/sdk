@@ -22,22 +22,22 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunDescribe(name string) {
+func RunDescribe(cli cli.Cli, name string) error {
 	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
 	if instancePattern {
 		// If the input of user is an instance describe running cell instance.
-		err := kubernetes.Describe(name)
+		err := cli.KubeCli().Describe(name)
 		if err != nil {
-			util.ExitWithErrorMessage("Error describing cell instance", err)
+			return fmt.Errorf("error describing cell instance, %v", err)
 		}
 	} else {
 		// If the input of user is a cell image print the cell yaml
-		fmt.Println(string(image.ReadCellImageYaml(name)))
+		fmt.Fprintln(cli.Out(), string(image.ReadCellImageYaml(cli.FileSystem().Repository(), name)))
 	}
+	return nil
 }

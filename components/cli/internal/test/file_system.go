@@ -62,3 +62,8 @@ func (fs *MockFileSystem) UserHome() (string, error) {
 func (fs *MockFileSystem) Repository() string {
 	return fs.repository
 }
+
+// RemoveAll mocks deletion of files in a given location.
+func (fs *MockFileSystem) RemoveAll(path string) error {
+	return nil
+}

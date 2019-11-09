@@ -27,27 +27,32 @@ import (
 type MockKubeCli struct {
 	cells      kubernetes.Cells
 	composites kubernetes.Composites
+	cellsBytes map[string][]byte
 }
 
 func (kubeCli *MockKubeCli) SetVerboseMode(enable bool) {
 }
 
-type option func(*MockKubeCli)
-
-func WithCells(cells kubernetes.Cells) option {
+func WithCells(cells kubernetes.Cells) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.cells = cells
 	}
 }
 
-func WithComposites(composites kubernetes.Composites) option {
+func WithComposites(composites kubernetes.Composites) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.composites = composites
 	}
 }
 
+func WithCellsBytes(cellsBytes map[string][]byte) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.cellsBytes = cellsBytes
+	}
+}
+
 // NewMockKubeCli returns a mock cli for the cli.KubeCli interface.
-func NewMockKubeCli(opts ...option) *MockKubeCli {
+func NewMockKubeCli(opts ...func(*MockKubeCli)) *MockKubeCli {
 	cli := &MockKubeCli{}
 	for _, opt := range opts {
 		opt(cli)
@@ -98,5 +103,14 @@ func (kubeCli *MockKubeCli) GetInstancesNames() ([]string, error) {
 }
 
 func (kubeCli *MockKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
+	if instanceKind == "cells.mesh.cellery.io" {
+		return kubeCli.cellsBytes[InstanceName], nil
+	} else if instanceKind == "composites.mesh.cellery.io" {
+		return kubeCli.cellsBytes[InstanceName], nil
+	}
 	return nil, nil
+}
+
+func (kubecli *MockKubeCli) Describe(cellName string) error {
+	return nil
 }

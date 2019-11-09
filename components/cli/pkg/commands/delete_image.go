@@ -20,17 +20,16 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"regexp"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunDeleteImage(cli cli.Cli, images []string, regex string, deleteAll bool) error {
+	repoLocation := cli.FileSystem().Repository()
 	imagesInRepo, err := getImagesArray(cli)
 	if err != nil {
 		return fmt.Errorf("error getting images array, %v", err)
@@ -40,10 +39,10 @@ func RunDeleteImage(cli cli.Cli, images []string, regex string, deleteAll bool) 
 		if err != nil {
 			return fmt.Errorf("error occurred while parsing cell image, %v", err)
 		}
-		cellImagePath := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
+		cellImagePath := path.Join(repoLocation, parsedCellImage.Organization,
 			parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 		if deleteAll {
-			_ = os.RemoveAll(cellImagePath)
+			return cli.FileSystem().RemoveAll(cellImagePath)
 		} else {
 			if regex != "" {
 				// Check if image name matches regex pattern
@@ -52,14 +51,14 @@ func RunDeleteImage(cli cli.Cli, images []string, regex string, deleteAll bool) 
 					return fmt.Errorf("error checking if pattern matches with image name, %v", err)
 				}
 				if regexMatches {
-					_ = os.RemoveAll(cellImagePath)
+					return cli.FileSystem().RemoveAll(cellImagePath)
 					continue
 				}
 			}
 			if len(images) > 0 {
 				for _, imageToBeDeleted := range images {
 					if imageInRepo.name == imageToBeDeleted {
-						_ = os.RemoveAll(cellImagePath)
+						return cli.FileSystem().RemoveAll(cellImagePath)
 						break
 					}
 				}

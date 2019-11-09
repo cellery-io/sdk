@@ -194,7 +194,7 @@ func displayCellInstanceApisTable(cell kubernetes.Cell, cellInstanceName string)
 }
 
 func displayImageApisTable(cli cli.Cli, imageName string) {
-	cellYamlContent := image.ReadCellImageYaml(imageName)
+	cellYamlContent := image.ReadCellImageYaml(cli.FileSystem().Repository(), imageName)
 	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {

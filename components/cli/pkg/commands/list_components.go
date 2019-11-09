@@ -27,24 +27,25 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/olekukonko/tablewriter"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunListComponents(name string) {
+func RunListComponents(cli cli.Cli, name string) {
 	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
 	if instancePattern {
 		displayComponentsTable(getCellInstanceComponents(name))
 	} else {
-		displayComponentsTable(getCellImageCompoents(name))
+		displayComponentsTable(getCellImageCompoents(cli, name))
 	}
 }
 
-func getCellImageCompoents(cellImage string) []string {
+func getCellImageCompoents(cli cli.Cli, cellImage string) []string {
 	var components []string
-	cellYamlContent := image.ReadCellImageYaml(cellImage)
+	cellYamlContent := image.ReadCellImageYaml(cli.FileSystem().Repository(), cellImage)
 	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {

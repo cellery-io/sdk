@@ -24,11 +24,12 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func newDescribeCommand() *cobra.Command {
+func newDescribeCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "describe <instance-name|cell-image-name>",
 		Short:   "Describes a cell image",
@@ -48,7 +49,7 @@ func newDescribeCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunDescribe(args[0])
+			commands.RunDescribe(cli, args[0])
 		},
 		Example: "  cellery describe employee\n" +
 			"  cellery describe cellery-samples/employee:1.0.0",

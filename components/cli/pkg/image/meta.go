@@ -23,14 +23,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func ReadMetaData(organization, project, version string) (*MetaData, error) {
-	r, err := zip.OpenReader(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
-		organization, project, version, project+".zip"))
+func ReadMetaData(repo, organization, project, version string) (*MetaData, error) {
+	r, err := zip.OpenReader(filepath.Join(repo, organization, project, version, project+".zip"))
 	if err != nil {
 		return nil, err
 	}

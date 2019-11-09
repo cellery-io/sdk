@@ -99,7 +99,7 @@ func getImagesArray(cli cli.Cli) ([]imageData, error) {
 					if err != nil {
 						log.Fatal(err)
 					}
-					meta, err := image.ReadMetaData(organization, project, version)
+					meta, err := image.ReadMetaData(repoLocation, organization, project, version)
 					if err != nil {
 						return nil, fmt.Errorf("error while listing images, %v", err)
 					}

@@ -38,6 +38,7 @@ type KubeCli interface {
 	GetCell(cellName string) (Cell, error)
 	GetComposite(compositeName string) (Composite, error)
 	GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error)
+	Describe(cellName string) error
 }
 
 type CelleryKubeCli struct {
