@@ -106,3 +106,8 @@ func (cli *MockCli) KubeCli() kubernetes.KubeCli {
 func (cli *MockCli) Registry() registry.Registry {
 	return cli.registry
 }
+
+// OpenBrowser mocks opening up of the provided URL in a browser
+func (cli *MockCli) OpenBrowser(url string) error {
+	return nil
+}

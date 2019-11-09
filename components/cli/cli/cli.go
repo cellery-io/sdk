@@ -19,9 +19,14 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"os/exec"
+	"runtime"
+	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
@@ -37,6 +42,7 @@ type Cli interface {
 	BalExecutor() ballerina.BalExecutor
 	KubeCli() kubernetes.KubeCli
 	Registry() registry.Registry
+	OpenBrowser(url string) error
 }
 
 // CelleryCli is an instance of the cellery command line client.
@@ -115,4 +121,37 @@ func (cli *CelleryCli) KubeCli() kubernetes.KubeCli {
 // KubeCli returns kubernetes.KubeCli instance.
 func (cli *CelleryCli) Registry() registry.Registry {
 	return cli.registry
+}
+
+// OpenBrowser opens up the provided URL in a browser
+func (cli *CelleryCli) OpenBrowser(url string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "openbsd":
+		fallthrough
+	case "linux":
+		cmd = exec.Command("xdg-open", url)
+	case "darwin":
+		cmd = exec.Command("open", url)
+	case "windows":
+		r := strings.NewReplacer("&", "^&")
+		cmd = exec.Command("cmd", "/c", "start", r.Replace(url))
+	}
+	if cmd != nil {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Start()
+		if err != nil {
+			log.Printf("Failed to open browser due to error %v", err)
+			return fmt.Errorf("Failed to open browser: " + err.Error())
+		}
+		err = cmd.Wait()
+		if err != nil {
+			log.Printf("Failed to wait for open browser command to finish due to error %v", err)
+			return fmt.Errorf("Failed to wait for open browser command to finish: " + err.Error())
+		}
+		return nil
+	} else {
+		return errors.New("unsupported platform")
+	}
 }

@@ -25,6 +25,8 @@ import (
 )
 
 const celleryHome = ".cellery"
+const celleryInstallationPathMac = "/Library/Cellery"
+const celleryInstallationPathUbuntu = "/usr/share/cellery"
 
 type FileSystemManager interface {
 	CurrentDir() string
@@ -32,6 +34,7 @@ type FileSystemManager interface {
 	TempDir() string
 	Repository() string
 	RemoveAll(path string) error
+	CelleryInstallationDir() string
 }
 
 type celleyFileSystem struct {
@@ -90,4 +93,15 @@ func userHomeDir() string {
 // TempDir returns temp dir
 func (fs *celleyFileSystem) TempDir() string {
 	return fs.tempDir
+}
+
+func (fs *celleyFileSystem) CelleryInstallationDir() string {
+	celleryHome := ""
+	if runtime.GOOS == "darwin" {
+		celleryHome = celleryInstallationPathMac
+	}
+	if runtime.GOOS == "linux" {
+		celleryHome = celleryInstallationPathUbuntu
+	}
+	return celleryHome
 }

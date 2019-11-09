@@ -19,10 +19,11 @@
 package test
 
 type MockFileSystem struct {
-	currentDir string
-	repository string
-	userHome   string
-	tempDir    string
+	currentDir             string
+	repository             string
+	userHome               string
+	tempDir                string
+	celleryInstallationDir string
 }
 
 // NewMockFileSystem returns a mockFileSystem instance.
@@ -46,15 +47,9 @@ func SetCurrentDir(currentDir string) func(*MockFileSystem) {
 	}
 }
 
-func SetUserHome(userHome string) func(*MockFileSystem) {
+func SetCelleryInstallationDir(dir string) func(*MockFileSystem) {
 	return func(fs *MockFileSystem) {
-		fs.userHome = userHome
-	}
-}
-
-func SetTempDir(tempDir string) func(*MockFileSystem) {
-	return func(fs *MockFileSystem) {
-		fs.tempDir = tempDir
+		fs.celleryInstallationDir = dir
 	}
 }
 
@@ -81,4 +76,8 @@ func (fs *MockFileSystem) Repository() string {
 // RemoveAll mocks deletion of files in a given location.
 func (fs *MockFileSystem) RemoveAll(path string) error {
 	return nil
+}
+
+func (fs *MockFileSystem) CelleryInstallationDir() string {
+	return fs.celleryInstallationDir
 }

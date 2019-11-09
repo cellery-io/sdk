@@ -21,17 +21,21 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // newViewCommand creates a new command which can be executed to view a particular image
-func newViewCommand() *cobra.Command {
+func newViewCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "view <organization>/<cell-image>:<version>",
 		Short: "View the Cell Image in a browser",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunView(args[0])
+			if err := commands.RunView(cli, args[0]); err != nil {
+				util.ExitWithErrorMessage("Cellery view command failed", err)
+			}
 		},
 		Example: "  cellery view cellery-samples/employee:1.0.0",
 	}

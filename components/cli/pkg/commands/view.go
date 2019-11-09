@@ -26,72 +26,64 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
+const celleryHomeDocsViewDir = "docs-view"
+
 // RunView opens the View for a particular Cell Image
-func RunView(cellImage string) {
-	celleryHomeDocsViewDir := path.Join(util.CelleryInstallationDir(), constants.CELLERY_HOME_DOCS_VIEW_DIR)
-	errorMessage := "Error occurred while generating Docs View"
+func RunView(cli cli.Cli, cellImage string) error {
+	celleryHomeDocsViewDir := path.Join(cli.FileSystem().CelleryInstallationDir(), celleryHomeDocsViewDir)
 
 	// Making a copy of the Docs Viewer
 	docsViewDir, err := ioutil.TempDir("", "cellery-docs-view")
 	if err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+		return fmt.Errorf("error creating temp dir, %v", err)
 	}
-	err = util.CopyDir(celleryHomeDocsViewDir, docsViewDir)
-	if err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+	if err = util.CopyDir(celleryHomeDocsViewDir, docsViewDir); err != nil {
+		return fmt.Errorf("error copying docs view dir, %v", err)
 	}
-
 	// Finding Cell Image location
 	parsedCellImage, err := image.ParseImageTag(cellImage)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+		return fmt.Errorf("error occurred while parsing cell image, %v", err)
 	}
-	cellImageFile := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
-		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+	cellImageFile := filepath.Join(cli.FileSystem().Repository(), parsedCellImage.Organization,
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+cellImageExt)
 
 	// Create temp directory
 	currentTime := time.Now()
 	timestamp := currentTime.Format("27065102350415")
-	tempPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", timestamp)
-	err = util.CreateDir(tempPath)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while unpacking Cell Image", err)
+	tempPath := filepath.Join(cli.FileSystem().TempDir(), timestamp)
+	if err = util.CreateDir(tempPath); err != nil {
+		return fmt.Errorf("error occurred while unpacking Cell Image, %v", err)
 	}
-	defer func() {
-		err = os.RemoveAll(tempPath)
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while cleaning up", err)
+	defer func() error {
+		if err = os.RemoveAll(tempPath); err != nil {
+			return fmt.Errorf("error occurred while cleaning up, %v", err)
 		}
+		return nil
 	}()
-
 	// Unzipping Cellery Image
-	err = util.Unzip(cellImageFile, tempPath)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while unpacking Cell Image", err)
+	if err = util.Unzip(cellImageFile, tempPath); err != nil {
+		return fmt.Errorf("error occurred while unpacking Cell Image, %v", err)
 	}
-
 	metadataFileContent, err := ioutil.ReadFile(filepath.Join(tempPath, artifacts, "cellery", "metadata.json"))
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while reading Cell metadata", err)
+		return fmt.Errorf("error occurred while reading Cell metadata, %v", err)
 	}
 
 	docsViewData := "window.__CELL_METADATA__ = " + string(metadataFileContent) + ";"
-	err = ioutil.WriteFile(filepath.Join(docsViewDir, "data", "cell.js"), []byte(docsViewData), 0666)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while creating Cell view", err)
+	if err = ioutil.WriteFile(filepath.Join(docsViewDir, "data", "cell.js"), []byte(docsViewData), 0666); err != nil {
+		return fmt.Errorf("error occurred while creating Cell view, %v", err)
 	}
-
 	// Opening browser
 	docsViewIndexFile := path.Join(docsViewDir, "index.html")
-	fmt.Printf("Cell Image Viewer: file://%s\n\n", docsViewIndexFile)
-	err = util.OpenBrowser(docsViewIndexFile)
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while opening the browser", err)
+	fmt.Fprintf(cli.Out(), "Cell Image Viewer: file://%s\n\n", docsViewIndexFile)
+	if err = cli.OpenBrowser(docsViewIndexFile); err != nil {
+		return fmt.Errorf("error occurred while opening the browser, %v", err)
 	}
+	return nil
 }
