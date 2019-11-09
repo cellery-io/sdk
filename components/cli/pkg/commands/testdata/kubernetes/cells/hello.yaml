@@ -1,0 +1,301 @@
+{
+  "apiVersion": "mesh.cellery.io/v1alpha2",
+  "kind": "Cell",
+  "metadata": {
+    "annotations": {
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"mesh.cellery.io/v1alpha2\",\"kind\":\"Cell\",\"metadata\":{\"annotations\":{\"mesh.cellery.io/cell-dependencies\":\"[]\",\"mesh.cellery.io/cell-image-name\":\"pet-be-auto\",\"mesh.cellery.io/cell-image-org\":\"myorg\",\"mesh.cellery.io/cell-image-version\":\"1.0.0\"},\"labels\":{},\"name\":\"pet-be-auto\",\"namespace\":\"default\"},\"spec\":{\"components\":[{\"metadata\":{\"annotations\":{},\"labels\":{},\"name\":\"controller\"},\"spec\":{\"configurations\":[],\"ports\":[{\"name\":\"controller\",\"port\":80,\"protocol\":\"http\",\"targetContainer\":\"controller\",\"targetPort\":80}],\"scalingPolicy\":{\"hpa\":{\"maxReplicas\":3,\"metrics\":[{\"resource\":{\"name\":\"cpu\",\"target\":{\"averageUtilization\":40,\"type\":\"Utilization\"}},\"type\":\"Resource\"}],\"minReplicas\":1},\"kpa\":null,\"overridable\":true,\"replicas\":1},\"secrets\":[],\"template\":{\"containers\":[{\"env\":[{\"name\":\"CATALOG_PORT\",\"value\":\"80\"},{\"name\":\"ORDER_PORT\",\"value\":\"80\"},{\"name\":\"ORDER_HOST\",\"value\":\"pet-be-auto--orders-service\"},{\"name\":\"CUSTOMER_PORT\",\"value\":\"80\"},{\"name\":\"CATALOG_HOST\",\"value\":\"pet-be-auto--catalog-service\"},{\"name\":\"CUSTOMER_HOST\",\"value\":\"pet-be-auto--customers-service\"}],\"image\":\"wso2cellery/samples-pet-store-controller:latest-dev\",\"name\":\"controller\",\"ports\":[{\"containerPort\":80}],\"resources\":{\"limits\":{\"cpu\":\"125m\"},\"requests\":{\"cpu\":\"125m\"}}}]},\"type\":\"Deployment\",\"volumeClaims\":[]}},{\"metadata\":{\"annotations\":{},\"labels\":{},\"name\":\"catalog\"},\"spec\":{\"configurations\":[],\"ports\":[{\"name\":\"catalog\",\"port\":80,\"protocol\":\"http\",\"targetContainer\":\"catalog\",\"targetPort\":80}],\"secrets\":[],\"template\":{\"containers\":[{\"image\":\"wso2cellery/samples-pet-store-catalog:latest-dev\",\"name\":\"catalog\",\"ports\":[{\"containerPort\":80}]}]},\"type\":\"Deployment\",\"volumeClaims\":[]}},{\"metadata\":{\"annotations\":{},\"labels\":{},\"name\":\"orders\"},\"spec\":{\"configurations\":[],\"ports\":[{\"name\":\"orders\",\"port\":80,\"protocol\":\"http\",\"targetContainer\":\"orders\",\"targetPort\":80}],\"secrets\":[],\"template\":{\"containers\":[{\"image\":\"wso2cellery/samples-pet-store-orders:latest-dev\",\"name\":\"orders\",\"ports\":[{\"containerPort\":80}]}]},\"type\":\"Deployment\",\"volumeClaims\":[]}},{\"metadata\":{\"annotations\":{},\"labels\":{},\"name\":\"customers\"},\"spec\":{\"configurations\":[],\"ports\":[{\"name\":\"customers\",\"port\":80,\"protocol\":\"http\",\"targetContainer\":\"customers\",\"targetPort\":80}],\"secrets\":[],\"template\":{\"containers\":[{\"image\":\"wso2cellery/samples-pet-store-customers:latest-dev\",\"name\":\"customers\",\"ports\":[{\"containerPort\":80}]}]},\"type\":\"Deployment\",\"volumeClaims\":[]}}],\"gateway\":{\"spec\":{\"ingress\":{\"extensions\":{},\"grpc\":[],\"http\":[{\"authenticate\":true,\"context\":\"/controller\",\"definitions\":[{\"method\":\"GET\",\"path\":\"/catalog\"},{\"method\":\"GET\",\"path\":\"/orders\"},{\"method\":\"POST\",\"path\":\"/orders\"},{\"method\":\"GET\",\"path\":\"/profile\"},{\"method\":\"POST\",\"path\":\"/profile\"}],\"destination\":{\"host\":\"controller\",\"port\":80},\"global\":false,\"port\":80,\"version\":\"0.1\"}],\"tcp\":[]}}},\"sts\":{\"spec\":{\"unsecuredPaths\":[]}}}}\n",
+      "mesh.cellery.io/cell-dependencies": "[]",
+      "mesh.cellery.io/cell-image-name": "pet-be-auto",
+      "mesh.cellery.io/cell-image-org": "myorg",
+      "mesh.cellery.io/cell-image-version": "1.0.0"
+    },
+    "creationTimestamp": "2019-11-09T04:36:05Z",
+    "generation": 5,
+    "name": "pet-be-auto",
+    "namespace": "default",
+    "resourceVersion": "174423",
+    "selfLink": "/apis/mesh.cellery.io/v1alpha2/namespaces/default/cells/pet-be-auto",
+    "uid": "70f42ab5-02aa-11ea-adda-42010a8a013c"
+  },
+  "spec": {
+    "components": [
+    {
+      "metadata": {
+        "annotations": {},
+        "labels": {},
+        "name": "controller"
+      },
+      "spec": {
+        "configurations": [],
+        "ports": [
+        {
+          "name": "controller",
+          "port": 80,
+          "protocol": "http",
+          "targetContainer": "controller",
+          "targetPort": 80
+        }
+        ],
+        "scalingPolicy": {
+          "hpa": {
+            "maxReplicas": 6,
+            "metrics": [
+            {
+              "resource": {
+                "name": "cpu",
+                "target": {
+                  "averageUtilization": 55,
+                  "type": "Utilization"
+                }
+              },
+              "type": "Resource"
+            }
+            ],
+            "minReplicas": 1
+          },
+          "kpa": null,
+          "overridable": true,
+          "replicas": 1
+        },
+        "secrets": [],
+        "template": {
+          "containers": [
+          {
+            "env": [
+            {
+              "name": "CATALOG_PORT",
+              "value": "80"
+            },
+            {
+              "name": "ORDER_PORT",
+              "value": "80"
+            },
+            {
+              "name": "ORDER_HOST",
+              "value": "pet-be-auto--orders-service"
+            },
+            {
+              "name": "CUSTOMER_PORT",
+              "value": "80"
+            },
+            {
+              "name": "CATALOG_HOST",
+              "value": "pet-be-auto--catalog-service"
+            },
+            {
+              "name": "CUSTOMER_HOST",
+              "value": "pet-be-auto--customers-service"
+            }
+            ],
+            "image": "wso2cellery/samples-pet-store-controller:latest-dev",
+            "name": "controller",
+            "ports": [
+            {
+              "containerPort": 80
+            }
+            ],
+            "resources": {
+              "limits": {
+                "cpu": "125m"
+              },
+              "requests": {
+                "cpu": "125m"
+              }
+            }
+          }
+          ]
+        },
+        "type": "Deployment",
+        "volumeClaims": []
+      }
+    },
+    {
+      "metadata": {
+        "annotations": {},
+        "labels": {},
+        "name": "catalog"
+      },
+      "spec": {
+        "configurations": [],
+        "ports": [
+        {
+          "name": "catalog",
+          "port": 80,
+          "protocol": "http",
+          "targetContainer": "catalog",
+          "targetPort": 80
+        }
+        ],
+        "secrets": [],
+        "template": {
+          "containers": [
+          {
+            "image": "wso2cellery/samples-pet-store-catalog:latest-dev",
+            "name": "catalog",
+            "ports": [
+            {
+              "containerPort": 80
+            }
+            ]
+          }
+          ]
+        },
+        "type": "Deployment",
+        "volumeClaims": []
+      }
+    },
+    {
+      "metadata": {
+        "annotations": {},
+        "labels": {},
+        "name": "orders"
+      },
+      "spec": {
+        "configurations": [],
+        "ports": [
+        {
+          "name": "orders",
+          "port": 80,
+          "protocol": "http",
+          "targetContainer": "orders",
+          "targetPort": 80
+        }
+        ],
+        "secrets": [],
+        "template": {
+          "containers": [
+          {
+            "image": "wso2cellery/samples-pet-store-orders:latest-dev",
+            "name": "orders",
+            "ports": [
+            {
+              "containerPort": 80
+            }
+            ]
+          }
+          ]
+        },
+        "type": "Deployment",
+        "volumeClaims": []
+      }
+    },
+    {
+      "metadata": {
+        "annotations": {},
+        "labels": {},
+        "name": "customers"
+      },
+      "spec": {
+        "configurations": [],
+        "ports": [
+        {
+          "name": "customers",
+          "port": 80,
+          "protocol": "http",
+          "targetContainer": "customers",
+          "targetPort": 80
+        }
+        ],
+        "secrets": [],
+        "template": {
+          "containers": [
+          {
+            "image": "wso2cellery/samples-pet-store-customers:latest-dev",
+            "name": "customers",
+            "ports": [
+            {
+              "containerPort": 80
+            }
+            ]
+          }
+          ]
+        },
+        "type": "Deployment",
+        "volumeClaims": []
+      }
+    }
+    ],
+    "gateway": {
+      "spec": {
+        "ingress": {
+          "extensions": {},
+          "grpc": [],
+          "http": [
+          {
+            "authenticate": true,
+            "context": "/controller",
+            "definitions": [
+            {
+              "method": "GET",
+              "path": "/catalog"
+            },
+            {
+              "method": "GET",
+              "path": "/orders"
+            },
+            {
+              "method": "POST",
+              "path": "/orders"
+            },
+            {
+              "method": "GET",
+              "path": "/profile"
+            },
+            {
+              "method": "POST",
+              "path": "/profile"
+            }
+            ],
+            "destination": {
+              "host": "controller",
+              "port": 80
+            },
+            "global": false,
+            "port": 80,
+            "version": "0.1"
+          }
+          ],
+          "tcp": []
+        },
+        "scalingPolicy": {
+          "replicas": 1
+        }
+      }
+    },
+    "sts": {
+      "spec": {
+        "unsecuredPaths": []
+      }
+    }
+  },
+  "status": {
+    "activeComponentCount": 4,
+    "componentCount": 4,
+    "componentGenerations": {
+      "pet-be-auto--catalog": 1,
+      "pet-be-auto--controller": 5,
+      "pet-be-auto--customers": 1,
+      "pet-be-auto--orders": 1
+    },
+    "componentStatuses": {
+      "pet-be-auto--catalog": "Ready",
+      "pet-be-auto--controller": "Ready",
+      "pet-be-auto--customers": "Ready",
+      "pet-be-auto--orders": "Ready"
+    },
+    "conditions": [
+    {
+      "status": "True",
+      "type": "Ready"
+    }
+    ],
+    "gatewayGeneration": 2,
+    "gatewayServiceName": "pet-be-auto--gateway-service",
+    "gatewayStatus": "Ready",
+    "networkPolicyGeneration": 1,
+    "observedGeneration": 5,
+    "status": "Ready",
+    "tokenServiceGeneration": 1
+  }
+}
+
