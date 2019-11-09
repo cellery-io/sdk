@@ -27,91 +27,89 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // RunInspect extracts the cell image and lists the files in the cell image
-func RunInspect(cellImage string) {
+func RunInspect(cli cli.Cli, cellImage string) error {
 	parsedCellImage, err := image.ParseImageTag(cellImage)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while parsing cell image", err)
+		return fmt.Errorf("error occurred while parsing cell image, %v", err)
 	}
-	cellImageFile := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
+	cellImageFile := filepath.Join(cli.FileSystem().Repository(), parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 
 	// Checking if the image is present in the local repo
 	isImagePresent, _ := util.FileExists(cellImageFile)
 	if !isImagePresent {
-		util.ExitWithErrorMessage(fmt.Sprintf("Failed to list files for image %s", util.Bold(cellImage)),
-			errors.New("Image not Found"))
+		return fmt.Errorf(fmt.Sprintf("failed to list files for image %s, %v", util.Bold(cellImage), errors.New("image not Found")))
 	}
 
 	// Create temp directory
 	currentTime := time.Now()
 	timestamp := currentTime.Format("27065102350415")
-	tempPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", timestamp)
+	tempPath := filepath.Join(cli.FileSystem().TempDir(), timestamp)
 	err = util.CreateDir(tempPath)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while reading the cell image", err)
+		return fmt.Errorf("error occurred while reading the cell image, %v", err)
 	}
-	defer func() {
+	defer func() error {
 		err = os.RemoveAll(tempPath)
 		if err != nil {
-			util.ExitWithErrorMessage("Error while cleaning up", err)
+			return fmt.Errorf("error while cleaning up, %v", err)
 		}
+		return nil
 	}()
 
 	// Unzipping Cellery Image
 	err = util.Unzip(cellImageFile, tempPath)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while reading the cell image", err)
+		return fmt.Errorf("error occurred while reading the cell image, %v", err)
 	}
 
 	// Printing the cell image directory structure
-	fmt.Printf("\n%s\n  │ \n", util.Bold(fmt.Sprintf("%s/%s:%s", parsedCellImage.Organization,
+	fmt.Fprintf(cli.Out(), "\n%s\n  │ \n", util.Bold(fmt.Sprintf("%s/%s:%s", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)))
-	err = printCellImageDirectory(tempPath, 0, []bool{})
+	err = printCellImageDirectory(cli, tempPath, 0, []bool{})
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while printing the cell image files", err)
+		return fmt.Errorf("error occurred while printing the cell image files, %v", err)
 	}
-	fmt.Println()
+	fmt.Fprintln(cli.Out())
+	return nil
 }
 
-func printCellImageDirectory(dir string, nestingLevel int, ancestorBranchPrintRequirement []bool) error {
+func printCellImageDirectory(cli cli.Cli, dir string, nestingLevel int, ancestorBranchPrintRequirement []bool) error {
 	fds, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return err
 	}
 	for i, fd := range fds {
-		//fmt.Printf("%d %d\n", nestingLevel, i)
 		fileName := fd.Name()
 
 		for j := 0; j < nestingLevel; j++ {
 			if ancestorBranchPrintRequirement[j] {
-				fmt.Printf("  │ ")
+				fmt.Fprintf(cli.Out(), "  │ ")
 			} else {
-				fmt.Printf("    ")
+				fmt.Fprintf(cli.Out(), "    ")
 			}
 		}
-
 		if i == len(fds)-1 {
-			fmt.Print("  └")
+			fmt.Fprintf(cli.Out(), "  └")
 		} else {
-			fmt.Print("  ├")
+			fmt.Fprintf(cli.Out(), "  ├")
 		}
-		fmt.Printf("──%s\n", fileName)
+		fmt.Fprintf(cli.Out(), "──%s\n", fileName)
 
 		if fd.IsDir() {
-			err = printCellImageDirectory(path.Join(dir, fileName), nestingLevel+1,
+			err = printCellImageDirectory(cli, path.Join(dir, fileName), nestingLevel+1,
 				append(ancestorBranchPrintRequirement, i != len(fds)-1))
 			if err != nil {
 				return err
 			}
 		}
 	}
-
 	return nil
 }

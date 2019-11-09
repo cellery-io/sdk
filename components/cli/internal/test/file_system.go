@@ -18,13 +18,11 @@
 
 package test
 
-import (
-	"io/ioutil"
-)
-
 type MockFileSystem struct {
 	currentDir string
 	repository string
+	userHome   string
+	tempDir    string
 }
 
 // NewMockFileSystem returns a mockFileSystem instance.
@@ -48,14 +46,31 @@ func SetCurrentDir(currentDir string) func(*MockFileSystem) {
 	}
 }
 
+func SetUserHome(userHome string) func(*MockFileSystem) {
+	return func(fs *MockFileSystem) {
+		fs.userHome = userHome
+	}
+}
+
+func SetTempDir(tempDir string) func(*MockFileSystem) {
+	return func(fs *MockFileSystem) {
+		fs.tempDir = tempDir
+	}
+}
+
 // CurrentDir returns the current directory.
 func (fs *MockFileSystem) CurrentDir() string {
 	return fs.currentDir
 }
 
+// TempDir returns the temp directory.
+func (fs *MockFileSystem) TempDir() string {
+	return fs.tempDir
+}
+
 // UserHome returns the user home.
-func (fs *MockFileSystem) UserHome() (string, error) {
-	return ioutil.TempDir("", "user-home")
+func (fs *MockFileSystem) UserHome() string {
+	return fs.userHome
 }
 
 // UserHome returns user home.

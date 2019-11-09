@@ -28,13 +28,17 @@ const celleryHome = ".cellery"
 
 type FileSystemManager interface {
 	CurrentDir() string
-	UserHome() (string, error)
+	UserHome() string
+	TempDir() string
 	Repository() string
 	RemoveAll(path string) error
 }
 
 type celleyFileSystem struct {
+	userHome   string
+	repository string
 	currentDir string
+	tempDir    string
 }
 
 // NewCelleryFileSystem returns a celleyFileSystem instance.
@@ -45,6 +49,9 @@ func NewCelleryFileSystem() (*celleyFileSystem, error) {
 	}
 	fs := &celleyFileSystem{
 		currentDir: currentDir,
+		userHome:   userHomeDir(),
+		repository: filepath.Join(userHomeDir(), celleryHome, "repo"),
+		tempDir:    filepath.Join(userHomeDir(), celleryHome, "tmp"),
 	}
 	return fs, nil
 }
@@ -55,13 +62,13 @@ func (fs *celleyFileSystem) CurrentDir() string {
 }
 
 // UserHome returns user home.
-func (fs *celleyFileSystem) UserHome() (string, error) {
-	return userHomeDir(), nil
+func (fs *celleyFileSystem) UserHome() string {
+	return fs.userHome
 }
 
 // UserHome returns user home.
 func (fs *celleyFileSystem) Repository() string {
-	return filepath.Join(userHomeDir(), celleryHome, "repo")
+	return fs.repository
 }
 
 // RemoveAll deletes files in a given location.
@@ -78,4 +85,9 @@ func userHomeDir() string {
 		return home
 	}
 	return os.Getenv("HOME")
+}
+
+// TempDir returns temp dir
+func (fs *celleyFileSystem) TempDir() string {
+	return fs.tempDir
 }

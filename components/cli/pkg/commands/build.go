@@ -97,11 +97,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 		return err
 	}
 	// Cleaning up the old image if it already exists
-	var userHome string
-	if userHome, err = cli.FileSystem().UserHome(); err != nil {
-		return err
-	}
-	repoLocation := filepath.Join(userHome, constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
+	repoLocation := filepath.Join(cli.FileSystem().UserHome(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	var hasOldImage bool
 	if hasOldImage, err = util.FileExists(repoLocation); err != nil {

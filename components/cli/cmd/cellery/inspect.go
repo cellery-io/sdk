@@ -21,14 +21,15 @@ package main
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-
-	"github.com/spf13/cobra"
 )
 
 // newListFilesCommand creates a command which can be invoked to list the files (directory structure) of a cell images.
-func newInspectCommand() *cobra.Command {
+func newInspectCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "inspect <organization>/<cell-image>:<version>",
 		Short:   "List the files in the cell image",
@@ -45,7 +46,7 @@ func newInspectCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunInspect(args[0])
+			commands.RunInspect(cli, args[0])
 		},
 		Example: "  cellery inspect cellery-samples/employee:1.0.0",
 	}
