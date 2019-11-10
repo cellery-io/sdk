@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http:www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -23,6 +23,9 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
 )
+
+const celleryInstance = "cells.mesh.cellery.io"
+const celleryComposite = "composites.mesh.cellery.io"
 
 type MockKubeCli struct {
 	cells            kubernetes.Cells
@@ -47,7 +50,7 @@ func WithComposites(composites kubernetes.Composites) func(*MockKubeCli) {
 	}
 }
 
-func WithCellsBytes(cellsBytes map[string][]byte) func(*MockKubeCli) {
+func WithCellsAsBytes(cellsBytes map[string][]byte) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.cellsBytes = cellsBytes
 	}
@@ -112,15 +115,15 @@ func (kubeCli *MockKubeCli) GetInstancesNames() ([]string, error) {
 }
 
 func (kubeCli *MockKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
-	if instanceKind == "cells.mesh.cellery.io" {
+	if instanceKind == celleryInstance {
 		return kubeCli.cellsBytes[InstanceName], nil
-	} else if instanceKind == "composites.mesh.cellery.io" {
+	} else if instanceKind == celleryComposite {
 		return kubeCli.cellsBytes[InstanceName], nil
 	}
 	return nil, nil
 }
 
-func (kubeCli *MockKubeCli) Describe(cellName string) error {
+func (kubeCli *MockKubeCli) DescribeCell(cellName string) error {
 	return nil
 }
 

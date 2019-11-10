@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http:www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -52,7 +52,7 @@ type Cli interface {
 type CelleryCli struct {
 	fileSystemManager FileSystemManager
 	kubecli           kubernetes.KubeCli
-	BallerinaExecutor ballerina.BalExecutor
+	ballerinaExecutor ballerina.BalExecutor
 	registry          registry.Registry
 	docker            docker.Docker
 }
@@ -78,6 +78,12 @@ func SetRegistry(registry registry.Registry) func(*CelleryCli) {
 func SetFileSystem(manager FileSystemManager) func(*CelleryCli) {
 	return func(cli *CelleryCli) {
 		cli.fileSystemManager = manager
+	}
+}
+
+func SetBallerinaExecutor(balExecutor ballerina.BalExecutor) func(*CelleryCli) {
+	return func(cli *CelleryCli) {
+		cli.ballerinaExecutor = balExecutor
 	}
 }
 
@@ -114,7 +120,7 @@ func (cli *CelleryCli) FileSystem() FileSystemManager {
 
 // BalExecutor returns ballerina.BalExecutor instance.
 func (cli *CelleryCli) BalExecutor() ballerina.BalExecutor {
-	return cli.BallerinaExecutor
+	return cli.ballerinaExecutor
 }
 
 // KubeCli returns kubernetes.KubeCli instance.
@@ -161,6 +167,6 @@ func (cli *CelleryCli) OpenBrowser(url string) error {
 		}
 		return nil
 	} else {
-		return errors.New("unsupported platform")
+		return errors.New(fmt.Sprintf("unsupported platform: %v", runtime.GOOS))
 	}
 }

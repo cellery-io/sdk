@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http:www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -20,6 +20,7 @@ package image
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"regexp"
 
@@ -42,7 +43,7 @@ func RunDeleteImage(cli cli.Cli, images []string, regex string, deleteAll bool) 
 		cellImagePath := path.Join(repoLocation, parsedCellImage.Organization,
 			parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
 		if deleteAll {
-			if err := cli.FileSystem().RemoveAll(cellImagePath); err != nil {
+			if err := os.RemoveAll(cellImagePath); err != nil {
 				return err
 			}
 		} else {
@@ -53,7 +54,7 @@ func RunDeleteImage(cli cli.Cli, images []string, regex string, deleteAll bool) 
 					return fmt.Errorf("error checking if pattern matches with image name, %v", err)
 				}
 				if regexMatches {
-					if cli.FileSystem().RemoveAll(cellImagePath); err != nil {
+					if os.RemoveAll(cellImagePath); err != nil {
 						return err
 					}
 					continue
@@ -62,7 +63,7 @@ func RunDeleteImage(cli cli.Cli, images []string, regex string, deleteAll bool) 
 			if len(images) > 0 {
 				for _, imageToBeDeleted := range images {
 					if imageInRepo.name == imageToBeDeleted {
-						if cli.FileSystem().RemoveAll(cellImagePath); err != nil {
+						if os.RemoveAll(cellImagePath); err != nil {
 							return err
 						}
 						break

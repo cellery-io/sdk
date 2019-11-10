@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2018 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2018 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http:www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -85,7 +85,6 @@ func main() {
 	if err != nil {
 		util.ExitWithErrorMessage("Error configuring cellery file system", err)
 	}
-	celleryCli := cli.NewCelleryCli(cli.SetRegistry(registry.NewCelleryRegistry()), cli.SetFileSystem(fileSystem))
 	var ballerinaExecutor ballerina.BalExecutor
 	moduleMgr := &util.BLangManager{}
 	// Initially assume ballerina is installed locally and try to get the ballerina executable path.
@@ -94,13 +93,14 @@ func main() {
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to get ballerina executable path", err)
 	}
-	if len(ballerinaExecutablePath) > 0 {
-		ballerinaExecutor = ballerina.NewLocalBalExecutor()
-	} else {
+	if len(ballerinaExecutablePath) == 0 {
 		// if ballerina is not installed locally, use docker.
 		ballerinaExecutor = ballerina.NewDockerBalExecutor()
 	}
-	celleryCli.BallerinaExecutor = ballerinaExecutor
+	// Initialize the cellery cli.
+	celleryCli := cli.NewCelleryCli(cli.SetRegistry(registry.NewCelleryRegistry()),
+		cli.SetFileSystem(fileSystem),
+		cli.SetBallerinaExecutor(ballerinaExecutor))
 
 	util.CreateCelleryDirStructure()
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")

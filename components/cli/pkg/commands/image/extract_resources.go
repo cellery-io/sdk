@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2019 WSO2 Inc. (http:www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http:www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -19,14 +19,12 @@
 package image
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -40,13 +38,12 @@ func RunExtractResources(cli cli.Cli, cellImage string, outputPath string) error
 
 	repoLocation := filepath.Join(cli.FileSystem().Repository(), parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
-	imageLocation := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+	imageLocation := filepath.Join(repoLocation, parsedCellImage.ImageName+cellImageExt)
 
 	// Checking if the image is present in the local repo
 	isImagePresent, _ := util.FileExists(imageLocation)
 	if !isImagePresent {
-		return fmt.Errorf(fmt.Sprintf("failed to extract resources for image %s, %v", util.Bold(cellImage),
-			errors.New("image not Found")))
+		return fmt.Errorf(fmt.Sprintf("failed to extract resources, image %s not found", util.Bold(cellImage)))
 	}
 
 	// Create temp directory
