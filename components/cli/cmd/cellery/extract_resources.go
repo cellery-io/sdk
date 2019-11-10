@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	image2 "github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
@@ -55,7 +55,7 @@ func newExtractResourcesCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := commands.RunExtractResources(cli, args[0], outputPath); err != nil {
+			if err := image2.RunExtractResources(cli, args[0], outputPath); err != nil {
 				util.ExitWithErrorMessage("Cellery extract-resources command failed", err)
 			}
 		},

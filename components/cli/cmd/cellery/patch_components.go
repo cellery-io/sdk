@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/instance"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -56,7 +56,7 @@ func newPatchComponentsCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunPatchForSingleComponent(args[0], args[1], containerImage, containerName, envVars)
+			err := instance.RunPatchForSingleComponent(args[0], args[1], containerImage, containerName, envVars)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to patch cell component %s in instance %s", args[1], args[0]), err)
 			}

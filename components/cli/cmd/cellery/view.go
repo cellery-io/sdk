@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -33,7 +33,7 @@ func newViewCommand(cli cli.Cli) *cobra.Command {
 		Short: "View the Cell Image in a browser",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := commands.RunView(cli, args[0]); err != nil {
+			if err := image.RunView(cli, args[0]); err != nil {
 				util.ExitWithErrorMessage("Cellery view command failed", err)
 			}
 		},

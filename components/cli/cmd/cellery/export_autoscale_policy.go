@@ -27,7 +27,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/instance"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -65,7 +65,7 @@ func newExportCellAutoscalePolicies(cli cli.Cli, file *string) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunExportAutoscalePolicies(cli, kubernetes.InstanceKindCell, args[0], *file)
+			err := instance.RunExportAutoscalePolicies(cli, kubernetes.InstanceKindCell, args[0], *file)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to export autoscale policies from instance %s", args[0]), err)
 			}
@@ -94,7 +94,7 @@ func newExportCompositeAutoscalePolicies(cli cli.Cli, file *string) *cobra.Comma
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunExportAutoscalePolicies(cli, kubernetes.InstanceKindComposite, args[0], *file)
+			err := instance.RunExportAutoscalePolicies(cli, kubernetes.InstanceKindComposite, args[0], *file)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to export autoscale policies from instance %s", args[0]), err)
 			}

@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	image2 "github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 )
@@ -77,7 +77,7 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
+			image2.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
 				assumeYes, debug, verbose, incell)
 		},
 		Example: "  cellery test cellery-samples/hr:1.0.0 -n hr-inst\n" +

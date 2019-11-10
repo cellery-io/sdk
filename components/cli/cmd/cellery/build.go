@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	image2 "github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -50,7 +50,7 @@ func newBuildCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := commands.RunBuild(cli, args[1], args[0]); err != nil {
+			if err := image2.RunBuild(cli, args[1], args[0]); err != nil {
 				util.ExitWithErrorMessage("Cellery build command failed", err)
 			}
 		},

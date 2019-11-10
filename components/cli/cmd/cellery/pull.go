@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	image2 "github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -51,7 +51,7 @@ func newPullCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := commands.RunPull(cli, args[0], isSilent, username, password); err != nil {
+			if err := image2.RunPull(cli, args[0], isSilent, username, password); err != nil {
 				util.ExitWithErrorMessage("Cellery pull command failed", err)
 			}
 		},

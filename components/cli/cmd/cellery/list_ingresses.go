@@ -22,11 +22,10 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
@@ -51,7 +50,7 @@ func newListIngressesCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunListIngresses(cli, args[0])
+			image.RunListIngresses(cli, args[0])
 		},
 		Example: "  cellery list ingresses employee\n" +
 			"  cellery list ingresses cellery-samples/employee:1.0.0\n",

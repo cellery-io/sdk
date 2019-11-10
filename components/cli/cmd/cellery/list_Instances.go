@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/instance"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -33,7 +33,7 @@ func newListInstancesCommand(cli cli.Cli) *cobra.Command {
 		Aliases: []string{"instance", "inst"},
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := commands.RunListInstances(cli); err != nil {
+			if err := instance.RunListInstances(cli); err != nil {
 				util.ExitWithErrorMessage("Cellery list instances command failed", err)
 			}
 		},
