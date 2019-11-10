@@ -21,17 +21,18 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/version"
 )
 
-func newVersionCommand() *cobra.Command {
+func newVersionCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "version",
 		Short:   "Get cellery runtime version",
 		Aliases: []string{"v", "ver"},
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunVersion()
+			version.RunVersion(cli)
 		},
 		Example: "  cellery version",
 	}

@@ -51,7 +51,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 	cmd.AddCommand(
 		newCompletionCommand(cmd),
 		newBuildCommand(cli),
-		newVersionCommand(),
+		newVersionCommand(cli),
 		newInitCommand(),
 		newRunCommand(cli),
 		newTerminateCommand(cli),

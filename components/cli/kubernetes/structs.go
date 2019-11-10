@@ -426,3 +426,12 @@ const (
 	InstanceKindCell      InstanceKind = "cells.mesh.cellery.io"
 	InstanceKindComposite InstanceKind = "composites.mesh.cellery.io"
 )
+
+type K8sVersion struct {
+	ServerVersion struct {
+		GitVersion string
+	}
+	ClientVersion struct {
+		GitVersion string
+	}
+}

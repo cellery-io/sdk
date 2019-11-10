@@ -29,6 +29,7 @@ import (
 	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/ballerina"
+	"github.com/cellery-io/sdk/components/cli/docker"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -43,6 +44,7 @@ type Cli interface {
 	KubeCli() kubernetes.KubeCli
 	Registry() registry.Registry
 	OpenBrowser(url string) error
+	DockerCli() docker.Docker
 }
 
 // CelleryCli is an instance of the cellery command line client.
@@ -52,12 +54,14 @@ type CelleryCli struct {
 	kubecli           kubernetes.KubeCli
 	BallerinaExecutor ballerina.BalExecutor
 	registry          registry.Registry
+	docker            docker.Docker
 }
 
 // NewCelleryCli returns a CelleryCli instance.
 func NewCelleryCli(opts ...func(*CelleryCli)) *CelleryCli {
 	cli := &CelleryCli{
 		kubecli: kubernetes.NewCelleryKubeCli(),
+		docker:  docker.NewCelleryDockerCli(),
 	}
 	for _, opt := range opts {
 		opt(cli)
@@ -121,6 +125,11 @@ func (cli *CelleryCli) KubeCli() kubernetes.KubeCli {
 // KubeCli returns kubernetes.KubeCli instance.
 func (cli *CelleryCli) Registry() registry.Registry {
 	return cli.registry
+}
+
+// FileSystem returns FileSystemManager instance.
+func (cli *CelleryCli) DockerCli() docker.Docker {
+	return cli.docker
 }
 
 // OpenBrowser opens up the provided URL in a browser

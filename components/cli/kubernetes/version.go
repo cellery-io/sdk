@@ -16,17 +16,29 @@
  * under the License.
  */
 
-package commands
+package kubernetes
 
-const artifacts = "artifacts"
-const celleryIdPattern = "[a-z0-9]+(-[a-z0-9]+)*"
-const celleryArgEnvVarKeyPattern = "(?P<key>[^:]+)"
-const celleryArgEnvVarValuePattern = "(?P<value>.+)"
-const celleryArgEnvVarPattern = "(((?P<instance>" + celleryIdPattern + "):" +
-	celleryArgEnvVarKeyPattern + "=" + celleryArgEnvVarValuePattern + ")|(" +
-	celleryArgEnvVarKeyPattern + "=" + celleryArgEnvVarValuePattern + "))"
-const src = "src"
-const celleryHome = ".cellery"
-const cellImageExt = ".zip"
-const ballerinaToml = "Ballerina.toml"
-const ballerinaLocalRepo = ".ballerina/"
+import (
+	"encoding/json"
+	"os/exec"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
+)
+
+func (kubecli *CelleryKubeCli) Version() (string, string, error) {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"version",
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	jsonOutput := K8sVersion{}
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	if err != nil {
+		return jsonOutput.ServerVersion.GitVersion, jsonOutput.ClientVersion.GitVersion, err
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	return jsonOutput.ServerVersion.GitVersion, jsonOutput.ClientVersion.GitVersion, err
+}

@@ -31,8 +31,7 @@ import (
 
 func TestStartCellInstance(t *testing.T) {
 	mockBalExecutor := test.NewMockBalExecutor()
-	mockCli := test.NewMockCli()
-	mockCli.BallerinaExecutor = mockBalExecutor
+	mockCli := test.NewMockCli(test.SetBalExecutor(mockBalExecutor))
 	imageDir, err := ioutil.TempDir("", "temp")
 	if err != nil {
 		t.Errorf("Failed to create image dir: %v", err)

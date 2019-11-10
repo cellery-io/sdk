@@ -26,13 +26,26 @@ import (
 )
 
 type MockBalExecutor struct {
-	CurrentDir string
+	CurrentDir     string
+	version        string
+	executablePath string
 }
 
 // NewMockBalExecutor returns a MockBalExecutor instance.
-func NewMockBalExecutor() *MockBalExecutor {
-	balExecutor := &MockBalExecutor{}
+func NewMockBalExecutor(opts ...func(*MockBalExecutor)) *MockBalExecutor {
+	balExecutor := &MockBalExecutor{
+		executablePath: "",
+	}
+	for _, opt := range opts {
+		opt(balExecutor)
+	}
 	return balExecutor
+}
+
+func SetBalVersion(version string) func(*MockBalExecutor) {
+	return func(balExecutor *MockBalExecutor) {
+		balExecutor.version = version
+	}
 }
 
 // Build mocks execution of ballerina build on an executable bal file.
@@ -48,10 +61,10 @@ func (balExecutor *MockBalExecutor) Run(imageDir string, instanceName string, en
 
 // Version returns the mock ballerina version.
 func (balExecutor *MockBalExecutor) Version() (string, error) {
-	return "", nil
+	return balExecutor.version, nil
 }
 
 // ExecutablePath returns mock ballerina executable path.
 func (balExecutor *MockBalExecutor) ExecutablePath() (string, error) {
-	return "", nil
+	return balExecutor.executablePath, nil
 }

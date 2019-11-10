@@ -24,6 +24,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/docker"
 	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry"
 )
@@ -31,10 +32,11 @@ import (
 type MockCli struct {
 	out               io.Writer
 	outBuffer         *bytes.Buffer
-	BallerinaExecutor ballerina.BalExecutor
+	ballerinaExecutor ballerina.BalExecutor
 	kubeCli           kubernetes.KubeCli
 	registry          registry.Registry
 	manager           cli.FileSystemManager
+	docker            docker.Docker
 }
 
 // NewMockCli returns a mock cli for the cli.Cli interface.
@@ -68,6 +70,18 @@ func SetFileSystem(manager cli.FileSystemManager) func(*MockCli) {
 	}
 }
 
+func SetDockerCli(docker docker.Docker) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.docker = docker
+	}
+}
+
+func SetBalExecutor(balExecutor ballerina.BalExecutor) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.ballerinaExecutor = balExecutor
+	}
+}
+
 // Out returns the output stream (stdout) the cli should write on.
 func (cli *MockCli) Out() io.Writer {
 	return cli.out
@@ -94,7 +108,7 @@ func (cli *MockCli) FileSystem() cli.FileSystemManager {
 
 // BalExecutor returns a mock ballerina.BalExecutor instance.
 func (cli *MockCli) BalExecutor() ballerina.BalExecutor {
-	return cli.BallerinaExecutor
+	return cli.ballerinaExecutor
 }
 
 // KubeCli returns mock kubernetes.KubeCli instance.
@@ -110,4 +124,9 @@ func (cli *MockCli) Registry() registry.Registry {
 // OpenBrowser mocks opening up of the provided URL in a browser
 func (cli *MockCli) OpenBrowser(url string) error {
 	return nil
+}
+
+// FileSystem returns mock DockerCli instance.
+func (cli *MockCli) DockerCli() docker.Docker {
+	return cli.docker
 }

@@ -25,9 +25,11 @@ import (
 )
 
 type MockKubeCli struct {
-	cells      kubernetes.Cells
-	composites kubernetes.Composites
-	cellsBytes map[string][]byte
+	cells            kubernetes.Cells
+	composites       kubernetes.Composites
+	cellsBytes       map[string][]byte
+	k8sServerVersion string
+	k8sClientVersion string
 }
 
 func (kubeCli *MockKubeCli) SetVerboseMode(enable bool) {
@@ -48,6 +50,13 @@ func WithComposites(composites kubernetes.Composites) func(*MockKubeCli) {
 func WithCellsBytes(cellsBytes map[string][]byte) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.cellsBytes = cellsBytes
+	}
+}
+
+func SetK8sVersions(serverVersion, clientVersion string) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.k8sServerVersion = serverVersion
+		cli.k8sClientVersion = clientVersion
 	}
 }
 
@@ -111,6 +120,10 @@ func (kubeCli *MockKubeCli) GetInstanceBytes(instanceKind, InstanceName string) 
 	return nil, nil
 }
 
-func (kubecli *MockKubeCli) Describe(cellName string) error {
+func (kubeCli *MockKubeCli) Describe(cellName string) error {
 	return nil
+}
+
+func (kubeCli *MockKubeCli) Version() (string, string, error) {
+	return kubeCli.k8sServerVersion, kubeCli.k8sClientVersion, nil
 }
