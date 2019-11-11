@@ -262,19 +262,6 @@ func GetComposite(compositeName string) (Composite, error) {
 	return jsonOutput, err
 }
 
-func GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
-	cmd := exec.Command(constants.KUBECTL,
-		"get",
-		instanceKind,
-		InstanceName,
-		"-o",
-		"json",
-	)
-	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	return []byte(out), err
-}
-
 func GetPodsForCell(cellName string) (Pods, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",

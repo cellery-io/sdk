@@ -26,7 +26,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 )
 
-func TestExportAutoscalePolicies(t *testing.T) {
+func TestRunApplyAutoscalePolicies(t *testing.T) {
 	petBeAutoCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-auto.yaml"))
 	if err != nil {
 		t.Errorf("failed to read mock cell yaml file")
@@ -34,22 +34,20 @@ func TestExportAutoscalePolicies(t *testing.T) {
 	cellMap := make(map[string][]byte)
 	cellMap["pet-be-auto"] = petBeAutoCell
 	mockCli := test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCellsAsBytes(cellMap))))
-	outputFile, err := ioutil.TempFile("", "exportpolicy*.yaml")
-	if err != nil {
-		t.Errorf("failed create yaml file to export to")
-	}
 	tests := []struct {
-		name        string
+		name     string
+		instance string
 	}{
 		{
-			name: "export autoscale policy",
+			name:     "apply autoscale policy",
+			instance: "pet-be-auto",
 		},
 	}
 	for _, testIteration := range tests {
 		t.Run(testIteration.name, func(t *testing.T) {
-			err := RunExportAutoscalePolicies(mockCli, celleryInstance, "pet-be-auto", outputFile.Name())
+			err := RunApplyAutoscalePolicies(mockCli, celleryInstance, testIteration.instance, filepath.Join("testdata", "policies", "autoscale", "myscalepolicy.yaml"))
 			if err != nil {
-				t.Errorf("error in RunExportAutoscalePolicies, %v", err)
+				t.Errorf("error in RunApplyAutoscalePolicies, %v", err)
 			}
 		})
 	}

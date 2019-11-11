@@ -25,25 +25,26 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/instance"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func newApplyAutoscalePolicyCommand() *cobra.Command {
+func newApplyAutoscalePolicyCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "autoscale <command>",
 		Short: "apply autoscale policies for a cell/composite instance",
 	}
 	cmd.AddCommand(
-		newApplyCellAutoscalePolicyCommand(),
-		newApplyCompositeAutoscalePolicyCommand(),
+		newApplyCellAutoscalePolicyCommand(cli),
+		newApplyCompositeAutoscalePolicyCommand(cli),
 	)
 	return cmd
 }
 
-func newApplyCellAutoscalePolicyCommand() *cobra.Command {
+func newApplyCellAutoscalePolicyCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cell <instance> <file>",
 		Short: "apply autoscale policies for a cell instance",
@@ -62,7 +63,7 @@ func newApplyCellAutoscalePolicyCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunApplyAutoscalePolicies(kubernetes.InstanceKindCell, args[0], args[1])
+			err := instance.RunApplyAutoscalePolicies(cli, kubernetes.InstanceKindCell, args[0], args[1])
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to cell instance %s", args[0]), err)
 			}
@@ -72,7 +73,7 @@ func newApplyCellAutoscalePolicyCommand() *cobra.Command {
 	return cmd
 }
 
-func newApplyCompositeAutoscalePolicyCommand() *cobra.Command {
+func newApplyCompositeAutoscalePolicyCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "composite <instance> <file>",
 		Short: "apply autoscale policies for a composite instance",
@@ -91,7 +92,7 @@ func newApplyCompositeAutoscalePolicyCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunApplyAutoscalePolicies(kubernetes.InstanceKindComposite, args[0], args[1])
+			err := instance.RunApplyAutoscalePolicies(cli, kubernetes.InstanceKindComposite, args[0], args[1])
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to apply autoscale policies to composite instance %s", args[0]), err)
 			}

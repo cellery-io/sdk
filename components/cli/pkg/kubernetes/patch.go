@@ -25,7 +25,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-func JsonPatch(kind, instance, jsonPatch string) error {
+func (kubeCli *CelleryKubeCli) JsonPatch(kind, instance, jsonPatch string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"patch",

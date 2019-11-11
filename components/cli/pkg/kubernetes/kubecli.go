@@ -41,6 +41,7 @@ type KubeCli interface {
 	GetCellLogsUserComponents(cellName string) (string, error)
 	GetCellLogsAllComponents(cellName string) (string, error)
 	GetComponentLogs(cellName, componentName string) (string, error)
+	JsonPatch(kind, instance, jsonPatch string) error
 }
 
 type CelleryKubeCli struct {

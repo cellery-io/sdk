@@ -18,16 +18,20 @@
 
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
 
-func newApplyPolicyCommand() *cobra.Command {
+	"github.com/cellery-io/sdk/components/cli/cli"
+)
+
+func newApplyPolicyCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "apply-policy <command>",
 		Short: "apply policies for a cell/composite instance",
 	}
 
 	cmd.AddCommand(
-		newApplyAutoscalePolicyCommand(),
+		newApplyAutoscalePolicyCommand(cli),
 	)
 	return cmd
 }

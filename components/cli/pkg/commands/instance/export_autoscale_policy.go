@@ -36,7 +36,7 @@ func RunExportAutoscalePolicies(cli cli.Cli, kind kubernetes.InstanceKind, insta
 	var err error
 	var spData, yamlBytes []byte
 	var sp *kubernetes.AutoScalingPolicy
-	if err = cli.ExecuteTask("Retrieving autoscale policy data", "Failed to retrieve autoscale policy data",
+	if err = cli.ExecuteTask("Exporting autoscale policies", "Failed to export autoscale policies",
 		"", func() error {
 			sp, err = getAutoscalePolicies(cli, kind, instance)
 			return err

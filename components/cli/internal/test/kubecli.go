@@ -160,3 +160,7 @@ func (kubeCli *MockKubeCli) GetCellLogsAllComponents(cellName string) (string, e
 func (kubeCli *MockKubeCli) GetComponentLogs(cellName, componentName string) (string, error) {
 	return kubeCli.cellLogs[cellName], nil
 }
+
+func (kubeCli *MockKubeCli) JsonPatch(kind, instance, jsonPatch string) error {
+	return nil
+}

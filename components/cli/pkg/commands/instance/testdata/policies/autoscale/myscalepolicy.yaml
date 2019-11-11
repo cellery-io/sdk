@@ -1,0 +1,22 @@
+components:
+- name: controller
+  scalingPolicy:
+    hpa:
+      maxReplicas: 5
+      metrics:
+      - resource:
+          name: cpu
+          target:
+            averageUtilization: 50
+            type: Utilization
+        type: Resource
+      minReplicas: 1
+    kpa: null
+    overridable: true
+    replicas: 1
+- name: catalog
+- name: orders
+- name: customers
+gateway:
+  scalingPolicy:
+    replicas: 1
