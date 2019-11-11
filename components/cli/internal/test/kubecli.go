@@ -19,6 +19,7 @@
 package test
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
@@ -163,4 +164,19 @@ func (kubeCli *MockKubeCli) GetComponentLogs(cellName, componentName string) (st
 
 func (kubeCli *MockKubeCli) JsonPatch(kind, instance, jsonPatch string) error {
 	return nil
+}
+
+func (kubeCli *MockKubeCli) ApplyFile(file string) error {
+	return nil
+}
+
+func (kubeCli *MockKubeCli) GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) {
+	var output map[string]interface{}
+	out := kubeCli.cellsBytes[cell]
+	err := json.Unmarshal(out, &output)
+	return output, err
+}
+
+func (kubeCli *MockKubeCli) GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{}, error) {
+	return nil, nil
 }

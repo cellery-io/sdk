@@ -26,6 +26,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -41,188 +42,50 @@ const k8sYamlImageEnvVars = "env"
 const k8sYamlContainerName = "name"
 const k8sContainerTemplate = "template"
 
-// TODO: remove
-//func RunPatchComponents(instance string, fqImage string) error {
-//	spinner := util.StartNewSpinner(fmt.Sprintf("Patching components in instance %s", instance))
-//	// parse the fully qualified image name
-//	parsedImage, err := img.ParseImageTag(fqImage)
-//	imageDir, err := ExtractImage(parsedImage, true, spinner)
-//	if err != nil {
-//		spinner.Stop(false)
-//		util.ExitWithErrorMessage("Error occurred while extracting image", err)
-//	}
-//	defer func() {
-//		_ = os.RemoveAll(imageDir)
-//	}()
-//	// read metadata.json to get the image name
-//	metadataFile := filepath.Join(imageDir, constants.ZIP_ARTIFACTS, "cellery",
-//		"metadata.json")
-//	metadataFileContent, err := ioutil.ReadFile(metadataFile)
-//	if err != nil {
-//		spinner.Stop(false)
-//		return err
-//	}
-//	imageMetadata := &img.MetaData{}
-//	err = json.Unmarshal(metadataFileContent, imageMetadata)
-//	if err != nil {
-//		spinner.Stop(false)
-//		return err
-//	}
-//	imageName := imageMetadata.Name
-//	if imageName == "" {
-//		spinner.Stop(false)
-//		return fmt.Errorf("unable to extract image name from metadata file %s", metadataFile)
-//	}
-//	// now read the image and parse it
-//	imageFile := filepath.Join(imageDir, constants.ZIP_ARTIFACTS, "cellery", imageName+".yaml")
-//	imageFileContent, err := ioutil.ReadFile(imageFile)
-//	if err != nil {
-//		spinner.Stop(false)
-//		return err
-//	}
-//	// need to decide if the file should be parsed as a Composite or a Cell
-//	var canBeComposite bool
-//	_, err = kubectl.GetCell(instance)
-//	if err != nil {
-//		if notFound, _ := errorpkg.IsCellInstanceNotFoundError(instance, err); notFound {
-//			// could be a composite
-//			canBeComposite = true
-//		} else {
-//			spinner.Stop(false)
-//			return err
-//		}
-//	}
-//
-//	artifacttFile := filepath.Join("./", fmt.Sprintf("%s.yaml", instance))
-//	defer func() {
-//		_ = os.Remove(artifacttFile)
-//	}()
-//	// check whether this is actually a Cell or a Composite
-//	if canBeComposite {
-//		err := patchCompositeInstace(imageFileContent, instance, artifacttFile)
-//		if err != nil {
-//			spinner.Stop(false)
-//			return err
-//		}
-//	} else {
-//		err := patchCellInstance(imageFileContent, instance, artifacttFile)
-//		if err != nil {
-//			spinner.Stop(false)
-//			return err
-//		}
-//	}
-//
-//	// kubectl apply
-//	err = kubectl.ApplyFile(artifacttFile)
-//	if err != nil {
-//		spinner.Stop(false)
-//		return err
-//	}
-//
-//	spinner.Stop(true)
-//	util.PrintSuccessMessage(fmt.Sprintf("Successfully patched the instance %s with new component images in %s", instance, fqImage))
-//	return nil
-//}
-
-//func patchCompositeInstace(imageFileContent []byte, instance string, artifactFile string) error {
-//	image := &kubectl.Composite{}
-//	err := yaml.Unmarshal(imageFileContent, image)
-//	if err != nil {
-//		return err
-//	}
-//	compositeInst, err := getPatchedCompositeInstance(instance, image.CompositeSpec.ComponentTemplates)
-//	if err != nil {
-//		return err
-//	}
-//
-//	patchedCompositeInstContents, err := yaml.Marshal(compositeInst)
-//	if err != nil {
-//		return err
-//	}
-//	err = writeToFile(patchedCompositeInstContents, artifactFile)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
-//func patchCellInstance(imageFileContent []byte, instance string, artifactFile string) error {
-//	image := &kubectl.Cell{}
-//	err := yaml.Unmarshal(imageFileContent, image)
-//	if err != nil {
-//		return err
-//	}
-//	cellInst, err := getPatchedCellInstance(instance, image.CellSpec.ComponentTemplates)
-//	if err != nil {
-//		return err
-//	}
-//	patchedCellInstContents, err := yaml.Marshal(cellInst)
-//	if err != nil {
-//		return err
-//	}
-//	err = writeToFile(patchedCellInstContents, artifactFile)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
-func RunPatchForSingleComponent(instance string, component string, containerImage string, containerName string, envVars []string) error {
-	spinner := util.StartNewSpinner(fmt.Sprintf("Patching component %s in instance %s", component, instance))
+func RunPatchForSingleComponent(cli cli.Cli, instance string, component string, containerImage string, containerName string, envVars []string) error {
+	//spinner := util.StartNewSpinner(fmt.Sprintf("Patching component %s in instance %s", component, instance))
 	var canBeComposite bool
-	_, err := kubernetes.GetCell(instance)
+	_, err := cli.KubeCli().GetCell(instance)
 	if err != nil {
 		if notFound, _ := errorpkg.IsCellInstanceNotFoundError(instance, err); notFound {
 			// could be a composite
 			canBeComposite = true
 		} else {
-			spinner.Stop(false)
 			return err
 		}
 	}
 	artifactFile := filepath.Join("./", fmt.Sprintf("%s.yaml", instance))
-	defer func() {
-		_ = os.Remove(artifactFile)
+	defer func() error {
+		return os.Remove(artifactFile)
 	}()
 
 	if canBeComposite {
-		_, err = kubernetes.GetComposite(instance)
+		_, err = cli.KubeCli().GetComposite(instance)
 		if err != nil {
 			if notFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instance, err); notFound {
 				// the given instance is neither a cell or a composite
-				spinner.Stop(false)
 				return fmt.Errorf("unable to find a running instance with name: %s", instance)
 			} else {
-				spinner.Stop(false)
 				return err
 			}
 		}
-		err := patchSingleComponentinComposite(instance, component, containerImage, containerName, envVars, artifactFile)
-		if err != nil {
-			spinner.Stop(false)
-			return err
+		if err = patchSingleComponentinComposite(cli, instance, component, containerImage, containerName, envVars, artifactFile); err != nil {
+			return fmt.Errorf("error patching single component in composite")
 		}
 	} else {
-		err := patchSingleComponentinCell(instance, component, containerImage, containerName, envVars, artifactFile)
-		if err != nil {
-			spinner.Stop(false)
-			return err
+		if err = patchSingleComponentinCell(cli, instance, component, containerImage, containerName, envVars, artifactFile); err != nil {
+			return fmt.Errorf("error patching single component in cell, %v", err)
 		}
 	}
-
-	// kubectl apply
-	err = kubernetes.ApplyFile(artifactFile)
-	if err != nil {
-		spinner.Stop(false)
-		return err
+	if err = cli.KubeCli().ApplyFile(artifactFile); err != nil {
+		return fmt.Errorf("error applying yaml %s", artifactFile)
 	}
-	spinner.Stop(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully patched the component %s in instance %s with container image %s", component, instance, containerImage))
 	return nil
 }
 
-func patchSingleComponentinComposite(instance string, component string, containerImage string, containerName string, envVars []string, artifactFile string) error {
-	compositeInst, err := getPatchedCompositeInstanceForSingleComponent(instance, component, containerImage, containerName, envVars)
+func patchSingleComponentinComposite(cli cli.Cli, instance string, component string, containerImage string, containerName string, envVars []string, artifactFile string) error {
+	compositeInst, err := getPatchedCompositeInstanceForSingleComponent(cli, instance, component, containerImage, containerName, envVars)
 	if err != nil {
 		return err
 	}
@@ -237,8 +100,8 @@ func patchSingleComponentinComposite(instance string, component string, containe
 	return nil
 }
 
-func patchSingleComponentinCell(instance string, component string, containerImage string, containerName string, envVars []string, artifactFile string) error {
-	cellInst, err := getPatchededCellInstanceForSingleComponent(instance, component, containerImage, containerName, envVars)
+func patchSingleComponentinCell(cli cli.Cli, instance string, component string, containerImage string, containerName string, envVars []string, artifactFile string) error {
+	cellInst, err := getPatchededCellInstanceForSingleComponent(cli, instance, component, containerImage, containerName, envVars)
 	if err != nil {
 		return err
 	}
@@ -253,12 +116,13 @@ func patchSingleComponentinCell(instance string, component string, containerImag
 	return nil
 }
 
-func getPatchededCellInstanceForSingleComponent(instance string, componentName string, containerImage string, containerName string, newEnvVars []string) (map[string]interface{}, error) {
+func getPatchededCellInstanceForSingleComponent(cli cli.Cli, instance string, componentName string, containerImage string, containerName string, newEnvVars []string) (map[string]interface{}, error) {
 	err := validateEnvVars(newEnvVars)
 	if err != nil {
 		return nil, err
 	}
-	cellInstance, err := kubernetes.GetCellInstanceAsMapInterface(instance)
+	cellInstance, err := cli.KubeCli().GetCellInstanceAsMapInterface(instance)
+	fmt.Println(cellInstance)
 	if err != nil {
 		return nil, err
 	}
@@ -270,12 +134,12 @@ func getPatchededCellInstanceForSingleComponent(instance string, componentName s
 	return cellInstance, nil
 }
 
-func getPatchedCompositeInstanceForSingleComponent(instance string, componentName string, containerImage string, containerName string, newEnvVars []string) (map[string]interface{}, error) {
+func getPatchedCompositeInstanceForSingleComponent(cli cli.Cli, instance string, componentName string, containerImage string, containerName string, newEnvVars []string) (map[string]interface{}, error) {
 	err := validateEnvVars(newEnvVars)
 	if err != nil {
 		return nil, err
 	}
-	compositeInst, err := kubernetes.GetCompositeInstanceAsMapInterface(instance)
+	compositeInst, err := cli.KubeCli().GetCompositeInstanceAsMapInterface(instance)
 	if err != nil {
 		return nil, err
 	}
@@ -343,32 +207,6 @@ func getEnvVarKeyValue(tuple string) (string, string) {
 	keyValue := strings.Split(tuple, "=")
 	return keyValue[0], keyValue[1]
 }
-
-//func getPatchedCellInstance(instance string, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
-//	cellInstance, err := kubectl.GetCellInstanceAsMapInterface(instance)
-//	if err != nil {
-//		return cellInstance, err
-//	}
-//	cellSpec, err := getModifedSpec(cellInstance, newSvcTemplates)
-//	if err != nil {
-//		return cellInstance, err
-//	}
-//	cellInstance[k8sYamlSpec] = cellSpec
-//	return cellInstance, nil
-//}
-
-//func getPatchedCompositeInstance(instance string, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
-//	compositeInstance, err := kubectl.GetCompositeInstanceAsMapInterface(instance)
-//	if err != nil {
-//		return compositeInstance, err
-//	}
-//	compositeSpec, err := getModifedSpec(compositeInstance, newSvcTemplates)
-//	if err != nil {
-//		return compositeInstance, err
-//	}
-//	compositeInstance[k8sYamlSpec] = compositeSpec
-//	return compositeInstance, nil
-//}
 
 func getModifiedSpecForComponent(instance map[string]interface{}, componentName string, containerImage string,
 	containerName string, newEnvVars []string) (map[string]interface{}, error) {
@@ -439,14 +277,13 @@ func getModifiedSpecForComponent(instance map[string]interface{}, componentName 
 					}
 				}
 				if !containerFound {
-					return nil, fmt.Errorf("No container with name %s found in component %s", containerName, componentName)
+					return nil, fmt.Errorf("no container with name %s found in component %s", containerName, componentName)
 				}
 			}
 
 			template[k8sYamlContainers] = containerSpecs
 			componentSpec[k8sContainerTemplate] = template
 			component[k8sYamlSpec] = componentSpec
-			//components[i] = component
 			break
 		}
 	}
@@ -535,67 +372,3 @@ func getTemplate(componentSpec map[string]interface{}) (map[string]interface{}, 
 	}
 	return template, nil
 }
-
-//func getModifedSpec(instance map[string]interface{}, newSvcTemplates []kubectl.ComponentTemplate) (map[string]interface{}, error) {
-//	cellSpecByteArr, err := yaml.Marshal(instance[k8sYamlSpec])
-//	if err != nil {
-//		return instance, err
-//	}
-//	var cellSpec map[string]interface{}
-//	err = yaml.Unmarshal(cellSpecByteArr, &cellSpec)
-//	if err != nil {
-//		return instance, err
-//	}
-//	svcTempalateBytes, err := yaml.Marshal(cellSpec[k8sYamlServicetemplates])
-//	if err != nil {
-//		return instance, err
-//	}
-//	var svcTemplates []map[string]interface{}
-//	err = yaml.Unmarshal(svcTempalateBytes, &svcTemplates)
-//	if err != nil {
-//		return instance, err
-//	}
-//
-//	for _, svcTemplate := range svcTemplates {
-//		// metadata
-//		svcTemplateMetadataBytes, err := yaml.Marshal(svcTemplate[k8sYamlMetadata])
-//		if err != nil {
-//			return instance, err
-//		}
-//		var svcTemplateMetadata map[string]string
-//		err = yaml.Unmarshal(svcTemplateMetadataBytes, &svcTemplateMetadata)
-//		if err != nil {
-//			return instance, err
-//		}
-//		// for each new component template, update the relevant container image
-//		for i, newSvcTemplate := range newSvcTemplates {
-//			if newSvcTemplate.Metadata.Name == svcTemplateMetadata[k8sYamlName] {
-//				svcTemplateSpecBytes, err := yaml.Marshal(svcTemplate[k8sYamlSpec])
-//				if err != nil {
-//					return instance, err
-//				}
-//				var svcTemplateSpec map[string]interface{}
-//				err = yaml.Unmarshal(svcTemplateSpecBytes, &svcTemplateSpec)
-//				if err != nil {
-//					return instance, err
-//				}
-//				containerSpecBytes, err := yaml.Marshal(svcTemplateSpec[k8sYamlContainer])
-//				if err != nil {
-//					return instance, err
-//				}
-//				var containerSpec []map[string]interface{}
-//				err = yaml.Unmarshal(containerSpecBytes, &containerSpec)
-//				if err != nil {
-//					return instance, err
-//				}
-//				// TODO: fixme - a component can have multiple containers, need a way to select and update the correct container
-//				containerSpec[0][k8sYamlImage] = newSvcTemplate.Spec.PodTemplate.Containers[0].Image
-//				svcTemplateSpec[k8sYamlContainer] = containerSpec
-//				svcTemplate[k8sYamlSpec] = svcTemplateSpec
-//				svcTemplates[i] = svcTemplate
-//			}
-//		}
-//	}
-//	cellSpec[k8sYamlServicetemplates] = svcTemplates
-//	return cellSpec, nil
-//}

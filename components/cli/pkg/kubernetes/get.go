@@ -320,24 +320,6 @@ func (kubeCli *CelleryKubeCli) GetServices(cellName string) (Services, error) {
 	return jsonOutput, err
 }
 
-func GetGateways(cellName string) (Gateway, error) {
-	cmd := exec.Command(constants.KUBECTL,
-		"get",
-		"gateways",
-		cellName+"--gateway",
-		"-o", ""+
-			"json",
-	)
-	displayVerboseOutput(cmd)
-	jsonOutput := Gateway{}
-	out, err := osexec.GetCommandOutput(cmd)
-	if err != nil {
-		return jsonOutput, err
-	}
-	err = json.Unmarshal([]byte(out), &jsonOutput)
-	return jsonOutput, err
-}
-
 func GetVirtualService(vs string) (VirtualService, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
@@ -349,24 +331,6 @@ func GetVirtualService(vs string) (VirtualService, error) {
 	displayVerboseOutput(cmd)
 	jsonOutput := VirtualService{}
 	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	if err != nil {
-		return jsonOutput, err
-	}
-	err = json.Unmarshal([]byte(out), &jsonOutput)
-	return jsonOutput, err
-}
-
-func GetAutoscalePolicy(autoscalepolicy string) (*AutoscalePolicy, error) {
-	cmd := exec.Command(constants.KUBECTL,
-		"get",
-		"ap",
-		autoscalepolicy,
-		"-o",
-		"json",
-	)
-	displayVerboseOutput(cmd)
-	jsonOutput := &AutoscalePolicy{}
-	out, err := osexec.GetCommandOutput(cmd)
 	if err != nil {
 		return jsonOutput, err
 	}
@@ -405,7 +369,7 @@ func GetGatewayAsMapInterface(gw string) (map[string]interface{}, error) {
 	return output, err
 }
 
-func GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) {
+func (kubeCli *CelleryKubeCli) GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
 		"cell",
@@ -423,7 +387,7 @@ func GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) 
 	return output, err
 }
 
-func GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{}, error) {
+func (kubeCli *CelleryKubeCli) GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{}, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
 		"composite",

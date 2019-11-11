@@ -49,3 +49,15 @@ func ApplyFile(file string) error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+func (kubeCli *CelleryKubeCli) ApplyFile(file string) error {
+	cmd := exec.Command(
+		constants.KUBECTL,
+		"apply",
+		"-f",
+		file,
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

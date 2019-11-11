@@ -71,7 +71,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newDeleteImageCommand(cli),
 		newExportPolicyCommand(cli),
 		newApplyPolicyCommand(cli),
-		newPatchComponentsCommand(),
+		newPatchComponentsCommand(cli),
 		newRouteTrafficCommand(),
 	)
 	cmd.PersistentFlags().BoolVarP(&verboseMode, "verbose", "v", false, "Run on verbose mode")
