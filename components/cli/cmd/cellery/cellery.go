@@ -52,7 +52,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newCompletionCommand(cmd),
 		newBuildCommand(cli),
 		newVersionCommand(cli),
-		newInitCommand(),
+		newInitCommand(cli),
 		newRunCommand(cli),
 		newTerminateCommand(cli),
 		newListCommand(cli),

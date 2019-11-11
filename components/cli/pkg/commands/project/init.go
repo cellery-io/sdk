@@ -16,14 +16,15 @@
  * under the License.
  */
 
-package commands
+package project
 
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/cellery-io/sdk/components/cli/cli"
 
 	"github.com/fatih/color"
 	"github.com/oxequa/interact"
@@ -82,10 +83,11 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
 }
 `
 
-func RunInit(projectName string) {
+// RunInit initializes a cellery project.
+func RunInit(cli cli.Cli, projectName string) error {
 	prefix := util.CyanBold("?")
 	if projectName == "" {
-		err := interact.Run(&interact.Interact{
+		if err := interact.Run(&interact.Interact{
 			Before: func(c interact.Context) error {
 				c.SetPrfx(color.Output, prefix)
 				return nil
@@ -106,46 +108,27 @@ func RunInit(projectName string) {
 					},
 				},
 			},
-		})
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while initializing the project", err)
+		}); err != nil {
+			return fmt.Errorf("error occurred while initializing the project, %v", err)
 		}
 	}
-	currentDir, err := os.Getwd()
-	if err != nil {
-		util.ExitWithErrorMessage("Error in getting current directory location", err)
+	projectDir := filepath.Join(cli.FileSystem().CurrentDir(), projectName)
+	if err := util.CreateDir(projectDir); err != nil {
+		return fmt.Errorf("failed to initialize project, %v", err)
 	}
-	writer, projectDir := createBalFile(currentDir, projectName)
-	writeCellTemplate(writer, CellTemplate)
+	writer, err := os.Create(filepath.Join(projectDir, projectName+".bal"))
+	if err != nil {
+		return fmt.Errorf("error in creating Ballerina File, %v", err)
+	}
+	balW := bufio.NewWriter(writer)
+	if _, err = balW.WriteString(CellTemplate); err != nil {
+		return fmt.Errorf("failed to create writer for cell file, %v", err)
+	}
+	if _ = balW.Flush(); err != nil {
+		return fmt.Errorf("failed to cleanup writer for cell file, %v", err)
+	}
 	util.PrintSuccessMessage(fmt.Sprintf("Initialized project in directory: %s", util.Faint(projectDir)))
 	util.PrintWhatsNextMessage("build the image",
 		"cellery build "+projectName+"/"+projectName+".bal"+" organization/image_name:version")
-}
-
-// createBalFile creates a bal file at the current location.
-func createBalFile(currentDir, projectName string) (*os.File, string) {
-	projectDir := filepath.Join(currentDir, projectName)
-	err := util.CreateDir(projectDir)
-	if err != nil {
-		util.ExitWithErrorMessage("Failed to initialize project", err)
-	}
-
-	balFile, err := os.Create(filepath.Join(projectDir, projectName+".bal"))
-	if err != nil {
-		util.ExitWithErrorMessage("Error in creating Ballerina File", err)
-	}
-	return balFile, projectDir
-}
-
-// writeCellTemplate writes the content to a bal file.
-func writeCellTemplate(writer io.Writer, cellTemplate string) {
-	balW := bufio.NewWriter(writer)
-	_, err := balW.WriteString(cellTemplate)
-	if err != nil {
-		util.ExitWithErrorMessage("Failed to create writer for cell file", err)
-	}
-	_ = balW.Flush()
-	if err != nil {
-		util.ExitWithErrorMessage("Failed to cleanup writer for cell file", err)
-	}
+	return nil
 }

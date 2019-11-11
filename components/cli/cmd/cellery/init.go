@@ -21,10 +21,12 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/project"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func newInitCommand() *cobra.Command {
+func newInitCommand(cli cli.Cli) *cobra.Command {
 	var projectName = ""
 	cmd := &cobra.Command{
 		Use:   "init [PROJECT_NAME]",
@@ -34,7 +36,9 @@ func newInitCommand() *cobra.Command {
 			if len(args) > 0 {
 				projectName = args[0]
 			}
-			commands.RunInit(projectName)
+			if err := project.RunInit(cli, projectName); err != nil {
+				util.ExitWithErrorMessage("Cellery init command failed", err)
+			}
 		},
 		Example: "  cellery init [PROJECT_NAME]",
 	}
