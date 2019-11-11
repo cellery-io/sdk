@@ -38,6 +38,9 @@ type KubeCli interface {
 	DescribeCell(cellName string) error
 	Version() (string, string, error)
 	GetServices(cellName string) (Services, error)
+	GetCellLogsUserComponents(cellName string) (string, error)
+	GetCellLogsAllComponents(cellName string) (string, error)
+	GetComponentLogs(cellName, componentName string) (string, error)
 }
 
 type CelleryKubeCli struct {
@@ -49,11 +52,11 @@ func NewCelleryKubeCli() *CelleryKubeCli {
 	return kubeCli
 }
 
-func (kubecli *CelleryKubeCli) SetVerboseMode(enable bool) {
+func (kubeCli *CelleryKubeCli) SetVerboseMode(enable bool) {
 	verboseMode = enable
 }
 
-func (kubecli *CelleryKubeCli) DeleteResource(kind, instance string) (string, error) {
+func (kubeCli *CelleryKubeCli) DeleteResource(kind, instance string) (string, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"delete",
@@ -65,13 +68,13 @@ func (kubecli *CelleryKubeCli) DeleteResource(kind, instance string) (string, er
 	return osexec.GetCommandOutput(cmd)
 }
 
-func (kubecli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
+func (kubeCli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
 	var instances []string
-	runningCellInstances, err := kubecli.GetCells()
+	runningCellInstances, err := kubeCli.GetCells()
 	if err != nil {
 		return nil, err
 	}
-	runningCompositeInstances, err := kubecli.GetComposites()
+	runningCompositeInstances, err := kubeCli.GetComposites()
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +87,7 @@ func (kubecli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
 	return instances, nil
 }
 
-func (kubecli *CelleryKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
+func (kubeCli *CelleryKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
 		instanceKind,

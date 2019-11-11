@@ -94,7 +94,7 @@ func GetNodes() (Node, error) {
 }
 
 // GetCells returns mock cell instances array.
-func (kubecli *CelleryKubeCli) GetCells() ([]Cell, error) {
+func (kubeCli *CelleryKubeCli) GetCells() ([]Cell, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"get",
@@ -112,7 +112,7 @@ func (kubecli *CelleryKubeCli) GetCells() ([]Cell, error) {
 	return jsonOutput.Items, err
 }
 
-func (kubecli *CelleryKubeCli) GetComposites() ([]Composite, error) {
+func (kubeCli *CelleryKubeCli) GetComposites() ([]Composite, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"get",
@@ -130,7 +130,7 @@ func (kubecli *CelleryKubeCli) GetComposites() ([]Composite, error) {
 	return jsonOutput.Items, err
 }
 
-func (kubecli *CelleryKubeCli) GetCell(cellName string) (Cell, error) {
+func (kubeCli *CelleryKubeCli) GetCell(cellName string) (Cell, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
 		"cells",
@@ -154,7 +154,7 @@ func (kubecli *CelleryKubeCli) GetCell(cellName string) (Cell, error) {
 	return jsonOutput, err
 }
 
-func (kubecli *CelleryKubeCli) GetComposite(compositeName string) (Composite, error) {
+func (kubeCli *CelleryKubeCli) GetComposite(compositeName string) (Composite, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"get",
 		"composite",
@@ -313,7 +313,7 @@ func GetPodsForComposite(compName string) (Pods, error) {
 	return jsonOutput, err
 }
 
-func (kubecli *CelleryKubeCli) GetServices(cellName string) (Services, error) {
+func (kubeCli *CelleryKubeCli) GetServices(cellName string) (Services, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"get",

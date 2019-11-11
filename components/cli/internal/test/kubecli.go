@@ -34,6 +34,7 @@ type MockKubeCli struct {
 	k8sServerVersion string
 	k8sClientVersion string
 	services         map[string]kubernetes.Services
+	cellLogs         map[string]string
 }
 
 func (kubeCli *MockKubeCli) SetVerboseMode(enable bool) {
@@ -60,6 +61,12 @@ func WithCellsAsBytes(cellsBytes map[string][]byte) func(*MockKubeCli) {
 func WithServices(services map[string]kubernetes.Services) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.services = services
+	}
+}
+
+func WithCellLogs(cellLogs map[string]string) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.cellLogs = cellLogs
 	}
 }
 
@@ -140,4 +147,16 @@ func (kubeCli *MockKubeCli) Version() (string, string, error) {
 
 func (kubeCli *MockKubeCli) GetServices(cellName string) (kubernetes.Services, error) {
 	return kubeCli.services[cellName], nil
+}
+
+func (kubeCli *MockKubeCli) GetCellLogsUserComponents(cellName string) (string, error) {
+	return kubeCli.cellLogs[cellName], nil
+}
+
+func (kubeCli *MockKubeCli) GetCellLogsAllComponents(cellName string) (string, error) {
+	return kubeCli.cellLogs[cellName], nil
+}
+
+func (kubeCli *MockKubeCli) GetComponentLogs(cellName, componentName string) (string, error) {
+	return kubeCli.cellLogs[cellName], nil
 }

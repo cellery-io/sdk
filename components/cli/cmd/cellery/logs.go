@@ -24,11 +24,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/instance"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func newLogsCommand() *cobra.Command {
+func newLogsCommand(cli cli.Cli) *cobra.Command {
 	var component string
 	var syslog bool
 	cmd := &cobra.Command{
@@ -52,8 +54,8 @@ func newLogsCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := commands.RunLogs(args[0], component, syslog); err != nil {
-				return fmt.Errorf("error running cellery log, %v", err)
+			if err := instance.RunLogs(cli, args[0], component, syslog); err != nil {
+				util.ExitWithErrorMessage("Cellery logs command failed", err)
 			}
 			return nil
 		},

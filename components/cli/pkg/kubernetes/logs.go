@@ -26,7 +26,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 )
 
-func GetCellLogsUserComponents(cellName string) (string, error) {
+func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(cellName string) (string, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"logs",
 		"-l",
@@ -39,7 +39,7 @@ func GetCellLogsUserComponents(cellName string) (string, error) {
 	return string(out), err
 }
 
-func GetCellLogsAllComponents(cellName string) (string, error) {
+func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(cellName string) (string, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"logs",
 		"-l",
@@ -52,7 +52,7 @@ func GetCellLogsAllComponents(cellName string) (string, error) {
 	return string(out), err
 }
 
-func GetComponentLogs(cellName, componentName string) (string, error) {
+func (kubeCli *CelleryKubeCli) GetComponentLogs(cellName, componentName string) (string, error) {
 	cmd := exec.Command(constants.KUBECTL,
 		"logs",
 		"-l",

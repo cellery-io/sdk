@@ -26,7 +26,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 )
 
-func (kubecli *CelleryKubeCli) Version() (string, string, error) {
+func (kubeCli *CelleryKubeCli) Version() (string, string, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"version",

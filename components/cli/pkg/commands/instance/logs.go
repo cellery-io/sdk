@@ -16,22 +16,22 @@
  * under the License.
  */
 
-package commands
+package instance
 
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/cli"
 )
 
-func RunLogs(cellName, componentName string, sysLog bool) error {
+func RunLogs(cli cli.Cli, cellName, componentName string, sysLog bool) error {
 	if componentName == "" {
 		var logs string
 		var err error
 		if sysLog {
-			logs, err = kubernetes.GetCellLogsAllComponents(cellName)
+			logs, err = cli.KubeCli().GetCellLogsAllComponents(cellName)
 		} else {
-			logs, err = kubernetes.GetCellLogsUserComponents(cellName)
+			logs, err = cli.KubeCli().GetCellLogsUserComponents(cellName)
 		}
 
 		if err != nil {
@@ -42,7 +42,7 @@ func RunLogs(cellName, componentName string, sysLog bool) error {
 				"instance %s", cellName))
 		}
 	} else {
-		logs, err := kubernetes.GetComponentLogs(cellName, componentName)
+		logs, err := cli.KubeCli().GetComponentLogs(cellName, componentName)
 		if err != nil {
 			return fmt.Errorf(fmt.Sprintf("Error getting logs for component %s of instance %s",
 				componentName, cellName), err)

@@ -26,7 +26,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
 )
 
-func (kubecli *CelleryKubeCli) DescribeCell(cellName string) error {
+func (kubeCli *CelleryKubeCli) DescribeCell(cellName string) error {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"describe",
