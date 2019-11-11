@@ -1,1 +1,0 @@
-{"ver":"1.0.0","components":{"hello":{"dockerImage":"wso2cellery/samples-hello-world-webapp","isDockerPushRequired":false,"labels":{},"dependencies":{"composites":{},"components":[],"cells":{}}}},"org":"myorg","autoScalingRequired":false,"kind":"Cell","name":"aaa","zeroScalingRequired":false}

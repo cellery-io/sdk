@@ -88,7 +88,7 @@ func TestRunExtractResourcesError(t *testing.T) {
 	for _, testIteration := range tests {
 		t.Run(testIteration.name, func(t *testing.T) {
 			err := RunExtractResources(mockCli, testIteration.image, extractDir)
-			if diff := cmp.Diff("failed to extract resources for image myorg/foo:1.0.0, image not Found", err.Error()); diff != "" {
+			if diff := cmp.Diff("failed to extract resources, image myorg/foo:1.0.0 not found", err.Error()); diff != "" {
 				t.Errorf("RunExtractResources: error (-want, +got)\n%v", diff)
 			}
 		})

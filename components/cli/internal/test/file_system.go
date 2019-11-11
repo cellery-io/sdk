@@ -76,3 +76,9 @@ func (fs *MockFileSystem) Repository() string {
 func (fs *MockFileSystem) CelleryInstallationDir() string {
 	return fs.celleryInstallationDir
 }
+
+// WorkingDirRelativePath returns the relative path of working directory.
+// For mock file system, WorkingDirRelativePath is also the current dir path.
+func (fs *MockFileSystem) WorkingDirRelativePath() string {
+	return fs.currentDir
+}

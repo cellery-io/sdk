@@ -32,7 +32,6 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
@@ -71,7 +70,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 		}); err != nil {
 		return err
 	}
-	// Execute ballerina build in temporary executable bal file
+	// Execute ballerina build in temporary executable bal file.
 	if err = cli.ExecuteTask("Executing ballerina build", "Failed to execute ballerina build",
 		"", func() error {
 			err := executeTempBalFile(cli.BalExecutor(), tempBuildFileName, iName)
@@ -79,7 +78,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 		}); err != nil {
 		return err
 	}
-	// Generate metadata
+	// Generate metadata.
 	if err = cli.ExecuteTask("Generating metadata", "Failed to generate metadata",
 		"", func() error {
 			err := generateMetaData(cli, parsedCellImage, projectDir)
@@ -87,17 +86,17 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 		}); err != nil {
 		return err
 	}
-	// Create the artifacts zip file
-	artifactsZip := parsedCellImage.ImageName + cellImageExt
-	if err = cli.ExecuteTask("Creating cell image zip file", "Failed to create temporary baf file",
+	// Create the artifacts zip file.
+	artifactsZip :=  parsedCellImage.ImageName + cellImageExt
+	if err = cli.ExecuteTask("Creating cell image zip file", "Failed to image zip",
 		"", func() error {
 			err := createArtifactsZip(cli, artifactsZip, projectDir, fileName)
 			return err
 		}); err != nil {
 		return err
 	}
-	// Cleaning up the old image if it already exists
-	repoLocation := filepath.Join(cli.FileSystem().UserHome(), constants.CELLERY_HOME, "repo", parsedCellImage.Organization,
+	// Cleaning up the old image if it already exists.
+	repoLocation := filepath.Join(cli.FileSystem().Repository(), parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	var hasOldImage bool
 	if hasOldImage, err = util.FileExists(repoLocation); err != nil {
@@ -117,7 +116,9 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	if err = util.CopyFile(zipSrc, zipDst); err != nil {
 		return fmt.Errorf("error occurred while saving image to local repo, %v", err)
 	}
-	_ = os.Remove(zipSrc)
+	if err = os.Remove(zipSrc); err != nil {
+		return fmt.Errorf("error occurred while removing zipSrc dir, %v", err)
+	}
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully built image: %s", util.Bold(tag)))
 	util.PrintWhatsNextMessage("run the image", "cellery run "+tag)
 	return nil
@@ -236,9 +237,8 @@ func generateMetaData(cli cli.Cli, cellImage *image.CellImage, projectDir string
 
 func extractDependenciesFromMetaData(cli cli.Cli, dependencyMetadata *image.MetaData, cellImage *image.CellImage) (*image.MetaData, error) {
 	var err error
-	cellImageZip := path.Join(util.UserHomeDir(), constants.CELLERY_HOME, "repo",
-		dependencyMetadata.Organization, dependencyMetadata.Name, dependencyMetadata.Version,
-		dependencyMetadata.Name+constants.CELL_IMAGE_EXT)
+	cellImageZip := path.Join(cli.FileSystem().Repository(), dependencyMetadata.Organization, dependencyMetadata.Name,
+		dependencyMetadata.Version, dependencyMetadata.Name+cellImageExt)
 	dependencyImage := dependencyMetadata.Organization + "/" + dependencyMetadata.Name +
 		":" + dependencyMetadata.Version
 	if cellImage.Registry != "" {
@@ -255,7 +255,7 @@ func extractDependenciesFromMetaData(cli cli.Cli, dependencyMetadata *image.Meta
 	// Create temp directory
 	currentTime := time.Now()
 	timestamp := currentTime.Format("27065102350415")
-	tempPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", timestamp)
+	tempPath := filepath.Join(cli.FileSystem().TempDir(), timestamp)
 	if err = util.CreateDir(tempPath); err != nil {
 		return nil, fmt.Errorf("error while creating temp directory, %v", err)
 	}
@@ -331,17 +331,23 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 			return fmt.Errorf("error occured while copying the %s, %v", ballerinaLocalRepo, err)
 		}
 	}
-	isTestDirExists, _ := util.FileExists(constants.ZIP_TESTS)
-	folders := []string{artifacts, src}
+	isTestDirExists, _ := util.FileExists(zipTests)
+	folders := []string{filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifacts) , filepath.Join(cli.FileSystem().WorkingDirRelativePath(), src)}
 
 	if isTestDirExists {
-		folders = append(folders, constants.ZIP_TESTS)
+		folders = append(folders, zipTests)
 	}
-
-	if err = util.RecursiveZip(nil, folders, artifactsZip); err != nil {
+	// Todo: Check if WorkingDirRelativePath could be omitted.
+	// For actual scenario WorkingDirRelativePath == ""
+	// However, since the current dir is different to the running location, exact path has to be provided when running unit tests.
+	if err = util.RecursiveZip(nil, folders, filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifactsZip)); err != nil {
 		return fmt.Errorf("error occurred while creating the image, %v", err)
 	}
-	_ = os.RemoveAll(filepath.Join(projectDir, artifacts))
-	_ = os.RemoveAll(filepath.Join(projectDir, src))
+	if err = os.RemoveAll(filepath.Join(projectDir, artifacts)); err != nil {
+		return fmt.Errorf("error occurred while removing artifacts dir, %v", err)
+	}
+	if err = os.RemoveAll(filepath.Join(projectDir, src)); err != nil {
+		return fmt.Errorf("error occurred while removing src dir, %v", err)
+	}
 	return nil
 }

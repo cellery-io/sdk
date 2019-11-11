@@ -34,13 +34,15 @@ type FileSystemManager interface {
 	TempDir() string
 	Repository() string
 	CelleryInstallationDir() string
+	WorkingDirRelativePath() string
 }
 
 type celleyFileSystem struct {
-	userHome   string
-	repository string
-	currentDir string
-	tempDir    string
+	userHome          string
+	repository        string
+	currentDir        string
+	tempDir           string
+	workingDirRelPath string
 }
 
 // NewCelleryFileSystem returns a celleyFileSystem instance.
@@ -50,10 +52,11 @@ func NewCelleryFileSystem() (*celleyFileSystem, error) {
 		return nil, err
 	}
 	fs := &celleyFileSystem{
-		currentDir: currentDir,
-		userHome:   userHomeDir(),
-		repository: filepath.Join(userHomeDir(), celleryHome, "repo"),
-		tempDir:    filepath.Join(userHomeDir(), celleryHome, "tmp"),
+		currentDir:        currentDir,
+		userHome:          userHomeDir(),
+		repository:        filepath.Join(userHomeDir(), celleryHome, "repo"),
+		tempDir:           filepath.Join(userHomeDir(), celleryHome, "tmp"),
+		workingDirRelPath: "",
 	}
 	return fs, nil
 }
@@ -98,4 +101,9 @@ func (fs *celleyFileSystem) CelleryInstallationDir() string {
 		celleryHome = celleryInstallationPathUbuntu
 	}
 	return celleryHome
+}
+
+// WorkingDirRelativePath returns the relative path of working directory.
+func (fs *celleyFileSystem) WorkingDirRelativePath() string {
+	return fs.workingDirRelPath
 }
