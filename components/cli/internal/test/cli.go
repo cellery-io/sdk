@@ -22,10 +22,10 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/docker"
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
+	"github.com/cellery-io/sdk/components/cli/pkg/docker"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry"
 )
 

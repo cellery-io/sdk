@@ -24,7 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/cellery-io/sdk/components/cli/internal/test"
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
 func TestGetCellTableData(t *testing.T) {

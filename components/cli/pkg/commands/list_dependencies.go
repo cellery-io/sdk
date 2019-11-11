@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/routing"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 

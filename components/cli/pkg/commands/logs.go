@@ -21,7 +21,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
 func RunLogs(cellName, componentName string, sysLog bool) error {

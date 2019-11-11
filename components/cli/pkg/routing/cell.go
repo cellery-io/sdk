@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
 const cellOriginalGatewaySvcAnnKey = "mesh.cellery.io/original-gw-svc"

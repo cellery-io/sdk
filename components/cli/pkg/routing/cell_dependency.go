@@ -21,8 +21,8 @@ package routing
 import (
 	"encoding/json"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
 	errors "github.com/cellery-io/sdk/components/cli/pkg/error"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
 const compositeDependencyKind = "Composite"

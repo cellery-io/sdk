@@ -21,7 +21,7 @@ package test
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
 const celleryInstance = "cells.mesh.cellery.io"

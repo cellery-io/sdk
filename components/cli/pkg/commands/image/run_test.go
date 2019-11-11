@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cellery-io/sdk/components/cli/ballerina"
 	"github.com/cellery-io/sdk/components/cli/internal/test"
+	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 )
 

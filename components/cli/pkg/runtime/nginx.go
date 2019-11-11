@@ -21,7 +21,7 @@ package runtime
 import (
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/kubernetes"
+	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
 func installNginx(artifactsPath string, isLoadBalancerIngressMode bool) error {
