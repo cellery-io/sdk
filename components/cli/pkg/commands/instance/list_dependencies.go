@@ -16,43 +16,40 @@
  * under the License.
  */
 
-package commands
+package instance
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
-	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
-	"github.com/cellery-io/sdk/components/cli/pkg/routing"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
 	"github.com/olekukonko/tablewriter"
+
+	"github.com/cellery-io/sdk/components/cli/cli"
+	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
+	"github.com/cellery-io/sdk/components/cli/pkg/routing"
 )
 
-func RunListDependencies(instanceName string) error {
+func RunListDependencies(cli cli.Cli, instanceName string) error {
 	var depJson string
 	var canBeComposite bool
-	cellInst, err := kubernetes.GetCell(instanceName)
+	cellInst, err := cli.KubeCli().GetCell(instanceName)
 	if err != nil {
 		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
 			canBeComposite = true
 		} else {
-			util.ExitWithErrorMessage("Failed to check available Cells", err)
+			return fmt.Errorf("failed to check available Cells, %v", err)
 		}
 	} else {
 		depJson = cellInst.CellMetaData.Annotations.Dependencies
 	}
 
 	if canBeComposite {
-		compositeInst, err := kubernetes.GetComposite(instanceName)
+		compositeInst, err := cli.KubeCli().GetComposite(instanceName)
 		if err != nil {
 			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
-				util.ExitWithErrorMessage("Failed to retrieve dependencies of "+instanceName,
-					errors.New(instanceName+" instance not available in the runtime"))
+				return fmt.Errorf("failed to retrieve dependencies of %s, instance not available in the runtime", instanceName)
 			} else {
-				util.ExitWithErrorMessage("Failed to check available Composites", err)
+				return fmt.Errorf("failed to check available Composites, %v", err)
 			}
 		} else {
 			depJson = compositeInst.CompositeMetaData.Annotations.Dependencies
@@ -64,7 +61,6 @@ func RunListDependencies(instanceName string) error {
 		return err
 	}
 	if len(dependencies) == 0 {
-		// No dependencies
 		return fmt.Errorf("no dependencies found in cell instance %s", instanceName)
 	}
 	var tableData [][]string
@@ -73,7 +69,6 @@ func RunListDependencies(instanceName string) error {
 			dependency["version"]}
 		tableData = append(tableData, record)
 	}
-
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"CELL INSTANCE", "IMAGE", "VERSION"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})

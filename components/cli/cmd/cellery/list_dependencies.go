@@ -24,12 +24,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/instance"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func newListDependenciesCommand() *cobra.Command {
+func newListDependenciesCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "dependencies <instance-name>",
 		Aliases: []string{"dep"},
@@ -49,7 +50,7 @@ func newListDependenciesCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := commands.RunListDependencies(args[0]); err != nil {
+			if err := instance.RunListDependencies(cli, args[0]); err != nil {
 				util.ExitWithErrorMessage("Unable to list dependencies", err)
 			}
 		},
