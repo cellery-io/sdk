@@ -228,7 +228,7 @@ func GetPodsForComposite(compName string) (Pods, error) {
 	return jsonOutput, err
 }
 
-func GetServices(cellName string) (Services, error) {
+func (kubecli *CelleryKubeCli) GetServices(cellName string) (Services, error) {
 	cmd := exec.Command(
 		constants.KUBECTL,
 		"get",

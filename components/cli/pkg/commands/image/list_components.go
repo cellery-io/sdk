@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package commands
+package image
 
 import (
 	"fmt"
@@ -28,43 +28,49 @@ import (
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunListComponents(cli cli.Cli, name string) {
-	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
+func RunListComponents(cli cli.Cli, name string) error {
+	var err error
+	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", celleryIdPattern), name)
 	if instancePattern {
-		displayComponentsTable(getCellInstanceComponents(name))
+		var instanceComponents []string
+		if instanceComponents, err = getCellInstanceComponents(cli, name); err != nil {
+			return err
+		}
+		displayComponentsTable(instanceComponents)
 	} else {
-		displayComponentsTable(getCellImageCompoents(cli, name))
+		imageComponents, err := getCellImageCompoents(cli, name)
+		if err != nil {
+			return err
+		}
+		displayComponentsTable(imageComponents)
 	}
+	return nil
 }
 
-func getCellImageCompoents(cli cli.Cli, cellImage string) []string {
+func getCellImageCompoents(cli cli.Cli, cellImage string) ([]string, error) {
 	var components []string
 	cellYamlContent := image.ReadCellImageYaml(cli.FileSystem().Repository(), cellImage)
 	cellImageContent := &image.Cell{}
-	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
-	if err != nil {
-		util.ExitWithErrorMessage("Error while reading cell image content", err)
+	if err := yaml.Unmarshal(cellYamlContent, cellImageContent); err != nil {
+		return nil, fmt.Errorf("error while reading cell image content, %v", err)
 	}
 	for _, component := range cellImageContent.Spec.Components {
 		components = append(components, component.Metadata.Name)
 	}
-	return components
+	return components, nil
 }
 
-func getCellInstanceComponents(cellName string) []string {
+func getCellInstanceComponents(cli cli.Cli, cellName string) ([]string, error) {
 	var components []string
-	services, err := kubernetes.GetServices(cellName)
+	services, err := cli.KubeCli().GetServices(cellName)
 	if err != nil {
-		util.ExitWithErrorMessage("Error getting list of components", err)
+		return nil, fmt.Errorf("error getting list of components, %v", err)
 	}
 	if len(services.Items) == 0 {
-		util.ExitWithErrorMessage("Error listing components", fmt.Errorf("cannot find cell: %v \n", cellName))
+		return nil, fmt.Errorf("error listing components, %v", fmt.Errorf("cannot find cell: %v \n", cellName))
 	} else {
 		for i := 0; i < len(services.Items); i++ {
 			var name string
@@ -73,17 +79,15 @@ func getCellInstanceComponents(cellName string) []string {
 			components = append(components, name)
 		}
 	}
-	return components
+	return components, nil
 }
 
 func displayComponentsTable(components []string) {
 	var tableData [][]string
-
 	for i := 0; i < len(components); i++ {
 		component := []string{components[i]}
 		tableData = append(tableData, component)
 	}
-
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"COMPONENT NAME"})
 	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})

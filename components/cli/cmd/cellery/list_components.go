@@ -25,8 +25,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newListComponentsCommand(cli cli.Cli) *cobra.Command {
@@ -49,7 +50,9 @@ func newListComponentsCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunListComponents(cli, args[0])
+			if err := image.RunListComponents(cli, args[0]); err != nil {
+				util.ExitWithErrorMessage("Cellery list components command failed", err)
+			}
 		},
 		Example: "  cellery list components employee\n" +
 			"  cellery list components cellery-samples/employee:1.0.0",
