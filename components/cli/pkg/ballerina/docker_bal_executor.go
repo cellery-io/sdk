@@ -163,8 +163,7 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, args []string) erro
 }
 
 // Run executes ballerina run when ballerina is not installed.
-func (balExecutor *DockerBalExecutor) Run(imageDir string, fileName string, args []string, envVars []*EnvironmentVariable) error {
-
+func (balExecutor *DockerBalExecutor) Run(fileName string, args []string, envVars []*EnvironmentVariable) error {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error in determining working directory, %v", err)
@@ -177,7 +176,6 @@ func (balExecutor *DockerBalExecutor) Run(imageDir string, fileName string, args
 	if err != nil {
 		return fmt.Errorf("docker Run Error, %v", err)
 	}
-
 	if string(containerId) == "" {
 		cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+version.BuildVersion(),
 			"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
@@ -212,10 +210,9 @@ func (balExecutor *DockerBalExecutor) Run(imageDir string, fileName string, args
 		}
 		exeUid = cliUser.Uid
 	}
+	cmd := exec.Command("docker", "exec")
 	re := regexp.MustCompile(`^.*cellery-cell-image`)
 	fileName = re.ReplaceAllString(fileName, dockerCliCellImageDir)
-	dockerImageDir := re.ReplaceAllString(imageDir, dockerCliCellImageDir)
-	cmd := exec.Command("docker", "exec", "-e", celleryImageDirEnvVar+"="+dockerImageDir)
 	shellEnvs := os.Environ()
 	// check if any env var prepended with `CELLERY` exists. If so, set them to docker exec command.
 	for _, shellEnv := range shellEnvs {
@@ -226,7 +223,12 @@ func (balExecutor *DockerBalExecutor) Run(imageDir string, fileName string, args
 	// set any explicitly passed env vars in cellery run command to the docker exec.
 	// This will override any env vars with identical names (prefixed with 'CELLERY') set previously.
 	for _, envVar := range envVars {
-		cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+		if envVar.Key == celleryImageDirEnvVar {
+			dockerImageDir := re.ReplaceAllString(envVar.Value, dockerCliCellImageDir)
+			cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+dockerImageDir)
+		} else {
+			cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+		}
 	}
 	cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", exeUid,
 		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath)

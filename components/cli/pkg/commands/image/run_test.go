@@ -25,48 +25,8 @@ import (
 	"testing"
 
 	"github.com/cellery-io/sdk/components/cli/internal/test"
-	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 )
-
-func TestStartCellInstance(t *testing.T) {
-	mockBalExecutor := test.NewMockBalExecutor()
-	mockCli := test.NewMockCli(test.SetBalExecutor(mockBalExecutor))
-	imageDir, err := ioutil.TempDir("", "temp")
-	if err != nil {
-		t.Errorf("Failed to create image dir: %v", err)
-	}
-	defer func() { os.RemoveAll(imageDir) }()
-	err = os.MkdirAll(filepath.Join(imageDir, "src"), os.ModePerm)
-	if err != nil {
-		t.Errorf("Failed to create src directory: %v", err)
-	}
-	_, err = os.Create(filepath.Join(imageDir, "src", "hello.bal"))
-	if err != nil {
-		t.Errorf("Failed to create bal file: %v", err)
-	}
-	cellImage := &image.CellImageName{
-		Organization: "myorg",
-		Name:         "hello",
-		Version:      "1.0.0",
-	}
-	cellImageMetadata := &image.MetaData{
-		CellImageName: *cellImage,
-	}
-	mainNode := &dependencyTreeNode{
-		Instance:  "hello",
-		IsRunning: false,
-		IsShared:  false,
-		MetaData:  cellImageMetadata,
-	}
-	var instanceEnvVars []*ballerina.EnvironmentVariable
-	rootNodeDependencies := map[string]*dependencyInfo{}
-	err = startCellInstance(mockCli, imageDir, "hello", mainNode, instanceEnvVars, false,
-		rootNodeDependencies, false)
-	if err != nil {
-		t.Errorf("startCellInstance failed: %v", err)
-	}
-}
 
 func TestRunRun(t *testing.T) {
 	currentDir, err := ioutil.TempDir("", "current-dir")
@@ -110,5 +70,44 @@ func TestRunRun(t *testing.T) {
 				t.Errorf("error in RunRun, %v", err)
 			}
 		})
+	}
+}
+
+func TestStartCellInstance(t *testing.T) {
+	mockBalExecutor := test.NewMockBalExecutor()
+	mockCli := test.NewMockCli(test.SetBalExecutor(mockBalExecutor))
+	imageDir, err := ioutil.TempDir("", "temp")
+	if err != nil {
+		t.Errorf("Failed to create image dir: %v", err)
+	}
+	defer func() { os.RemoveAll(imageDir) }()
+	err = os.MkdirAll(filepath.Join(imageDir, "src"), os.ModePerm)
+	if err != nil {
+		t.Errorf("Failed to create src directory: %v", err)
+	}
+	_, err = os.Create(filepath.Join(imageDir, "src", "hello.bal"))
+	if err != nil {
+		t.Errorf("Failed to create bal file: %v", err)
+	}
+	cellImage := &image.CellImageName{
+		Organization: "myorg",
+		Name:         "hello",
+		Version:      "1.0.0",
+	}
+	cellImageMetadata := &image.MetaData{
+		CellImageName: *cellImage,
+	}
+	mainNode := &dependencyTreeNode{
+		Instance:  "hello",
+		IsRunning: false,
+		IsShared:  false,
+		MetaData:  cellImageMetadata,
+	}
+	var instanceEnvVars []*environmentVariable
+	rootNodeDependencies := map[string]*dependencyInfo{}
+	err = startCellInstance(mockCli, imageDir, "hello", mainNode, instanceEnvVars, false,
+		rootNodeDependencies, false)
+	if err != nil {
+		t.Errorf("startCellInstance failed: %v", err)
 	}
 }

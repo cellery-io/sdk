@@ -44,7 +44,7 @@ func displayCellTable(cli cli.Cli) error {
 		return fmt.Errorf("error getting cell table data, %v", err)
 	}
 	if len(tableData) > 0 {
-		fmt.Printf("\n %s\n", util.Bold("Cell Instances:"))
+		fmt.Fprintf(cli.Out(), "\n %s\n", util.Bold("Cell Instances:"))
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"INSTANCE", "IMAGE", "STATUS", "GATEWAY", "COMPONENTS", "AGE"})
 		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
@@ -70,7 +70,7 @@ func displayCellTable(cli cli.Cli) error {
 		table.AppendBulk(tableData)
 		table.Render()
 	} else {
-		fmt.Println(cli.Out(), "No running cell instances.")
+		fmt.Fprintln(cli.Out(), "No running cell instances.")
 	}
 	return nil
 }
@@ -81,7 +81,7 @@ func displayCompositeTable(cli cli.Cli) {
 		util.ExitWithErrorMessage("Error getting information of composites", err)
 	}
 	if len(compositeData) > 0 {
-		fmt.Printf(" \n %s\n", util.Bold("Composite Instances:"))
+		fmt.Fprintf(cli.Out(), " \n %s\n", util.Bold("Composite Instances:"))
 
 		var tableData [][]string
 

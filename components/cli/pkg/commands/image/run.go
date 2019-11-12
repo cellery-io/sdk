@@ -94,7 +94,7 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 			parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
 		}
 	}
-	var instanceEnvVars []*ballerina.EnvironmentVariable
+	var instanceEnvVars []*environmentVariable
 	if len(envVars) > 0 {
 		// Parsing environment variables
 		for _, envVar := range envVars {
@@ -122,7 +122,7 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 			if targetInstance == "" {
 				targetInstance = instanceName
 			}
-			parsedEnvVar := &ballerina.EnvironmentVariable{
+			parsedEnvVar := &environmentVariable{
 				InstanceName: targetInstance,
 				Key:          envVarKey,
 				Value:        envVarValue,
@@ -158,7 +158,7 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 }
 
 func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runningNode *dependencyTreeNode,
-	envVars []*ballerina.EnvironmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo,
+	envVars []*environmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo,
 	shareDependencies bool) error {
 	defer os.Remove(imageDir)
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
@@ -172,23 +172,23 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 	if tempRunFileName, err = util.CreateTempExecutableBalFile(balFilePath, "run"); err != nil {
 		return fmt.Errorf("error creating temporarily executable bal file, %v", err)
 	}
-	var balEnvVars []ballerina.EnvironmentVariable
+	var balEnvVars []*ballerina.EnvironmentVariable
 	// Set celleryImageDirEnvVar environment variable.
-	balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
+	balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
 		Key:   celleryImageDirEnvVar,
 		Value: imageDir})
 	// Setting user defined environment variables.
 	for _, envVar := range envVars {
 		// Export environment variables defined by user for root instance
 		if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
-			balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
+			balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
 				Key:   envVar.Key,
 				Value: envVar.Value,
 			})
 		}
 		// Export environment variables defined by user for dependent instances
 		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
-			balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
+			balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
 				Key:   celleryEnvVarPrefix + envVar.InstanceName + "." + envVar.Key,
 				Value: envVar.Value,
 			})
@@ -198,7 +198,7 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 	if runCommandArgs, err = runCmdArgs(instanceName, dependencyLinks, runningNode, startDependencies, shareDependencies); err != nil {
 		return fmt.Errorf("failed to get run command arguements, %v", err)
 	}
-	if err = cli.BalExecutor().Run(imageDir, tempRunFileName, runCommandArgs, envVars); err != nil {
+	if err = cli.BalExecutor().Run(tempRunFileName, runCommandArgs, balEnvVars); err != nil {
 		return fmt.Errorf("failed to run bal file, %v", err)
 	}
 	if err = os.Remove(tempRunFileName); err != nil {

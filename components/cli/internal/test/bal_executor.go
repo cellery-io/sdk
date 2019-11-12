@@ -99,7 +99,7 @@ func (balExecutor *MockBalExecutor) Build(fileName string, args []string) error 
 }
 
 // Build mocks execution of ballerina run on an executable bal file.
-func (balExecutor *MockBalExecutor) Run(imageDir string, tempRunFileName string, args []string, envVars []*ballerina.EnvironmentVariable) error {
+func (balExecutor *MockBalExecutor) Run(fileName string, args []string, envVars []*ballerina.EnvironmentVariable) error {
 	return nil
 }
 

@@ -28,7 +28,7 @@ import (
 type MockRegistry struct {
 	out       io.Writer
 	outBuffer *bytes.Buffer
-	images map[string][]byte
+	images    map[string][]byte
 }
 
 func NewMockRegistry(opts ...func(*MockRegistry)) *MockRegistry {

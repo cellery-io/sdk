@@ -35,7 +35,7 @@ const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
 
 type BalExecutor interface {
 	Build(fileName string, args []string) error
-	Run(imageDir string, fileName string, args []string, envVars []*EnvironmentVariable) error
+	Run(fileName string, args []string, envVars []*EnvironmentVariable) error
 	Version() (string, error)
 	ExecutablePath() (string, error)
 }
@@ -88,7 +88,7 @@ func (balExecutor *LocalBalExecutor) Build(fileName string, args []string) error
 }
 
 // Run executes ballerina run on an executable bal file.
-func (balExecutor *LocalBalExecutor) Run(imageDir string, fileName string, args []string,
+func (balExecutor *LocalBalExecutor) Run(fileName string, args []string,
 	envVars []*EnvironmentVariable) error {
 	cmd := &exec.Cmd{}
 	exePath, err := balExecutor.ExecutablePath()
@@ -98,7 +98,7 @@ func (balExecutor *LocalBalExecutor) Run(imageDir string, fileName string, args 
 	cmd = exec.Command(exePath, "run", fileName, "run")
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
+	//cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
 	// Export environment variables defined by user
 	for _, envVar := range envVars {
 		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
@@ -188,7 +188,6 @@ func ballerinaInstallationPath() (string, error) {
 
 // EnvironmentVariable is used to store the environment variables to be passed to the instances
 type EnvironmentVariable struct {
-	InstanceName string
-	Key          string
-	Value        string
+	Key   string
+	Value string
 }
