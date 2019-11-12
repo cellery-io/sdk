@@ -18,7 +18,7 @@
 
 package constants
 
-const DOMAIN_NAME_PATTERN = "[a-z0-9]+((?:-|.)[a-z0-9]+)*(:[0-9]+)?"
+const DomainNamePattern = "[a-z0-9]+((?:-|.)[a-z0-9]+)*(:[0-9]+)?"
 const CELLERY_ID_PATTERN = "[a-z0-9]+(-[a-z0-9]+)*"
 const CELLERY_ALIAS_PATTERN = "[a-zA-Z0-9_-]+"
 const IMAGE_VERSION_PATTERN = "[a-z0-9]+((?:-|.)[a-z0-9]+)*"

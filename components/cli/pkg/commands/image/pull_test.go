@@ -20,11 +20,86 @@ package image
 
 import (
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/google/go-cmp/cmp"
 )
+
+func TestRunPull(t *testing.T) {
+	mockRepo, err := ioutil.TempDir("", "mock-repo")
+	if err != nil {
+		t.Errorf("failed to create mock repository, %v", err)
+	}
+	mockFileSystem := test.NewMockFileSystem(test.SetRepository(mockRepo))
+	mockCredManager := test.NewMockCredManager(test.SetCredentials("myhub.cellery.io", "aclice", "alice123"))
+
+	sampleImage, err := ioutil.ReadFile(filepath.Join("testdata", "repo", "myorg", "hello", "1.0.0", "hello.zip"))
+	if err != nil {
+		t.Error("error reading sample image file")
+	}
+	imagesMap := make(map[string][]byte)
+	imagesMap["myorg/hello:1.0.0"] = sampleImage
+	mockRegistry := test.NewMockRegistry(test.SetImages(imagesMap))
+	mockCli := test.NewMockCli(
+		test.SetFileSystem(mockFileSystem),
+		test.SetCredManager(mockCredManager),
+		test.SetRegistry(mockRegistry),
+	)
+	tests := []struct {
+		name             string
+		image            string
+		silent           bool
+		username         string
+		password         string
+		expectedToPass   bool
+		expectedErrorMsg string
+	}{
+		{
+			name:             "pull valid image",
+			image:            "myorg/hello:1.0.0",
+			silent:           true,
+			username:         "alice",
+			password:         "alice123",
+			expectedToPass:   true,
+			expectedErrorMsg: "",
+		},
+		{
+			name:             "pull invalid image",
+			image:            "myorg/foo:1.0.0",
+			silent:           true,
+			username:         "alice",
+			password:         "alice123",
+			expectedToPass:   false,
+			expectedErrorMsg: "invalid cell image, zip: not a valid zip file",
+		},
+		{
+			name:             "pull image without username, password",
+			image:            "myorg/foo:1.0.0",
+			silent:           true,
+			username:         "",
+			password:         "",
+			expectedToPass:   false,
+			expectedErrorMsg: "invalid cell image, zip: not a valid zip file",
+		},
+	}
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunPull(mockCli, tst.image, tst.silent, tst.username, tst.password)
+			if tst.expectedToPass {
+				if err != nil {
+					t.Errorf("error in RunPull, %v", err)
+				}
+			} else {
+				if diff := cmp.Diff(tst.expectedErrorMsg, err.Error()); diff != "" {
+					t.Errorf("RunLogout: not logged in (-want, +got)\n%v", diff)
+				}
+			}
+		})
+	}
+}
 
 func TestPullImage(t *testing.T) {
 	parsedCellImage := &image.CellImage{

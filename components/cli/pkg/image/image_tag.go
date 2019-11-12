@@ -115,7 +115,7 @@ func ValidateImageTagWithRegistry(imageTag string) error {
 	}
 
 	registry := subMatch[1]
-	isValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.DOMAIN_NAME_PATTERN), registry)
+	isValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.DomainNamePattern), registry)
 	if registry != "" && (err != nil || !isValid) {
 		return fmt.Errorf("expects a valid URL as the registry, received %s", registry)
 	}

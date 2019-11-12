@@ -28,15 +28,25 @@ import (
 type MockRegistry struct {
 	out       io.Writer
 	outBuffer *bytes.Buffer
+	images map[string][]byte
 }
 
-func NewMockRegistry() *MockRegistry {
+func NewMockRegistry(opts ...func(*MockRegistry)) *MockRegistry {
 	outBuffer := new(bytes.Buffer)
 	registry := &MockRegistry{
 		out:       outBuffer,
 		outBuffer: outBuffer,
 	}
+	for _, opt := range opts {
+		opt(registry)
+	}
 	return registry
+}
+
+func SetImages(images map[string][]byte) func(*MockRegistry) {
+	return func(registry *MockRegistry) {
+		registry.images = images
+	}
 }
 
 func (registry *MockRegistry) Push(parsedCellImage *image.CellImage, fileBytes []byte, username, password string) error {
@@ -44,8 +54,8 @@ func (registry *MockRegistry) Push(parsedCellImage *image.CellImage, fileBytes [
 }
 
 func (registry *MockRegistry) Pull(parsedCellImage *image.CellImage, username string, password string) ([]byte, error) {
-	var cellImage []byte
-	return cellImage, nil
+	imageName := parsedCellImage.Organization + "/" + parsedCellImage.ImageName + ":" + parsedCellImage.ImageVersion
+	return registry.images[imageName], nil
 }
 
 // Out returns the mock writer used for the stdout.
