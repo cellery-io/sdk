@@ -245,8 +245,10 @@ func PrintSuccessMessage(message string) {
 
 // PrintInfoMessage prints an information
 func PrintInfoMessage(message string) {
-	fmt.Println()
+	fmt.Println("--------------------------------------------------------")
 	fmt.Printf("\n%s %s\n", CyanBold("\u24D8"), message)
+	fmt.Println("--------------------------------------------------------\n")
+
 }
 
 func PrintWarningMessage(message string) {

@@ -20,9 +20,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"path/filepath"
 	"regexp"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 
 	"github.com/spf13/cobra"
 
@@ -91,9 +92,9 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-        	commands.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
-        		assumeYes, debug, verbose, incell, projLocation)
-        },
+			image2.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
+				assumeYes, debug, verbose, incell, projLocation)
+		},
 		Example: "  cellery test cellery-samples/hr:1.0.0 -n hr-inst\n" +
 			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst -y\n" +
 			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst --assume-yes\n" +

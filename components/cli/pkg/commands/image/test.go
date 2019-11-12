@@ -20,14 +20,6 @@ package image
 
 import (
 	"bufio"
-	"os/user"
-	"strconv"
-
-	"github.com/cellery-io/sdk/components/cli/cli"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
 
 	"encoding/json"
 	"fmt"
@@ -37,7 +29,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -183,7 +174,7 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 
 	spinner.Stop(true)
 	err = startTestCellInstance(imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
-		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes, projLocation, )
+		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes, projLocation)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to test Cell instance "+instanceName, err)
 	}
@@ -321,7 +312,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 				return fmt.Errorf("error occurred while creating the ballerina.conf, %s", err)
 			}
 			err = RunDockerTelepresenceTests(incell, cmd, testsRoot, imageDir, instanceName)
-			if err != nil{
+			if err != nil {
 				StopTelepresence(telepresenceYamlPath)
 				return fmt.Errorf("error occured while running tests in ballerina docker image, %s", err)
 			}
@@ -340,7 +331,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			//	cmdArgs = append(cmdArgs, "--disable-groups", "incell")
 			//}
 			err = RunTelepresenceTests(incell, cmd, exePath, imageDir, instanceName, debug)
-			if err != nil{
+			if err != nil {
 				StopTelepresence(telepresenceYamlPath)
 				return fmt.Errorf("error occured while running tests, %s", err)
 			}
@@ -363,7 +354,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 
 			err = RunTelepresenceTests(incell, cmd, exePath, imageDir, instanceName, debug)
-			if err != nil{
+			if err != nil {
 				StopTelepresence(telepresenceYamlPath)
 				return fmt.Errorf("error occured while running tests, %s", err)
 			}
@@ -451,14 +442,14 @@ func PromtConfirmation(assumeYes bool, balProj string) error {
 		var debugMsg string
 		isExists, err := util.FileExists(balConf)
 		if err != nil {
-			return fmt.Errorf("error occured while checking if %s exists,", balConf, err )
+			return fmt.Errorf("error occured while checking if %s exists,", balConf, err)
 		}
 		if isExists {
-			debugMsg = constants.BALLERINA_CONF + " already exists in project location: "+ balProj + ". This will be overridden to debug tests. "
+			debugMsg = constants.BALLERINA_CONF + " already exists in project location: " + balProj + ". This will be overridden to debug tests. "
 		} else {
-			debugMsg = constants.BALLERINA_CONF + " file will be created in project location: "+ balProj + " to debug tests."
+			debugMsg = constants.BALLERINA_CONF + " file will be created in project location: " + balProj + " to debug tests."
 		}
-		fmt.Printf("%s " + util.Bold(debugMsg+ "Do you wish to continue with debugging the tests (Y/n)? "), util.YellowBold("?"))
+		fmt.Printf("%s "+util.Bold(debugMsg+"Do you wish to continue with debugging the tests (Y/n)? "), util.YellowBold("?"))
 		reader := bufio.NewReader(os.Stdin)
 		confirmation, err := reader.ReadString('\n')
 		if err != nil {
@@ -561,16 +552,16 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 		deploymentName = "telepresence--telepresence-deployment"
 		spinnerMsg = "Creating telepresence instance"
 	}
-	kubectl.ApplyFile(dstYamlFile)
+	kubernetes.ApplyFile(dstYamlFile)
 	spinner = util.StartNewSpinner(spinnerMsg)
 	time.Sleep(5 * time.Second)
-	err := kubectl.WaitForDeployment("available", 900, deploymentName, "default")
+	err := kubernetes.WaitForDeployment("available", 900, deploymentName, "default")
 	if err != nil {
 		return nil, fmt.Errorf("error waiting for telepresence deployment %v to be available", deploymentName, err)
 	}
 
 	if !incell {
-		err = kubectl.WaitForCell("Ready", 30*60, "telepresence", "default")
+		err = kubernetes.WaitForCell("Ready", 30*60, "telepresence", "default")
 		if err != nil {
 			return nil, fmt.Errorf("error waiting for instance telepresence to be ready", err)
 		}

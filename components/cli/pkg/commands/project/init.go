@@ -21,16 +21,21 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/fatih/color"
-	"github.com/oxequa/interact"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/version"
+
+	"github.com/fatih/color"
+	"github.com/oxequa/interact"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 const CellTemplate = `
@@ -83,10 +88,10 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
     return <@untainted> cellery:createInstance(helloCell, iName, instances, startDependencies, shareDependencies);
 }
 `
-const testImports  = `
+const testImports = `
 import ballerina/test;
 `
-const TestTemplate  = `
+const TestTemplate = `
 import ballerina/test;
 import ballerina/io;
 import celleryio/cellery;
@@ -111,16 +116,26 @@ public function cleanUp() {
     error? err = cellery:stopInstances(instanceList);
 }
 `
+const projStructure = `
+New project structure:
+
+%s/
+├── Ballerina.toml
+└── src
+    └── %s
+        ├── %s
+        └── tests
+            └── %s
+`
+
 func RunInit(projectName string, testArg string) {
-	if testArg == ""{
+	if testArg == "" {
 		initProject(projectName)
-	} else if testArg == "test" {
+	} else {
 		err := initTest(projectName)
 		if err != nil {
 			util.ExitWithErrorMessage("error occurred while initializing tests", err)
 		}
-	} else {
-		//throw error message
 	}
 }
 
@@ -180,25 +195,59 @@ func initTest(balFile string) error {
 	if err != nil {
 		return fmt.Errorf("error occurred while changing directory", err)
 	}
-	//Append tests
-	//appendTestsToBalFile(balFile)
 
 	writer, projectTestDir := createTestBalFile(balAbsPath)
 	writeCellTemplate(writer, TestTemplate)
-	util.PrintSuccessMessage(fmt.Sprintf("Initialized tests for cell file in: %s", util.Faint(projectTestDir)))
-	//util.PrintWhatsNextMessage("build the image",
-	//	"cellery build "+projectName+"/"+projectName+".bal"+" organization/image_name:version")
-
 
 	//Create ballerina project
 	balProjectName := filepath.Base(balModuleDir) + "_proj"
-	if exePath != ""{
+	projExists, err := util.FileExists(balProjectName)
+	if err != nil {
+		return fmt.Errorf("error while checking if project %s exists", balProjectName)
+	}
+	if projExists {
+		return fmt.Errorf("%s project already exists", balProjectName)
+	}
+	if exePath != "" {
 		cmd := exec.Command(exePath, "new", balProjectName)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
 		if err != nil {
 			return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
+		}
+	} else {
+		currentDir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("error occurred while getting current directory", err)
+		}
+		err = util.CleanOrCreateDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME))
+		if err != nil {
+			return err
+		}
+
+		var bashArgs []string
+		bashArgs = append(bashArgs, "run")
+		bashArgs = append(bashArgs, ConstructDockerArgs(balModuleDir, currentDir)...)
+		cmd := exec.Command("docker", bashArgs...)
+		fmt.Println(cmd)
+		cmd.Env = os.Environ()
+		cmd.Stdout = os.Stdout
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("error occurred while initializing tests using ballerina docker image, %s", err)
+		}
+
+		err = util.CopyDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME, balProjectName), filepath.Join(currentDir, balProjectName))
+		if err != nil {
+			return err
+		}
+
+		err = util.RemoveDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME))
+		if err != nil {
+			return err
 		}
 	}
 
@@ -212,6 +261,11 @@ func initTest(balFile string) error {
 	if err != nil {
 		return err
 	}
+
+	util.PrintSuccessMessage(fmt.Sprintf("Initialized tests for %s in: %v", balFile, util.Faint(projectTestDir)))
+	util.PrintInfoMessage(fmt.Sprintf(projStructure, balProjectName,
+		util.Faint(filepath.Base(balModuleDir)), util.Faint(filepath.Base(balAbsPath)),
+		strings.TrimSuffix(filepath.Base(balAbsPath), path.Ext(balAbsPath))+"_test.bal"))
 	return nil
 }
 
@@ -259,37 +313,21 @@ func createTestBalFile(balFilePath string) (*os.File, string) {
 	return testBalFile, projectTestDir
 }
 
-func appendTestsToBalFile(balFile string) error {
-	tmpBalFile := "tmp.bal"
-	_, err := os.Create(tmpBalFile)
+func ConstructDockerArgs(projectDir string, currentDir string) []string {
+	cliUser, err := user.Current()
 	if err != nil {
-		return err
+		util.ExitWithErrorMessage("Error while retrieving the current user", err)
 	}
 
-	f, err := os.OpenFile(tmpBalFile, os.O_APPEND|os.O_WRONLY, 0600)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	//Add test import
-	if _, err = f.WriteString(testImports); err != nil {
-		return err
-	}
-	content, err := ioutil.ReadFile(balFile)
-	if err != nil {
-		return err
+	dockerCmdArgs := []string{"-u", cliUser.Uid,
+		"-l", "ballerina-runtime=" + version.BuildVersion(),
+		"--mount", "type=bind,source=" + filepath.Join(currentDir, constants.TARGET_DIR_NAME) + ",target=/home/cellery/tmp",
+		"--mount", "type=bind,source=" + projectDir + ",target=/home/cellery/" + projectDir,
+		"-w", "/home/cellery/",
+		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
 	}
 
-	// Convert []byte to string and print to screen
-	existingBalText := string(content)
-	if _, err = f.WriteString(existingBalText); err != nil {
-		return err
-	}
-	if _, err = f.WriteString(TestTemplate); err != nil {
-		return err
-	}
-	util.CopyFile(tmpBalFile, balFile)
-	os.Remove(tmpBalFile)
-	return nil
+	dockerCommand := []string{"./init-test.sh", cliUser.Uid, filepath.Base(projectDir)}
+	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
+	return dockerCmdArgs
 }

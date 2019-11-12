@@ -19,6 +19,11 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/commands"
@@ -30,20 +35,32 @@ func newInitCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [PROJECT_NAME]",
 		Short: "Initialize a cell project",
-		Args:  cobra.MaximumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args: func(cmd *cobra.Command, args []string) error {
+			err := cobra.MaximumNArgs(2)(cmd, args)
+			if err != nil {
+				return err
+			}
+
 			if len(args) > 1 {
 				testStr = args[0]
+				if testStr != "test" {
+					return fmt.Errorf("invalid argument. expects %s, recieved %s", util.Bold("test"), testStr)
+				}
 				projectName = args[1]
-				commands.RunInit(projectName, testStr)
+				if !(strings.HasSuffix(projectName, ".bal")) {
+					return fmt.Errorf("expects a bal file, recieved %v", projectName)
+				}
 			} else if len(args) > 0 {
 				testStr = ""
 				projectName = args[0]
-				commands.RunInit(projectName, testStr)
 			}
-
+			return nil
 		},
-		Example: "  cellery init [PROJECT_NAME] or cellery init test [PROJECT_PATH]",
+		Run: func(cmd *cobra.Command, args []string) {
+			commands.RunInit(projectName, testStr)
+		},
+		Example: "  cellery init [PROJECT_NAME]\n" +
+			"  cellery init test [PROJECT_PATH]/[PROJECT_PATH].bal",
 	}
 	return cmd
 }
