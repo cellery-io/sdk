@@ -84,22 +84,22 @@ func TestRunRun(t *testing.T) {
 	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem), test.SetBalExecutor(mockBalExecutor))
 
 	tests := []struct {
-		name  string
-		image string
-		instance string
+		name              string
+		image             string
+		instance          string
 		startDependencies bool
 		shareDependencies bool
-		dependencyLinks []string
-		envVars []string
+		dependencyLinks   []string
+		envVars           []string
 	}{
 		{
-			name:  "run image",
-			image: "myorg/hello:1.0.0",
-			instance:"hello",
-			startDependencies:false,
-			shareDependencies:false,
-			dependencyLinks:nil,
-			envVars:nil,
+			name:              "run image",
+			image:             "myorg/hello:1.0.0",
+			instance:          "hello",
+			startDependencies: false,
+			shareDependencies: false,
+			dependencyLinks:   nil,
+			envVars:           nil,
 		},
 	}
 	for _, tst := range tests {

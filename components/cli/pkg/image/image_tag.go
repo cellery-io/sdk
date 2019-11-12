@@ -31,7 +31,7 @@ import (
 // ParseImageTag parses the given image name string and returns a CellImage struct with the relevant information.
 func ParseImageTag(cellImageString string) (parsedCellImage *CellImage, err error) {
 	cellImage := &CellImage{
-		constants.CENTRAL_REGISTRY_HOST,
+		constants.CentralRegistryHost,
 		"",
 		"",
 		"",

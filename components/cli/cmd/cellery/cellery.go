@@ -31,6 +31,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry"
+	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -60,7 +61,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newStatusCommand(cli),
 		newLogsCommand(cli),
 		newLoginCommand(),
-		newLogoutCommand(),
+		newLogoutCommand(cli),
 		newPushCommand(cli),
 		newPullCommand(cli),
 		newSetupCommand(),
@@ -97,11 +98,17 @@ func main() {
 		// if ballerina is not installed locally, use docker.
 		ballerinaExecutor = ballerina.NewDockerBalExecutor()
 	}
-	// Initialize the cellery cli.
-	celleryCli := cli.NewCelleryCli(cli.SetRegistry(registry.NewCelleryRegistry()),
+	credManager, err := credentials.NewCredManager()
+	if err != nil {
+		util.ExitWithErrorMessage("Failed configuring credentials manager", err)
+	}
+	// Initialize the Cellery CLI.
+	celleryCli := cli.NewCelleryCli(
+		cli.SetRegistry(registry.NewCelleryRegistry()),
 		cli.SetFileSystem(fileSystem),
-		cli.SetBallerinaExecutor(ballerinaExecutor))
-
+		cli.SetBallerinaExecutor(ballerinaExecutor),
+		cli.SetCredManager(credManager),
+	)
 	util.CreateCelleryDirStructure()
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")

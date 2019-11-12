@@ -32,6 +32,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/docker"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry"
+	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
@@ -45,6 +46,7 @@ type Cli interface {
 	Registry() registry.Registry
 	OpenBrowser(url string) error
 	DockerCli() docker.Docker
+	CredManager() credentials.CredManager
 }
 
 // CelleryCli is an instance of the cellery command line client.
@@ -55,6 +57,7 @@ type CelleryCli struct {
 	ballerinaExecutor ballerina.BalExecutor
 	registry          registry.Registry
 	docker            docker.Docker
+	credManager       credentials.CredManager
 }
 
 // NewCelleryCli returns a CelleryCli instance.
@@ -87,6 +90,12 @@ func SetBallerinaExecutor(balExecutor ballerina.BalExecutor) func(*CelleryCli) {
 	}
 }
 
+func SetCredManager(credManager credentials.CredManager) func(*CelleryCli) {
+	return func(cli *CelleryCli) {
+		cli.credManager = credManager
+	}
+}
+
 // Out returns the writer used for the stdout.
 func (cli *CelleryCli) Out() io.Writer {
 	return os.Stdout
@@ -113,22 +122,22 @@ func (cli *CelleryCli) ExecuteTask(startMessage, errorMessage, successMessage st
 	return nil
 }
 
-// FileSystem returns FileSystemManager instance.
+// FileSystem returns a FileSystemManager instance.
 func (cli *CelleryCli) FileSystem() FileSystemManager {
 	return cli.fileSystemManager
 }
 
-// BalExecutor returns ballerina.BalExecutor instance.
+// BalExecutor returns a BalExecutor instance.
 func (cli *CelleryCli) BalExecutor() ballerina.BalExecutor {
 	return cli.ballerinaExecutor
 }
 
-// KubeCli returns kubernetes.KubeCli instance.
+// KubeCli returns a KubeCli instance.
 func (cli *CelleryCli) KubeCli() kubernetes.KubeCli {
 	return cli.kubecli
 }
 
-// KubeCli returns kubernetes.KubeCli instance.
+// Registry returns a registry instance.
 func (cli *CelleryCli) Registry() registry.Registry {
 	return cli.registry
 }
@@ -136,6 +145,11 @@ func (cli *CelleryCli) Registry() registry.Registry {
 // FileSystem returns FileSystemManager instance.
 func (cli *CelleryCli) DockerCli() docker.Docker {
 	return cli.docker
+}
+
+// CredManager returns a CredManager instance.
+func (cli *CelleryCli) CredManager() credentials.CredManager {
+	return cli.credManager
 }
 
 // OpenBrowser opens up the provided URL in a browser

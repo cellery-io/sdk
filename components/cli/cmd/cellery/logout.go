@@ -21,21 +21,22 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands/hub"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
 // newLogoutCommand removes the credentials for a particular registry
-func newLogoutCommand() *cobra.Command {
+func newLogoutCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "logout [registry-url]",
 		Short: "Logout from a Cellery Registry",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 1 {
-				hub.RunLogout(args[0])
+				hub.RunLogout(cli, args[0])
 			} else {
-				hub.RunLogout(constants.CENTRAL_REGISTRY_HOST)
+				hub.RunLogout(cli, constants.CentralRegistryHost)
 			}
 		},
 		Example: "  cellery logout\n" +

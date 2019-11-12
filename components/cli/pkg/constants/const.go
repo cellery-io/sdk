@@ -36,7 +36,7 @@ const GROUP_NAME = "mesh.cellery.io"
 const CELL_IMAGE_EXT = ".zip"
 const JSON_EXT = ".json"
 
-const CENTRAL_REGISTRY_HOST = "registry.hub.cellery.io"
+const CentralRegistryHost = "registry.hub.cellery.io"
 const CENTRAL_REGISTRY_HOST_REGX = "^.*registry.hub.cellery.(io|net)$"
 
 const CELLERY_SETUP_MANAGE = "Manage"

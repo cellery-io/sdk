@@ -63,16 +63,16 @@ func TestRunStatus(t *testing.T) {
 	mockCli := test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))))
 
 	tests := []struct {
-		name      string
-		instance  string
+		name     string
+		instance string
 	}{
 		{
-			name:      "status of cell instance",
-			instance:  "employee",
+			name:     "status of cell instance",
+			instance: "employee",
 		},
 		{
-			name:      "status of composite instance",
-			instance:  "hr",
+			name:     "status of composite instance",
+			instance: "hr",
 		},
 	}
 	for _, tst := range tests {

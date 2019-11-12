@@ -20,10 +20,11 @@ package test
 
 import (
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
 )
 
 type MockBalExecutor struct {

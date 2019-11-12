@@ -21,34 +21,29 @@ package hub
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // RunLogout removes the saved credentials for a particular registry
-func RunLogout(registryURL string) {
-	fmt.Print("Logging out from Registry: " + util.Bold(registryURL))
+func RunLogout(cli cli.Cli, registryURL string) error {
+	fmt.Fprint(cli.Out(), "Logging out from Registry: "+util.Bold(registryURL))
 
-	credManager, err := credentials.NewCredManager()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while creating Credentials Manager", err)
-	}
-
+	credManager := cli.CredManager()
 	// Checking if the credentials are present
 	isCredentialsPresent, err := credManager.HasCredentials(registryURL)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while checking whether credentials are already saved", err)
+		return fmt.Errorf("error occurred while checking whether credentials are already saved, %v", err)
 	}
 
 	if !isCredentialsPresent {
-		fmt.Printf("\nYou have not logged into %s Registry\n", util.Bold(registryURL))
+		fmt.Fprint(cli.Out(), fmt.Sprintf("\nYou have not logged into %s Registry\n", util.Bold(registryURL)))
 	} else {
-		err = credManager.RemoveCredentials(registryURL)
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while removing Credentials", err)
+		if err = credManager.RemoveCredentials(registryURL); err != nil {
+			return fmt.Errorf("error occurred while removing Credentials, %v", err)
 		}
-
 		util.PrintSuccessMessage(fmt.Sprintf("Successfully logged out from Registry: %s",
 			util.Bold(registryURL)))
 	}
+	return nil
 }

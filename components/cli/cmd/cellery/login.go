@@ -48,7 +48,7 @@ func newLoginCommand() *cobra.Command {
 			if len(args) == 1 {
 				hub.RunLogin(args[0], username, password)
 			} else {
-				hub.RunLogin(constants.CENTRAL_REGISTRY_HOST, username, password)
+				hub.RunLogin(constants.CentralRegistryHost, username, password)
 			}
 		},
 		Example: "  cellery login\n" +

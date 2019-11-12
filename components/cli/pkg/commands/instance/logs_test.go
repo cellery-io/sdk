@@ -19,8 +19,9 @@
 package instance
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 )
@@ -61,22 +62,22 @@ func TestRunLogs(t *testing.T) {
 
 func TestRunLogsError(t *testing.T) {
 	tests := []struct {
-		name      string
-		instance  string
-		component string
+		name       string
+		instance   string
+		component  string
 		errMessage string
 	}{
 		{
-			name:      "No logs of cell instance",
-			instance:  "employee",
-			component: "",
-			errMessage:"No logs found%!(EXTRA *errors.errorString=cannot find cell instance employee)",
+			name:       "No logs of cell instance",
+			instance:   "employee",
+			component:  "",
+			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find cell instance employee)",
 		},
 		{
-			name:      "No logs of cell component",
-			instance:  "employee",
-			component: "job",
-			errMessage:"No logs found%!(EXTRA *errors.errorString=cannot find component job of cell instance employee)",
+			name:       "No logs of cell component",
+			instance:   "employee",
+			component:  "job",
+			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find component job of cell instance employee)",
 		},
 	}
 	for _, tst := range tests {

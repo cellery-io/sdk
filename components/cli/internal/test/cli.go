@@ -27,6 +27,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/docker"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry"
+	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 )
 
 type MockCli struct {
@@ -37,6 +38,7 @@ type MockCli struct {
 	registry          registry.Registry
 	manager           cli.FileSystemManager
 	docker            docker.Docker
+	credManager       credentials.CredManager
 }
 
 // NewMockCli returns a mock cli for the cli.Cli interface.
@@ -79,6 +81,12 @@ func SetDockerCli(docker docker.Docker) func(*MockCli) {
 func SetBalExecutor(balExecutor ballerina.BalExecutor) func(*MockCli) {
 	return func(cli *MockCli) {
 		cli.ballerinaExecutor = balExecutor
+	}
+}
+
+func SetCredManager(manager credentials.CredManager) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.credManager = manager
 	}
 }
 
@@ -129,4 +137,9 @@ func (cli *MockCli) OpenBrowser(url string) error {
 // FileSystem returns mock DockerCli instance.
 func (cli *MockCli) DockerCli() docker.Docker {
 	return cli.docker
+}
+
+// CredManager returns a mock CredManager instance.
+func (cli *MockCli) CredManager() credentials.CredManager {
+	return cli.credManager
 }
