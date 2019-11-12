@@ -347,14 +347,14 @@ func GetSourceFileName(filePath string) (string, error) {
 }
 
 func CopyK8sArtifacts(outPath string) {
-	k8sArtifactsDir := filepath.Join(outPath, constants.K8S_ARTIFACTS)
+	k8sArtifactsDir := filepath.Join(outPath, constants.K8sArtifacts)
 	RemoveDir(k8sArtifactsDir)
 	CreateDir(k8sArtifactsDir)
-	CopyDir(filepath.Join(CelleryInstallationDir(), constants.K8S_ARTIFACTS), k8sArtifactsDir)
+	CopyDir(filepath.Join(CelleryInstallationDir(), constants.K8sArtifacts), k8sArtifactsDir)
 }
 
 func CreateCelleryDirStructure() {
-	celleryHome := filepath.Join(UserHomeDir(), constants.CELLERY_HOME)
+	celleryHome := filepath.Join(UserHomeDir(), constants.CelleryHome)
 	CreateDir(celleryHome)
 	CreateDir(filepath.Join(celleryHome, "gcp"))
 	CreateDir(filepath.Join(celleryHome, "k8s-artefacts"))

@@ -55,9 +55,9 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		createFoldersRequiredForMysqlPvc()
 		createFoldersRequiredForApimPvc()
 	}
-	dbHostName := constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER
-	dbUserName := constants.CELLERY_SQL_USER_NAME
-	dbPassword := constants.CELLERY_SQL_PASSWORD
+	dbHostName := constants.MysqlHostNameForExistingCluster
+	dbUserName := constants.CellerySqlUserName
+	dbPassword := constants.CellerySqlPassword
 	if hasNfsStorage {
 		dbHostName = db.DbHostName
 		dbUserName = db.DbUserName
@@ -110,18 +110,18 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 
 	// Install istio
 	spinner.SetNewAction("Installing istio")
-	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
 		return fmt.Errorf("error installing istio: %v", err)
 	}
 
 	// Apply only knative serving CRD's
-	if err := ApplyKnativeCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+	if err := ApplyKnativeCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
 		return fmt.Errorf("error installing knative serving: %v", err)
 	}
 
 	// Apply controller CRDs
 	spinner.SetNewAction("Creating controller")
-	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
 		return fmt.Errorf("error creating cellery controller: %v", err)
 	}
 
@@ -303,15 +303,15 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 func AddComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return addApim(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), false)
+		return addApim(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts), false)
 	case IdentityProvider:
-		return addIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+		return addIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	case Observability:
-		return addObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+		return addObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	case ScaleToZero:
-		return InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+		return InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	case HPA:
-		return InstallHPA(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+		return InstallHPA(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}
@@ -320,15 +320,15 @@ func AddComponent(component SystemComponent) error {
 func DeleteComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return deleteApim(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+		return deleteApim(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	case IdentityProvider:
-		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	case Observability:
-		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	case ScaleToZero:
 		return deleteKnative()
 	case HPA:
-		return deleteHpa(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+		return deleteHpa(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}
@@ -351,20 +351,20 @@ func IsComponentEnabled(component SystemComponent) (bool, error) {
 
 func createFoldersRequiredForMysqlPvc() {
 	// Backup folders
-	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL),
-		filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL)+"-old")
+	util.RenameFile(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql),
+		filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql)+"-old")
 	// Create folders required by the mysql PVC
-	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY, constants.MYSQL))
+	util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql))
 }
 
 func createFoldersRequiredForApimPvc() {
 	// Backup folders
-	util.RenameFile(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
-		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER), filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP,
-		constants.CELLERY, constants.APIM_REPOSITORY_DEPLOYMENT_SERVER)+"-old")
+	util.RenameFile(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.ApimRepositoryDeploymentServer), filepath.Join(constants.RootDir, constants.VAR, constants.TMP,
+		constants.CELLERY, constants.ApimRepositoryDeploymentServer)+"-old")
 	// Create folders required by the APIM PVC
-	util.CreateDir(filepath.Join(constants.ROOT_DIR, constants.VAR, constants.TMP, constants.CELLERY,
-		constants.APIM_REPOSITORY_DEPLOYMENT_SERVER))
+	util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.ApimRepositoryDeploymentServer))
 }
 
 func buildArtifactsPath(component SystemComponent, artifactsPath string) string {

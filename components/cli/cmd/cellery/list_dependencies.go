@@ -40,7 +40,7 @@ func newListDependenciesCommand(cli cli.Cli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0]); err == nil {
+			if isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), args[0]); err == nil {
 				if !isCellValid {
 					return fmt.Errorf("expects a valid cell instance name, received %s", args[0])
 				}

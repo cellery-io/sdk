@@ -40,8 +40,8 @@ func RunSetup() {
 
 	cellPrompt := promptui.Select{
 		Label: util.YellowBold("?") + " Setup Cellery runtime",
-		Items: []string{constants.CELLERY_SETUP_CREATE, constants.CELLERY_SETUP_MANAGE,
-			constants.CELLERY_SETUP_MODIFY, constants.CELLERY_SETUP_SWITCH, constants.CELLERY_SETUP_EXIT},
+		Items: []string{constants.CellerySetupCreate, constants.CellerySetupManage,
+			constants.CellerySetupModify, constants.CellerySetupSwitch, constants.CellerySetupExit},
 		Templates: selectTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -50,15 +50,15 @@ func RunSetup() {
 	}
 
 	switch value {
-	case constants.CELLERY_SETUP_MANAGE:
+	case constants.CellerySetupManage:
 		{
 			manageEnvironment()
 		}
-	case constants.CELLERY_SETUP_CREATE:
+	case constants.CellerySetupCreate:
 		{
 			createEnvironment()
 		}
-	case constants.CELLERY_SETUP_MODIFY:
+	case constants.CellerySetupModify:
 		{
 			var err error
 			apimEnabled, err = runtime.IsApimEnabled()
@@ -83,7 +83,7 @@ func RunSetup() {
 			enableHpa = !hpaEnabled
 			modifyRuntime()
 		}
-	case constants.CELLERY_SETUP_SWITCH:
+	case constants.CellerySetupSwitch:
 		{
 			selectEnvironment()
 		}
@@ -96,7 +96,7 @@ func RunSetup() {
 
 func selectEnvironment() error {
 	contexts := getContexts()
-	contexts = append(contexts, constants.CELLERY_SETUP_BACK)
+	contexts = append(contexts, constants.CellerySetupBack)
 	bold := color.New(color.Bold).SprintFunc()
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -116,7 +116,7 @@ func selectEnvironment() error {
 		return fmt.Errorf("failed to select cluster: %v", err)
 	}
 
-	if value == constants.CELLERY_SETUP_BACK {
+	if value == constants.CellerySetupBack {
 		RunSetup()
 	}
 

@@ -50,13 +50,13 @@ func newRunCommand(cli cli.Cli) *cobra.Command {
 				return err
 			}
 			if name != "" {
-				isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
+				isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), name)
 				if err != nil || !isCellValid {
 					return fmt.Errorf("expects a valid cell name, received %s", args[0])
 				}
 			}
 			for _, dependencyLink := range dependencyLinks {
-				isMatch, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.DEPENDENCY_LINK_PATTERN),
+				isMatch, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.DependencyLinkPattern),
 					dependencyLink)
 				if err != nil || !isMatch {
 					return fmt.Errorf("expects dependency links in the format "+
@@ -64,7 +64,7 @@ func newRunCommand(cli cli.Cli) *cobra.Command {
 				}
 			}
 			for _, envVar := range envVars {
-				isMatch, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CLI_ARG_ENV_VAR_PATTERN),
+				isMatch, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CliArgEnvVarPattern),
 					envVar)
 				if err != nil || !isMatch {
 					return fmt.Errorf("expects environment varibles in the format "+

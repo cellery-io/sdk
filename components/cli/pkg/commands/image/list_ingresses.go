@@ -40,7 +40,7 @@ import (
 )
 
 func RunListIngresses(cli cli.Cli, name string) {
-	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
+	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), name)
 	if instancePattern {
 		displayInstanceApisTable(name)
 	} else {
@@ -153,9 +153,9 @@ func displayCellInstanceApisTable(cell kubernetes.Cell, cellInstanceName string)
 			globalUrlVersion := getGlobalUrlVersion(globalVersion, version)
 			if apiArray[i].Global {
 				if path != "/" {
-					globalUrl = constants.WSO2_APIM_HOST + strings.Replace("/"+globalUrlContext+"/"+context+path+"/"+globalUrlVersion, "//", "/", -1)
+					globalUrl = constants.Wso2ApimHost + strings.Replace("/"+globalUrlContext+"/"+context+path+"/"+globalUrlVersion, "//", "/", -1)
 				} else {
-					globalUrl = constants.WSO2_APIM_HOST + strings.Replace("/"+globalUrlContext+"/"+context+"/"+globalUrlVersion, "//", "/", -1)
+					globalUrl = constants.Wso2ApimHost + strings.Replace("/"+globalUrlContext+"/"+context+"/"+globalUrlVersion, "//", "/", -1)
 				}
 			}
 			tableRecord := []string{context, ingressType, version, method, path, url, globalUrl}
@@ -218,7 +218,7 @@ func displayCompositeImageApisTable(cli cli.Cli, compositeImageContent string) {
 		for _, ingressInfo := range componentDetail.Ingress {
 			var ingressData []string
 			ingressData = append(ingressData, componentDetail.ComponentName)
-			if ingressInfo.IngressTypeTCP == constants.TCP_INGRESS {
+			if ingressInfo.IngressTypeTCP == constants.TcpIngress {
 				ingressData = append(ingressData, ingressInfo.IngressTypeTCP)
 			} else {
 				ingressData = append(ingressData, ingressInfo.IngressType)
@@ -228,7 +228,7 @@ func displayCompositeImageApisTable(cli cli.Cli, compositeImageContent string) {
 			} else {
 				ingressData = append(ingressData, strconv.Itoa(int(ingressInfo.Port)))
 			}
-			if ingressInfo.IngressTypeTCP == constants.TCP_INGRESS {
+			if ingressInfo.IngressTypeTCP == constants.TcpIngress {
 				ingressData = append(ingressData, fmt.Sprintf("%s_%s, %s_tcp_%s", componentDetail.ComponentName,
 					constants.HOST, componentDetail.ComponentName, constants.PORT))
 			} else {
@@ -274,40 +274,40 @@ func displayCellImageApisTable(cli cli.Cli, cellImageContent string) {
 			} else {
 				ingressInfo.Expose = "false"
 			}
-			if ingressInfo.IngressType == constants.HTTP_API_INGRESS && ingressInfo.Context != "" {
+			if ingressInfo.IngressType == constants.HttpApiIngress && ingressInfo.Context != "" {
 				for _, resourcesValue := range ingressInfo.Definition {
 					for _, resource := range resourcesValue {
 						ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType,
 							ingressInfo.Context, ingressInfo.ApiVersion, strconv.Itoa(int(ingressInfo.Port)),
-							resource.Path, resource.Method, ingressInfo.Expose, constants.N_A,
+							resource.Path, resource.Method, ingressInfo.Expose, constants.NA,
 							fmt.Sprintf("%s_%s_%s", componentDetail.ComponentName, ingress, "api_url")}
 						tableData = append(tableData, ingressData)
 					}
 				}
-			} else if ingressInfo.IngressType == constants.WEB_INGRESS {
+			} else if ingressInfo.IngressType == constants.WebIngress {
 				ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType,
 					ingressInfo.GatewayConfig.Context, ingressInfo.ApiVersion, strconv.Itoa(int(ingressInfo.Port)),
-					constants.N_A, constants.N_A, ingressInfo.Expose, ingressInfo.GatewayConfig.Vhost, constants.N_A}
+					constants.NA, constants.NA, ingressInfo.Expose, ingressInfo.GatewayConfig.Vhost, constants.NA}
 				tableData = append(tableData, ingressData)
 
-			} else if ingressInfo.IngressType == constants.GRPC_INGRESS {
-				ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType, constants.N_A,
-					constants.N_A, strconv.Itoa(ingressInfo.GatewayPort), constants.N_A, constants.N_A, constants.N_A,
+			} else if ingressInfo.IngressType == constants.GrpcIngress {
+				ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType, constants.NA,
+					constants.NA, strconv.Itoa(ingressInfo.GatewayPort), constants.NA, constants.NA, constants.NA,
 					ingressInfo.GatewayConfig.Vhost,
-					fmt.Sprintf("%s, %s_%s", constants.GATEWAY_HOST, componentDetail.ComponentName, "grpc_port")}
+					fmt.Sprintf("%s, %s_%s", constants.GatewayHost, componentDetail.ComponentName, "grpc_port")}
 				tableData = append(tableData, ingressData)
 
-			} else if ingressInfo.IngressTypeTCP == constants.TCP_INGRESS {
+			} else if ingressInfo.IngressTypeTCP == constants.TcpIngress {
 				if (int(ingressInfo.Port)) == 0 {
-					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressTypeTCP, constants.N_A,
-						constants.N_A, "--", constants.N_A, constants.N_A, ingressInfo.Expose,
-						ingressInfo.GatewayConfig.Vhost, fmt.Sprintf("%s, %s_tcp_%s", constants.GATEWAY_HOST,
+					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressTypeTCP, constants.NA,
+						constants.NA, "--", constants.NA, constants.NA, ingressInfo.Expose,
+						ingressInfo.GatewayConfig.Vhost, fmt.Sprintf("%s, %s_tcp_%s", constants.GatewayHost,
 							componentDetail.ComponentName, constants.PORT)}
 				} else {
-					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressTypeTCP, constants.N_A,
-						constants.N_A, strconv.Itoa(int(ingressInfo.Port)), constants.N_A, constants.N_A,
+					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressTypeTCP, constants.NA,
+						constants.NA, strconv.Itoa(int(ingressInfo.Port)), constants.NA, constants.NA,
 						ingressInfo.Expose, ingressInfo.GatewayConfig.Vhost,
-						fmt.Sprintf("%s, %s_tcp_%s", constants.GATEWAY_HOST, componentDetail.ComponentName, constants.PORT)}
+						fmt.Sprintf("%s, %s_tcp_%s", constants.GatewayHost, componentDetail.ComponentName, constants.PORT)}
 				}
 				tableData = append(tableData, ingressData)
 			}
@@ -354,8 +354,8 @@ func getIngressValues(cli cli.Cli, cellImageContent string) (kubernetes.Cell, er
 		return kubernetes.Cell{}, fmt.Errorf("error occurred while extracting image: %s", err)
 	}
 
-	jsonFile, err := os.Open(fmt.Sprintf("%s/%s/%s/%s%s%s", imageDir, constants.ZIP_ARTIFACTS, constants.CELLERY,
-		parsedCellImage.ImageName, constants.ZIP_META_SUFFIX, constants.JSON_EXT))
+	jsonFile, err := os.Open(fmt.Sprintf("%s/%s/%s/%s%s%s", imageDir, constants.ZipArtifacts, constants.CELLERY,
+		parsedCellImage.ImageName, constants.ZipMetaSuffix, constants.JsonExt))
 	if err != nil {
 		return kubernetes.Cell{}, fmt.Errorf("error occurred while reading image_meta file: %s", err)
 	}

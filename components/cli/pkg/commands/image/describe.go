@@ -28,7 +28,7 @@ import (
 )
 
 func RunDescribe(cli cli.Cli, name string) error {
-	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), name)
+	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), name)
 	if instancePattern {
 		// If the input of user is an instance describe running cell instance.
 		err := cli.KubeCli().DescribeCell(name)

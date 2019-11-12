@@ -45,7 +45,7 @@ func NewFileCredentialsManager() (*FileCredentialsManager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to identify the current user due to: %v", err)
 	}
-	credentialsFile := path.Join(currentUser.HomeDir, constants.CELLERY_HOME, credentialsFileName)
+	credentialsFile := path.Join(currentUser.HomeDir, constants.CelleryHome, credentialsFileName)
 	credManager := &FileCredentialsManager{
 		credFile: credentialsFile,
 	}

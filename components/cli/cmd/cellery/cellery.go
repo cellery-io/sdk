@@ -110,7 +110,7 @@ func main() {
 		cli.SetCredManager(credManager),
 	)
 	util.CreateCelleryDirStructure()
-	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "logs")
+	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CelleryHome, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")
 
 	// Creating the log directory if it does not exist

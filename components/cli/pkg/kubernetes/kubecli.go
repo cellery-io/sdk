@@ -62,7 +62,7 @@ func (kubeCli *CelleryKubeCli) SetVerboseMode(enable bool) {
 
 func (kubeCli *CelleryKubeCli) DeleteResource(kind, instance string) (string, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"delete",
 		kind,
 		instance,
@@ -92,7 +92,7 @@ func (kubeCli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
 }
 
 func (kubeCli *CelleryKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		instanceKind,
 		InstanceName,

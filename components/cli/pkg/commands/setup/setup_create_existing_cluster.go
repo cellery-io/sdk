@@ -50,18 +50,18 @@ func createOnExistingCluster() error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.PERSISTENT_VOLUME, constants.NON_PERSISTENT_VOLUME, constants.CELLERY_SETUP_BACK},
+		Items:     []string{constants.PersistentVolume, constants.NonPersistentVolume, constants.CellerySetupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
-	if value == constants.CELLERY_SETUP_BACK {
+	if value == constants.CellerySetupBack {
 		createEnvironment()
 		return nil
 	}
-	if value == constants.PERSISTENT_VOLUME {
+	if value == constants.PersistentVolume {
 		isPersistentVolume = true
 		hasNfsStorage, isBackSelected, err = util.GetYesOrNoFromUser(fmt.Sprintf("Use NFS server"),
 			true)
@@ -89,7 +89,7 @@ func createOnExistingCluster() error {
 	}
 	if !isLoadBalancerIngressMode {
 		nodePortIpAddress = getNodePortIpAddress()
-		isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$|^$", constants.IP_ADDRESS_PATTERN),
+		isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$|^$", constants.IpAddressPattern),
 			nodePortIpAddress)
 		if err != nil || !isNodePortIpAddressValid {
 			util.ExitWithErrorMessage("Error creating cellery runtime", fmt.Errorf("expects a valid "+
@@ -107,9 +107,9 @@ func createOnExistingCluster() error {
 
 func RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
 	nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) {
-	artifactsPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.K8S_ARTIFACTS)
+	artifactsPath := filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.K8sArtifacts)
 	os.RemoveAll(artifactsPath)
-	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS), artifactsPath)
+	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
 	if err := runtime.CreateRuntime(artifactsPath, isPersistentVolume, hasNfsStorage,
 		isLoadBalancerIngressMode, nfs, db, nodePortIpAddress); err != nil {
 		util.ExitWithErrorMessage("Failed to deploy cellery runtime", err)

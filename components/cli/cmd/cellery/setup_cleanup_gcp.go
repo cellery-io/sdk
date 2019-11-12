@@ -48,10 +48,10 @@ func newSetupCleanupGcpCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(strings.Split(args[0], constants.GCP_CLUSTER_NAME)) > 1 {
-				uniqueNumber = strings.Split(args[0], constants.GCP_CLUSTER_NAME)[1]
+			if len(strings.Split(args[0], constants.GcpClusterName)) > 1 {
+				uniqueNumber = strings.Split(args[0], constants.GcpClusterName)[1]
 			}
-			setup.RunCleanupGcp(constants.GCP_CLUSTER_NAME + uniqueNumber)
+			setup.RunCleanupGcp(constants.GcpClusterName + uniqueNumber)
 		},
 		Example: "  cellery setup cleanup gcp <cluster_name>",
 	}

@@ -151,7 +151,7 @@ func requestCredentialsFromUser(registryCredentials *credentials.RegistryCredent
 	var isAuthorized chan bool
 	var done chan bool
 	var err error
-	regex, err := regexp.Compile(constants.CENTRAL_REGISTRY_HOST_REGX)
+	regex, err := regexp.Compile(constants.CentralRegistryHostRegx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -173,7 +173,7 @@ func requestCredentialsFromUser(registryCredentials *credentials.RegistryCredent
 // validateCredentialsWithRegistry initiates a connection to Cellery Registry to validate credentials
 func validateCredentialsWithRegistry(registryCredentials *credentials.RegistryCredentials) error {
 	registryPassword := registryCredentials.Password
-	regex, err := regexp.Compile(constants.CENTRAL_REGISTRY_HOST_REGX)
+	regex, err := regexp.Compile(constants.CentralRegistryHostRegx)
 	if err != nil {
 		return err
 	}

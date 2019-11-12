@@ -39,7 +39,7 @@ func manageExistingCluster() error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select `cleanup` to remove existing cluster",
-		Items:     []string{constants.CELLERY_MANAGE_CLEANUP, constants.CELLERY_SETUP_BACK},
+		Items:     []string{constants.CelleryManageCleanup, constants.CellerySetupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -48,7 +48,7 @@ func manageExistingCluster() error {
 	}
 
 	switch value {
-	case constants.CELLERY_MANAGE_CLEANUP:
+	case constants.CelleryManageCleanup:
 		{
 			cleanupExistingCluster()
 		}

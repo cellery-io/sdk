@@ -154,16 +154,16 @@ func UserHomeDir() string {
 }
 
 func UserHomeCelleryDir() string {
-	return filepath.Join(UserHomeDir(), constants.CELLERY_HOME)
+	return filepath.Join(UserHomeDir(), constants.CelleryHome)
 }
 
 func CelleryInstallationDir() string {
 	celleryHome := ""
 	if runtime.GOOS == "darwin" {
-		celleryHome = constants.CELLERY_INSTALLATION_PATH_MAC
+		celleryHome = constants.CelleryInstallationPathMac
 	}
 	if runtime.GOOS == "linux" {
-		celleryHome = constants.CELLERY_INSTALLATION_PATH_UBUNTU
+		celleryHome = constants.CelleryInstallationPathUbuntu
 	}
 	return celleryHome
 }
@@ -171,10 +171,10 @@ func CelleryInstallationDir() string {
 func BallerinaInstallationDir() string {
 	ballerinaHome := ""
 	if runtime.GOOS == "darwin" {
-		ballerinaHome = constants.BALLERINA_INSTALLATION_PATH_MAC
+		ballerinaHome = constants.BallerinaInstallationPathMac
 	}
 	if runtime.GOOS == "linux" {
-		ballerinaHome = constants.BALLERINA_INSTALLATION_PATH_UBUNTU
+		ballerinaHome = constants.BallerinaInstallationPathUbuntu
 	}
 	return ballerinaHome
 
@@ -280,7 +280,7 @@ func GetYesOrNoFromUser(question string, withBackOption bool) (bool, bool, error
 	var options []string
 	var isBackSelected = false
 	if withBackOption {
-		options = []string{"Yes", "No", constants.CELLERY_SETUP_BACK}
+		options = []string{"Yes", "No", constants.CellerySetupBack}
 	} else {
 		options = []string{"Yes", "No"}
 	}
@@ -289,7 +289,7 @@ func GetYesOrNoFromUser(question string, withBackOption bool) (bool, bool, error
 		Items: options,
 	}
 	_, result, err := prompt.Run()
-	if result == constants.CELLERY_SETUP_BACK {
+	if result == constants.CellerySetupBack {
 		isBackSelected = true
 	}
 	if err != nil {
@@ -386,14 +386,14 @@ func IsCompleteSetupSelected() (bool, bool) {
 
 	cellPrompt := promptui.Select{
 		Label:     YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.BASIC, constants.COMPLETE, constants.CELLERY_SETUP_BACK},
+		Items:     []string{constants.BASIC, constants.COMPLETE, constants.CellerySetupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
 		ExitWithErrorMessage("Failed to select an option: %v", err)
 	}
-	if value == constants.CELLERY_SETUP_BACK {
+	if value == constants.CellerySetupBack {
 		isBackSelected = true
 	}
 	if value == constants.COMPLETE {
@@ -414,17 +414,17 @@ func IsLoadBalancerIngressTypeSelected() (bool, bool) {
 
 	cellPrompt := promptui.Select{
 		Label:     YellowBold("?") + " Select ingress mode",
-		Items:     []string{constants.INGRESS_MODE_NODE_PORT, constants.INGRESS_MODE_LOAD_BALANCER, constants.CELLERY_SETUP_BACK},
+		Items:     []string{constants.IngressModeNodePort, constants.IngressModeLoadBalancer, constants.CellerySetupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
 		ExitWithErrorMessage("Failed to select an option: %v", err)
 	}
-	if value == constants.CELLERY_SETUP_BACK {
+	if value == constants.CellerySetupBack {
 		isBackSelected = true
 	}
-	if value == constants.INGRESS_MODE_LOAD_BALANCER {
+	if value == constants.IngressModeLoadBalancer {
 		isLoadBalancerSelected = true
 	}
 	return isLoadBalancerSelected, isBackSelected

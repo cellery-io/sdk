@@ -27,10 +27,10 @@ import (
 )
 
 func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(cellName string) (string, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
-		constants.GROUP_NAME+"/cell="+cellName+","+constants.GROUP_NAME+"/component",
+		constants.GroupName+"/cell="+cellName+","+constants.GroupName+"/component",
 		"--all-containers=true",
 	)
 	displayVerboseOutput(cmd)
@@ -40,10 +40,10 @@ func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(cellName string) (strin
 }
 
 func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(cellName string) (string, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
-		constants.GROUP_NAME+"/cell="+cellName,
+		constants.GroupName+"/cell="+cellName,
 		"--all-containers=true",
 	)
 	displayVerboseOutput(cmd)
@@ -53,10 +53,10 @@ func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(cellName string) (string
 }
 
 func (kubeCli *CelleryKubeCli) GetComponentLogs(cellName, componentName string) (string, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
-		constants.GROUP_NAME+"/service="+cellName+"--"+componentName,
+		constants.GroupName+"/service="+cellName+"--"+componentName,
 		"-c",
 		componentName,
 	)

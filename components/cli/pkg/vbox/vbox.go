@@ -49,7 +49,7 @@ var configBasic = fmt.Sprintf("config-cellery-runtime-basic-%s", version.BuildVe
 
 func InstallVM(isComplete bool) error {
 	var err error
-	vmPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmFileName)
+	vmPath := filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, vmFileName)
 	spinner := util.StartNewSpinner("Installing Cellery Runtime")
 
 	if _, err = osexec.GetCommandOutput(exec.Command(vBoxManage, hostOnlyIf, create)); err != nil {
@@ -155,25 +155,25 @@ func RemoveVm() error {
 	if _, err = osexec.GetCommandOutput(exec.Command(vBoxManage, unregistervm, vmName, argDelete)); err != nil {
 		return err
 	}
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmFileName))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmDiskName))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, vmFileName))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, vmDiskName))
 	return nil
 }
 
 func RemoveVmImage() {
 	// If user does not wish to retain the downloaded image delete the file from the system
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmComplete))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmBasic))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, configComplete))
-	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, configBasic))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, vmComplete))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, vmBasic))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, configComplete))
+	os.RemoveAll(filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, configBasic))
 }
 func ImageExists() Exists {
 	exists := None
 	var err error
 	vmCompleteExists := false
 	vmBasicExists := false
-	var vmCompletePath = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmComplete)
-	var vmBasicPath = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, vm, vmBasic)
+	var vmCompletePath = filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, vmComplete)
+	var vmBasicPath = filepath.Join(util.UserHomeDir(), constants.CelleryHome, vm, vmBasic)
 
 	vmCompleteExists, err = util.FileExists(vmCompletePath)
 	if err != nil {

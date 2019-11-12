@@ -45,7 +45,7 @@ func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {
 	defer file.Close()
 
 	sess, _ := session.NewSession(&aws.Config{
-		Region: aws.String(constants.AWS_REGION), Credentials: credentials.AnonymousCredentials},
+		Region: aws.String(constants.AwsRegion), Credentials: credentials.AnonymousCredentials},
 	)
 
 	// Get the object size
@@ -97,7 +97,7 @@ func GetS3ObjectEtag(bucket, item string) string {
 
 func getS3Object(bucket, item string) s3.HeadObjectOutput {
 	sess, _ := session.NewSession(&aws.Config{
-		Region: aws.String(constants.AWS_REGION), Credentials: credentials.AnonymousCredentials},
+		Region: aws.String(constants.AwsRegion), Credentials: credentials.AnonymousCredentials},
 	)
 
 	svc := s3.New(sess)

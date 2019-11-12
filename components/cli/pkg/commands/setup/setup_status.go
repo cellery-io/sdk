@@ -46,7 +46,7 @@ type SystemComponent struct {
 func RunSetupStatusCommand() {
 	var err error
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"version",
 	)
 	out, err := osexec.GetCommandOutput(cmd)

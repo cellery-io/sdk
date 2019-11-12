@@ -31,9 +31,9 @@ import (
 func ReadCellImageYaml(repo, cellImage string) []byte {
 	parsedCellImage, err := ParseImageTag(cellImage)
 	cellImageZip := path.Join(repo, parsedCellImage.Organization,
-		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CellImageExt)
 	// Create tmp directory
-	tmpPath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, "tmp", "imageExtracted")
+	tmpPath := filepath.Join(util.UserHomeDir(), constants.CelleryHome, "tmp", "imageExtracted")
 	err = util.CleanOrCreateDir(tmpPath)
 	if err != nil {
 		panic(err)
@@ -42,7 +42,7 @@ func ReadCellImageYaml(repo, cellImage string) []byte {
 	if err != nil {
 		util.ExitWithErrorMessage("Error occurred while extracting cell image", err)
 	}
-	cellYamlContent, err := ioutil.ReadFile(filepath.Join(tmpPath, constants.ZIP_ARTIFACTS, "cellery",
+	cellYamlContent, err := ioutil.ReadFile(filepath.Join(tmpPath, constants.ZipArtifacts, "cellery",
 		parsedCellImage.ImageName+".yaml"))
 	if err != nil {
 		util.ExitWithErrorMessage("Error while reading cell image content", err)

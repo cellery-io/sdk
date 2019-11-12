@@ -27,7 +27,7 @@ import (
 
 func CreateFile(file string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"create",
 		"-f",
 		file,
@@ -39,7 +39,7 @@ func CreateFile(file string) error {
 
 func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"create",
 		"configmap",
 		name,
@@ -54,7 +54,7 @@ func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
 
 func CreateClusterRoleBinding(clusterRole, user string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"create",
 		"clusterrolebinding",
 		"cluster-admin-binding",

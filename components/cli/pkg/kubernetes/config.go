@@ -128,7 +128,7 @@ func mergeContexts(old []*ContextInfo, new []*ContextInfo) []*ContextInfo {
 
 func UseContext(context string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"config",
 		"use-context",
 		context,
@@ -141,7 +141,7 @@ func UseContext(context string) error {
 
 func GetContexts() ([]byte, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"config",
 		"view",
 		"-o",
@@ -153,7 +153,7 @@ func GetContexts() ([]byte, error) {
 
 func GetContext() (string, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"config",
 		"current-context",
 	)

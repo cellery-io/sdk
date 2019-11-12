@@ -163,7 +163,7 @@ func (balExecutor *LocalBalExecutor) ExecutablePath() (string, error) {
 	}
 	if strings.Contains(ballerinaVersion, "Ballerina") {
 		if len(strings.Split(ballerinaVersion, " ")) > 0 {
-			if strings.Split(ballerinaVersion, " ")[1] == constants.BALLERINA_VERSION {
+			if strings.Split(ballerinaVersion, " ")[1] == constants.BallerinaVersion {
 				// If existing ballerina version is as the expected version, execute ballerina run without executable path
 				return ballerina, nil
 			}
@@ -175,7 +175,7 @@ func (balExecutor *LocalBalExecutor) ExecutablePath() (string, error) {
 // ballerinaInstallationPath checks if the expected ballerina version exists.
 // If so return its installation path.
 func ballerinaInstallationPath() (string, error) {
-	exePath := util.BallerinaInstallationDir() + constants.BALLERINA_EXECUTABLE_PATH
+	exePath := util.BallerinaInstallationDir() + constants.BallerinaExecutablePath
 	if _, err := os.Stat(exePath); err != nil {
 		if os.IsNotExist(err) {
 			return "", nil

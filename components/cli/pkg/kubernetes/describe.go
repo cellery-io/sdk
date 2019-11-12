@@ -28,7 +28,7 @@ import (
 
 func (kubeCli *CelleryKubeCli) DescribeCell(cellName string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"describe",
 		"cells",
 		cellName,

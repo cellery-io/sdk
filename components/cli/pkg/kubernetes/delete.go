@@ -28,7 +28,7 @@ import (
 
 func DeleteFileWithNamespace(file, namespace string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"delete",
 		"-f",
 		file,
@@ -42,7 +42,7 @@ func DeleteFileWithNamespace(file, namespace string) error {
 
 func DeleteFile(file string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"delete",
 		"-f",
 		file,
@@ -55,7 +55,7 @@ func DeleteFile(file string) error {
 
 func DeleteResource(kind, instance string) (string, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"delete",
 		kind,
 		instance,
@@ -67,7 +67,7 @@ func DeleteResource(kind, instance string) (string, error) {
 
 func DeleteNameSpace(nameSpace string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"delete",
 		"ns",
 		nameSpace,
@@ -80,7 +80,7 @@ func DeleteNameSpace(nameSpace string) error {
 
 func DeleteAllCells() error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"delete",
 		"cells",
 		"--all",
@@ -93,7 +93,7 @@ func DeleteAllCells() error {
 
 func DeleteCell(cellInstance string) (string, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"delete",
 		"cell",
 		cellInstance,
@@ -104,7 +104,7 @@ func DeleteCell(cellInstance string) (string, error) {
 
 func DeletePersistedVolume(persistedVolume string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"delete",
 		"pv",
 		persistedVolume,

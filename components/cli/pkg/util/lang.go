@@ -102,7 +102,7 @@ func (langMgr *BLangManager) GetExecutablePath() (string, error) {
 	}
 	if strings.Contains(balVersionCmdOutput, "Ballerina") {
 		if len(strings.Split(balVersionCmdOutput, " ")) > 0 {
-			if strings.Split(balVersionCmdOutput, " ")[1] == constants.BALLERINA_VERSION {
+			if strings.Split(balVersionCmdOutput, " ")[1] == constants.BallerinaVersion {
 				// If existing ballerina version is as the expected version, execute ballerina run without executable path
 				return "ballerina", nil
 			}
@@ -112,9 +112,9 @@ func (langMgr *BLangManager) GetExecutablePath() (string, error) {
 }
 
 func getBallerinaExecutablePath() (string, error) {
-	exePath := BallerinaInstallationDir() + constants.BALLERINA_EXECUTABLE_PATH
+	exePath := BallerinaInstallationDir() + constants.BallerinaExecutablePath
 	if _, err := os.Stat(exePath); os.IsNotExist(err) {
-		exePath = strings.TrimSuffix(CelleryInstallationDir(), "/") + constants.CELLERY_EXECUTABLE_PATH
+		exePath = strings.TrimSuffix(CelleryInstallationDir(), "/") + constants.CelleryExecutablePath
 		if _, err := os.Stat(exePath); os.IsNotExist(err) {
 			return "", nil
 		} else if err != nil {

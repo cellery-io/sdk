@@ -37,7 +37,7 @@ func CreateCelleryNameSpace() error {
 }
 
 func buildNameSpaceYamlPaths() []string {
-	base := buildArtifactsPath(System, filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS))
+	base := buildArtifactsPath(System, filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	return []string{
 		filepath.Join(base, "ns-init.yaml"),
 	}

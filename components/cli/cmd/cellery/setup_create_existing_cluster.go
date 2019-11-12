@@ -46,7 +46,7 @@ func newSetupCreateOnExistingClusterCommand(isComplete *bool) *cobra.Command {
 		Short: "Create a Cellery runtime in existing cluster",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if nodePortIpAddress != "" {
-				isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.IP_ADDRESS_PATTERN), nodePortIpAddress)
+				isNodePortIpAddressValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.IpAddressPattern), nodePortIpAddress)
 				if err != nil || !isNodePortIpAddressValid {
 					return fmt.Errorf("expects a valid nodeport ip address, received %s", nodePortIpAddress)
 				}

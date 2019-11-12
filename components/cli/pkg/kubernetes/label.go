@@ -29,7 +29,7 @@ func ApplyLable(itemType, itemName, labelName string, overWrite bool) error {
 	var cmd *exec.Cmd
 	if overWrite {
 		cmd = exec.Command(
-			constants.KUBECTL,
+			constants.KubeCtl,
 			"label",
 			itemType,
 			itemName,
@@ -38,7 +38,7 @@ func ApplyLable(itemType, itemName, labelName string, overWrite bool) error {
 		)
 	} else {
 		cmd = exec.Command(
-			constants.KUBECTL,
+			constants.KubeCtl,
 			"label",
 			itemType,
 			itemName,

@@ -41,8 +41,8 @@ var configBasic = fmt.Sprintf("config-cellery-runtime-basic-%s", version.BuildVe
 var md5Complete = fmt.Sprintf("cellery-runtime-complete-%s.md5", version.BuildVersion())
 var md5Basic = fmt.Sprintf("cellery-runtime-basic-%s.md5", version.BuildVersion())
 
-var downloadLocation = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.VM)
-var downloadTempLocation = filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.TMP, constants.VM)
+var downloadLocation = filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.VM)
+var downloadTempLocation = filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.TMP, constants.VM)
 
 var vmPath string
 var md5Path string
@@ -88,9 +88,9 @@ func RunSetupCreateLocal(isCompleteSelected, forceDownload, confirmed bool) {
 		if repoCreateErr != nil {
 			util.ExitWithErrorMessage("Failed to create vm directory", err)
 		}
-		etag = util.GetS3ObjectEtag(constants.AWS_S3_BUCKET, vm)
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, vm, downloadTempLocation, true)
-		util.DownloadFromS3Bucket(constants.AWS_S3_BUCKET, config, downloadTempLocation, false)
+		etag = util.GetS3ObjectEtag(constants.AwsS3Bucket, vm)
+		util.DownloadFromS3Bucket(constants.AwsS3Bucket, vm, downloadTempLocation, true)
+		util.DownloadFromS3Bucket(constants.AwsS3Bucket, config, downloadTempLocation, false)
 		// Copy the files if the download was successful
 		util.CopyFile(filepath.Join(downloadTempLocation, vm), filepath.Join(downloadLocation, vm))
 		util.CopyFile(filepath.Join(downloadTempLocation, config), filepath.Join(downloadLocation, config))
@@ -141,7 +141,7 @@ func downloadVmConfirmation(confirmed bool) bool {
 			}
 			// Check if updated version of vm is available
 			fmt.Println("Checking if updated cellery runtime is available ...")
-			etag = util.GetS3ObjectEtag(constants.AWS_S3_BUCKET, vm)
+			etag = util.GetS3ObjectEtag(constants.AwsS3Bucket, vm)
 			if !(strings.Contains(string(md5), etag)) {
 				// md5 file confirms the availability of an updated image of vm
 				if !confirmed {
@@ -149,7 +149,7 @@ func downloadVmConfirmation(confirmed bool) bool {
 					downloadVm, _, err = util.GetYesOrNoFromUser(fmt.Sprintf(
 						"Updated version of %s is available and will take %s from your "+
 							"machine. Do you want to use the upgraded version",
-						vm, util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vm))), false)
+						vm, util.FormatBytesToString(util.GetS3ObjectSize(constants.AwsS3Bucket, vm))), false)
 					if !downloadVm {
 						// Not exiting CLI since user response "No" suggests using old image
 						fmt.Println("Installing existing cellery-local-setup")
@@ -189,15 +189,15 @@ func createLocal() error {
 		Inactive: "  {{ . | faint }}",
 		Help:     util.Faint("[Use arrow keys]"),
 	}
-	sizeBasic := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmBasic))
-	sizeComplete := util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vmComplete))
+	sizeBasic := util.FormatBytesToString(util.GetS3ObjectSize(constants.AwsS3Bucket, vmBasic))
+	sizeComplete := util.FormatBytesToString(util.GetS3ObjectSize(constants.AwsS3Bucket, vmComplete))
 
 	cellPrompt := promptui.Select{
 		Label: util.YellowBold("?") + " Select the type of runtime",
 		Items: []string{
 			fmt.Sprintf("%s (size: %s)", constants.BASIC, sizeBasic),
 			fmt.Sprintf("%s (size: %s)", constants.COMPLETE, sizeComplete),
-			constants.CELLERY_SETUP_BACK,
+			constants.CellerySetupBack,
 		},
 		Templates: cellTemplate,
 	}
@@ -219,7 +219,7 @@ func createLocal() error {
 func confirmDownload() {
 	confirm, _, err := util.GetYesOrNoFromUser(fmt.Sprintf(
 		"Downloading %s will take %s from your machine. Do you want to continue", vm,
-		util.FormatBytesToString(util.GetS3ObjectSize(constants.AWS_S3_BUCKET, vm))),
+		util.FormatBytesToString(util.GetS3ObjectSize(constants.AwsS3Bucket, vm))),
 		false)
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to get user confirmation to download", err)

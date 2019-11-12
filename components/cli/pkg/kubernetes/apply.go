@@ -27,7 +27,7 @@ import (
 
 func ApplyFileWithNamespace(file, namespace string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"apply",
 		"-f",
 		file,
@@ -40,7 +40,7 @@ func ApplyFileWithNamespace(file, namespace string) error {
 
 func ApplyFile(file string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"apply",
 		"-f",
 		file,
@@ -52,7 +52,7 @@ func ApplyFile(file string) error {
 
 func (kubeCli *CelleryKubeCli) ApplyFile(file string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"apply",
 		"-f",
 		file,

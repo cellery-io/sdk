@@ -118,7 +118,7 @@ func getTargetInstancePercentage(percentage string) (int, error) {
 }
 
 func validateInstanceName(instanceName string) error {
-	isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), instanceName)
+	isCellInstValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), instanceName)
 	if err != nil {
 		return err
 	}

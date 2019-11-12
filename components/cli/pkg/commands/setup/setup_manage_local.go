@@ -48,7 +48,7 @@ func manageLocal() error {
 	}
 
 	switch value {
-	case constants.CELLERY_MANAGE_STOP:
+	case constants.CelleryManageStop:
 		{
 			spinner := util.StartNewSpinner("Stopping Cellery Runtime")
 			defer func() {
@@ -56,12 +56,12 @@ func manageLocal() error {
 			}()
 			vbox.StopVm()
 		}
-	case constants.CELLERY_MANAGE_START:
+	case constants.CelleryManageStart:
 		{
 			vbox.StartVm()
 			runtime.WaitFor(false, false)
 		}
-	case constants.CELLERY_MANAGE_CLEANUP:
+	case constants.CelleryManageCleanup:
 		{
 			RunCleanupLocal(false, false)
 		}

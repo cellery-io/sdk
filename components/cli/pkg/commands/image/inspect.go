@@ -40,7 +40,7 @@ func RunInspect(cli cli.Cli, cellImage string) error {
 		return fmt.Errorf("error occurred while parsing cell image, %v", err)
 	}
 	cellImageFile := filepath.Join(cli.FileSystem().Repository(), parsedCellImage.Organization,
-		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CellImageExt)
 
 	// Checking if the image is present in the local repo
 	isImagePresent, _ := util.FileExists(cellImageFile)

@@ -38,8 +38,8 @@ func manageEnvironment() error {
 
 	cellPrompt := promptui.Select{
 		Label: util.YellowBold("?") + " Select a runtime",
-		Items: []string{constants.CELLERY_SETUP_LOCAL, constants.CELLERY_SETUP_GCP,
-			constants.CELLERY_SETUP_EXISTING_CLUSTER, constants.CELLERY_SETUP_BACK},
+		Items: []string{constants.CellerySetupLocal, constants.CellerySetupGcp,
+			constants.CellerySetupExistingCluster, constants.CellerySetupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -48,15 +48,15 @@ func manageEnvironment() error {
 	}
 
 	switch value {
-	case constants.CELLERY_SETUP_LOCAL:
+	case constants.CellerySetupLocal:
 		{
 			manageLocal()
 		}
-	case constants.CELLERY_SETUP_GCP:
+	case constants.CellerySetupGcp:
 		{
 			manageGcp()
 		}
-	case constants.CELLERY_SETUP_EXISTING_CLUSTER:
+	case constants.CellerySetupExistingCluster:
 		{
 			manageExistingCluster()
 		}
@@ -72,9 +72,9 @@ func getManageLabel() string {
 	var manageLabel string
 	if vbox.IsVmInstalled() {
 		if vbox.IsVmRunning() {
-			manageLabel = constants.VM_NAME + " is running. Select `Stop` to stop the VM"
+			manageLabel = constants.VmName + " is running. Select `Stop` to stop the VM"
 		} else {
-			manageLabel = constants.VM_NAME + " is installed. Select `Start` to start the VM"
+			manageLabel = constants.VmName + " is installed. Select `Start` to start the VM"
 		}
 	} else {
 		manageLabel = "Cellery runtime is not installed"
@@ -85,10 +85,10 @@ func getManageLabel() string {
 func getManageEnvOptions() []string {
 	if vbox.IsVmInstalled() {
 		if vbox.IsVmRunning() {
-			return []string{constants.CELLERY_MANAGE_STOP, constants.CELLERY_MANAGE_CLEANUP, constants.CELLERY_SETUP_BACK}
+			return []string{constants.CelleryManageStop, constants.CelleryManageCleanup, constants.CellerySetupBack}
 		} else {
-			return []string{constants.CELLERY_MANAGE_START, constants.CELLERY_MANAGE_CLEANUP, constants.CELLERY_SETUP_BACK}
+			return []string{constants.CelleryManageStart, constants.CelleryManageCleanup, constants.CellerySetupBack}
 		}
 	}
-	return []string{constants.CELLERY_SETUP_BACK}
+	return []string{constants.CellerySetupBack}
 }

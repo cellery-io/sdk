@@ -117,7 +117,7 @@ func RunPush(cli cli.Cli, cellImage string, username string, password string) er
 						log.Printf("Finished reading done channel from main goroutine")
 					}
 				}
-				regex, err := regexp.Compile(constants.CENTRAL_REGISTRY_HOST_REGX)
+				regex, err := regexp.Compile(constants.CentralRegistryHostRegx)
 				if err != nil {
 					return fmt.Errorf("error occurred while compiling the registry regex, %v", err)
 				}

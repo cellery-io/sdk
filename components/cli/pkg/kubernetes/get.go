@@ -31,7 +31,7 @@ import (
 
 func GetDeploymentNames(namespace string) ([]string, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"deployments",
 		"-o",
@@ -47,7 +47,7 @@ func GetDeploymentNames(namespace string) ([]string, error) {
 }
 
 func GetMasterNodeName() (string, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"node",
 		"--selector",
@@ -73,7 +73,7 @@ func GetMasterNodeName() (string, error) {
 
 func GetNodes() (Node, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"nodes",
 		"-o",
@@ -96,7 +96,7 @@ func GetNodes() (Node, error) {
 // GetCells returns mock cell instances array.
 func (kubeCli *CelleryKubeCli) GetCells() ([]Cell, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"cells",
 		"-o",
@@ -114,7 +114,7 @@ func (kubeCli *CelleryKubeCli) GetCells() ([]Cell, error) {
 
 func (kubeCli *CelleryKubeCli) GetComposites() ([]Composite, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"composites",
 		"-o",
@@ -131,7 +131,7 @@ func (kubeCli *CelleryKubeCli) GetComposites() ([]Composite, error) {
 }
 
 func (kubeCli *CelleryKubeCli) GetCell(cellName string) (Cell, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"cells",
 		cellName,
@@ -155,7 +155,7 @@ func (kubeCli *CelleryKubeCli) GetCell(cellName string) (Cell, error) {
 }
 
 func (kubeCli *CelleryKubeCli) GetComposite(compositeName string) (Composite, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"composite",
 		compositeName,
@@ -180,7 +180,7 @@ func (kubeCli *CelleryKubeCli) GetComposite(compositeName string) (Composite, er
 
 func GetCells() (Cells, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"cells",
 		"-o",
@@ -198,7 +198,7 @@ func GetCells() (Cells, error) {
 
 func GetComposites() (Composites, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"composites",
 		"-o",
@@ -215,7 +215,7 @@ func GetComposites() (Composites, error) {
 }
 
 func GetCell(cellName string) (Cell, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"cells",
 		cellName,
@@ -239,7 +239,7 @@ func GetCell(cellName string) (Cell, error) {
 }
 
 func GetComposite(compositeName string) (Composite, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"composite",
 		compositeName,
@@ -263,11 +263,11 @@ func GetComposite(compositeName string) (Composite, error) {
 }
 
 func GetPodsForCell(cellName string) (Pods, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"pods",
 		"-l",
-		constants.GROUP_NAME+"/cell="+cellName,
+		constants.GroupName+"/cell="+cellName,
 		"-o",
 		"json",
 	)
@@ -282,11 +282,11 @@ func GetPodsForCell(cellName string) (Pods, error) {
 }
 
 func GetPodsForComposite(compName string) (Pods, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"pods",
 		"-l",
-		constants.GROUP_NAME+"/composite="+compName,
+		constants.GroupName+"/composite="+compName,
 		"-o",
 		"json",
 	)
@@ -302,11 +302,11 @@ func GetPodsForComposite(compName string) (Pods, error) {
 
 func (kubeCli *CelleryKubeCli) GetServices(cellName string) (Services, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"services",
 		"-l",
-		constants.GROUP_NAME+"/cell="+cellName,
+		constants.GroupName+"/cell="+cellName,
 		"-o",
 		"json",
 	)
@@ -321,7 +321,7 @@ func (kubeCli *CelleryKubeCli) GetServices(cellName string) (Services, error) {
 }
 
 func GetVirtualService(vs string) (VirtualService, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"virtualservice",
 		vs,
@@ -340,7 +340,7 @@ func GetVirtualService(vs string) (VirtualService, error) {
 
 func GetDeployment(namespace, deployment string) (string, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"deployments",
 		deployment,
@@ -352,7 +352,7 @@ func GetDeployment(namespace, deployment string) (string, error) {
 }
 
 func GetGatewayAsMapInterface(gw string) (map[string]interface{}, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"gateways",
 		gw,
@@ -370,7 +370,7 @@ func GetGatewayAsMapInterface(gw string) (map[string]interface{}, error) {
 }
 
 func (kubeCli *CelleryKubeCli) GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"cell",
 		cell,
@@ -388,7 +388,7 @@ func (kubeCli *CelleryKubeCli) GetCellInstanceAsMapInterface(cell string) (map[s
 }
 
 func (kubeCli *CelleryKubeCli) GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{}, error) {
-	cmd := exec.Command(constants.KUBECTL,
+	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"composite",
 		composite,
@@ -407,7 +407,7 @@ func (kubeCli *CelleryKubeCli) GetCompositeInstanceAsMapInterface(composite stri
 
 func GetService(service, namespace string) (Service, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"get",
 		"services",
 		"-n",

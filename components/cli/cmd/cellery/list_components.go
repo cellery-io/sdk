@@ -40,9 +40,9 @@ func newListComponentsCommand(cli cli.Cli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
+			isCellValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), args[0])
 			if err != nil || !isCellValid {
-				isCellImageValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELL_IMAGE_PATTERN), args[0])
+				isCellImageValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CellImagePattern), args[0])
 				if err != nil || !isCellImageValid {
 					return fmt.Errorf("expects a valid cell instance name or a cell image name, received %s", args[0])
 				}

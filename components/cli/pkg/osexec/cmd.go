@@ -32,7 +32,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
-var tmpFile = filepath.Join(userHomeDir(), constants.CELLERY_HOME, constants.TMP, "./out.txt")
+var tmpFile = filepath.Join(userHomeDir(), constants.CelleryHome, constants.TMP, "./out.txt")
 
 func GetCommandOutput(cmd *exec.Cmd) (string, error) {
 	exitCode := 0

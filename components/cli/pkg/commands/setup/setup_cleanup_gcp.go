@@ -47,7 +47,7 @@ func manageGcp() error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select `cleanup` to remove an existing GCP cluster",
-		Items:     []string{constants.CELLERY_MANAGE_CLEANUP, constants.CELLERY_SETUP_BACK},
+		Items:     []string{constants.CelleryManageCleanup, constants.CellerySetupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -56,7 +56,7 @@ func manageGcp() error {
 	}
 
 	switch value {
-	case constants.CELLERY_MANAGE_CLEANUP:
+	case constants.CelleryManageCleanup:
 		{
 			cleanupGcp()
 		}
@@ -69,7 +69,7 @@ func manageGcp() error {
 }
 
 func cleanupGcp() error {
-	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP),
+	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.GCP),
 		".json")
 
 	if len(jsonAuthFile) > 0 {
@@ -77,7 +77,7 @@ func cleanupGcp() error {
 	} else {
 		util.ExitWithErrorMessage("Failed to cleanup gcp setup", fmt.Errorf("Could not find "+
 			"authentication json file in : %s. Please copy GCP service account credentials"+
-			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME,
+			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CelleryHome,
 			constants.GCP)))
 	}
 	ctx := context.Background()
@@ -107,14 +107,14 @@ func cleanupGcp() error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select a GCP cluster to delete",
-		Items:     append(userCreatedGcpClusters, constants.CELLERY_SETUP_BACK),
+		Items:     append(userCreatedGcpClusters, constants.CellerySetupBack),
 		Templates: selectTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
 		util.ExitWithErrorMessage("Failed to select an option: %v", err)
 	}
-	if value == constants.CELLERY_SETUP_BACK {
+	if value == constants.CellerySetupBack {
 		manageGcp()
 		return nil
 	}
@@ -124,13 +124,13 @@ func cleanupGcp() error {
 
 func ValidateGcpCluster(cluster string) (bool, error) {
 	valid := false
-	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP), ".json")
+	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.GCP), ".json")
 
 	if len(jsonAuthFile) > 0 {
 		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
 	} else {
 		return false, fmt.Errorf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
-			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP))
+			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.GCP))
 	}
 	ctx := context.Background()
 	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)
@@ -146,10 +146,10 @@ func ValidateGcpCluster(cluster string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to list clusters: %v", err)
 	}
-	clusterNameSlice := strings.Split(cluster, constants.GCP_CLUSTER_NAME)
+	clusterNameSlice := strings.Split(cluster, constants.GcpClusterName)
 	if len(clusterNameSlice) > 1 {
-		uniqueNumber := strings.Split(cluster, constants.GCP_CLUSTER_NAME)[1]
-		if util.ContainsInStringArray(clusters, constants.GCP_CLUSTER_NAME+uniqueNumber) {
+		uniqueNumber := strings.Split(cluster, constants.GcpClusterName)[1]
+		if util.ContainsInStringArray(clusters, constants.GcpClusterName+uniqueNumber) {
 			valid = true
 		}
 	}
@@ -157,7 +157,7 @@ func ValidateGcpCluster(cluster string) (bool, error) {
 }
 
 func RunCleanupGcp(value string) error {
-	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, constants.GCP),
+	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.GCP),
 		".json")
 
 	if len(jsonAuthFile) > 0 {
@@ -165,7 +165,7 @@ func RunCleanupGcp(value string) error {
 	} else {
 		util.ExitWithErrorMessage("Failed to cleanup gcp setup", fmt.Errorf("Could not find "+
 			"authentication json file in : %s. Please copy GCP service account credentials"+
-			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME,
+			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CelleryHome,
 			constants.GCP)))
 	}
 	ctx := context.Background()
@@ -183,13 +183,13 @@ func RunCleanupGcp(value string) error {
 	cleanupSpinner := util.StartNewSpinner("Removing GCP cluster")
 
 	// Delete GCP cluster
-	errCleanup := deleteGcpCluster(gcpService, projectName, zone, constants.GCP_CLUSTER_NAME+uniqueNumber)
+	errCleanup := deleteGcpCluster(gcpService, projectName, zone, constants.GcpClusterName+uniqueNumber)
 	if errCleanup != nil {
 		cleanupSpinner.Stop(false)
 		fmt.Printf("Failed to cleanup GCP cluster: %v", errCleanup)
 	}
 	for i := 0; i < 15; i++ {
-		if gcpClusterExist(gcpService, projectName, zone, constants.GCP_CLUSTER_NAME+uniqueNumber) {
+		if gcpClusterExist(gcpService, projectName, zone, constants.GcpClusterName+uniqueNumber) {
 			time.Sleep(60 * time.Second)
 		} else {
 			break
@@ -210,7 +210,7 @@ func RunCleanupGcp(value string) error {
 		fmt.Printf("Failed to cleanup GCP cluster: %v", err)
 	}
 
-	errorDeleteSql := deleteSqlInstance(sqlService, projectName, constants.GCP_DB_INSTANCE_NAME+uniqueNumber)
+	errorDeleteSql := deleteSqlInstance(sqlService, projectName, constants.GcpDbInstanceName+uniqueNumber)
 	if errorDeleteSql != nil {
 		cleanupSpinner.Stop(false)
 		fmt.Printf("Failed to cleanup GCP cluster: %v", errorDeleteSql)
@@ -229,7 +229,7 @@ func RunCleanupGcp(value string) error {
 		cleanupSpinner.Stop(false)
 		fmt.Printf("Failed to cleanup GCP cluster: %v", err)
 	}
-	errDeleteFileStore := deleteFileStore(nfsService, projectName, zone, constants.GCP_NFS_SERVER_INSTANCE+uniqueNumber)
+	errDeleteFileStore := deleteFileStore(nfsService, projectName, zone, constants.GcpNfsServerInstance+uniqueNumber)
 	if errDeleteFileStore != nil {
 		fmt.Printf("Failed to cleanup GCP cluster: %v", errDeleteFileStore)
 	}
@@ -241,12 +241,12 @@ func RunCleanupGcp(value string) error {
 		fmt.Printf("Error creating storage client: %v", err)
 	}
 
-	errorDeleteStorageObject := deleteGcpStorageObject(storageClient, constants.GCP_BUCKET_NAME+uniqueNumber, constants.INIT_SQL)
+	errorDeleteStorageObject := deleteGcpStorageObject(storageClient, constants.GcpBucketName+uniqueNumber, constants.InitSql)
 	if err != nil {
 		fmt.Printf("Error deleting gcp storage object: %v", errorDeleteStorageObject)
 	}
 
-	errorDeleteStorage := deleteGcpStorage(storageClient, constants.GCP_BUCKET_NAME+uniqueNumber)
+	errorDeleteStorage := deleteGcpStorage(storageClient, constants.GcpBucketName+uniqueNumber)
 	if err != nil {
 		fmt.Printf("Error deleting gcp storage: %v", errorDeleteStorage)
 	}

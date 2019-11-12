@@ -80,21 +80,21 @@ func ValidateImageTag(imageTag string) error {
 	}
 
 	organization := subMatch[1]
-	isValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), organization)
+	isValid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), organization)
 	if err != nil || !isValid {
 		return fmt.Errorf("expects a valid organization name (lower case letters, numbers and dashes "+
 			"with only letters and numbers at the begining and end), received %s", organization)
 	}
 
 	imageName := subMatch[2]
-	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), imageName)
+	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), imageName)
 	if err != nil || !isValid {
 		return fmt.Errorf("expects a valid image name (lower case letters, numbers and dashes "+
 			"with only letters and numbers at the begining and end), received %s", imageName)
 	}
 
 	imageVersion := subMatch[3]
-	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.IMAGE_VERSION_PATTERN), imageVersion)
+	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.ImageVersionPattern), imageVersion)
 	if err != nil || !isValid {
 		return fmt.Errorf("expects a valid image version (lower case letters, numbers, dashes and dots "+
 			"with only letters and numbers at the begining and end), received %s", imageVersion)
@@ -121,21 +121,21 @@ func ValidateImageTagWithRegistry(imageTag string) error {
 	}
 
 	organization := subMatch[2]
-	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), organization)
+	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), organization)
 	if err != nil || !isValid {
 		return fmt.Errorf("expects a valid organization name (lower case letters, numbers and dashes "+
 			"with only letters and numbers at the begining and end), received %s", organization)
 	}
 
 	imageName := subMatch[3]
-	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), imageName)
+	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), imageName)
 	if err != nil || !isValid {
 		return fmt.Errorf("expects a valid image name (lower case letters, numbers and dashes "+
 			"with only letters and numbers at the begining and end), received %s", imageName)
 	}
 
 	imageVersion := subMatch[4]
-	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.IMAGE_VERSION_PATTERN), imageVersion)
+	isValid, err = regexp.MatchString(fmt.Sprintf("^%s$", constants.ImageVersionPattern), imageVersion)
 	if err != nil || !isValid {
 		return fmt.Errorf("expects a valid image version (lower case letters, numbers, dashes and dots "+
 			"with only letters and numbers at the begining and end), received %s", imageVersion)

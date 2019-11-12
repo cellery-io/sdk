@@ -60,7 +60,7 @@ func LoadConfig() *Conf {
 		},
 	}
 
-	configFilePath := filepath.Join(util.UserHomeDir(), constants.CELLERY_HOME, configFile)
+	configFilePath := filepath.Join(util.UserHomeDir(), constants.CelleryHome, configFile)
 	configFileBytes, err := ioutil.ReadFile(configFilePath)
 	if err == nil {
 		err = json.Unmarshal(configFileBytes, conf)

@@ -28,7 +28,7 @@ import (
 
 func (kubeCli *CelleryKubeCli) Version() (string, string, error) {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"version",
 		"-o",
 		"json",

@@ -53,7 +53,7 @@ func newApplyCellAutoscalePolicyCommand(cli cli.Cli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
+			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), args[0])
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -82,7 +82,7 @@ func newApplyCompositeAutoscalePolicyCommand(cli cli.Cli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CELLERY_ID_PATTERN), args[0])
+			valid, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), args[0])
 			if err != nil {
 				log.Fatal(err)
 			}

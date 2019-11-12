@@ -27,7 +27,7 @@ import (
 
 func (kubeCli *CelleryKubeCli) JsonPatch(kind, instance, jsonPatch string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"patch",
 		"--type=json",
 		kind,
@@ -42,7 +42,7 @@ func (kubeCli *CelleryKubeCli) JsonPatch(kind, instance, jsonPatch string) error
 
 func JsonPatchWithNameSpace(kind, instance, jsonPatch, nameSpace string) error {
 	cmd := exec.Command(
-		constants.KUBECTL,
+		constants.KubeCtl,
 		"patch",
 		"--type=json",
 		kind,
