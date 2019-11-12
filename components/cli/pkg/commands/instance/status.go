@@ -47,9 +47,9 @@ func RunStatus(cli cli.Cli, instance string) error {
 		if err != nil {
 			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instance, err); compositeNotFound {
 				// given instance name does not correspond either to a cell or a composite
-				return fmt.Errorf("error checking if composite exists, %v", err)
+				return fmt.Errorf("instance %s does not exist", instance)
 			} else {
-				return fmt.Errorf("instance %s does not exist, %v", instance, err)
+				return fmt.Errorf("error checking if composite exists, %v", err)
 			}
 		}
 		return displayCompositeStatus(instance, creationTime, status)

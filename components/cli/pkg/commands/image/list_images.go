@@ -46,28 +46,32 @@ func RunListImages(cli cli.Cli) error {
 	if err != nil {
 		return fmt.Errorf("error getting images arrays, %v", err)
 	}
-	for _, i := range images {
-		data = append(data, []string{i.name, i.size, i.created, i.kind})
+	if len(images) == 0 {
+		fmt.Fprintln(cli.Out(), "No images found.")
+	} else {
+		for _, i := range images {
+			data = append(data, []string{i.name, i.size, i.created, i.kind})
+		}
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"IMAGE", "SIZE", "CREATED", "KIND"})
+		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+		table.SetAlignment(3)
+		table.SetRowSeparator("-")
+		table.SetCenterSeparator(" ")
+		table.SetColumnSeparator(" ")
+		table.SetHeaderColor(
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold})
+		table.SetColumnColor(
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{})
+		table.AppendBulk(data)
+		table.Render()
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"IMAGE", "SIZE", "CREATED", "KIND"})
-	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
-	table.SetAlignment(3)
-	table.SetRowSeparator("-")
-	table.SetCenterSeparator(" ")
-	table.SetColumnSeparator(" ")
-	table.SetHeaderColor(
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold})
-	table.SetColumnColor(
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{})
-	table.AppendBulk(data)
-	table.Render()
 	return nil
 }
 

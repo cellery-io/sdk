@@ -60,61 +60,36 @@ func TestRunListInstances(t *testing.T) {
 			},
 		},
 	}
-	mockCli := test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))))
 	tests := []struct {
-		name string
+		name             string
+		instancesRunning bool
+		expected         string
+		mockCli          *test.MockCli
 	}{
 		{
-			name: "list instances",
+			name:             "list instances with cells and composites instances running",
+			instancesRunning: true,
+			expected:         "",
+			mockCli:          test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites)))),
+		},
+		{
+			name:             "list instances without instances running",
+			instancesRunning: false,
+			expected:         "No running instances.\n",
+			mockCli:          test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli())),
 		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunListInstances(mockCli)
-			if err != nil {
-				t.Errorf("error in RunListInstances, %v", err)
-			}
-		})
-	}
-}
-
-func TestGetCellTableData(t *testing.T) {
-	cells := kubernetes.Cells{
-		Items: []kubernetes.Cell{
-			{
-				CellMetaData: kubernetes.K8SMetaData{
-					Name:              "employee",
-					CreationTimestamp: "2019-10-18T11:40:36Z",
-				},
-			},
-			{
-				CellMetaData: kubernetes.K8SMetaData{
-					Name:              "stock",
-					CreationTimestamp: "2019-10-18T11:40:36Z",
-				},
-			},
-		},
-	}
-	tests := []struct {
-		name        string
-		want        string
-		MockKubeCli *test.MockKubeCli
-	}{
-		{
-			name:        "list instances with single cell instance",
-			want:        "employee",
-			MockKubeCli: test.NewMockKubeCli(test.WithCells(cells)),
-		},
-	}
-	for _, tst := range tests {
-		t.Run(tst.name, func(t *testing.T) {
-			tableData, err := getCellTableData(tst.MockKubeCli)
-			if err != nil {
-				t.Errorf("error in getCellTableData")
-			}
-			got := tableData[0][0]
-			if diff := cmp.Diff(tst.want, got); diff != "" {
-				t.Errorf("getCellTableData (-want, +got)\n%v", diff)
+			err := RunListInstances(tst.mockCli)
+			if tst.instancesRunning {
+				if err != nil {
+					t.Errorf("error in RunListInstances, %v", err)
+				}
+			} else {
+				if diff := cmp.Diff(tst.expected, tst.mockCli.OutBuffer().String()); diff != "" {
+					t.Errorf("RunListInstances: unexpected output (-want, +got)\n%v", diff)
+				}
 			}
 		})
 	}

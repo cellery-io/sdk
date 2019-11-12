@@ -26,23 +26,31 @@ import (
 	"github.com/olekukonko/tablewriter"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func RunListInstances(cli cli.Cli) error {
-	if err := displayCellTable(cli); err != nil {
-		return fmt.Errorf("error displaying cell table, %v", err)
+	var err error
+	var cellTableData, compositeTableData [][]string
+	if cellTableData, err = getCellTableData(cli); err != nil {
+		return fmt.Errorf("error getting cell data, %v", err)
 	}
-	displayCompositeTable(cli)
+	if len(cellTableData) > 0 {
+		displayCellTable(cli, cellTableData)
+	}
+	if compositeTableData, err = getCompositeTableData(cli); err != nil {
+		return fmt.Errorf("error getting composite data, %v", err)
+	}
+	if len(compositeTableData) > 0 {
+		displayCompositeTable(cli, compositeTableData)
+	}
+	if len(cellTableData) == 0 && len(compositeTableData) == 0 {
+		fmt.Fprintln(cli.Out(), "No running instances.")
+	}
 	return nil
 }
 
-func displayCellTable(cli cli.Cli) error {
-	tableData, err := getCellTableData(cli.KubeCli())
-	if err != nil {
-		return fmt.Errorf("error getting cell table data, %v", err)
-	}
+func displayCellTable(cli cli.Cli, tableData [][]string) error {
 	if len(tableData) > 0 {
 		fmt.Fprintf(cli.Out(), "\n %s\n", util.Bold("Cell Instances:"))
 		table := tablewriter.NewWriter(os.Stdout)
@@ -69,34 +77,13 @@ func displayCellTable(cli cli.Cli) error {
 
 		table.AppendBulk(tableData)
 		table.Render()
-	} else {
-		fmt.Fprintln(cli.Out(), "No running cell instances.")
 	}
 	return nil
 }
 
-func displayCompositeTable(cli cli.Cli) {
-	compositeData, err := cli.KubeCli().GetComposites()
-	if err != nil {
-		util.ExitWithErrorMessage("Error getting information of composites", err)
-	}
-	if len(compositeData) > 0 {
+func displayCompositeTable(cli cli.Cli, tableData [][]string) error {
+	if len(tableData) > 0 {
 		fmt.Fprintf(cli.Out(), " \n %s\n", util.Bold("Composite Instances:"))
-
-		var tableData [][]string
-
-		for i := 0; i < len(compositeData); i++ {
-			age := util.GetDuration(util.ConvertStringToTime(compositeData[i].CompositeMetaData.CreationTimestamp))
-			instance := compositeData[i].CompositeMetaData.Name
-			cellImage := compositeData[i].CompositeMetaData.Annotations.Organization + "/" +
-				compositeData[i].CompositeMetaData.Annotations.Name + ":" +
-				compositeData[i].CompositeMetaData.Annotations.Version
-			components := compositeData[i].CompositeStatus.ServiceCount
-			status := compositeData[i].CompositeStatus.Status
-			tableRecord := []string{instance, cellImage, status, strconv.Itoa(components), age}
-			tableData = append(tableData, tableRecord)
-		}
-
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"INSTANCE", "IMAGE", "STATUS", "COMPONENTS", "AGE"})
 		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
@@ -120,11 +107,12 @@ func displayCompositeTable(cli cli.Cli) {
 		table.AppendBulk(tableData)
 		table.Render()
 	}
+	return nil
 }
 
-func getCellTableData(kubecli kubernetes.KubeCli) ([][]string, error) {
+func getCellTableData(cli cli.Cli) ([][]string, error) {
 	var tableData [][]string
-	cells, err := kubecli.GetCells()
+	cells, err := cli.KubeCli().GetCells()
 	if err != nil {
 		return nil, fmt.Errorf("error getting information of cells, %v", err)
 	}
@@ -136,6 +124,26 @@ func getCellTableData(kubecli kubernetes.KubeCli) ([][]string, error) {
 		components := cells[i].CellStatus.ServiceCount
 		status := cells[i].CellStatus.Status
 		tableRecord := []string{instance, cellImage, status, gateway, strconv.Itoa(components), age}
+		tableData = append(tableData, tableRecord)
+	}
+	return tableData, nil
+}
+
+func getCompositeTableData(cli cli.Cli) ([][]string, error) {
+	compositeData, err := cli.KubeCli().GetComposites()
+	if err != nil {
+		return nil, fmt.Errorf("error getting information of composites, %v", err)
+	}
+	var tableData [][]string
+	for i := 0; i < len(compositeData); i++ {
+		age := util.GetDuration(util.ConvertStringToTime(compositeData[i].CompositeMetaData.CreationTimestamp))
+		instance := compositeData[i].CompositeMetaData.Name
+		cellImage := compositeData[i].CompositeMetaData.Annotations.Organization + "/" +
+			compositeData[i].CompositeMetaData.Annotations.Name + ":" +
+			compositeData[i].CompositeMetaData.Annotations.Version
+		components := compositeData[i].CompositeStatus.ServiceCount
+		status := compositeData[i].CompositeStatus.Status
+		tableRecord := []string{instance, cellImage, status, strconv.Itoa(components), age}
 		tableData = append(tableData, tableRecord)
 	}
 	return tableData, nil
