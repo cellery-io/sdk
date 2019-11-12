@@ -33,7 +33,7 @@ func newListImagesCommand(cli cli.Cli) *cobra.Command {
 		Aliases: []string{"image", "img"},
 		Args:    cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := image.RunImage(cli); err != nil {
+			if err := image.RunListImages(cli); err != nil {
 				util.ExitWithErrorMessage("Cellery list images command failed", err)
 			}
 		},

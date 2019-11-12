@@ -27,6 +27,57 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
+func TestRunListInstances(t *testing.T) {
+	cells := kubernetes.Cells{
+		Items: []kubernetes.Cell{
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "employee",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "stock",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+		},
+	}
+	composites := kubernetes.Composites{
+		Items: []kubernetes.Composite{
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "hr",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "job",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+		},
+	}
+	mockCli := test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))))
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "list instances",
+		},
+	}
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunListInstances(mockCli)
+			if err != nil {
+				t.Errorf("error in RunListInstances, %v", err)
+			}
+		})
+	}
+}
+
 func TestGetCellTableData(t *testing.T) {
 	cells := kubernetes.Cells{
 		Items: []kubernetes.Cell{
@@ -55,14 +106,14 @@ func TestGetCellTableData(t *testing.T) {
 			MockKubeCli: test.NewMockKubeCli(test.WithCells(cells)),
 		},
 	}
-	for _, testIteration := range tests {
-		t.Run(testIteration.name, func(t *testing.T) {
-			tableData, err := getCellTableData(testIteration.MockKubeCli)
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			tableData, err := getCellTableData(tst.MockKubeCli)
 			if err != nil {
 				t.Errorf("error in getCellTableData")
 			}
 			got := tableData[0][0]
-			if diff := cmp.Diff(testIteration.want, got); diff != "" {
+			if diff := cmp.Diff(tst.want, got); diff != "" {
 				t.Errorf("getCellTableData (-want, +got)\n%v", diff)
 			}
 		})

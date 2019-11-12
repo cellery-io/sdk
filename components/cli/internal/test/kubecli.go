@@ -36,6 +36,7 @@ type MockKubeCli struct {
 	k8sClientVersion string
 	services         map[string]kubernetes.Services
 	cellLogs         map[string]string
+	componentsLogs   map[string]string
 }
 
 func (kubeCli *MockKubeCli) SetVerboseMode(enable bool) {
@@ -71,6 +72,12 @@ func WithCellLogs(cellLogs map[string]string) func(*MockKubeCli) {
 	}
 }
 
+func WithComponentLogs(componentLogs map[string]string) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.componentsLogs = componentLogs
+	}
+}
+
 func SetK8sVersions(serverVersion, clientVersion string) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.k8sServerVersion = serverVersion
@@ -102,7 +109,7 @@ func (kubeCli *MockKubeCli) GetCell(cellName string) (kubernetes.Cell, error) {
 			return cell, nil
 		}
 	}
-	return kubernetes.Cell{}, fmt.Errorf("cell %s does not exist", cellName)
+	return kubernetes.Cell{}, fmt.Errorf("cell %s not found", cellName)
 }
 
 func (kubeCli *MockKubeCli) GetComposite(compositeName string) (kubernetes.Composite, error) {
@@ -111,7 +118,7 @@ func (kubeCli *MockKubeCli) GetComposite(compositeName string) (kubernetes.Compo
 			return composite, nil
 		}
 	}
-	return kubernetes.Composite{}, fmt.Errorf("composite %s does not exist", compositeName)
+	return kubernetes.Composite{}, fmt.Errorf("composite %s not found", compositeName)
 }
 
 func (kubeCli *MockKubeCli) DeleteResource(kind, instance string) (string, error) {
@@ -159,7 +166,7 @@ func (kubeCli *MockKubeCli) GetCellLogsAllComponents(cellName string) (string, e
 }
 
 func (kubeCli *MockKubeCli) GetComponentLogs(cellName, componentName string) (string, error) {
-	return kubeCli.cellLogs[cellName], nil
+	return kubeCli.componentsLogs[cellName + ":" + componentName], nil
 }
 
 func (kubeCli *MockKubeCli) JsonPatch(kind, instance, jsonPatch string) error {

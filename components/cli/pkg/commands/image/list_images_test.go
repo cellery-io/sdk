@@ -27,6 +27,28 @@ import (
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 )
 
+func TestRunListImages(t *testing.T) {
+	mockRepo := filepath.Join("testdata", "repo")
+	mockFileSystem := test.NewMockFileSystem(test.SetRepository(mockRepo))
+	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem))
+
+	tests := []struct {
+		name string
+	}{
+		{
+			name: "list images",
+		},
+	}
+	for _, testIteration := range tests {
+		t.Run(testIteration.name, func(t *testing.T) {
+			err := RunListImages(mockCli)
+			if err != nil {
+				t.Errorf("error in RunListImages, %v", err)
+			}
+		})
+	}
+}
+
 func TestGetImagesArray(t *testing.T) {
 	mockRepo := filepath.Join("testdata", "repo")
 	mockFileSystem := test.NewMockFileSystem(test.SetRepository(mockRepo))

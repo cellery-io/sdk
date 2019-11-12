@@ -19,6 +19,7 @@
 package instance
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"testing"
 
 	"github.com/cellery-io/sdk/components/cli/internal/test"
@@ -26,8 +27,10 @@ import (
 
 func TestRunLogs(t *testing.T) {
 	logsMap := make(map[string]string)
+	componentLogsMap := make(map[string]string)
 	logsMap["employee"] = "employee cell is running"
-	mockKubeCli := test.NewMockKubeCli(test.WithCellLogs(logsMap))
+	componentLogsMap["employee:job"] = "job component is running"
+	mockKubeCli := test.NewMockKubeCli(test.WithCellLogs(logsMap), test.WithComponentLogs(componentLogsMap))
 	mockCli := test.NewMockCli(test.SetKubeCli(mockKubeCli))
 
 	tests := []struct {
@@ -40,12 +43,47 @@ func TestRunLogs(t *testing.T) {
 			instance:  "employee",
 			component: "",
 		},
+		{
+			name:      "logs of cell component",
+			instance:  "employee",
+			component: "job",
+		},
 	}
-	for _, testIteration := range tests {
-		t.Run(testIteration.name, func(t *testing.T) {
-			err := RunLogs(mockCli, testIteration.instance, testIteration.component, false)
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunLogs(mockCli, tst.instance, tst.component, false)
 			if err != nil {
 				t.Errorf("error in RunLogs, %v", err)
+			}
+		})
+	}
+}
+
+func TestRunLogsError(t *testing.T) {
+	tests := []struct {
+		name      string
+		instance  string
+		component string
+		errMessage string
+	}{
+		{
+			name:      "No logs of cell instance",
+			instance:  "employee",
+			component: "",
+			errMessage:"No logs found%!(EXTRA *errors.errorString=cannot find cell instance employee)",
+		},
+		{
+			name:      "No logs of cell component",
+			instance:  "employee",
+			component: "job",
+			errMessage:"No logs found%!(EXTRA *errors.errorString=cannot find component job of cell instance employee)",
+		},
+	}
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli())), tst.instance, tst.component, false)
+			if diff := cmp.Diff(tst.errMessage, err.Error()); diff != "" {
+				t.Errorf("RunLogs: unexpected error (-want, +got)\n%v", diff)
 			}
 		})
 	}

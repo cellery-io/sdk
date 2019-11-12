@@ -98,6 +98,7 @@ func (balExecutor *LocalBalExecutor) Run(imageDir string, fileName string, args 
 	cmd = exec.Command(exePath, "run", fileName, "run")
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
 	// Export environment variables defined by user
 	for _, envVar := range envVars {
 		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)

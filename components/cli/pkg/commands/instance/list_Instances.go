@@ -34,7 +34,7 @@ func RunListInstances(cli cli.Cli) error {
 	if err := displayCellTable(cli); err != nil {
 		return fmt.Errorf("error displaying cell table, %v", err)
 	}
-	displayCompositeTable()
+	displayCompositeTable(cli)
 	return nil
 }
 
@@ -75,24 +75,24 @@ func displayCellTable(cli cli.Cli) error {
 	return nil
 }
 
-func displayCompositeTable() {
-	compositeData, err := kubernetes.GetComposites()
+func displayCompositeTable(cli cli.Cli) {
+	compositeData, err := cli.KubeCli().GetComposites()
 	if err != nil {
 		util.ExitWithErrorMessage("Error getting information of composites", err)
 	}
-	if len(compositeData.Items) > 0 {
+	if len(compositeData) > 0 {
 		fmt.Printf(" \n %s\n", util.Bold("Composite Instances:"))
 
 		var tableData [][]string
 
-		for i := 0; i < len(compositeData.Items); i++ {
-			age := util.GetDuration(util.ConvertStringToTime(compositeData.Items[i].CompositeMetaData.CreationTimestamp))
-			instance := compositeData.Items[i].CompositeMetaData.Name
-			cellImage := compositeData.Items[i].CompositeMetaData.Annotations.Organization + "/" +
-				compositeData.Items[i].CompositeMetaData.Annotations.Name + ":" +
-				compositeData.Items[i].CompositeMetaData.Annotations.Version
-			components := compositeData.Items[i].CompositeStatus.ServiceCount
-			status := compositeData.Items[i].CompositeStatus.Status
+		for i := 0; i < len(compositeData); i++ {
+			age := util.GetDuration(util.ConvertStringToTime(compositeData[i].CompositeMetaData.CreationTimestamp))
+			instance := compositeData[i].CompositeMetaData.Name
+			cellImage := compositeData[i].CompositeMetaData.Annotations.Organization + "/" +
+				compositeData[i].CompositeMetaData.Annotations.Name + ":" +
+				compositeData[i].CompositeMetaData.Annotations.Version
+			components := compositeData[i].CompositeStatus.ServiceCount
+			status := compositeData[i].CompositeStatus.Status
 			tableRecord := []string{instance, cellImage, status, strconv.Itoa(components), age}
 			tableData = append(tableData, tableRecord)
 		}

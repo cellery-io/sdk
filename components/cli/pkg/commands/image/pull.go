@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -137,7 +136,7 @@ func pullImage(cli cli.Cli, parsedCellImage *image.CellImage, username string, p
 		return fmt.Errorf("error occurred while saving cell image to local repo, %v", err)
 	}
 	// Writing the Cell Image to local file
-	cellImageFile := filepath.Join(repoLocation, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+	cellImageFile := filepath.Join(repoLocation, parsedCellImage.ImageName+cellImageExt)
 	err = ioutil.WriteFile(cellImageFile, cellImage, 0644)
 	if err != nil {
 		return fmt.Errorf("error occurred while saving cell image to local repo, %v", err)

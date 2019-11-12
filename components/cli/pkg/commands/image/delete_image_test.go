@@ -29,18 +29,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 )
 
-func TestDeleteImageSuccess(t *testing.T) {
-	tempRepo, err := ioutil.TempDir("", "repo")
-	if err != nil {
-		t.Errorf("error creating temp repo, %v", err)
-	}
-	mockRepo := filepath.Join("testdata", "repo")
-	if copyDir(mockRepo, tempRepo); err != nil {
-		t.Errorf("error copying mock repo to temp repo, %v", err)
-	}
-	mockFileSystem := test.NewMockFileSystem(test.SetRepository(tempRepo))
-	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem))
-
+func TestDeleteImage(t *testing.T) {
 	tests := []struct {
 		name      string
 		images    []string
@@ -73,6 +62,16 @@ func TestDeleteImageSuccess(t *testing.T) {
 		},
 	}
 	for _, testIteration := range tests {
+		tempRepo, err := ioutil.TempDir("", "repo")
+		if err != nil {
+			t.Errorf("error creating temp repo, %v", err)
+		}
+		mockRepo := filepath.Join("testdata", "repo")
+		if copyDir(mockRepo, tempRepo); err != nil {
+			t.Errorf("error copying mock repo to temp repo, %v", err)
+		}
+		mockFileSystem := test.NewMockFileSystem(test.SetRepository(tempRepo))
+		mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem))
 		t.Run(testIteration.name, func(t *testing.T) {
 			err := RunDeleteImage(mockCli, testIteration.images, testIteration.regex, testIteration.deleteAll)
 			if err != nil {

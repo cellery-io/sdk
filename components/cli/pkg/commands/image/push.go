@@ -48,7 +48,7 @@ func RunPush(cli cli.Cli, cellImage string, username string, password string) er
 	if err != nil {
 		return fmt.Errorf("error occurred while extracting image, %v", err)
 	}
-	metadataFileContent, err := ioutil.ReadFile(filepath.Join(imageDir, constants.ZIP_ARTIFACTS, "cellery",
+	metadataFileContent, err := ioutil.ReadFile(filepath.Join(imageDir, artifacts, "cellery",
 		"metadata.json"))
 	if err != nil {
 		return fmt.Errorf("error occurred while reading Cell Image metadata, %v", err)
@@ -211,7 +211,7 @@ func pushImage(cli cli.Cli, parsedCellImage *image.CellImage, username string, p
 	fmt.Println(fmt.Sprintf("\nReading image %s from the Local Repository", util.Bold(imageName)))
 	// Reading the cell image
 	cellImageFilePath := filepath.Join(cli.FileSystem().Repository(), parsedCellImage.Organization,
-		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CELL_IMAGE_EXT)
+		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+cellImageExt)
 
 	// Checking if the image is present in the local repo
 	isImagePresent, _ := util.FileExists(cellImageFilePath)

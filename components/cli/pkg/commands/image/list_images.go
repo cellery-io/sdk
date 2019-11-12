@@ -40,7 +40,7 @@ type imageData struct {
 	kind    string
 }
 
-func RunImage(cli cli.Cli) error {
+func RunListImages(cli cli.Cli) error {
 	var data [][]string
 	images, err := getImagesArray(cli)
 	if err != nil {

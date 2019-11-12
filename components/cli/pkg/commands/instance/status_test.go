@@ -27,6 +27,64 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
+func TestRunStatus(t *testing.T) {
+	cells := kubernetes.Cells{
+		Items: []kubernetes.Cell{
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "employee",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "stock",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+		},
+	}
+	composites := kubernetes.Composites{
+		Items: []kubernetes.Composite{
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "hr",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "job",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+		},
+	}
+	mockCli := test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))))
+
+	tests := []struct {
+		name      string
+		instance  string
+	}{
+		{
+			name:      "status of cell instance",
+			instance:  "employee",
+		},
+		{
+			name:      "status of composite instance",
+			instance:  "hr",
+		},
+	}
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunStatus(mockCli, tst.instance)
+			if err != nil {
+				t.Errorf("error in RunStatus, %v", err)
+			}
+		})
+	}
+}
+
 func TestGetCellSummary(t *testing.T) {
 	cells := kubernetes.Cells{
 		Items: []kubernetes.Cell{
