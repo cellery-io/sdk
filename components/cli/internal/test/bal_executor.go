@@ -20,11 +20,10 @@ package test
 
 import (
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
 )
 
 type MockBalExecutor struct {
@@ -77,7 +76,7 @@ func SetMetadataJsonContent(content []byte) func(*MockBalExecutor) {
 }
 
 // Build mocks execution of ballerina build on an executable bal file.
-func (balExecutor *MockBalExecutor) Build(fileName string, iName []byte) error {
+func (balExecutor *MockBalExecutor) Build(fileName string, args []string) error {
 	var err error
 	var metadataJson, yaml *os.File
 	if err := os.MkdirAll(filepath.Join(balExecutor.currentDir, "target", "cellery"), os.ModePerm); err != nil {
@@ -99,7 +98,7 @@ func (balExecutor *MockBalExecutor) Build(fileName string, iName []byte) error {
 }
 
 // Build mocks execution of ballerina run on an executable bal file.
-func (balExecutor *MockBalExecutor) Run(imageDir string, instanceName string, envVars []*ballerina.EnvironmentVariable, tempRunFileName string, args []string) error {
+func (balExecutor *MockBalExecutor) Run(imageDir string, tempRunFileName string, args []string, envVars []*ballerina.EnvironmentVariable) error {
 	return nil
 }
 

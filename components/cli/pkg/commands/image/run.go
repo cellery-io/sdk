@@ -173,10 +173,11 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 		return fmt.Errorf("error creating temporarily executable bal file, %v", err)
 	}
 	var balEnvVars []ballerina.EnvironmentVariable
+	// Set celleryImageDirEnvVar environment variable.
 	balEnvVars = append(balEnvVars, ballerina.EnvironmentVariable{
 		Key:   celleryImageDirEnvVar,
 		Value: imageDir})
-	// Setting environment variables
+	// Setting user defined environment variables.
 	for _, envVar := range envVars {
 		// Export environment variables defined by user for root instance
 		if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
@@ -197,7 +198,7 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 	if runCommandArgs, err = runCmdArgs(instanceName, dependencyLinks, runningNode, startDependencies, shareDependencies); err != nil {
 		return fmt.Errorf("failed to get run command arguements, %v", err)
 	}
-	if err = cli.BalExecutor().Run(imageDir, instanceName, envVars, tempRunFileName, runCommandArgs); err != nil {
+	if err = cli.BalExecutor().Run(imageDir, tempRunFileName, runCommandArgs, envVars); err != nil {
 		return fmt.Errorf("failed to run bal file, %v", err)
 	}
 	if err = os.Remove(tempRunFileName); err != nil {
@@ -210,7 +211,7 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 // Cleaning the path after finishing your work is your responsibility.
 func ExtractImage(cli cli.Cli, cellImage *image.CellImage, pullIfNotPresent bool) (string, error) {
 	var err error
-	repoLocation := filepath.Join(util.UserHomeDir(), celleryHome, "repo", cellImage.Organization,
+	repoLocation := filepath.Join(cli.FileSystem().Repository(), cellImage.Organization,
 		cellImage.ImageName, cellImage.ImageVersion)
 	zipLocation := filepath.Join(repoLocation, cellImage.ImageName+cellImageExt)
 	// Pull image if not exist

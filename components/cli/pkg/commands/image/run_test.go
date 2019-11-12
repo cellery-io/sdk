@@ -67,3 +67,48 @@ func TestStartCellInstance(t *testing.T) {
 		t.Errorf("startCellInstance failed: %v", err)
 	}
 }
+
+func TestRunRun(t *testing.T) {
+	currentDir, err := ioutil.TempDir("", "current-dir")
+	if err != nil {
+		t.Errorf("failed to create current dir")
+	}
+	defer func() {
+		if err := os.RemoveAll(currentDir); err != nil {
+			t.Errorf("failed to remove current dir")
+		}
+	}()
+	mockFileSystem := test.NewMockFileSystem(test.SetCurrentDir(currentDir), test.SetRepository(filepath.Join(
+		"testdata", "repo")))
+	mockBalExecutor := test.NewMockBalExecutor(test.SetBalCurrentDir(currentDir))
+	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem), test.SetBalExecutor(mockBalExecutor))
+
+	tests := []struct {
+		name  string
+		image string
+		instance string
+		startDependencies bool
+		shareDependencies bool
+		dependencyLinks []string
+		envVars []string
+	}{
+		{
+			name:  "run image",
+			image: "myorg/hello:1.0.0",
+			instance:"hello",
+			startDependencies:false,
+			shareDependencies:false,
+			dependencyLinks:nil,
+			envVars:nil,
+		},
+	}
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunRun(mockCli, tst.image, tst.instance, tst.startDependencies, tst.shareDependencies,
+				tst.dependencyLinks, tst.envVars)
+			if err != nil {
+				t.Errorf("error in RunRun, %v", err)
+			}
+		})
+	}
+}

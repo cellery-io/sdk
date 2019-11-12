@@ -50,7 +50,7 @@ func NewDockerBalExecutor() *DockerBalExecutor {
 }
 
 // Build executes ballerina build when ballerina is not installed.
-func (balExecutor *DockerBalExecutor) Build(fileName string, iName []byte) error {
+func (balExecutor *DockerBalExecutor) Build(fileName string, args []string) error {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error in determining working directory, %v", err)
@@ -130,7 +130,9 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, iName []byte) error
 	balFilePath := re.ReplaceAllString(fileName, "")
 	cmd := exec.Command("docker", "exec", "-w", homeCellery+"/src", "-u", cliUser.Uid,
 		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath, "run",
-		filepath.Join(homeCellery, "src", balFilePath), "build", string(iName), "{}", "false", "false")
+		filepath.Join(homeCellery, "src", balFilePath), "build")
+	cmd.Args = append(cmd.Args, args...)
+	cmd.Args = append(cmd.Args, "{}", "false", "false")
 	var stderr bytes.Buffer
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
@@ -161,8 +163,7 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, iName []byte) error
 }
 
 // Run executes ballerina run when ballerina is not installed.
-func (balExecutor *DockerBalExecutor) Run(imageDir string, instanceName string,
-	envVars []*EnvironmentVariable, tempRunFileName string, args []string) error {
+func (balExecutor *DockerBalExecutor) Run(imageDir string, fileName string, args []string, envVars []*EnvironmentVariable) error {
 
 	currentDir, err := os.Getwd()
 	if err != nil {
@@ -211,41 +212,26 @@ func (balExecutor *DockerBalExecutor) Run(imageDir string, instanceName string,
 		}
 		exeUid = cliUser.Uid
 	}
-	var cmdArgs []string
-	cmdArgs = append(cmdArgs, "-e", celleryImageDirEnvVar+"="+imageDir)
-
 	re := regexp.MustCompile(`^.*cellery-cell-image`)
-	tempRunFileName = re.ReplaceAllString(tempRunFileName, dockerCliCellImageDir)
+	fileName = re.ReplaceAllString(fileName, dockerCliCellImageDir)
 	dockerImageDir := re.ReplaceAllString(imageDir, dockerCliCellImageDir)
-
 	cmd := exec.Command("docker", "exec", "-e", celleryImageDirEnvVar+"="+dockerImageDir)
 	shellEnvs := os.Environ()
 	// check if any env var prepended with `CELLERY` exists. If so, set them to docker exec command.
-	if len(shellEnvs) != 0 {
-		for _, shellEnv := range shellEnvs {
-			if strings.HasPrefix(shellEnv, "CELLERY") {
-				cmd.Args = append(cmd.Args, "-e", shellEnv)
-			}
+	for _, shellEnv := range shellEnvs {
+		if strings.HasPrefix(shellEnv, "CELLERY") {
+			cmd.Args = append(cmd.Args, "-e", shellEnv)
 		}
 	}
 	// set any explicitly passed env vars in cellery run command to the docker exec.
 	// This will override any env vars with identical names (prefixed with 'CELLERY') set previously.
-	if len(envVars) != 0 {
-		for _, envVar := range envVars {
-			cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
-		}
+	for _, envVar := range envVars {
+		cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
 	}
 	cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", exeUid,
 		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath)
-	cmd.Args = append(cmd.Args, "run", tempRunFileName, "run")
+	cmd.Args = append(cmd.Args, "run", fileName, "run")
 	cmd.Args = append(cmd.Args, args...)
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
-	// Export environment variables defined by user
-	// Todo: check if setting env vars to cmd.Env is redundant
-	for _, envVar := range envVars {
-		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
-	}
 	var stderr bytes.Buffer
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)

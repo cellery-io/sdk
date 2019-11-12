@@ -294,7 +294,7 @@ func createTempBalFile(cli cli.Cli, fileName string) (string, error) {
 }
 
 func executeTempBalFile(ballerinaExecutor ballerina.BalExecutor, tempBuildFileName string, iName []byte) error {
-	if err := ballerinaExecutor.Build(tempBuildFileName, iName); err != nil {
+	if err := ballerinaExecutor.Build(tempBuildFileName, []string{string(iName)}); err != nil {
 		return err
 	}
 	if err := os.Remove(tempBuildFileName); err != nil {

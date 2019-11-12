@@ -31,12 +31,11 @@ import (
 )
 
 const ballerina = "ballerina"
-const celleryEnvVar = "cellery_env_"
 const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
 
 type BalExecutor interface {
-	Build(fileName string, iName []byte) error
-	Run(imageDir string, instanceName string, envVars []*EnvironmentVariable, tempRunFileName string, args []string) error
+	Build(fileName string, args []string) error
+	Run(imageDir string, fileName string, args []string, envVars []*EnvironmentVariable) error
 	Version() (string, error)
 	ExecutablePath() (string, error)
 }
@@ -51,12 +50,14 @@ func NewLocalBalExecutor() *LocalBalExecutor {
 }
 
 // Build executes ballerina build on an executable bal file.
-func (balExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error {
+func (balExecutor *LocalBalExecutor) Build(fileName string, args []string) error {
 	exePath, err := balExecutor.ExecutablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
-	cmd := exec.Command(exePath, "run", fileName, "build", string(iName), "{}", "false", "false")
+	cmd := exec.Command(exePath, "run", fileName, "build")
+	cmd.Args = append(cmd.Args, args...)
+	cmd.Args = append(cmd.Args, "{}", "false", "false")
 	var stderr bytes.Buffer
 	stdoutReader, _ := cmd.StdoutPipe()
 	stdoutScanner := bufio.NewScanner(stdoutReader)
@@ -87,17 +88,16 @@ func (balExecutor *LocalBalExecutor) Build(fileName string, iName []byte) error 
 }
 
 // Run executes ballerina run on an executable bal file.
-func (balExecutor *LocalBalExecutor) Run(imageDir string, instanceName string,
-	envVars []*EnvironmentVariable, tempRunFileName string, args []string) error {
+func (balExecutor *LocalBalExecutor) Run(imageDir string, fileName string, args []string,
+	envVars []*EnvironmentVariable) error {
 	cmd := &exec.Cmd{}
 	exePath, err := balExecutor.ExecutablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
-	cmd = exec.Command(exePath, "run", tempRunFileName, "run")
+	cmd = exec.Command(exePath, "run", fileName, "run")
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
 	// Export environment variables defined by user
 	for _, envVar := range envVars {
 		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
