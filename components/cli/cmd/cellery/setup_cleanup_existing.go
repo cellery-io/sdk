@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 )
 
 func newSetupCleanupExistingCommand() *cobra.Command {
@@ -35,7 +35,7 @@ func newSetupCleanupExistingCommand() *cobra.Command {
 		Short: "Cleanup existing cluster setup",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunCleanupExisting(knative, istio, ingress, hpa, confirmed)
+			setup.RunCleanupExisting(knative, istio, ingress, hpa, confirmed)
 		},
 		Example: "  cellery setup cleanup existing",
 	}

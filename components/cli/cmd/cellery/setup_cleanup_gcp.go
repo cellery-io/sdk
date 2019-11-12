@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
@@ -41,7 +41,7 @@ func newSetupCleanupGcpCommand() *cobra.Command {
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			valid, err := commands.ValidateGcpCluster(args[0])
+			valid, err := setup.ValidateGcpCluster(args[0])
 			if !valid || err != nil {
 				return fmt.Errorf("Gcp cluster " + args[0] + " doesn't exist")
 			}
@@ -51,7 +51,7 @@ func newSetupCleanupGcpCommand() *cobra.Command {
 			if len(strings.Split(args[0], constants.GCP_CLUSTER_NAME)) > 1 {
 				uniqueNumber = strings.Split(args[0], constants.GCP_CLUSTER_NAME)[1]
 			}
-			commands.RunCleanupGcp(constants.GCP_CLUSTER_NAME + uniqueNumber)
+			setup.RunCleanupGcp(constants.GCP_CLUSTER_NAME + uniqueNumber)
 		},
 		Example: "  cellery setup cleanup gcp <cluster_name>",
 	}

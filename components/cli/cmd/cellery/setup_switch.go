@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 )
 
 func newSetupSwitchCommand() *cobra.Command {
@@ -33,10 +33,10 @@ func newSetupSwitchCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return commands.ValidateCluster(args[0])
+			return setup.ValidateCluster(args[0])
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSwitchCommand(args[0])
+			setup.RunSwitchCommand(args[0])
 		},
 		Example: "  cellery setup switch cellery-admin@cellery",
 	}

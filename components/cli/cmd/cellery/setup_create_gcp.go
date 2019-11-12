@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 )
 
 func newSetupCreateGcpCommand(isComplete *bool) *cobra.Command {
@@ -30,7 +30,7 @@ func newSetupCreateGcpCommand(isComplete *bool) *cobra.Command {
 		Short: "Create a Cellery runtime in gcp",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateGcp(*isComplete)
+			setup.RunSetupCreateGcp(*isComplete)
 		},
 		Example: "  cellery setup create gcp",
 	}

@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/hub"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
@@ -33,9 +33,9 @@ func newLogoutCommand() *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 1 {
-				commands.RunLogout(args[0])
+				hub.RunLogout(args[0])
 			} else {
-				commands.RunLogout(constants.CENTRAL_REGISTRY_HOST)
+				hub.RunLogout(constants.CENTRAL_REGISTRY_HOST)
 			}
 		},
 		Example: "  cellery logout\n" +

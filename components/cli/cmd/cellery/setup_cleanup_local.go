@@ -21,10 +21,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
-	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
-
 	"github.com/spf13/cobra"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
+	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
 )
 
 func newSetupCleanupLocalCommand() *cobra.Command {
@@ -40,7 +40,7 @@ func newSetupCleanupLocalCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunCleanupLocal(true, deleteImage)
+			setup.RunCleanupLocal(true, deleteImage)
 		},
 		Example: "  cellery setup cleanup local",
 	}

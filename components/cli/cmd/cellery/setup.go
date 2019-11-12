@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 )
 
 func newSetupCommand() *cobra.Command {
@@ -30,7 +30,7 @@ func newSetupCommand() *cobra.Command {
 		Short: "Setup cellery runtime",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetup()
+			setup.RunSetup()
 		},
 		Example: "  cellery setup",
 	}

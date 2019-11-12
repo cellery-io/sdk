@@ -24,9 +24,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 )
 
@@ -65,7 +64,7 @@ func newSetupCreateOnExistingClusterCommand(isComplete *bool) *cobra.Command {
 				dbPassword)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode,
+			setup.RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode,
 				nfs, db, nodePortIpAddress)
 		},
 		Example: "  cellery setup create existing",

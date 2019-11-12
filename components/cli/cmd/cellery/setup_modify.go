@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
@@ -77,7 +77,7 @@ func newSetupModifyCommand() *cobra.Command {
 			hpaChange = convertToSelection(hpa)
 			// Check the user inputs against the current runtime
 			validateRuntime()
-			commands.RunSetupModify(apimgtChange, observabilityChange, scaleToZeroChange, hpaChange)
+			setup.RunSetupModify(apimgtChange, observabilityChange, scaleToZeroChange, hpaChange)
 		},
 		Example: "  cellery setup modify --apim=enable --observability=disable",
 	}

@@ -16,25 +16,36 @@
  * under the License.
  */
 
-package commands
+package setup
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunSwitchCommand(context string) error {
-	if err := kubernetes.UseContext(context); err != nil {
-		util.ExitWithErrorMessage("Failed to switch cluster", err)
+func RunSetupListClusters() error {
+	for _, v := range getContexts() {
+		fmt.Println(v)
 	}
 	return nil
 }
 
-func ValidateCluster(cluster string) error {
-	if !util.ContainsInStringArray(getContexts(), cluster) {
-		return fmt.Errorf("cluster %s doesn't exist", cluster)
+func getContexts() []string {
+	var contexts []string
+	jsonOutput := &kubernetes.Config{}
+	output, err := kubernetes.GetContexts()
+	if err != nil {
+		util.ExitWithErrorMessage("Error getting context list", err)
 	}
-	return nil
+	err = json.Unmarshal(output, jsonOutput)
+	if err != nil {
+		util.ExitWithErrorMessage("Error trying to unmarshal contexts output", err)
+	}
+	for i := 0; i < len(jsonOutput.Contexts); i++ {
+		contexts = append(contexts, jsonOutput.Contexts[i].Name)
+	}
+	return contexts
 }

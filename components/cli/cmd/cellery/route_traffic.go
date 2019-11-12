@@ -24,12 +24,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/instance"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newRouteTrafficCommand() *cobra.Command {
@@ -76,7 +75,7 @@ func newRouteTrafficCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			err := commands.RunRouteTrafficCommand(srcInstances, dependencyInstance, targetInstance, percentage, enableSessionAwareness, assumeYes)
+			err := instance.RunRouteTrafficCommand(srcInstances, dependencyInstance, targetInstance, percentage, enableSessionAwareness, assumeYes)
 			if err != nil {
 				util.ExitWithErrorMessage(fmt.Sprintf("Unable to route traffic to the target instance: %s, percentage: %d", targetInstance, percentage), err)
 			}

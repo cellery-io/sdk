@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 )
 
 func newSetupListClustersCommand() *cobra.Command {
@@ -30,7 +30,7 @@ func newSetupListClustersCommand() *cobra.Command {
 		Short: "List k8s clusters",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupListClusters()
+			setup.RunSetupListClusters()
 		},
 		Example: "  cellery setup list cluster",
 	}

@@ -28,11 +28,11 @@ import (
 )
 
 type MockBalExecutor struct {
-	currentDir     string
-	version        string
-	executablePath string
-	yamlName string
-	yamlContent []byte
+	currentDir          string
+	version             string
+	executablePath      string
+	yamlName            string
+	yamlContent         []byte
 	metadataJsonContent []byte
 }
 
@@ -75,7 +75,6 @@ func SetMetadataJsonContent(content []byte) func(*MockBalExecutor) {
 		balExecutor.metadataJsonContent = content
 	}
 }
-
 
 // Build mocks execution of ballerina build on an executable bal file.
 func (balExecutor *MockBalExecutor) Build(fileName string, iName []byte) error {

@@ -23,7 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/hub"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 )
 
@@ -46,9 +46,9 @@ func newLoginCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 1 {
-				commands.RunLogin(args[0], username, password)
+				hub.RunLogin(args[0], username, password)
 			} else {
-				commands.RunLogin(constants.CENTRAL_REGISTRY_HOST, username, password)
+				hub.RunLogin(constants.CENTRAL_REGISTRY_HOST, username, password)
 			}
 		},
 		Example: "  cellery login\n" +

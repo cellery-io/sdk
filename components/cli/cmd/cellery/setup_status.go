@@ -22,7 +22,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 )
 
 func newSetupStatusCommand() *cobra.Command {
@@ -31,7 +31,7 @@ func newSetupStatusCommand() *cobra.Command {
 		Short: "Display status of cluster with a status list of system components",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupStatusCommand()
+			setup.RunSetupStatusCommand()
 		},
 		Example: "  cellery setup status",
 	}

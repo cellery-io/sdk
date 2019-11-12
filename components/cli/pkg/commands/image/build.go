@@ -87,7 +87,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 		return err
 	}
 	// Create the artifacts zip file.
-	artifactsZip :=  parsedCellImage.ImageName + cellImageExt
+	artifactsZip := parsedCellImage.ImageName + cellImageExt
 	if err = cli.ExecuteTask("Creating cell image zip file", "Failed to image zip",
 		"", func() error {
 			err := createArtifactsZip(cli, artifactsZip, projectDir, fileName)
@@ -332,7 +332,7 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 		}
 	}
 	isTestDirExists, _ := util.FileExists(zipTests)
-	folders := []string{filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifacts) , filepath.Join(cli.FileSystem().WorkingDirRelativePath(), src)}
+	folders := []string{filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifacts), filepath.Join(cli.FileSystem().WorkingDirRelativePath(), src)}
 
 	if isTestDirExists {
 		folders = append(folders, zipTests)

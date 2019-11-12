@@ -21,9 +21,8 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
 	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-
-	"github.com/cellery-io/sdk/components/cli/pkg/commands"
 )
 
 func newSetupCreateLocalCommand(isComplete *bool) *cobra.Command {
@@ -39,7 +38,7 @@ func newSetupCreateLocalCommand(isComplete *bool) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			commands.RunSetupCreateLocal(isCompleteSetup, forceDownload, true)
+			setup.RunSetupCreateLocal(isCompleteSetup, forceDownload, true)
 		},
 		Example: "  cellery setup create local",
 	}
