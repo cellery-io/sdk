@@ -122,7 +122,6 @@ func getPatchededCellInstanceForSingleComponent(cli cli.Cli, instance string, co
 		return nil, err
 	}
 	cellInstance, err := cli.KubeCli().GetCellInstanceAsMapInterface(instance)
-	fmt.Println(cellInstance)
 	if err != nil {
 		return nil, err
 	}
