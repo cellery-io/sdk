@@ -22,10 +22,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands/project"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/spf13/cobra"
 )
 
 func newInitCommand(cli cli.Cli) *cobra.Command {
@@ -56,10 +57,13 @@ func newInitCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			project.RunInit(projectName, testStr)
+			if err := project.RunInit(cli, projectName, testStr); err != nil {
+				util.ExitWithErrorMessage("Cellery init command failed, %v", err)
+			}
+
 		},
 		Example: "  cellery init [PROJECT_NAME]\n" +
-			"  cellery init test [PROJECT_PATH]/[PROJECT_PATH].bal",
+			"  cellery init test [PROJECT_PATH]/[PROJECT_NAME].bal",
 	}
 	return cmd
 }

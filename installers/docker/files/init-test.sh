@@ -25,9 +25,8 @@ USER_ID=${1}
 MODULE_DIR=${2}
 TEMP_DIR=tmp
 BAL_PROJECT="$MODULE_DIR"_proj
-B7a_EXECUTABLE=/usr/lib/ballerina/ballerina-1.0.3/bin/ballerina
 
 usermod -u $USER_ID $USER
-$B7a_EXECUTABLE new $BAL_PROJECT
+ballerina new $BAL_PROJECT
 mkdir -p $TEMP_DIR
 mv $BAL_PROJECT $TEMP_DIR/

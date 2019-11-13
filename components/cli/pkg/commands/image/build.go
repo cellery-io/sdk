@@ -21,7 +21,6 @@ package image
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"io/ioutil"
 	"os"
 	"path"
@@ -33,6 +32,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
@@ -320,7 +320,7 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 	if balParent == "." {
 		absBalParent, err := filepath.Abs(balParent)
 		if err != nil {
-			return fmt.Errorf("error while retrieving absolute path of current directory", err)
+			return fmt.Errorf("error while retrieving absolute path of current directory, %v", err)
 		}
 		balParent = absBalParent
 	}
@@ -340,7 +340,7 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 		}
 	}
 	isTestDirExists, _ := util.FileExists(filepath.Join(balParent, constants.ZipTests))
-	folders := []string{artifacts, src}
+	folders := []string{filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifacts), filepath.Join(cli.FileSystem().WorkingDirRelativePath(), src)}
 
 	if balParent != projectDir {
 		if err = util.CopyDir(filepath.Join(balParent, constants.ZipTests),
@@ -349,7 +349,7 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 		}
 	}
 	if isTestDirExists {
-		folders = append(folders, constants.ZipTests)
+		folders = append(folders, filepath.Join(cli.FileSystem().WorkingDirRelativePath(), constants.ZipTests))
 	}
 	// Todo: Check if WorkingDirRelativePath could be omitted.
 	// For actual scenario WorkingDirRelativePath == ""

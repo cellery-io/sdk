@@ -23,14 +23,13 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-
 	"github.com/spf13/cobra"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
 	image2 "github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 func newTestCommand(cli cli.Cli) *cobra.Command {
@@ -84,16 +83,21 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 					return fmt.Errorf("expects a Ballerina project. Use --project-location or -p to specify the project location")
 				} else {
 					isExists, err := util.FileExists(filepath.Join(projLocation, constants.BallerinaToml))
-					if err != nil || !isExists {
-						return fmt.Errorf("expects a Ballerina project location, recieved %s", projLocation)
+					if err != nil {
+						return fmt.Errorf("expects a Ballerina project location, recieved %s, %v", projLocation)
+					}
+					if !isExists {
+						return fmt.Errorf("path %s does not exist", filepath.Join(projLocation, constants.BallerinaToml))
 					}
 				}
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			image2.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
-				assumeYes, debug, verbose, incell, projLocation)
+			if err := image2.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
+				assumeYes, debug, verbose, incell, projLocation); err != nil {
+				util.ExitWithErrorMessage("Cellery test command failed", err)
+			}
 		},
 		Example: "  cellery test cellery-samples/hr:1.0.0 -n hr-inst\n" +
 			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst -y\n" +

@@ -550,19 +550,21 @@ public function getCellEndpoints(InstanceState[] iNameList, string alias = "", s
     return tempRef;
 }
 
-public function runDockerTest(string image, map<Env> envVars) returns (error?){
-    Test petBeDockerTest = {
-        name: "pet-be-test",
+public function runDockerTest(string imageName, map<Env> envVars) returns (error?){
+    ImageName iName = getCellImage();
+    string instanceName = <string>iName["instanceName"];
+    Test dockerTest = {
+        name: instanceName + "-test",
         src: {
-            image: "docker.io/wso2cellery/pet-be-tests"
+            image: imageName
         },
         envVars: envVars
     };
-    TestSuite petBeTestSuite = {
-        tests: [petBeDockerTest]
+    TestSuite testSuite = {
+        tests: [dockerTest]
     };
 
-    return runTestSuite(getCellImage(), petBeTestSuite);
+    return runTestSuite(getCellImage(), testSuite);
 }
 
 function parseCellDependency(string alias) returns ImageName {
