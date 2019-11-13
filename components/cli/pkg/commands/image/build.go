@@ -88,7 +88,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	}
 	// Create the artifacts zip file.
 	artifactsZip := parsedCellImage.ImageName + cellImageExt
-	if err = cli.ExecuteTask("Creating cell image zip file", "Failed to image zip",
+	if err = cli.ExecuteTask("Creating the cell image zip file", "Failed to create the image zip",
 		"", func() error {
 			err := createArtifactsZip(cli, artifactsZip, projectDir, fileName)
 			return err

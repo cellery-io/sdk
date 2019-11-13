@@ -53,11 +53,10 @@ func newLogsCommand(cli cli.Cli) *cobra.Command {
 			}
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := instance.RunLogs(cli, args[0], component, syslog); err != nil {
 				util.ExitWithErrorMessage("Cellery logs command failed", err)
 			}
-			return nil
 		},
 		Example: "  cellery logs employee\n" +
 			"  cellery logs employee -c salary",
