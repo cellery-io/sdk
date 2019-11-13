@@ -45,7 +45,7 @@ func RunInspect(cli cli.Cli, cellImage string) error {
 	// Checking if the image is present in the local repo
 	isImagePresent, _ := util.FileExists(cellImageFile)
 	if !isImagePresent {
-		return fmt.Errorf(fmt.Sprintf("failed to list files for image %s, %v", util.Bold(cellImage), errors.New("image not Found")))
+		return fmt.Errorf(fmt.Sprintf("failed to list files for image %s, %v", cellImage, errors.New("image not Found")))
 	}
 
 	// Create temp directory

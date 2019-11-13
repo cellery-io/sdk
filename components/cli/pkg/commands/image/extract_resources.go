@@ -43,7 +43,7 @@ func RunExtractResources(cli cli.Cli, cellImage string, outputPath string) error
 	// Checking if the image is present in the local repo
 	isImagePresent, _ := util.FileExists(imageLocation)
 	if !isImagePresent {
-		return fmt.Errorf(fmt.Sprintf("failed to extract resources, image %s not found", util.Bold(cellImage)))
+		return fmt.Errorf(fmt.Sprintf("failed to extract resources, image %s not found", cellImage))
 	}
 
 	// Create temp directory

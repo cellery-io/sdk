@@ -54,11 +54,11 @@ func TestRunBuild(t *testing.T) {
 		t.Errorf("failed to create mock repo dir")
 	}
 	mockFileSystem := test.NewMockFileSystem(test.SetCurrentDir(currentDir), test.SetRepository(mockRepo))
-	yamlContent, err := ioutil.ReadFile(filepath.Join("testdata", "project", "target", "cellery", "foo.yaml"))
+	yamlContent, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "foo.yaml"))
 	if err != nil {
 		t.Errorf("Failed to read foo.yaml: %v", err)
 	}
-	metadataJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "target", "cellery", "metadata.json"))
+	metadataJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "metadata.json"))
 	if err != nil {
 		t.Errorf("Failed to read metadata.json: %v", err)
 	}

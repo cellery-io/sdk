@@ -54,7 +54,7 @@ func TestRunInit(t *testing.T) {
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunInit(mockCli, tst.project)
+			err := RunInit(mockCli, tst.project, "")
 			if err != nil {
 				t.Errorf("error in RunInspect, %v", err)
 			}
