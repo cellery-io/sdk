@@ -83,7 +83,7 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 				if projLocation == "" {
 					return fmt.Errorf("expects a Ballerina project. Use --project-location or -p to specify the project location")
 				} else {
-					isExists, err := util.FileExists(filepath.Join(projLocation, constants.BALLERINA_TOML))
+					isExists, err := util.FileExists(filepath.Join(projLocation, constants.BallerinaToml))
 					if err != nil || !isExists {
 						return fmt.Errorf("expects a Ballerina project location, recieved %s", projLocation)
 					}

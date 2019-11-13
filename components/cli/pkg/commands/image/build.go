@@ -21,6 +21,7 @@ package image
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"io/ioutil"
 	"os"
 	"path"
@@ -90,7 +91,7 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	artifactsZip := parsedCellImage.ImageName + cellImageExt
 	if err = cli.ExecuteTask("Creating the cell image zip file", "Failed to create the image zip",
 		"", func() error {
-			err := createArtifactsZip(artifactsZip, projectDir, fileName)
+			err := createArtifactsZip(cli, artifactsZip, projectDir, fileName)
 			return err
 		}); err != nil {
 		return err
@@ -294,7 +295,7 @@ func createTempBalFile(cli cli.Cli, fileName string) (string, error) {
 }
 
 func executeTempBalFile(ballerinaExecutor ballerina.BalExecutor, tempBuildFileName string, iName []byte) error {
-	if err := ballerinaExecutor.Build(tempBuildFileName, iName); err != nil {
+	if err := ballerinaExecutor.Build(tempBuildFileName, []string{string(iName)}); err != nil {
 		return err
 	}
 	if err := os.Remove(tempBuildFileName); err != nil {
@@ -303,7 +304,7 @@ func executeTempBalFile(ballerinaExecutor ballerina.BalExecutor, tempBuildFileNa
 	return nil
 }
 
-func createArtifactsZip(artifactsZip, projectDir, fileName string) error {
+func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) error {
 	var err error
 	targetDir := filepath.Join(projectDir, "target")
 	if err = util.CopyDir(targetDir, filepath.Join(projectDir, artifacts)); err != nil {
@@ -338,17 +339,17 @@ func createArtifactsZip(artifactsZip, projectDir, fileName string) error {
 			return fmt.Errorf("error occured while copying the %s, %v", ballerinaLocalRepo, err)
 		}
 	}
-	isTestDirExists, _ := util.FileExists(filepath.Join(balParent, constants.ZIP_TESTS))
+	isTestDirExists, _ := util.FileExists(filepath.Join(balParent, constants.ZipTests))
 	folders := []string{artifacts, src}
 
 	if balParent != projectDir {
-		if err = util.CopyDir(filepath.Join(balParent, constants.ZIP_TESTS),
-			filepath.Join(projectDir, constants.ZIP_TESTS)); err != nil {
-			return fmt.Errorf("error occured while copying the %s, %v", constants.ZIP_TESTS, err)
+		if err = util.CopyDir(filepath.Join(balParent, constants.ZipTests),
+			filepath.Join(projectDir, constants.ZipTests)); err != nil {
+			return fmt.Errorf("error occured while copying the %s, %v", constants.ZipTests, err)
 		}
 	}
 	if isTestDirExists {
-		folders = append(folders, constants.ZIP_TESTS)
+		folders = append(folders, constants.ZipTests)
 	}
 	// Todo: Check if WorkingDirRelativePath could be omitted.
 	// For actual scenario WorkingDirRelativePath == ""

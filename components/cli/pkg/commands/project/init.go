@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package commands
+package project
 
 import (
 	"bufio"
@@ -221,7 +221,7 @@ func initTest(balFile string) error {
 		if err != nil {
 			return fmt.Errorf("error occurred while getting current directory", err)
 		}
-		err = util.CleanOrCreateDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME))
+		err = util.CleanAndCreateDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME))
 		if err != nil {
 			return err
 		}
@@ -230,7 +230,6 @@ func initTest(balFile string) error {
 		bashArgs = append(bashArgs, "run")
 		bashArgs = append(bashArgs, ConstructDockerArgs(balModuleDir, currentDir)...)
 		cmd := exec.Command("docker", bashArgs...)
-		fmt.Println(cmd)
 		cmd.Env = os.Environ()
 		cmd.Stdout = os.Stdout
 		cmd.Stdin = os.Stdin

@@ -231,15 +231,15 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	if !debug {
 		// Construct test artifact names
 		balProjectName := constants.TARGET_DIR_NAME
-		balTomlPath := filepath.Join(imageDir, constants.ZIP_BALLERINA_SOURCE, constants.BALLERINA_TOML)
-		testsPath := filepath.Join(imageDir, constants.ZIP_TESTS)
+		balTomlPath := filepath.Join(imageDir, constants.ZipBallerinaSource, constants.BallerinaToml)
+		testsPath := filepath.Join(imageDir, constants.ZipTests)
 		testsRoot := filepath.Join(currentDir, balProjectName)
 		var balModule string
 
 		if instanceName != "" {
-			balModule = filepath.Join(testsRoot, constants.ZIP_BALLERINA_SOURCE, instanceName)
+			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
 		} else {
-			balModule = filepath.Join(testsRoot, constants.ZIP_BALLERINA_SOURCE, constants.TEMP_TEST_MODULE)
+			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
 		}
 		isTestDirExists, _ := util.FileExists(testsPath)
 		var isBallerinaProject bool
@@ -351,7 +351,7 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 			}
 			cmd = &exec.Cmd{}
 			cmd.Env = os.Environ()
-			cmd.Env = append(cmd.Env, constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
+			cmd.Env = append(cmd.Env, constants.CelleryImageDirEnvVar+"="+imageDir)
 
 			err = RunTelepresenceTests(incell, cmd, exePath, imageDir, instanceName, debug)
 			if err != nil {
@@ -378,7 +378,7 @@ func RunTelepresenceTests(incell bool, cmd *exec.Cmd, exePath string, imageDir s
 		return fmt.Errorf("error occurred while creating telepresence deployment", err)
 	}
 
-	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TELEPRESENCE_EXEC_PATH, "/telepresence")
+	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
 	var telArgs = []string{telepresenceExecPath, "--deployment", *deploymentName}
 	if !debug {
 		balArgs := []string{exePath, "test", "--all"}
@@ -409,7 +409,7 @@ func RunDockerTelepresenceTests(incell bool, cmd *exec.Cmd, testsRoot string, im
 		return fmt.Errorf("error occurred while creating telepresence deployment", err)
 	}
 
-	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TELEPRESENCE_EXEC_PATH, "/telepresence")
+	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
 	var telArgs = []string{telepresenceExecPath, "--deployment", *deploymentName}
 	dockerCmdArgs := ConstructDockerArgs(testsRoot, imageDir)
 	telArgs = append(telArgs, "--docker-run")
@@ -438,16 +438,16 @@ func RunDockerTelepresenceTests(incell bool, cmd *exec.Cmd, testsRoot string, im
 
 func PromtConfirmation(assumeYes bool, balProj string) error {
 	if !assumeYes {
-		balConf := filepath.Join(balProj, constants.BALLERINA_CONF)
+		balConf := filepath.Join(balProj, constants.BallerinaConf)
 		var debugMsg string
 		isExists, err := util.FileExists(balConf)
 		if err != nil {
 			return fmt.Errorf("error occured while checking if %s exists,", balConf, err)
 		}
 		if isExists {
-			debugMsg = constants.BALLERINA_CONF + " already exists in project location: " + balProj + ". This will be overridden to debug tests. "
+			debugMsg = constants.BallerinaConf + " already exists in project location: " + balProj + ". This will be overridden to debug tests. "
 		} else {
-			debugMsg = constants.BALLERINA_CONF + " file will be created in project location: " + balProj + " to debug tests."
+			debugMsg = constants.BallerinaConf + " file will be created in project location: " + balProj + " to debug tests."
 		}
 		fmt.Printf("%s "+util.Bold(debugMsg+"Do you wish to continue with debugging the tests (Y/n)? "), util.YellowBold("?"))
 		reader := bufio.NewReader(os.Stdin)
@@ -474,7 +474,7 @@ func CreateBallerinaConf(iName string, verboseMode string, imageDir string, depe
 	content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
 		strings.Replace(dependencyLinks, "\"", "\\\"", -1)))
 
-	ballerinaConfPath := filepath.Join(balProj, constants.BALLERINA_CONF)
+	ballerinaConfPath := filepath.Join(balProj, constants.BallerinaConf)
 
 	isExistsBalConf, err := util.FileExists(ballerinaConfPath)
 	if err != nil {
@@ -535,7 +535,7 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 	var spinner *util.Spinner
 	var spinnerMsg string
 	if incell {
-		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-deployment.yaml")
+		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-deployment.yaml")
 		err := util.CopyFile(srcYamlFile, dstYamlFile)
 		if err != nil {
 			return nil, fmt.Errorf("error while copying telepresene k8s artifact to %s", imageDir, err)
@@ -544,7 +544,7 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 		deploymentName = instanceName + "--telepresence"
 		spinnerMsg = "Creating telepresence deployment"
 	} else {
-		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS, constants.TELEPRESENCE, "telepresence-cell.yaml")
+		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-cell.yaml")
 		err := util.CopyFile(srcYamlFile, dstYamlFile)
 		if err != nil {
 			return nil, fmt.Errorf("error while copying telepresene k8s artifact to %s", imageDir, err)
