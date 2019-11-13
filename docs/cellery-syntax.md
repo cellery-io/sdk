@@ -236,9 +236,9 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
 
     //Assign values to cell->component->ingress
     cellery:CellImage webCell = check cellery:constructCellImage(iName);
-    cellery:WebIngress webUI = <cellery:WebIngress>webCell.components.webComp.ingresses.webUI;
-    webUI.gatewayConfig.tls.key = tlsKey;
-    webUI.gatewayConfig.tls.cert = tlsCert;
+    cellery:WebIngress webUI = <cellery:WebIngress>webCell.components["webComp"]["ingresses"]["webUI"];
+    webUI["gatewayConfig"]["tls"]["key"] = tlsKey;
+    webUI["gatewayConfig"]["tls"]["cert"] = tlsCert;
     // Create the cell instance
     return <@untainted> cellery:createInstance(webCell, iName);
 }

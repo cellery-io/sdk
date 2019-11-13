@@ -38,7 +38,7 @@ An environment variable `HELLO_NAME` is expected by `helloComponent` to render t
         // This Components exposes the HTML hello world page
         cellery:Component helloComponent = {
             name: "hello",
-            source: {
+            src: {
                 image: "wso2cellery/samples-hello-world-webapp"
             },
             ingresses: {
@@ -61,22 +61,22 @@ An environment variable `HELLO_NAME` is expected by `helloComponent` to render t
                 helloComp: helloComponent
             }
         };
-        return cellery:createImage(helloCell, untaint iName);
+        return <@untainted> cellery:createImage(helloCell, untaint iName);
     }
     
-    public function run(cellery:ImageName iName, map<cellery:ImageName> instances) returns error? {
+    public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
         cellery:CellImage helloCell = check cellery:constructCellImage(untaint iName);
         string vhostName = config:getAsString("VHOST_NAME");
         if (vhostName !== "") {
-            cellery:WebIngress web = <cellery:WebIngress>helloCell.components.helloComp.ingresses.webUI;
-            web.gatewayConfig.vhost = vhostName;
+            cellery:WebIngress web = <cellery:WebIngress>helloCell.components["helloComp"]["ingresses"]["webUI"];
+            web["gatewayConfig"]["vhost"] = vhostName;
         }
     
         string helloName = config:getAsString("HELLO_NAME");
         if (helloName !== "") {
-            helloCell.components.helloComp.envVars.HELLO_NAME.value = helloName;
+            helloCell.components["helloComp"]["envVars"]["HELLO_NAME"].value = helloName;
         }
-        return cellery:createInstance(helloCell, iName, instances);
+        return <@untainted> cellery:createInstance(helloCell, iName, instances);
     }
     ```
 4. The `run` method will be invoked during the `cellery run` operation, and users can pass environment variables to 
