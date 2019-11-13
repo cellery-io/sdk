@@ -1,6 +1,6 @@
 # Scaling up/down cells
 Each component within the cells can be scaled up or down. Cellery supports auto scaling with [Horizontal pod autoscaler](#scale-with-hpa), 
-and [Zero-scaling](#zero-scaling).
+and [Zero-scaling](#zero-scaling). In addition, its possible to scale components of cells and composites manually.
 
 This README includes,
 * [Horizontal pod autoscaler](#scale-with-hpa)
@@ -11,6 +11,7 @@ This README includes,
 * [Zero-scaling](#zero-scaling)
     * [Enable zero-scaling](#enable-zero-scaling)
     * [Syntax](#syntax-for-zero-scaling)
+* [Manual scaling](#manual-scaling)
 
 A [component](https://github.com/wso2-cellery/spec/tree/master#component) can have either Autoscaling policy or zero scaling policy. Based on that, the underneath autoscaler will be determined. 
 Generally the autoscaling policy has minimum replica count greater than 0, and hence the [horizontal pod autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
@@ -192,6 +193,25 @@ Further, scaling with be performed based on concurrent requests for the componen
 For detailed syntax, refer [here](cellery-syntax.md).  
 
 Just [build and run the cell](writing-a-cell.md) with this scaling configuration for the component, to try out the zero scaling functionality. 
+
+## Manual scaling
+Cell and composite components can be scaled up/down manually. This is particularly useful if there is no autoscaling policy attached for a component.
+First, [export](#export-policy) the scale policies for the given cell. Now, modify the exported policy by changing `scalingPolicy.replicas` under the selected component:
+
+```yaml
+components:
+- name: catalog
+  scalingPolicy:
+    replicas: 4
+- name: orders
+  scalingPolicy:
+    replicas: 1
+gateway:
+  scalingPolicy:
+    replicas: 2
+```
+In the exported scale policy shown above, replicas for `catalog` component is set to 4 and for gateway its 2. 
+[Apply](#apply-policy) the scale policy again so that the changes are reflected.  
 
 #What's Next?
 - [Developing and runing a Cell](writing-a-cell.md) - step by step explanation on how you could define your own cells.
