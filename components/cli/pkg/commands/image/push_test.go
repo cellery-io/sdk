@@ -60,15 +60,6 @@ func TestRunPush(t *testing.T) {
 			expectedErrorMsg: "",
 			credManager:      test.NewMockCredManager(test.SetCredentials("myhub.cellery.io", "aclice", "alice123")),
 		},
-		{
-			name:             "push valid image without credentials",
-			image:            "myorg/hello:1.0.0",
-			username:         "",
-			password:         "",
-			expectedToPass:   true,
-			expectedErrorMsg: "",
-			credManager:      test.NewMockCredManager(test.SetCredentials("myhub.cellery.io", "aclice", "alice123")),
-		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {

@@ -76,15 +76,6 @@ func TestRunPull(t *testing.T) {
 			expectedToPass:   false,
 			expectedErrorMsg: "invalid cell image, zip: not a valid zip file",
 		},
-		{
-			name:             "pull image without username, password",
-			image:            "myorg/foo:1.0.0",
-			silent:           true,
-			username:         "",
-			password:         "",
-			expectedToPass:   false,
-			expectedErrorMsg: "invalid cell image, zip: not a valid zip file",
-		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {

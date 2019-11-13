@@ -36,47 +36,49 @@ import (
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunListIngresses(cli cli.Cli, name string) {
-	instancePattern, _ := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), name)
+func RunListIngresses(cli cli.Cli, name string) error {
+	instancePattern, err := regexp.MatchString(fmt.Sprintf("^%s$", constants.CelleryIdPattern), name)
+	if err != nil {
+		return fmt.Errorf("%s is neither instance nor an image", name)
+	}
 	if instancePattern {
-		displayInstanceApisTable(name)
+		return displayInstanceApisTable(cli, name)
 	} else {
-		displayImageApisTable(cli, name)
+		return displayImageApisTable(cli, name)
 	}
 }
 
-func displayInstanceApisTable(instanceName string) {
+func displayInstanceApisTable(cli cli.Cli, instanceName string) error {
 	var canBeComposite bool
-	cell, err := kubernetes.GetCell(instanceName)
+	cell, err := cli.KubeCli().GetCell(instanceName)
 	if err != nil {
 		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
 			canBeComposite = true
 		} else {
-			util.ExitWithErrorMessage("Failed to check available Cells", err)
+			return fmt.Errorf("failed to check available Cells, %v", err)
 		}
 	} else {
-		displayCellInstanceApisTable(cell, instanceName)
+		displayCellInstanceApisTable(cli, cell, instanceName)
 	}
 
 	if canBeComposite {
-		composite, err := kubernetes.GetComposite(instanceName)
+		composite, err := cli.KubeCli().GetComposite(instanceName)
 		if err != nil {
 			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
-				util.ExitWithErrorMessage("Failed to retrieve ingresses of "+instanceName,
-					errors.New(instanceName+" instance not available in the runtime"))
+				return fmt.Errorf(fmt.Sprintf("failed to retrieve ingresses of %s, %v ", instanceName, errors.New(instanceName+" instance not available in the runtime")))
 			} else {
-				util.ExitWithErrorMessage("Failed to check available Composites", err)
+				return fmt.Errorf("failed to check available Composites, %v", err)
 			}
 		} else {
-			displayCompositeInstanceApisTable(composite)
+			displayCompositeInstanceApisTable(cli, composite, instanceName)
 		}
 	}
+	return nil
 }
 
-func displayCompositeInstanceApisTable(composite kubernetes.Composite) {
+func displayCompositeInstanceApisTable(cli cli.Cli, composite kubernetes.Composite, compositeInstance string) {
 	var tableData [][]string
 	for _, component := range composite.CompositeSpec.ComponentTemplates {
 		for _, port := range component.Spec.Ports {
@@ -84,26 +86,30 @@ func displayCompositeInstanceApisTable(composite kubernetes.Composite) {
 			tableData = append(tableData, tableRecord)
 		}
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS PORT"})
-	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
-	table.SetAlignment(3)
-	table.SetRowSeparator("-")
-	table.SetCenterSeparator(" ")
-	table.SetColumnSeparator(" ")
-	table.SetHeaderColor(
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold})
-	table.SetColumnColor(
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{})
-	table.AppendBulk(tableData)
-	table.Render()
+	if len(tableData) > 0 {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS PORT"})
+		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+		table.SetAlignment(3)
+		table.SetRowSeparator("-")
+		table.SetCenterSeparator(" ")
+		table.SetColumnSeparator(" ")
+		table.SetHeaderColor(
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold})
+		table.SetColumnColor(
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{})
+		table.AppendBulk(tableData)
+		table.Render()
+	} else {
+		fmt.Fprintln(cli.Out(), fmt.Sprintf("No ingresses found for composite instance %s", compositeInstance))
+	}
 }
 
-func displayCellInstanceApisTable(cell kubernetes.Cell, cellInstanceName string) {
+func displayCellInstanceApisTable(cli cli.Cli, cell kubernetes.Cell, cellInstanceName string) {
 	apiArray := cell.CellSpec.GateWayTemplate.GatewaySpec.Ingress.HttpApis
 	var ingressType = "web"
 	globalContext := ""
@@ -162,56 +168,65 @@ func displayCellInstanceApisTable(cell kubernetes.Cell, cellInstanceName string)
 			tableData = append(tableData, tableRecord)
 		}
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	if ingressType == "http" {
-		table.SetHeader([]string{"CONTEXT", "INGRESS TYPE", "VERSION", "METHOD", "RESOURCE", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
+	if len(tableData) > 0 {
+		table := tablewriter.NewWriter(os.Stdout)
+		if ingressType == "http" {
+			table.SetHeader([]string{"CONTEXT", "INGRESS TYPE", "VERSION", "METHOD", "RESOURCE", "LOCAL CELL GATEWAY", "GLOBAL API URL"})
+		} else {
+			table.SetHeader([]string{"CONTEXT", "INGRESS TYPE", "VERSION", "METHOD", "RESOURCE", "LOCAL CELL GATEWAY", "VHOST"})
+		}
+		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+		table.SetAlignment(3)
+		table.SetRowSeparator("-")
+		table.SetCenterSeparator(" ")
+		table.SetColumnSeparator(" ")
+		table.SetHeaderColor(
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold})
+		table.SetColumnColor(
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{})
+		table.AppendBulk(tableData)
+		table.Render()
 	} else {
-		table.SetHeader([]string{"CONTEXT", "INGRESS TYPE", "VERSION", "METHOD", "RESOURCE", "LOCAL CELL GATEWAY", "VHOST"})
+		fmt.Fprintln(cli.Out(), fmt.Sprintf("No ingresses found for cell instance, %s", cellInstanceName))
 	}
-	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
-	table.SetAlignment(3)
-	table.SetRowSeparator("-")
-	table.SetCenterSeparator(" ")
-	table.SetColumnSeparator(" ")
-	table.SetHeaderColor(
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold})
-	table.SetColumnColor(
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{})
-	table.AppendBulk(tableData)
-	table.Render()
 }
 
-func displayImageApisTable(cli cli.Cli, imageName string) {
+func displayImageApisTable(cli cli.Cli, imageName string) error {
 	cellYamlContent := image.ReadCellImageYaml(cli.FileSystem().Repository(), imageName)
 	cellImageContent := &image.Cell{}
 	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
 	if err != nil {
-		util.ExitWithErrorMessage("Error while reading cell image content", err)
+		return fmt.Errorf("error while reading cell image content, %v", err)
 	}
 
 	if cellImageContent.Kind == "Cell" {
-		displayCellImageApisTable(cli, imageName)
+		if err := displayCellImageApisTable(cli, imageName); err != nil {
+			return fmt.Errorf("error displaying cell image apis table, %v", err)
+		}
 	} else if cellImageContent.Kind == "Composite" {
-		displayCompositeImageApisTable(cli, imageName)
+		if err := displayCompositeImageApisTable(cli, imageName); err != nil {
+			return fmt.Errorf("error displaying composite image apis table, %v", err)
+		}
 	}
+	return nil
 }
 
-func displayCompositeImageApisTable(cli cli.Cli, compositeImageContent string) {
+func displayCompositeImageApisTable(cli cli.Cli, compositeImageContent string) error {
 	cell, err := getIngressValues(cli, compositeImageContent)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while displaying composite image ingress", err)
+		return fmt.Errorf("error occurred while displaying composite image ingress, %v", err)
 	}
 	var tableData [][]string
 	for _, componentDetail := range cell.Component {
@@ -238,32 +253,36 @@ func displayCompositeImageApisTable(cli cli.Cli, compositeImageContent string) {
 			tableData = append(tableData, ingressData)
 		}
 	}
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS PORT", "INGRESS_KEY"})
-	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
-	table.SetAlignment(3)
-	table.SetRowSeparator("-")
-	table.SetCenterSeparator(" ")
-	table.SetColumnSeparator(" ")
-	table.SetHeaderColor(
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold})
-	table.SetColumnColor(
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{})
-	table.AppendBulk(tableData)
-	table.Render()
+	if len(tableData) > 0 {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS PORT", "INGRESS_KEY"})
+		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+		table.SetAlignment(3)
+		table.SetRowSeparator("-")
+		table.SetCenterSeparator(" ")
+		table.SetColumnSeparator(" ")
+		table.SetHeaderColor(
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold})
+		table.SetColumnColor(
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{})
+		table.AppendBulk(tableData)
+		table.Render()
+	} else {
+		fmt.Fprintln(cli.Out(), fmt.Sprintf("No ingresses found for composite image, %s", compositeImageContent))
+	}
+	return nil
 }
 
-func displayCellImageApisTable(cli cli.Cli, cellImageContent string) {
+func displayCellImageApisTable(cli cli.Cli, cellImageContent string) error {
 	cell, err := getIngressValues(cli, cellImageContent)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while displaying cell image ingress", err)
+		return fmt.Errorf("error occurred while displaying cell image ingress, %v", err)
 	}
 	var tableData [][]string
 	for _, componentDetail := range cell.Component {
@@ -313,38 +332,42 @@ func displayCellImageApisTable(cli cli.Cli, cellImageContent string) {
 			}
 		}
 	}
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS CONTEXT", "INGRESS_VERSION", "INGRESS PORT", "RESOURCE", "METHOD", "GLOBALLY EXPOSED", "VHOST", "INGRESS_KEY"})
-	table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
-	table.SetAlignment(3)
-	table.SetRowSeparator("-")
-	table.SetCenterSeparator(" ")
-	table.SetColumnSeparator(" ")
-	table.SetHeaderColor(
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold},
-		tablewriter.Colors{tablewriter.Bold})
-	table.SetColumnColor(
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{},
-		tablewriter.Colors{})
-	table.AppendBulk(tableData)
-	table.Render()
+	if len(tableData) > 0 {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS CONTEXT", "INGRESS_VERSION", "INGRESS PORT", "RESOURCE", "METHOD", "GLOBALLY EXPOSED", "VHOST", "INGRESS_KEY"})
+		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
+		table.SetAlignment(3)
+		table.SetRowSeparator("-")
+		table.SetCenterSeparator(" ")
+		table.SetColumnSeparator(" ")
+		table.SetHeaderColor(
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold})
+		table.SetColumnColor(
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{},
+			tablewriter.Colors{})
+		table.AppendBulk(tableData)
+		table.Render()
+	} else {
+		fmt.Fprintln(cli.Out(), fmt.Sprintf("No ingresses found for cell image, %s", cellImageContent))
+	}
+	return nil
 }
 
 func getIngressValues(cli cli.Cli, cellImageContent string) (kubernetes.Cell, error) {

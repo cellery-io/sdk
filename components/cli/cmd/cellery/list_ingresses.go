@@ -27,6 +27,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // newApisCommand creates a cobra command which can be invoked to get the APIs exposed by a cell
@@ -50,7 +51,9 @@ func newListIngressesCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			image.RunListIngresses(cli, args[0])
+			if err := image.RunListIngresses(cli, args[0]); err != nil {
+				util.ExitWithErrorMessage("Cellery list ingresses command failed", err)
+			}
 		},
 		Example: "  cellery list ingresses employee\n" +
 			"  cellery list ingresses cellery-samples/employee:1.0.0\n",
