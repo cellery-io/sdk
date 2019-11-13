@@ -1,6 +1,6 @@
 GCP setup
 ---
-## Prerequisite
+## Prerequisites
 ### Mandatory
 - [Kubectl version 1.13/1.14/1.15](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Cellery](../../README.md#download-cellery)
