@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
@@ -30,6 +31,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
@@ -271,4 +274,108 @@ func (balExecutor *DockerBalExecutor) Version() (string, error) {
 // ExecutablePath returns ballerina executable path.
 func (balExecutor *DockerBalExecutor) ExecutablePath() (string, error) {
 	return "", nil
+}
+
+func (balExecutor *DockerBalExecutor) Init(projectDir string) error {
+	cliUser, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("error while retrieving the current user, %v", err)
+	}
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error in determining working directory, %v", err)
+	}
+	err = util.CleanAndCreateDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME))
+	if err != nil {
+		return err
+	}
+	dockerCmdArgs := []string{"-u", cliUser.Uid,
+		"-l", "ballerina-runtime=" + version.BuildVersion(),
+		"--mount", "type=bind,source=" + filepath.Join(currentDir, constants.TARGET_DIR_NAME) + ",target=/home/cellery/tmp",
+		"--mount", "type=bind,source=" + projectDir + ",target=/home/cellery/" + projectDir,
+		"-w", "/home/cellery/",
+		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
+	}
+	dockerCommand := []string{"./" + constants.BalInitTestExecFIle, cliUser.Uid, filepath.Base(projectDir)}
+	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
+	var bashArgs []string
+	bashArgs = append(bashArgs, "run")
+	bashArgs = append(bashArgs, dockerCmdArgs...)
+	cmd := exec.Command("docker", bashArgs...)
+	cmd.Env = os.Environ()
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error occurred while initializing tests using ballerina docker image, %v", err)
+	}
+	balProjectName := filepath.Base(projectDir) + "_proj"
+	err = util.CopyDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME, balProjectName), filepath.Join(currentDir, balProjectName))
+	if err != nil {
+		return err
+	}
+	err = util.RemoveDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (balExecutor *DockerBalExecutor) Test(fileName string, args []string, envVars []*EnvironmentVariable) error {
+	//Replace imagedir
+	read, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+	newContents := strings.Replace(string(read), util.UserHomeDir(), "/home/cellery", 1)
+	err = ioutil.WriteFile(fileName, []byte(newContents), 0)
+	if err != nil {
+		return err
+	}
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	cmd := &exec.Cmd{}
+	// This will override any env vars with identical names (prefixed with 'CELLERY') set previously.
+	for _, envVar := range envVars {
+		if envVar.Key == celleryImageDirEnvVar {
+			envVar.Value = strings.Replace(envVar.Value, util.UserHomeDir(), "/home/cellery", 1)
+		}
+		cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+	}
+	cliUser, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("error while retrieving the current user, %v", err)
+	}
+	dockerCmdArgs := []string{"-u", cliUser.Uid,
+		"-l", "ballerina-runtime=" + version.BuildVersion(),
+		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".ballerina,target=/home/cellery/.ballerina",
+		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".cellery,target=/home/cellery/.cellery",
+		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".kube,target=/home/cellery/.kube",
+		"--mount", "type=bind,source=" + currentDir + ",target=/home/cellery/tmp",
+		"-w", "/home/cellery/",
+		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
+	}
+	dockerCommand := []string{"./" + constants.BalTestExecFIle, cliUser.Uid}
+	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
+	args = append(args, "--docker-run")
+	args = append(args, dockerCmdArgs...)
+	bashArgs := []string{"/bin/bash", "-c", strings.Join(args, " ")}
+	cmd.Env = os.Environ()
+	cmd.Path = "/bin/bash"
+	cmd.Args = bashArgs
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("error occurred while running tests, %v", err)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return fmt.Errorf("error occurred while waiting for tests to complete, %v", err)
+	}
+	return nil
 }

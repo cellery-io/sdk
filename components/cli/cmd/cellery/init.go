@@ -20,6 +20,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -48,7 +49,14 @@ func newInitCommand(cli cli.Cli) *cobra.Command {
 				}
 				projectName = args[1]
 				if !(strings.HasSuffix(projectName, ".bal")) {
-					return fmt.Errorf("expects a bal file, recieved %v", projectName)
+					return fmt.Errorf("expects a valid bal file, recieved %v", projectName)
+				}
+				isExist, err := util.FileExists(filepath.Join(cli.FileSystem().CurrentDir(), projectName))
+				if err != nil {
+					return err
+				}
+				if !isExist {
+					return fmt.Errorf("expects a valid path, recieved %v", projectName)
 				}
 			} else if len(args) > 0 {
 				testStr = ""

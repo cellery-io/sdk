@@ -20,7 +20,6 @@ package image
 
 import (
 	"bufio"
-
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -33,6 +32,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
+
 	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
@@ -41,7 +42,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
-// RunRun starts Cell instance (along with dependency instances if specified by the user)\
+// RunTest starts Cell instance (along with dependency instances if specified by the user)\
 func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, incell bool, projLocation string) error {
 	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
@@ -174,7 +175,7 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 	}
 
 	spinner.Stop(true)
-	err = startTestCellInstance(imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
+	err = startTestCellInstance(cli, imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
 		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes, projLocation)
 	if err != nil {
 		return fmt.Errorf("failed to test Cell instance "+instanceName+", %v", err)
@@ -186,7 +187,7 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 	return nil
 }
 
-func startTestCellInstance(imageDir string, instanceName string, runningNode *dependencyTreeNode,
+func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, runningNode *dependencyTreeNode,
 	envVars []*environmentVariable, startDependencies bool, shareDependencies bool, dependencyLinks map[string]*dependencyInfo,
 	verbose bool, debug bool, incell bool, assumeYes bool, projLocation string) error {
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
@@ -221,221 +222,160 @@ func startTestCellInstance(imageDir string, instanceName string, runningNode *de
 	}
 
 	// Get Ballerina Installation if exists
-	moduleMgr := &util.BLangManager{}
-	exePath, err := moduleMgr.GetExecutablePath()
+	exePath, err := cli.BalExecutor().ExecutablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
-	cmd := &exec.Cmd{}
 	verboseMode := strconv.FormatBool(verbose)
 
 	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
-	if !debug {
-		// Construct test artifact names
-		balProjectName := constants.TARGET_DIR_NAME
-		balTomlPath := filepath.Join(imageDir, constants.ZipBallerinaSource, constants.BallerinaToml)
-		testsPath := filepath.Join(imageDir, constants.ZipTests)
-		testsRoot := filepath.Join(currentDir, balProjectName)
-		var balModule string
+	if debug && exePath == "" {
+		return fmt.Errorf("Ballerina should be installed to debug tests.")
+	}
+	balProjectName := constants.TARGET_DIR_NAME
+	// Construct test artifact names
+	if debug {
+		balProjectName = filepath.Base(projLocation)
+	}
 
-		if instanceName != "" {
-			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
-		} else {
-			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
+	balTomlPath := filepath.Join(imageDir, constants.ZipBallerinaSource, constants.BallerinaToml)
+	testsPath := filepath.Join(imageDir, constants.ZipTests)
+	testsRoot := filepath.Join(currentDir, balProjectName)
+	var balModule string
+
+	if instanceName != "" {
+		balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
+	} else {
+		balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
+	}
+	isTestDirExists, _ := util.FileExists(testsPath)
+	var isBallerinaProject bool
+
+	read, err := ioutil.ReadFile(balFilePath)
+	containsTests := strings.Contains(string(read), "@test")
+	if err != nil {
+		return err
+	}
+	if !isTestDirExists && !containsTests {
+		return fmt.Errorf("no tests found in the cell image %v", imageTag)
+	}
+
+	err = util.RemoveDir(testsRoot)
+	if err != nil {
+		return fmt.Errorf("error occurred while deleting filepath, %s", err)
+	}
+
+	// Create Ballerina project
+	isBallerinaProject, err = util.FileExists(balTomlPath)
+	if exePath != "" {
+		cmd := exec.Command(exePath, "new", balProjectName)
+		if verbose {
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
 		}
-		isTestDirExists, _ := util.FileExists(testsPath)
-		var isBallerinaProject bool
-
-		//TODO: check if bal file contains @test
-		if !isTestDirExists {
-			return fmt.Errorf("no tests found in the cell image %v", imageTag)
-		}
-
-		err = util.RemoveDir(testsRoot)
+		err = cmd.Run()
 		if err != nil {
-			return fmt.Errorf("error occurred while deleting filepath, %s", err)
-		}
-
-		// Create Ballerina project
-		isBallerinaProject, err = util.FileExists(balTomlPath)
-		if exePath != "" {
-			cmd := exec.Command(exePath, "new", balProjectName)
-			if verbose {
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-			}
-			err = cmd.Run()
-			if err != nil {
-				return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
-			}
-		} else {
-			err = util.CleanOrCreateDir(testsRoot)
-			if err != nil {
-				return fmt.Errorf("error occurred while creating %s, %v", testsRoot, err)
-			}
-		}
-
-		// Copy artifacts for running tests
-		if isBallerinaProject {
-			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
-			if fileCopyError != nil {
-				return fmt.Errorf("error occurred while copying %s, %v", constants.BallerinaToml, err)
-			}
-		}
-		fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZipTests))
-		if fileCopyError != nil {
-			return fmt.Errorf("error occurred while copying tests folder, %s", err)
-		}
-
-		err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
-		if err != nil {
-			return fmt.Errorf("error occurred while creating %s, %v", filepath.Join(testsRoot, "logs"), err)
-		}
-
-		// Change working dir to Bal project
-		err = os.Chdir(testsRoot)
-		if err != nil {
-			return fmt.Errorf("error occurred while changing working directory, %s", err)
-		}
-
-		isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
-		if !isExistsSourceBal {
-			fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
-			if fileCopyError != nil {
-				return fmt.Errorf("error occurred while copying source bal file, %s", err)
-			}
-		}
-
-		if exePath == "" {
-			mntImageDir := strings.Replace(imageDir, util.UserHomeDir(), "/home/cellery", 1)
-			err = CreateBallerinaConf(string(iName), verboseMode, mntImageDir, string(dependencyLinksJson), envVars, testsRoot)
-			if err != nil {
-				return fmt.Errorf("error occurred while creating the ballerina.conf, %s", err)
-			}
-			err = RunDockerTelepresenceTests(incell, cmd, testsRoot, imageDir, instanceName)
-			if err != nil {
-				StopTelepresence(telepresenceYamlPath)
-				return fmt.Errorf("error occured while running tests in ballerina docker image, %s", err)
-			}
-		} else {
-			err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, testsRoot)
-			if err != nil {
-				return fmt.Errorf("error occurred while creating the ballerina.conf, %s", err)
-			}
-			cmd = &exec.Cmd{}
-			cmd.Env = os.Environ()
-			cmd.Env = append(cmd.Env, constants.CelleryImageDirEnvVar+"="+imageDir)
-
-			//if incell {
-			//	cmdArgs = append(cmdArgs, "--groups", "incell")
-			//} else {
-			//	cmdArgs = append(cmdArgs, "--disable-groups", "incell")
-			//}
-			err = RunTelepresenceTests(incell, cmd, exePath, imageDir, instanceName, debug)
-			if err != nil {
-				StopTelepresence(telepresenceYamlPath)
-				return fmt.Errorf("error occured while running tests, %s", err)
-			}
+			return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
 		}
 	} else {
-		if exePath == "" {
-			return fmt.Errorf("Ballerina should be installed to debug tests.")
-		} else {
-			balProj, err := filepath.Abs(projLocation)
-			if err != nil {
-				return fmt.Errorf("error occurred while retrieving absolute path of project, %s", err)
-			}
-			PromtConfirmation(assumeYes, balProj)
-			err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, balProj)
-			if err != nil {
-				return fmt.Errorf("error occurred while creating the ballerina.conf, %s", err)
-			}
-			cmd = &exec.Cmd{}
-			cmd.Env = os.Environ()
-			cmd.Env = append(cmd.Env, constants.CelleryImageDirEnvVar+"="+imageDir)
-
-			err = RunTelepresenceTests(incell, cmd, exePath, imageDir, instanceName, debug)
-			if err != nil {
-				StopTelepresence(telepresenceYamlPath)
-				return fmt.Errorf("error occured while running tests, %s", err)
-			}
+		err = util.CleanOrCreateDir(testsRoot)
+		if err != nil {
+			return fmt.Errorf("error occurred while creating %s, %v", testsRoot, err)
 		}
 	}
-	StopTelepresence(telepresenceYamlPath)
 
+	// Copy artifacts for running tests
+	if isBallerinaProject {
+		fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
+		if fileCopyError != nil {
+			return fmt.Errorf("error occurred while copying %s, %v", constants.BallerinaToml, err)
+		}
+	}
+	fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZipTests))
+	if fileCopyError != nil {
+		return fmt.Errorf("error occurred while copying tests folder, %s", err)
+	}
+
+	err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
+	if err != nil {
+		return fmt.Errorf("error occurred while creating %s, %v", filepath.Join(testsRoot, "logs"), err)
+	}
+
+	// Change working dir to Bal project
+	err = os.Chdir(testsRoot)
+	if err != nil {
+		return fmt.Errorf("error occurred while changing working directory, %s", err)
+	}
+
+	isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
+	if !isExistsSourceBal {
+		fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
+		if fileCopyError != nil {
+			return fmt.Errorf("error occurred while copying source bal file, %s", err)
+		}
+	}
+
+	err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, testsRoot)
+	if err != nil {
+		return fmt.Errorf("error occurred while creating the ballerina.conf, %s", err)
+	}
+
+	//if incell {
+	//	cmdArgs = append(cmdArgs, "--groups", "incell")
+	//} else {
+	//	cmdArgs = append(cmdArgs, "--disable-groups", "incell")
+	//}
+
+	var balEnvVars []*ballerina.EnvironmentVariable
+	// Set celleryImageDirEnvVar environment variable.
+
+	balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
+		Key:   celleryImageDirEnvVar,
+		Value: imageDir})
+	for _, envVar := range envVars {
+		// Export environment variables defined by user for root instance
+		if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
+			balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
+				Key:   envVar.Key,
+				Value: envVar.Value,
+			})
+		}
+		// Export environment variables defined by user for dependent instances
+		if !(envVar.InstanceName == "" || envVar.InstanceName == instanceName) {
+			balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
+				Key:   celleryEnvVarPrefix + envVar.InstanceName + "." + envVar.Key,
+				Value: envVar.Value,
+			})
+		}
+	}
+
+	var testCmdArgs []string
+	if testCmdArgs, err = testCommandArgs(incell, imageDir, instanceName); err != nil {
+		return fmt.Errorf("failed to get run command arguements, %v", err)
+	}
+
+	if debug {
+		PromtConfirmation(assumeYes, testsRoot)
+		balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
+			Key:   "DEBUG",
+			Value: "true",
+		})
+	}
+	if err = cli.BalExecutor().Test(filepath.Join(testsRoot, constants.BallerinaConf), testCmdArgs, balEnvVars); err != nil {
+		StopTelepresence(telepresenceYamlPath)
+		return fmt.Errorf("failed to run bal file, %v", err)
+	}
+	if err != nil {
+		StopTelepresence(telepresenceYamlPath)
+		return fmt.Errorf("error occured while running tests in ballerina docker image, %s", err)
+	}
+	StopTelepresence(telepresenceYamlPath)
 	return nil
 }
 func StopTelepresence(filepath string) error {
 	err := kubernetes.DeleteFile(filepath)
 	if err != nil {
 		return fmt.Errorf("error occurred while stopping telepresence %s", err)
-	}
-	return nil
-}
-
-func RunTelepresenceTests(incell bool, cmd *exec.Cmd, exePath string, imageDir string, instanceName string, debug bool) error {
-	deploymentName, err := CreateTelepresenceDeployment(incell, imageDir, instanceName)
-	if err != nil {
-		return fmt.Errorf("error occurred while creating telepresence deployment, %v", err)
-	}
-
-	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
-	var telArgs = []string{telepresenceExecPath, "--deployment", *deploymentName}
-	if !debug {
-		balArgs := []string{exePath, "test", "--all"}
-		telArgs = append(telArgs, "--run")
-		telArgs = append(telArgs, balArgs...)
-	}
-
-	cmd.Path = telepresenceExecPath
-	cmd.Args = telArgs
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	err = cmd.Start()
-	if err != nil {
-		return fmt.Errorf("error occurred while running tests, %v", err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return fmt.Errorf("error occurred while waiting for tests to complete, %v", err)
-	}
-	return nil
-}
-
-func RunDockerTelepresenceTests(incell bool, cmd *exec.Cmd, testsRoot string, imageDir string, instanceName string) error {
-
-	deploymentName, err := CreateTelepresenceDeployment(incell, imageDir, instanceName)
-	if err != nil {
-		return fmt.Errorf("error occurred while creating telepresence deployment, %v", err)
-	}
-
-	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
-	var telArgs = []string{telepresenceExecPath, "--deployment", *deploymentName}
-	dockerCmdArgs, err := ConstructDockerArgs(testsRoot, imageDir)
-	if err != nil {
-		return err
-	}
-	telArgs = append(telArgs, "--docker-run")
-	telArgs = append(telArgs, dockerCmdArgs...)
-
-	bashArgs := []string{"/bin/bash", "-c", strings.Join(telArgs, " ")}
-
-	cmd.Env = os.Environ()
-	imageDir = strings.Replace(imageDir, util.UserHomeDir(), "/home/cellery", 1)
-	cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)
-	cmd.Path = "/bin/bash"
-	cmd.Args = bashArgs
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	err = cmd.Start()
-	if err != nil {
-		return fmt.Errorf("error occurred while running tests, %v", err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return fmt.Errorf("error occurred while waiting for tests to complete, %v", err)
 	}
 	return nil
 }
@@ -568,4 +508,15 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 	}
 	spinner.Stop(true)
 	return &deploymentName, nil
+}
+
+func testCommandArgs(incell bool, imageDir string, instanceName string) ([]string, error) {
+	deploymentName, err := CreateTelepresenceDeployment(incell, imageDir, instanceName)
+	if err != nil {
+		return nil, fmt.Errorf("error occurred while creating telepresence deployment, %v", err)
+	}
+
+	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
+	var telArgs = []string{telepresenceExecPath, "--deployment", *deploymentName}
+	return telArgs, nil
 }

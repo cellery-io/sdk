@@ -552,7 +552,13 @@ public function getCellEndpoints(InstanceState[] iNameList, string alias = "", s
 
 public function runDockerTest(string imageName, map<Env> envVars) returns (error?){
     ImageName iName = getCellImage();
-    string instanceName = <string>iName["instanceName"];
+    string? instanceNameResult = iName["instanceName"];
+    string instanceName;
+    if (instanceNameResult is string && instanceNameResult != "") {
+        instanceName = instanceNameResult;
+    } else {
+        instanceName = "tmp";
+    }
     Test dockerTest = {
         name: instanceName + "-test",
         src: {

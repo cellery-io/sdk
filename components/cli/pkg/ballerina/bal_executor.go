@@ -24,6 +24,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -36,6 +38,8 @@ const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
 type BalExecutor interface {
 	Build(fileName string, args []string) error
 	Run(fileName string, args []string, envVars []*EnvironmentVariable) error
+	Test(fileName string, args []string, envVars []*EnvironmentVariable) error
+	Init(projectName string) error
 	Version() (string, error)
 	ExecutablePath() (string, error)
 }
@@ -133,6 +137,19 @@ func (balExecutor *LocalBalExecutor) Run(fileName string, args []string,
 }
 
 // Version returns the ballerina version.
+func (balExecutor *LocalBalExecutor) Init(projectDir string) error {
+	balProjectName := filepath.Base(projectDir) + "_proj"
+	cmd := exec.Command(ballerina, "new", balProjectName)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
+	}
+	return nil
+}
+
+// Version returns the ballerina version.
 func (balExecutor *LocalBalExecutor) Version() (string, error) {
 	version := ""
 	cmd := exec.Command(ballerina, "version")
@@ -184,6 +201,48 @@ func ballerinaInstallationPath() (string, error) {
 		}
 	}
 	return exePath + ballerina, nil
+}
+
+func (balExecutor *LocalBalExecutor) Test(fileName string, args []string, envVars []*EnvironmentVariable) error {
+	cmd := &exec.Cmd{}
+	exePath, err := balExecutor.ExecutablePath()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path, %v", err)
+	}
+	cmd.Env = os.Environ()
+	// Export environment variables defined by user
+	for _, envVar := range envVars {
+		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
+	}
+	var debug bool
+	for _, envVar := range envVars {
+		if envVar.Key == "DEBUG" {
+			debug, err = strconv.ParseBool(envVar.Value)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if !debug {
+		balArgs := []string{exePath, "test", "--all"}
+		args = append(args, "--run")
+		args = append(args, balArgs...)
+	}
+	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
+	cmd.Path = telepresenceExecPath
+	cmd.Args = args
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
+	if err != nil {
+		return fmt.Errorf("error occurred while running tests, %v", err)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return fmt.Errorf("error occurred while waiting for tests to complete, %v", err)
+	}
+	return nil
 }
 
 // EnvironmentVariable is used to store the environment variables to be passed to the instances
