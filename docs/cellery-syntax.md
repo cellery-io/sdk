@@ -71,7 +71,7 @@ of network accessible entry points (Ingresses) and parameters. A sample componen
 ```ballerina
 cellery:Component helloComponent = {
     name: "hello-api",
-    source: {
+    src: {
         image: "docker.io/wso2cellery/samples-hello-world-api" // source docker image
     },
     ingresses: {
@@ -203,7 +203,7 @@ TLS can be defined to a web ingress as below:
 // Web Component
 cellery:Component webComponent = {
     name: "web-ui",
-    source: {
+    src: {
         image: "wso2cellery/samples-hello-world-webapp"
     },
     ingresses: { 
@@ -235,12 +235,12 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
     string tlsCert = readFile(config:getAsString("tls.cert"));
 
     //Assign values to cell->component->ingress
-    cellery:CellImage webCell = check cellery:constructCellImage(untaint iName);
+    cellery:CellImage webCell = check cellery:constructCellImage(iName);
     cellery:WebIngress webUI = <cellery:WebIngress>webCell.components.webComp.ingresses.webUI;
     webUI.gatewayConfig.tls.key = tlsKey;
     webUI.gatewayConfig.tls.cert = tlsCert;
     // Create the cell instance
-    return cellery:createInstance(webCell, iName);
+    return <@untainted> cellery:createInstance(webCell, iName);
 }
 
 // Read the file given in filePath and return the content as a string.
@@ -262,7 +262,7 @@ Web ingress support Open ID connect. OIDC config can be defined as below.
 ```ballerina
 cellery:Component portalComponent = {
     name: "portal",
-    source: {
+    src: {
         image: "wso2cellery/samples-pet-store-portal"
     },
     ingresses: {
@@ -344,7 +344,7 @@ HttpPort ingress supports defining a http port as an endpoint. This ingress is u
 //Stock Component
 cellery:Component stockComponent = {
     name: "stock",
-    source: {
+    src: {
         image: "wso2cellery/sampleapp-stock:0.3.0"
     },
     ingresses: {
@@ -366,7 +366,7 @@ A cell developer can require a set of environment parameters that should be pass
 // Employee Component
 cellery:Component employeeComponent = {
     name: "employee",
-    source: {
+    src: {
         image: "docker.io/celleryio/sampleapp-employee"
     },
     ingresses: {
@@ -390,7 +390,7 @@ Note the parameters SALARY_HOST in the Cell definition above. This parameters ca
 ```ballerina
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
     employeeCell.components.empComp.envVars.SALARY_HOST.value = config:getAsString("salary.host");
-    return cellery:createInstance(employeeCell, iName);
+    return <@untainted> cellery:createInstance(employeeCell, iName);
 }
 ```
 
@@ -428,7 +428,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Stock Component
     cellery:Component stockComponent = {
         name: "stock",
-        source: {
+        src: {
             image: "wso2cellery/sampleapp-stock:0.3.0"
         },
         ingresses: {
@@ -462,7 +462,7 @@ public function build(cellery:ImageName iName) returns error? {
             stockComp: stockComponent
         }
     };
-    return cellery:createImage(stockCell, untaint iName);
+    return <@untainted> cellery:createImage(stockCell, iName);
 }
 ``` 
 
@@ -481,7 +481,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Pet Component
     cellery:Component petComponent = {
         name: "pet-service",
-        source: {
+        src: {
             image: "docker.io/isurulucky/pet-service"
         },
         ingresses: {
@@ -513,7 +513,7 @@ public function build(cellery:ImageName iName) returns error? {
             petComp: petComponent
         }
     };
-    return cellery:createImage(petCell, untaint iName);
+    return <@untainted> cellery:createImage(petCell, iName);
 }
 ```
 The Auto-scale policy defined by the developer can be overridden at the runtime by providing a different policy at the runtime.
@@ -532,7 +532,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Pet Component
     cellery:Component petComponent = {
         name: "pet-service",
-        source: {
+        src: {
             image: "docker.io/isurulucky/pet-service"
         },
         ingresses: {
@@ -560,7 +560,7 @@ public function build(cellery:ImageName iName) returns error? {
             petComp: petComponent
         }
     };
-    return cellery:createImage(petCell, untaint iName);
+    return <@untainted> cellery:createImage(petCell, iName);
 }
 ```  
 
@@ -577,7 +577,7 @@ public function build(cellery:ImageName iName) returns error? {
     // Salary Component
     cellery:Component salaryComponent = {
         name: "salary",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-salary"
         },
         ingresses: {
@@ -616,7 +616,7 @@ public function build(cellery:ImageName iName) returns error? {
     // Salary Component
     cellery:Component salaryComponent = {
         name: "salary",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-salary"
         },
         ingresses: {
@@ -656,7 +656,7 @@ public function build(cellery:ImageName iName) returns error? {
     // Salary Component
     cellery:Component salaryComponent = {
         name: "salary",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-salary"
         },
         ingresses: {
@@ -697,7 +697,7 @@ Configurations can be add to component as following.
 ```ballerina
     cellery:Component helloComponent = {
         name: "hello-api",
-        source: {
+        src: {
             image: "docker.io/wso2cellery/samples-hello-world-api-hello-service"
         },
         ingresses: {
@@ -748,7 +748,7 @@ Secret can be add to component as following.
 ```ballerina
     cellery:Component helloComponent = {
         name: "hello-api",
-        source: {
+        src: {
             image: "docker.io/wso2cellery/samples-hello-world-api-hello-service"
         },
         ingresses: {
@@ -800,7 +800,7 @@ Volume Claims can be add to component as following.
 ```ballerina
     cellery:Component helloComponent = {
         name: "hello-api",
-        source: {
+        src: {
             image: "docker.io/wso2cellery/samples-hello-world-api-hello-service"
         },
         ingresses: {
@@ -869,7 +869,7 @@ public function build(cellery:ImageName iName) returns error? {
     // Salary Component
     cellery:Component salaryComponent = {
         name: "salary",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-salary"
         },
         ingresses: {
@@ -896,7 +896,7 @@ public function build(cellery:ImageName iName) returns error? {
     // Employee Component
     cellery:Component employeeComponent = {
         name: "employee",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-employee"
         },
         ingresses: {
@@ -927,7 +927,7 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
 
-    return cellery:createImage(employeeCell, untaint iName);
+    return <@untainted> cellery:createImage(employeeCell, iName);
 }
 ```
 
@@ -955,7 +955,7 @@ public function build(cellery:ImageName iName) returns error? {
     //Stock Component
     cellery:Component stockComponent = {
         name: "stock",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-stock"
         },
         ingresses: {
@@ -978,7 +978,7 @@ public function build(cellery:ImageName iName) returns error? {
             stockComp: stockComponent
         }
     };
-    return cellery:createImage(stockCell, untaint iName);
+    return <@untainted> cellery:createImage(stockCell, iName);
 }
 ```
 
@@ -996,7 +996,7 @@ public function build(cellery:ImageName iName) returns error? {
     //HR component
     cellery:Component hrComponent = {
         name: "hr",
-        source: {
+        src: {
             image: "docker.io/celleryio/sampleapp-hr"
         },
         ingresses: {
@@ -1014,9 +1014,6 @@ public function build(cellery:ImageName iName) returns error? {
                 expose: "global"
             }
         },
-        envVars: {
-            stock_api_url: { value: "" }
-        },
         dependencies: {
             cells: {
                 stockCellDep: <cellery:ImageName>{ org: "myorg", name: "stock", ver: "1.0.0" } // dependency as a struct
@@ -1024,8 +1021,8 @@ public function build(cellery:ImageName iName) returns error? {
         }
     };
 
-    hrComponent.envVars = {
-        stock_api_url: { value: <string>cellery:getReference(hrComponent, "stockCellDep").stock_api_url }
+    hrComponent["envVars"] = {
+        stock_api_url: { value: <string>cellery:getReference(hrComponent, "stockCellDep")["stock_api_url"] }
     };
 
     // Cell Initialization
@@ -1034,12 +1031,12 @@ public function build(cellery:ImageName iName) returns error? {
             hrComp: hrComponent
         }
     };
-    return cellery:createImage(hrCell, untaint iName);
+    return <@untainted> cellery:createImage(hrCell, iName);
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
-    cellery:CellImage hrCell = check cellery:constructCellImage(untaint iName);
-    return cellery:createInstance(hrCell, iName, instances);
+    cellery:CellImage hrCell = check cellery:constructCellImage(iName);
+    return <@untainted> cellery:createInstance(hrCell, iName, instances);
 }
 ```
  
