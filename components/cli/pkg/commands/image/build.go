@@ -342,7 +342,7 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 	isTestDirExists, _ := util.FileExists(filepath.Join(balParent, constants.ZipTests))
 	folders := []string{filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifacts), filepath.Join(cli.FileSystem().WorkingDirRelativePath(), src)}
 
-	if balParent != projectDir {
+	if balParent != projectDir && isTestDirExists {
 		if err = util.CopyDir(filepath.Join(balParent, constants.ZipTests),
 			filepath.Join(projectDir, constants.ZipTests)); err != nil {
 			return fmt.Errorf("error occured while copying the %s, %v", constants.ZipTests, err)
