@@ -288,14 +288,14 @@ func (balExecutor *DockerBalExecutor) Init(projectDir string) error {
 	if err != nil {
 		return err
 	}
-	dockerCmdArgs := []string{"-u", cliUser.Uid,
+	dockerCmdArgs := []string{
 		"-l", "ballerina-runtime=" + version.BuildVersion(),
 		"--mount", "type=bind,source=" + filepath.Join(currentDir, constants.TargetDirName) + ",target=/home/cellery/tmp",
 		"--mount", "type=bind,source=" + projectDir + ",target=/home/cellery/" + projectDir,
 		"-w", "/home/cellery/",
 		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
 	}
-	dockerCommand := []string{"./" + constants.BalInitTestExecFIle, cliUser.Uid, filepath.Base(projectDir)}
+	dockerCommand := []string{"./" + constants.BalInitTestExecFIle, cliUser.Uid, filepath.Base(projectDir), cliUser.Username, runtime.GOOS}
 	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
 	var bashArgs []string
 	bashArgs = append(bashArgs, "run")
@@ -348,7 +348,7 @@ func (balExecutor *DockerBalExecutor) Test(fileName string, args []string, envVa
 	if err != nil {
 		return fmt.Errorf("error while retrieving the current user, %v", err)
 	}
-	dockerCmdArgs := []string{"-u", cliUser.Uid,
+	dockerCmdArgs := []string{
 		"-l", "ballerina-runtime=" + version.BuildVersion(),
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".ballerina,target=/home/cellery/.ballerina",
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".cellery,target=/home/cellery/.cellery",
@@ -357,7 +357,7 @@ func (balExecutor *DockerBalExecutor) Test(fileName string, args []string, envVa
 		"-w", "/home/cellery/",
 		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
 	}
-	dockerCommand := []string{"./" + constants.BalTestExecFIle, cliUser.Uid}
+	dockerCommand := []string{"./" + constants.BalTestExecFIle, cliUser.Uid, cliUser.Username, runtime.GOOS}
 	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
 	args = append(args, "--docker-run")
 	args = append(args, dockerCmdArgs...)

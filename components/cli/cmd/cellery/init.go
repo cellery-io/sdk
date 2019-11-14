@@ -66,7 +66,7 @@ func newInitCommand(cli cli.Cli) *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := project.RunInit(cli, projectName, testStr); err != nil {
-				util.ExitWithErrorMessage("Cellery init command failed, %v", err)
+				util.ExitWithErrorMessage("Cellery init command failed", err)
 			}
 
 		},

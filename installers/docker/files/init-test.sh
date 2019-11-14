@@ -23,10 +23,15 @@ set -e
 
 USER_ID=${1}
 MODULE_DIR=${2}
+NEW_USER=${3}
+OS=${4}
 TEMP_DIR=tmp
 BAL_PROJECT="$MODULE_DIR"_proj
 
-usermod -u $USER_ID $USER
+if [[ "$USER_ID" != 1000 ]] && [[ "$OS" == "linux" ]]; then
+    useradd -m -d /home/cellery --uid $USER_ID $NEW_USER
+fi
 ballerina new $BAL_PROJECT
 mkdir -p $TEMP_DIR
 mv $BAL_PROJECT $TEMP_DIR/
+chown -R $USER_ID $TEMP_DIR/

@@ -22,12 +22,22 @@
 set -e
 
 USER_ID=${1}
+NEW_USER=${2}
+EXEC_USER=cellery
+OS=${3}
 TEMP_DIR=tmp
 B7a_TOML_LOCATION=$TEMP_DIR/Ballerina.toml
 BAL_PROJECT=target
 
-usermod -u $USER_ID $USER
-ballerina new $BAL_PROJECT
-cp -r $TEMP_DIR/* $BAL_PROJECT/
+if [[ "$OS" == "linux" ]]; then
+    if [[ "$USER_ID" != 1000 ]]; then
+        useradd -m -d /home/cellery --uid $USER_ID $NEW_USER
+        EXEC_USER=$NEW_USER
+    fi
+fi
+
+sudo -u $EXEC_USER HOME=/home/cellery ballerina new $BAL_PROJECT
+sudo -u $EXEC_USER HOME=/home/cellery cp -r $TEMP_DIR/* $BAL_PROJECT/
 cd $BAL_PROJECT/
-ballerina test --all
+sudo -u $EXEC_USER HOME=/home/cellery ballerina test --all
+

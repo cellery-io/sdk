@@ -40,7 +40,8 @@ RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 curl \
 gpg-agent \
-software-properties-common
+software-properties-common \
+sudo
 
 RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 RUN add-apt-repository "deb [arch=amd64] http://apt.kubernetes.io/ kubernetes-xenial main"
