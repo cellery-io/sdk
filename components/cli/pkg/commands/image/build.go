@@ -63,6 +63,13 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	if !fileExist {
 		return fmt.Errorf("file '%s' does not exist", util.Bold(fileName))
 	}
+
+	// Removing the target directory if it exists
+	targetDir := filepath.Join(projectDir, "target")
+	if err = os.RemoveAll(targetDir); err != nil {
+		return fmt.Errorf("failed to cleanup target directory, %v", err)
+	}
+
 	var tempBuildFileName string
 	if err = cli.ExecuteTask("Creating temporary executable bal file", "Failed to create temporary baf file",
 		"", func() error {
