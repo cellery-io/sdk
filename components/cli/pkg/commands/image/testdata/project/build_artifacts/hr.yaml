@@ -1,0 +1,66 @@
+---
+apiVersion: "mesh.cellery.io/v1alpha2"
+kind: "Cell"
+metadata:
+  annotations:
+    mesh.cellery.io/cell-image-org: "myorg"
+    mesh.cellery.io/cell-image-name: "hr"
+    mesh.cellery.io/cell-image-version: "1.0.0"
+    mesh.cellery.io/cell-dependencies: "[{\"org\":\"myorg\",\"name\":\"employee\"\
+      ,\"version\":\"1.0.0\",\"alias\":\"employeeCellDep\",\"kind\":\"Cell\"},{\"\
+      org\":\"myorg\",\"name\":\"stock\",\"version\":\"1.0.0\",\"alias\":\"stockCellDep\"\
+      ,\"kind\":\"Cell\"}]"
+  labels: {}
+  name: "hr"
+spec:
+  components:
+  - metadata:
+      annotations: {}
+      labels: {}
+      name: "hr"
+    spec:
+      type: null
+      template:
+        containers:
+        - env:
+          - name: "stock_api_url"
+            value: "http://{{stockCellDep}}--gateway-service:80/stock"
+          - name: "employee_api_url"
+            value: "http://{{employeeCellDep}}--gateway-service:80/employee"
+          image: "wso2cellery/sampleapp-hr:0.3.0"
+          name: "hr"
+          ports:
+          - containerPort: 8080
+      ports:
+      - name: "hr"
+        port: 80
+        protocol: "http"
+        targetContainer: "hr"
+        targetPort: 8080
+      configurations: []
+      secrets: []
+      volumeClaims: []
+  gateway:
+    spec:
+      ingress:
+        extensions:
+          apiPublisher:
+            context: "myorg"
+            version: "1.0.1"
+        http:
+        - definitions:
+          - path: "/"
+            method: "GET"
+          version: "local"
+          port: 80
+          context: "/hr"
+          global: true
+          authenticate: true
+          destination:
+            host: "hr"
+            port: 80
+        grpc: []
+        tcp: []
+  sts:
+    spec:
+      unsecuredPaths: []

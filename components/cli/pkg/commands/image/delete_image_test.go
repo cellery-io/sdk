@@ -107,7 +107,7 @@ func copyDir(src string, dst string) error {
 				return err
 			}
 		} else {
-			if err = copyFile(srcfp, dstfp); err != nil {
+			if _, err = copyFile(srcfp, dstfp); err != nil {
 				return err
 			}
 		}
@@ -116,27 +116,27 @@ func copyDir(src string, dst string) error {
 }
 
 // File copies a single file from src to dst
-func copyFile(src, dst string) error {
+func copyFile(src, dst string) (*os.File, error) {
 	var err error
 	var srcfd *os.File
 	var dstfd *os.File
 	var srcinfo os.FileInfo
 
 	if srcfd, err = os.Open(src); err != nil {
-		return err
+		return nil, err
 	}
 	defer srcfd.Close()
 
 	if dstfd, err = os.Create(dst); err != nil {
-		return err
+		return nil, err
 	}
 	defer dstfd.Close()
 
 	if _, err = io.Copy(dstfd, srcfd); err != nil {
-		return err
+		return nil, err
 	}
 	if srcinfo, err = os.Stat(src); err != nil {
-		return err
+		return nil, err
 	}
-	return os.Chmod(dst, srcinfo.Mode())
+	return dstfd, os.Chmod(dst, srcinfo.Mode())
 }

@@ -61,7 +61,7 @@ func TestGetImagesArray(t *testing.T) {
 	}{
 		{
 			name:     "list images with single image",
-			wantName: "myorg/hello:1.0.0",
+			wantName: "myorg/employee:1.0.0",
 			wantKind: "Cell",
 		},
 	}

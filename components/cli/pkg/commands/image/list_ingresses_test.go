@@ -44,17 +44,18 @@ func TestRunListIngresses(t *testing.T) {
 									{
 										Context: "foo",
 										Version: "1.0.0",
+										Definitions: []kubernetes.APIDefinition{
+											{
+												Path:   "/bar",
+												Method: "POST",
+											},
+										},
+										Global: true,
 									},
 								},
 							},
 						},
 					},
-				},
-			},
-			{
-				CellMetaData: kubernetes.K8SMetaData{
-					Name:              "stock",
-					CreationTimestamp: "2019-10-18T11:40:36Z",
 				},
 			},
 		},
@@ -66,11 +67,19 @@ func TestRunListIngresses(t *testing.T) {
 					Name:              "hr",
 					CreationTimestamp: "2019-10-18T11:40:36Z",
 				},
-			},
-			{
-				CompositeMetaData: kubernetes.K8SMetaData{
-					Name:              "job",
-					CreationTimestamp: "2019-10-18T11:40:36Z",
+				CompositeSpec: kubernetes.CompositeSpec{
+					ComponentTemplates: []kubernetes.ComponentTemplate{
+						{
+							Spec: kubernetes.ComponentTemplateSpec{
+								Ports: []kubernetes.Port{
+									{
+										Name: "my-port",
+										Port: 9999,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -93,6 +102,11 @@ func TestRunListIngresses(t *testing.T) {
 		{
 			name:    "list ingresses of cell image",
 			arg:     "myorg/hello:1.0.0",
+			mockCli: test.NewMockCli(test.SetFileSystem(mockFileSystem)),
+		},
+		{
+			name:    "list ingresses of composite image",
+			arg:     "myorg/stock-comp:1.0.0",
 			mockCli: test.NewMockCli(test.SetFileSystem(mockFileSystem)),
 		},
 	}

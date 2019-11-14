@@ -37,49 +37,74 @@ func TestRunBuild(t *testing.T) {
 			t.Errorf("failed to remove current dir")
 		}
 	}()
-	balFileContent, err := ioutil.ReadFile(filepath.Join("testdata", "project", "foo.bal"))
+	tempRepo, err := ioutil.TempDir("", "repo")
 	if err != nil {
-		t.Errorf("Failed to read foo.bal: %v", err)
+		t.Errorf("error creating temp repo, %v", err)
 	}
-	balFile, err := os.Create(filepath.Join(currentDir, "foo.bal"))
+	mockRepo := filepath.Join("testdata", "repo")
+	if copyDir(mockRepo, tempRepo); err != nil {
+		t.Errorf("error copying mock repo to temp repo, %v", err)
+	}
+	mockFileSystem := test.NewMockFileSystem(test.SetRepository(tempRepo), test.SetCurrentDir(currentDir))
+
+	// Test data for building foo.bal
+	fooBal, err := copyFile(filepath.Join("testdata", "project", "foo.bal"), filepath.Join(currentDir, "foo.bal"))
 	if err != nil {
-		t.Errorf("Failed to create bal file: %v", err)
+		t.Errorf("failed to copy foo.bal to mock location")
 	}
-	err = ioutil.WriteFile(balFile.Name(), []byte(balFileContent), os.ModePerm)
-	if err != nil {
-		t.Errorf("Failed to write to bal file: %v", err)
-	}
-	mockRepo, err := ioutil.TempDir("", "repo-dir")
-	if err != nil {
-		t.Errorf("failed to create mock repo dir")
-	}
-	mockFileSystem := test.NewMockFileSystem(test.SetCurrentDir(currentDir), test.SetRepository(mockRepo))
-	yamlContent, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "foo.yaml"))
+	fooYamlContent, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "foo.yaml"))
 	if err != nil {
 		t.Errorf("Failed to read foo.yaml: %v", err)
 	}
-	metadataJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "metadata.json"))
+	fooMetadataJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "foo_metadata.json"))
 	if err != nil {
 		t.Errorf("Failed to read metadata.json: %v", err)
 	}
-	mockBalExecutor := test.NewMockBalExecutor(test.SetBalCurrentDir(currentDir),
-		test.SetYamlName("foo.yaml"),
-		test.SetYamlContent(yamlContent),
-		test.SetMetadataJsonContent(metadataJson))
-	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem), test.SetBalExecutor(mockBalExecutor))
-
+	// Test data for building hr.bal
+	hrBal, err := copyFile(filepath.Join("testdata", "project", "foo.bal"), filepath.Join(currentDir, "hr.bal"))
+	if err != nil {
+		t.Errorf("failed to copy hr.bal to mock location")
+	}
+	hrYamlContent, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "hr.yaml"))
+	if err != nil {
+		t.Errorf("Failed to read foo.yaml: %v", err)
+	}
+	hrMetadataJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "hr_metadata.json"))
+	if err != nil {
+		t.Errorf("Failed to read metadata.json: %v", err)
+	}
 	tests := []struct {
-		name  string
-		image string
+		name         string
+		file         *os.File
+		image        string
+		yamlName     string
+		yaml         []byte
+		metadataJson []byte
 	}{
 		{
-			name:  "build image",
-			image: "myorg/foo:1.0.0",
+			name:         "build image",
+			image:        "myorg/foo:1.0.0",
+			file:         fooBal,
+			yamlName:     "foo.yaml",
+			yaml:         fooYamlContent,
+			metadataJson: fooMetadataJson,
+		},
+		{
+			name:         "build image with dependencies",
+			image:        "myorg/hr:1.0.0",
+			file:         hrBal,
+			yamlName:     "hr.yaml",
+			yaml:         hrYamlContent,
+			metadataJson: hrMetadataJson,
 		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunBuild(mockCli, tst.image, balFile.Name())
+			mockBalExecutor := test.NewMockBalExecutor(test.SetBalCurrentDir(currentDir),
+				test.SetYamlName(tst.yamlName),
+				test.SetYamlContent(tst.yaml),
+				test.SetMetadataJsonContent(tst.metadataJson))
+			err := RunBuild(test.NewMockCli(test.SetFileSystem(mockFileSystem), test.SetBalExecutor(mockBalExecutor)), tst.image, tst.file.Name())
 			if err != nil {
 				t.Errorf("error in RunBuild, %v", err)
 			}
