@@ -4,6 +4,7 @@
 * [init](#cellery-init) - initialize a cellery project.
 * [build](#cellery-build) - build a cell image.
 * [run](#cellery-run) - create cell instance(s). 
+* [test](#cellery-test) - test cell instance(s). 
 * [view](#cellery-view) - view cell and component dependencies.
 * [list](#cellery-list) - list information about cell instances/images.
 * [delete](#cellery-delete) - Delete cell images.
@@ -95,6 +96,40 @@ Ex:
     cellery run wso2/my-cell:1.0.0 -d 
     cellery run wso2/my-cell:1.0.0 -s -d
     cellery run wso2/my-cell:1.0.0 -y
+ ```
+
+[Back to Command List](#cellery-cli-commands)
+
+#### Cellery Test
+
+Test a cell instance 
+
+###### Parameters: 
+
+* Cell image name: name of a built Cell image
+
+###### Flags (Optional): 
+
+* _-y, --assume-yes : Flag to enable/disable prompting for confirmation before starting instance(s)_
+* _-e, --env : Set an environment variable for the cellery run method in the Cell file_
+* _-l, --link : Link an instance with a dependency alias_
+* _-n, --name : Name of the cell instance_
+* _-s, --share-instances : Share all instances among equivalent Cell Instances_
+* _-d, --start-dependencies : Start all the dependencies of this Cell Image in order_
+* _--debug : Enable test debug mode_
+* _-p, --project-location Ballerina Project location_
+
+
+Ex: 
+
+ ```
+    cellery test wso2/my-cell:1.0.0
+    cellery test wso2/my-cell:1.0.0 -n my-cell-inst 
+    cellery test wso2/my-cell:1.0.0 -l dependencyKey:dependentInstance
+    cellery test wso2/my-cell:1.0.0 -e config=value 
+    cellery test wso2/my-cell:1.0.0 -d 
+    cellery test wso2/my-cell:1.0.0 -s -d
+    cellery test wso2/my-cell:1.0.0 --debug -p foo_proj -y
  ```
 
 [Back to Command List](#cellery-cli-commands)
