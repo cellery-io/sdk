@@ -43,7 +43,7 @@ func RunVersion(cli cli.Cli) error {
 	balVersion, err := cli.BalExecutor().Version()
 	if err != nil {
 		// Having b7a locally is optional since the cellery build and run can be invoked via a docker container.
-		fmt.Fprintln(cli.Out(), fmt.Sprintf("Ballerina %s not installed locally", constants.BallerinaVersion))
+		fmt.Fprintln(cli.Out(), fmt.Sprintf(" Ballerina %s not installed locally", constants.BallerinaVersion))
 	} else {
 		fmt.Fprintln(cli.Out(), " Version:\t\t"+strings.TrimSpace(balVersion))
 	}
@@ -53,21 +53,21 @@ func RunVersion(cli cli.Cli) error {
 		_, _ = boldWhite.Fprintln(cli.Out(), "\nKubernetes")
 		fmt.Fprintln(cli.Out(), " Server Version:\t"+serverVersion)
 		fmt.Fprintln(cli.Out(), " Client Version:\t"+clientVersion)
-		fmt.Fprintln(cli.Out(), " CRD:\t\t\ttrue") // TODO
+		//fmt.Fprintln(cli.Out(), " CRD:\t\t\ttrue") // TODO
 	}
 	// Printing Docker version information
 	_, _ = boldWhite.Println("\nDocker:")
 	dockerServerVersion, err := cli.DockerCli().ServerVersion()
 	if err != nil {
-		fmt.Fprintf(cli.Out(), "\x1b[31;1m Error while getting Docker Server version, \x1b[0m%v\n",
-			strings.TrimSpace(dockerServerVersion))
+		fmt.Fprintln(cli.Out(), fmt.Sprintf("\x1b[31;1m Error while getting Docker Server version, \x1b[0m%v\n",
+			strings.TrimSpace(dockerServerVersion)))
 	} else {
-		fmt.Fprintf(cli.Out(), " Server Version:\t"+strings.TrimSpace(dockerServerVersion))
+		fmt.Fprintln(cli.Out(), " Server Version:\t"+strings.TrimSpace(dockerServerVersion))
 	}
 	dockerClientVersion, err := cli.DockerCli().ClientVersion()
 	if err != nil {
-		fmt.Fprintf(cli.Out(), "\x1b[31;1m Error while getting Docker Client version, \x1b[0m%v\n",
-			strings.TrimSpace(dockerClientVersion))
+		fmt.Fprintln(cli.Out(), fmt.Sprintf("\x1b[31;1m Error while getting Docker Client version, \x1b[0m%v\n",
+			strings.TrimSpace(dockerClientVersion)))
 	} else {
 		fmt.Fprintln(cli.Out(), " Client Version:\t"+strings.TrimSpace(dockerClientVersion))
 	}
