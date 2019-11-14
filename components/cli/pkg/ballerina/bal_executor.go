@@ -138,7 +138,7 @@ func (balExecutor *LocalBalExecutor) Run(fileName string, args []string,
 
 // Init initializes a ballerina project in the current working directory
 func (balExecutor *LocalBalExecutor) Init(projectDir string) error {
-	balProjectName := filepath.Base(projectDir) + "_proj"
+	balProjectName := filepath.Base(projectDir) + constants.BalProjExt
 	cmd := exec.Command(ballerina, "new", balProjectName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

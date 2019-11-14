@@ -32,9 +32,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
-
 	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/image"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
@@ -45,44 +44,41 @@ import (
 // RunTest starts Cell instance (along with dependency instances if specified by the user)\
 func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, incell bool, projLocation string) error {
-	spinner := util.StartNewSpinner("Extracting Cell Image " + util.Bold(cellImageTag))
-	parsedCellImage, err := image.ParseImageTag(cellImageTag)
-	if err != nil {
+	var err error
+	var imageDir string
+	var parsedCellImage *image.CellImage
+	if parsedCellImage, err = image.ParseImageTag(cellImageTag); err != nil {
 		return fmt.Errorf("error occurred while parsing cell image, %v", err)
 	}
-	imageDir, err := ExtractImage(cli, parsedCellImage, true)
-	if err != nil {
-		spinner.Stop(false)
-		return fmt.Errorf("Error occurred while extracting image, %v", err)
+	if err = cli.ExecuteTask("Extracting cell image", "Failed to extract cell image",
+		"", func() error {
+			imageDir, err = ExtractImage(cli, parsedCellImage, true)
+			return err
+		}); err != nil {
+		return err
 	}
 	defer func() error {
 		err = os.RemoveAll(imageDir)
 		if err != nil {
-			spinner.Stop(false)
 			return fmt.Errorf("error occurred while cleaning up, %v", err)
 		}
 		return nil
 	}()
 
 	// Reading Cell Image metadata
-	spinner.SetNewAction("Reading Image " + util.Bold(cellImageTag))
-	metadataFileContent, err := ioutil.ReadFile(filepath.Join(imageDir, constants.ZipArtifacts, "cellery",
-		"metadata.json"))
-	if err != nil {
-		spinner.Stop(false)
+	var metadataFileContent []byte
+	if metadataFileContent, err = ioutil.ReadFile(filepath.Join(imageDir, artifacts, "cellery",
+		"metadata.json")); err != nil {
 		return fmt.Errorf("error occurred while reading Image metadata, %v", err)
 	}
 	cellImageMetadata := &image.MetaData{}
-	err = json.Unmarshal(metadataFileContent, cellImageMetadata)
-	if err != nil {
-		spinner.Stop(false)
+	if err = json.Unmarshal(metadataFileContent, cellImageMetadata); err != nil {
 		return fmt.Errorf("error occurred while reading Image metadata, %v", err)
 	}
 
 	var parsedDependencyLinks []*dependencyAliasLink
 	if len(dependencyLinks) > 0 {
 		// Parsing the dependency links list
-		spinner.SetNewAction("Validating dependency links")
 		for _, link := range dependencyLinks {
 			var dependencyLink *dependencyAliasLink
 			linkSplit := strings.Split(link, ":")
@@ -101,7 +97,6 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 			}
 			cellInstance, err := kubernetes.GetCell(dependencyLink.DependencyInstance)
 			if err != nil && !strings.Contains(err.Error(), "not found") {
-				spinner.Stop(false)
 				return fmt.Errorf("error occurred while validating dependency links, %v", err)
 			} else {
 				dependencyLink.IsRunning = err == nil && cellInstance.CellStatus.Status == "Ready"
@@ -110,7 +105,6 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 			}
 			compositeInstance, err := kubernetes.GetComposite(dependencyLink.DependencyInstance)
 			if err != nil && !strings.Contains(err.Error(), "not found") {
-				spinner.Stop(false)
 				return fmt.Errorf("error occurred while validating dependency links, %v", err)
 			} else {
 				dependencyLink.IsRunning = err == nil && compositeInstance.CompositeStatus.Status == "Ready"
@@ -122,7 +116,6 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 	instanceEnvVars := []*environmentVariable{}
 	if len(envVars) > 0 {
 		// Parsing environment variables
-		spinner.SetNewAction("Validating environment variables")
 		for _, envVar := range envVars {
 			var targetInstance string
 			var envVarKey string
@@ -174,7 +167,6 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 		dependencyEnv = append(dependencyEnv, link.DependencyAlias+"="+link.DependencyInstance)
 	}
 
-	spinner.Stop(true)
 	err = startTestCellInstance(cli, imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
 		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes, projLocation)
 	if err != nil {
@@ -198,7 +190,7 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	}
 	balFilePath := filepath.Join(imageDir, constants.ZipBallerinaSource, balFileName)
 
-	currentDir, err := os.Getwd()
+	currentDir := cli.FileSystem().CurrentDir()
 	if err != nil {
 		return fmt.Errorf("error in determining working directory, %v", err)
 	}
@@ -232,7 +224,7 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	if debug && exePath == "" {
 		return fmt.Errorf("Ballerina should be installed to debug tests.")
 	}
-	balProjectName := constants.TARGET_DIR_NAME
+	balProjectName := constants.TargetDirName
 	// Construct test artifact names
 	if debug {
 		balProjectName = filepath.Base(projLocation)
@@ -350,7 +342,7 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	}
 
 	var testCmdArgs []string
-	if testCmdArgs, err = testCommandArgs(incell, imageDir, instanceName); err != nil {
+	if testCmdArgs, err = testCommandArgs(cli, incell, imageDir, instanceName); err != nil {
 		return fmt.Errorf("failed to get run command arguements, %v", err)
 	}
 
@@ -472,8 +464,7 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 	var srcYamlFile string
 	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
 	var deploymentName string
-	var spinner *util.Spinner
-	var spinnerMsg string
+
 	if incell {
 		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-deployment.yaml")
 		err := util.CopyFile(srcYamlFile, dstYamlFile)
@@ -482,7 +473,6 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 		}
 		util.ReplaceInFile(dstYamlFile, "{{cell}}", instanceName, -1)
 		deploymentName = instanceName + "--telepresence"
-		spinnerMsg = "Creating telepresence deployment"
 	} else {
 		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-cell.yaml")
 		err := util.CopyFile(srcYamlFile, dstYamlFile)
@@ -490,10 +480,8 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 			return nil, fmt.Errorf("error while copying telepresene k8s artifact to %s, %v", imageDir, err)
 		}
 		deploymentName = "telepresence--telepresence-deployment"
-		spinnerMsg = "Creating telepresence instance"
 	}
 	kubernetes.ApplyFile(dstYamlFile)
-	spinner = util.StartNewSpinner(spinnerMsg)
 	time.Sleep(5 * time.Second)
 	err := kubernetes.WaitForDeployment("available", 900, deploymentName, "default")
 	if err != nil {
@@ -506,14 +494,19 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 			return nil, fmt.Errorf("error waiting for instance telepresence to be ready, %v", err)
 		}
 	}
-	spinner.Stop(true)
 	return &deploymentName, nil
 }
 
-func testCommandArgs(incell bool, imageDir string, instanceName string) ([]string, error) {
-	deploymentName, err := CreateTelepresenceDeployment(incell, imageDir, instanceName)
-	if err != nil {
-		return nil, fmt.Errorf("error occurred while creating telepresence deployment, %v", err)
+func testCommandArgs(cli cli.Cli, incell bool, imageDir string, instanceName string) ([]string, error) {
+	var err error
+	var deploymentName *string
+	if err = cli.ExecuteTask("Creating telepresence k8s resources",
+		"Failed to create telepresence k8s resources",
+		"", func() error {
+			deploymentName, err = CreateTelepresenceDeployment(incell, imageDir, instanceName)
+			return err
+		}); err != nil {
+		return nil, err
 	}
 
 	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")

@@ -33,7 +33,6 @@ import (
 	"time"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
@@ -285,13 +284,13 @@ func (balExecutor *DockerBalExecutor) Init(projectDir string) error {
 	if err != nil {
 		return fmt.Errorf("error in determining working directory, %v", err)
 	}
-	err = util.CleanAndCreateDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME))
+	err = util.CleanAndCreateDir(filepath.Join(currentDir, constants.TargetDirName))
 	if err != nil {
 		return err
 	}
 	dockerCmdArgs := []string{"-u", cliUser.Uid,
 		"-l", "ballerina-runtime=" + version.BuildVersion(),
-		"--mount", "type=bind,source=" + filepath.Join(currentDir, constants.TARGET_DIR_NAME) + ",target=/home/cellery/tmp",
+		"--mount", "type=bind,source=" + filepath.Join(currentDir, constants.TargetDirName) + ",target=/home/cellery/tmp",
 		"--mount", "type=bind,source=" + projectDir + ",target=/home/cellery/" + projectDir,
 		"-w", "/home/cellery/",
 		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
@@ -311,11 +310,11 @@ func (balExecutor *DockerBalExecutor) Init(projectDir string) error {
 		return fmt.Errorf("error occurred while initializing tests using ballerina docker image, %v", err)
 	}
 	balProjectName := filepath.Base(projectDir) + "_proj"
-	err = util.CopyDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME, balProjectName), filepath.Join(currentDir, balProjectName))
+	err = util.CopyDir(filepath.Join(currentDir, constants.TargetDirName, balProjectName), filepath.Join(currentDir, balProjectName))
 	if err != nil {
 		return err
 	}
-	err = util.RemoveDir(filepath.Join(currentDir, constants.TARGET_DIR_NAME))
+	err = util.RemoveDir(filepath.Join(currentDir, constants.TargetDirName))
 	if err != nil {
 		return err
 	}

@@ -94,8 +94,19 @@ import celleryio/cellery;
 # Handle creation of instances for running tests
 @test:BeforeSuite
 function setup() {
-    cellery:InstanceState[]|error? result = runInstances(conf);
-    cellery:Reference cellEndpoints = <cellery:Reference>cellery:getCellEndpoints(<@untainted> instanceList);
+    cellery:ImageName iName = <cellery:ImageName>cellery:getCellImage();
+    cellery:InstanceState[]|error? result = run(iName, {}, true, true);
+    if (result is error) {
+        cellery:InstanceState iNameState = {
+            iName : iName, 
+            isRunning: true
+        };
+        instanceList[instanceList.length()] = <@untainted> iNameState;
+    } else {
+        instanceList = <cellery:InstanceState[]>result;
+    }
+    cellery:Reference petBeUrls = <cellery:Reference>cellery:getCellEndpoints(<@untainted> instanceList);
+	PET_BE_CONTROLLER_ENDPOINT= <string>petBeUrls["controller_ingress_api_url"];
 }
 
 # Tests inserting order from an external cell by calling the pet-be gateway
