@@ -109,11 +109,10 @@ public class PetServiceTest {
         Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getType(), "Resource");
         Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getResource().getName(),
                 AUTO_SCALING_METRIC_RESOURCE_CPU);
-        Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getResource().getTarget().get("averageValue"), "500m");
+        Assert.assertEquals(autoscalePolicy.getMetrics().get(0).getResource().getTargetAverageValue(), "500m");
         Assert.assertEquals(autoscalePolicy.getMetrics().get(1).getResource().getName(),
                 AUTO_SCALING_METRIC_RESOURCE_MEMORY);
-        Assert.assertEquals(autoscalePolicy.getMetrics().get(1).getResource().getTarget().get("averageUtilization"),
-                "50");
+        Assert.assertEquals(autoscalePolicy.getMetrics().get(1).getResource().getTargetAverageUtilization(), 50);
 
 
         final ComponentSpec petSpec = cell.getSpec().getComponents().get(1).getSpec();

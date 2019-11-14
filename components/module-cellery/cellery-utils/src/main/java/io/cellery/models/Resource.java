@@ -19,10 +19,8 @@
 
 package io.cellery.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Autoscaling Resource Model.
@@ -30,9 +28,8 @@ import java.util.Map;
 @Data
 public class Resource {
     private String name;
-    private Map target;
-
-    public Resource() {
-        target = new HashMap<>();
-    }
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private int targetAverageUtilization;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String targetAverageValue;
 }

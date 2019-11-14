@@ -84,7 +84,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -405,15 +404,9 @@ public class CreateCellImage {
         final MapValue resourceMap = metricsMap.getMapValue(resourceName);
         final String threshold = resourceMap.get("threshold").toString();
         if ("Value".equals(resourceMap.getType().getName())) {
-            HashMap<String, Object> hs = new HashMap<>();
-            hs.put("type", "AverageValue");
-            hs.put("averageValue", threshold);
-            resource.setTarget(hs);
+            resource.setTargetAverageValue(threshold);
         } else {
-            HashMap<String, Object> hs = new HashMap<>();
-            hs.put("type", "Utilization");
-            hs.put("averageUtilization", threshold);
-            resource.setTarget(hs);
+            resource.setTargetAverageUtilization(Integer.parseInt(threshold));
         }
         scalingResourceMetric.setResource(resource);
         return scalingResourceMetric;
