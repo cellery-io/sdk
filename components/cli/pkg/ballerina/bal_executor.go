@@ -136,7 +136,7 @@ func (balExecutor *LocalBalExecutor) Run(fileName string, args []string,
 	return nil
 }
 
-// Version returns the ballerina version.
+// Init initializes a ballerina project in the current working directory
 func (balExecutor *LocalBalExecutor) Init(projectDir string) error {
 	balProjectName := filepath.Base(projectDir) + "_proj"
 	cmd := exec.Command(ballerina, "new", balProjectName)

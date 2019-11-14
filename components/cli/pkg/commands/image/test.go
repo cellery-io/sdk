@@ -288,12 +288,12 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	if isBallerinaProject {
 		fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
 		if fileCopyError != nil {
-			return fmt.Errorf("error occurred while copying %s, %v", constants.BallerinaToml, err)
+			return fmt.Errorf("error occurred while copying %s, %v", constants.BallerinaToml, fileCopyError)
 		}
 	}
 	fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZipTests))
 	if fileCopyError != nil {
-		return fmt.Errorf("error occurred while copying tests folder, %s", err)
+		return fmt.Errorf("error occurred while copying tests folder, %v", fileCopyError)
 	}
 
 	err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
@@ -304,20 +304,20 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	// Change working dir to Bal project
 	err = os.Chdir(testsRoot)
 	if err != nil {
-		return fmt.Errorf("error occurred while changing working directory, %s", err)
+		return fmt.Errorf("error occurred while changing working directory, %v", err)
 	}
 
 	isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
 	if !isExistsSourceBal {
 		fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
 		if fileCopyError != nil {
-			return fmt.Errorf("error occurred while copying source bal file, %s", err)
+			return fmt.Errorf("error occurred while copying source bal file, %v", fileCopyError)
 		}
 	}
 
 	err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, testsRoot)
 	if err != nil {
-		return fmt.Errorf("error occurred while creating the ballerina.conf, %s", err)
+		return fmt.Errorf("error occurred while creating the ballerina.conf, %v", fileCopyError)
 	}
 
 	//if incell {
@@ -367,7 +367,7 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	}
 	if err != nil {
 		StopTelepresence(telepresenceYamlPath)
-		return fmt.Errorf("error occured while running tests in ballerina docker image, %s", err)
+		return fmt.Errorf("error occured while running tests in ballerina docker image, %v", err)
 	}
 	StopTelepresence(telepresenceYamlPath)
 	return nil
@@ -375,7 +375,7 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 func StopTelepresence(filepath string) error {
 	err := kubernetes.DeleteFile(filepath)
 	if err != nil {
-		return fmt.Errorf("error occurred while stopping telepresence %s", err)
+		return fmt.Errorf("error occurred while stopping telepresence %v", err)
 	}
 	return nil
 }
@@ -386,7 +386,7 @@ func PromtConfirmation(assumeYes bool, balProj string) error {
 		var debugMsg string
 		isExists, err := util.FileExists(balConf)
 		if err != nil {
-			return fmt.Errorf("error occured while checking if %s exists, %v", balConf, err)
+			return fmt.Errorf("error occured while checking if %v exists, %v", balConf, err)
 		}
 		if isExists {
 			debugMsg = constants.BallerinaConf + " already exists in project location: " + balProj + ". This will be overridden to debug tests. "
