@@ -71,7 +71,7 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:CellImage helloCell = check cellery:constructCellImage(iName);
+    cellery:CellImage helloCell = check cellery:constructCellImage(<@untainted> iName);
     string vhostName = config:getAsString("VHOST_NAME");
     if (vhostName !== "") {
         cellery:WebIngress web = <cellery:WebIngress>helloCell.components["helloComp"]["ingresses"]["webUI"];
@@ -91,6 +91,8 @@ import ballerina/test;
 import ballerina/io;
 import celleryio/cellery;
 
+cellery:InstanceState[] instanceList = [];
+
 # Handle creation of instances for running tests
 @test:BeforeSuite
 function setup() {
@@ -105,8 +107,6 @@ function setup() {
     } else {
         instanceList = <cellery:InstanceState[]>result;
     }
-    cellery:Reference petBeUrls = <cellery:Reference>cellery:getCellEndpoints(<@untainted> instanceList);
-	PET_BE_CONTROLLER_ENDPOINT= <string>petBeUrls["controller_ingress_api_url"];
 }
 
 # Tests inserting order from an external cell by calling the pet-be gateway
