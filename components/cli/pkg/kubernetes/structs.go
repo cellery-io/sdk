@@ -48,7 +48,8 @@ type Composites struct {
 }
 
 type Cell struct {
-	Component    map[string]ComponentDetail `json:"components"`
+	//TODO: Remove components from Cell Struct
+	Component    map[string]ComponentDetail `json:"components,omitempty"`
 	Kind         string                     `json:"kind"`
 	APIVersion   string                     `json:"apiVersion"`
 	CellMetaData K8SMetaData                `json:"metadata"`
