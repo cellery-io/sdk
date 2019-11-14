@@ -26,6 +26,7 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/cellery-io/sdk/components/cli/cli"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/version"
 )
 
@@ -42,16 +43,14 @@ func RunVersion(cli cli.Cli) error {
 	balVersion, err := cli.BalExecutor().Version()
 	if err != nil {
 		// Having b7a locally is optional since the cellery build and run can be invoked via a docker container.
-		fmt.Fprintln(cli.Out(), " Ballerina not found locally")
+		fmt.Fprintln(cli.Out(), fmt.Sprintf("Ballerina %s not installed locally", constants.BallerinaVersion))
 	} else {
 		fmt.Fprintln(cli.Out(), " Version:\t\t"+strings.TrimSpace(balVersion))
 	}
 	// Printing Kubernetes version information
 	serverVersion, clientVersion, err := cli.KubeCli().Version()
-	_, _ = boldWhite.Fprintln(cli.Out(), "\nKubernetes")
-	if err != nil {
-		return fmt.Errorf("failed to get k8s version, %v", err)
-	} else {
+	if err == nil {
+		_, _ = boldWhite.Fprintln(cli.Out(), "\nKubernetes")
 		fmt.Fprintln(cli.Out(), " Server Version:\t"+serverVersion)
 		fmt.Fprintln(cli.Out(), " Client Version:\t"+clientVersion)
 		fmt.Fprintln(cli.Out(), " CRD:\t\t\ttrue") // TODO

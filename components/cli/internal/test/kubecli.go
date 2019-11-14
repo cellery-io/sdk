@@ -146,7 +146,12 @@ func (kubeCli *MockKubeCli) GetInstanceBytes(instanceKind, InstanceName string) 
 }
 
 func (kubeCli *MockKubeCli) DescribeCell(cellName string) error {
-	return nil
+	for _, cell := range kubeCli.cells.Items {
+		if cell.CellMetaData.Name == cellName {
+			return nil
+		}
+	}
+	return fmt.Errorf(fmt.Sprintf("cell instance %s not found", cellName))
 }
 
 func (kubeCli *MockKubeCli) Version() (string, string, error) {

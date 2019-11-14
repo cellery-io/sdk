@@ -267,7 +267,7 @@ func (balExecutor *DockerBalExecutor) Run(fileName string, args []string, envVar
 
 // Version returns the ballerina version.
 func (balExecutor *DockerBalExecutor) Version() (string, error) {
-	return "", nil
+	return fmt.Sprintf("Ballerina %s not installed locally", constants.BallerinaVersion), nil
 }
 
 // ExecutablePath returns ballerina executable path.

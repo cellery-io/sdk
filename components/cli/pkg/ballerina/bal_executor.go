@@ -168,6 +168,20 @@ func (balExecutor *LocalBalExecutor) Version() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error waiting to get ballerina version, %v", err)
 	}
+	if strings.Contains(version, "Ballerina") {
+		if len(strings.Split(version, "Language")) > 0 {
+			// Ballerina version > 1.0.0
+			balVersionOutput := strings.Split(version, "Language")[0]
+			if len(strings.Split(balVersionOutput, " ")) > 0 {
+				return strings.Split(balVersionOutput, " ")[1], nil
+			}
+		} else {
+			// Ballerina version < 1.0.0
+			if len(strings.Split(version, " ")) > 0 {
+				return strings.Split(version, " ")[1], nil
+			}
+		}
+	}
 	return version, nil
 }
 
@@ -178,13 +192,9 @@ func (balExecutor *LocalBalExecutor) ExecutablePath() (string, error) {
 	if ballerinaVersion, err = balExecutor.Version(); err != nil {
 		return ballerinaInstallationPath()
 	}
-	if strings.Contains(ballerinaVersion, "Ballerina") {
-		if len(strings.Split(ballerinaVersion, " ")) > 0 {
-			if strings.Split(ballerinaVersion, " ")[1] == constants.BallerinaVersion {
-				// If existing ballerina version is as the expected version, execute ballerina run without executable path
-				return ballerina, nil
-			}
-		}
+	if ballerinaVersion == constants.BallerinaVersion {
+		// If existing ballerina version is as the expected version, execute ballerina run without executable path
+		return ballerina, nil
 	}
 	return ballerinaInstallationPath()
 }

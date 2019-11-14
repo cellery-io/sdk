@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
@@ -38,23 +40,38 @@ func TestRunDescribeInstance(t *testing.T) {
 		},
 	}
 	tests := []struct {
-		name     string
-		instance string
-		want     string
-		MockCli  *test.MockCli
+		name             string
+		instance         string
+		MockCli          *test.MockCli
+		expectedToPass   bool
+		expectedErrorMsg string
 	}{
 		{
-			name:     "describe cell instance",
-			want:     "employee",
-			instance: "employee",
-			MockCli:  test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells)))),
+			name:             "describe cell instance",
+			instance:         "employee",
+			MockCli:          test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells)))),
+			expectedToPass:   true,
+			expectedErrorMsg: "",
+		},
+		{
+			name:             "describe non-existing cell instance",
+			instance:         "foo",
+			MockCli:          test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells)))),
+			expectedToPass:   false,
+			expectedErrorMsg: "error describing cell instance, cell instance foo not found",
 		},
 	}
-	for _, testIteration := range tests {
-		t.Run(testIteration.name, func(t *testing.T) {
-			err := RunDescribe(testIteration.MockCli, testIteration.instance)
-			if err != nil {
-				t.Errorf("error in RunDescribe instance")
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunDescribe(tst.MockCli, tst.instance)
+			if tst.expectedToPass {
+				if err != nil {
+					t.Errorf("error in RunDescribe instance")
+				}
+			} else {
+				if diff := cmp.Diff(tst.expectedErrorMsg, err.Error()); diff != "" {
+					t.Errorf("invalid error message (-want, +got)\n%v", diff)
+				}
 			}
 		})
 	}
