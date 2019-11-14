@@ -103,6 +103,16 @@ func (balExecutor *MockBalExecutor) Run(fileName string, args []string, envVars 
 	return nil
 }
 
+// Build mocks execution of ballerina run for tests on an executable bal file.
+func (balExecutor *MockBalExecutor) Test(fileName string, args []string, envVars []*ballerina.EnvironmentVariable) error {
+	return nil
+}
+
+// Build mocks execution of ballerina run for cellery init on an executable bal file.
+func (balExecutor *MockBalExecutor) Init(projectName string) error {
+	return nil
+}
+
 // Version returns the mock ballerina version.
 func (balExecutor *MockBalExecutor) Version() (string, error) {
 	return balExecutor.version, nil
