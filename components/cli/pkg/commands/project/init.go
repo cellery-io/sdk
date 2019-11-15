@@ -269,6 +269,9 @@ func writeCellTemplate(writer io.Writer, cellTemplate string) error {
 func createTestBalFile(balFilePath string) (*os.File, *string, error) {
 	projectTestDir := filepath.Join(filepath.Dir(balFilePath), "tests")
 	isExistsTests, err := util.FileExists(projectTestDir)
+	if err != nil {
+		return nil, nil, err
+	}
 	if isExistsTests {
 		return nil, &projectTestDir, nil
 	}

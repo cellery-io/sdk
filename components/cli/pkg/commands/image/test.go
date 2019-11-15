@@ -280,14 +280,17 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 		} else {
 			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
 		}
-		isTestDirExists, _ := util.FileExists(testsPath)
-		var isBallerinaProject bool
-
-		read, err := ioutil.ReadFile(balFilePath)
-		containsTests := strings.Contains(string(read), "@test")
+		isTestDirExists, err := util.FileExists(testsPath)
 		if err != nil {
 			return err
 		}
+		var isBallerinaProject bool
+
+		read, err := ioutil.ReadFile(balFilePath)
+		if err != nil {
+			return err
+		}
+		containsTests := strings.Contains(string(read), "@test")
 		if !isTestDirExists && !containsTests {
 			return fmt.Errorf("no tests found in the cell image %v", imageTag)
 		}
@@ -298,6 +301,9 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 
 		// Create Ballerina project
 		isBallerinaProject, err = util.FileExists(balTomlPath)
+		if err != nil {
+			return err
+		}
 		if exePath != "" {
 			cmd := exec.Command(exePath, "new", balProjectName)
 			if verbose {
@@ -339,6 +345,9 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 		}
 
 		isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
+		if err != nil {
+			return err
+		}
 		if !isExistsSourceBal {
 			fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
 			if fileCopyError != nil {
