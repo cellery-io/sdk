@@ -447,7 +447,7 @@ Apply a policy/set of policies included in a file to the Cellery runtime targeti
  
  ##### Cellery Apply Policy Autoscale:
  
- Apply a file containing a set of autoscale policies to the given cell instance.
+ Apply a file containing a set of autoscale policies or zero-scale policies to the given cell instance.
  
  ###### Parameters: 
  
@@ -493,6 +493,36 @@ Apply a policy/set of policies included in a file to the Cellery runtime targeti
   gateway:
     scalingPolicy:
       replicas: 1
+  ```
+
+###### Sample zero-scale policy:
+  ```yaml
+  components:
+  - name: controller
+    scalingPolicy:
+      kpa:
+        maxReplicas: 5
+        concurrency: 2
+  - name: catalog
+    scalingPolicy:
+      replicas: 1
+  - name: orders
+    scalingPolicy:
+      replicas: 1
+  - name: customers
+    scalingPolicy:
+      hpa:
+        maxReplicas: 3
+        metrics:
+        - resource:
+            name: memory
+            targetAverageValue: 64Mi
+          type: Resource
+        minReplicas: 1
+  - name: portal
+  gateway: 
+    scalingPolicy:
+          replicas: 1
   ```
   * The flag 'overridable' implies whether the existing policy can be overriden by the same command repeatedly. 
   
