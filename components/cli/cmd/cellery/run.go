@@ -85,7 +85,9 @@ func newRunCommand(cli cli.Cli) *cobra.Command {
 			"-l stock:stock-inst \n" +
 			"  cellery run cellery-samples/employee:1.0.0 -l employee-inst.people-hr:people-hr-inst\n" +
 			"  cellery run cellery-samples/employee:1.0.0 --share-instances " +
-			"-l employee-inst.people-hr:people-hr-inst",
+			"-l employee-inst.people-hr:people-hr-inst\n" +
+			"  cellery run cellery-samples/hr:1.0.0 -n hr-inst -l employee:employee-inst -e host=foo " +
+			"-e employee-inst:host=bar -e hr-inst:mode=dev\n",
 	}
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Name of the cell instance")
 	cmd.Flags().BoolVarP(&startDependencies, "start-dependencies", "d", false,
