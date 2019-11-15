@@ -38,21 +38,30 @@ func TestRunLogs(t *testing.T) {
 		name      string
 		instance  string
 		component string
+		sysLog bool
 	}{
 		{
-			name:      "logs of cell instance",
+			name:      "logs of cell instance (all components)",
 			instance:  "employee",
 			component: "",
+			sysLog:false,
+		},
+		{
+			name:      "logs of cell instance (user components)",
+			instance:  "employee",
+			component: "",
+			sysLog:true,
 		},
 		{
 			name:      "logs of cell component",
 			instance:  "employee",
 			component: "job",
+			sysLog:false,
 		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunLogs(mockCli, tst.instance, tst.component, false)
+			err := RunLogs(mockCli, tst.instance, tst.component, tst.sysLog)
 			if err != nil {
 				t.Errorf("error in RunLogs, %v", err)
 			}
