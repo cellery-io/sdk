@@ -173,8 +173,10 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 		return fmt.Errorf("failed to test Cell instance "+instanceName+", %v", err)
 	}
 	//Remove Ballerina toml and local repo to avoid failing cellery build and run
-	os.Remove(constants.BallerinaToml)
-	os.Remove(constants.BallerinaConf)
+	if !debug {
+		os.Remove(constants.BallerinaToml)
+		os.Remove(constants.BallerinaConf)
+	}
 	util.PrintSuccessMessage(fmt.Sprintf("Completed running tests for instance %s", util.Bold(instanceName)))
 	return nil
 }
@@ -225,98 +227,10 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 		return fmt.Errorf("Ballerina should be installed to debug tests.")
 	}
 	balProjectName := constants.TargetDirName
-	// Construct test artifact names
-	if debug {
-		balProjectName = filepath.Base(projLocation)
-	}
 
 	balTomlPath := filepath.Join(imageDir, constants.ZipBallerinaSource, constants.BallerinaToml)
 	testsPath := filepath.Join(imageDir, constants.ZipTests)
 	testsRoot := filepath.Join(currentDir, balProjectName)
-	var balModule string
-
-	if instanceName != "" {
-		balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
-	} else {
-		balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
-	}
-	isTestDirExists, _ := util.FileExists(testsPath)
-	var isBallerinaProject bool
-
-	read, err := ioutil.ReadFile(balFilePath)
-	containsTests := strings.Contains(string(read), "@test")
-	if err != nil {
-		return err
-	}
-	if !isTestDirExists && !containsTests {
-		return fmt.Errorf("no tests found in the cell image %v", imageTag)
-	}
-
-	err = util.RemoveDir(testsRoot)
-	if err != nil {
-		return fmt.Errorf("error occurred while deleting filepath, %s", err)
-	}
-
-	// Create Ballerina project
-	isBallerinaProject, err = util.FileExists(balTomlPath)
-	if exePath != "" {
-		cmd := exec.Command(exePath, "new", balProjectName)
-		if verbose {
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-		}
-		err = cmd.Run()
-		if err != nil {
-			return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
-		}
-	} else {
-		err = util.CleanOrCreateDir(testsRoot)
-		if err != nil {
-			return fmt.Errorf("error occurred while creating %s, %v", testsRoot, err)
-		}
-	}
-
-	// Copy artifacts for running tests
-	if isBallerinaProject {
-		fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
-		if fileCopyError != nil {
-			return fmt.Errorf("error occurred while copying %s, %v", constants.BallerinaToml, fileCopyError)
-		}
-	}
-	fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZipTests))
-	if fileCopyError != nil {
-		return fmt.Errorf("error occurred while copying tests folder, %v", fileCopyError)
-	}
-
-	err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
-	if err != nil {
-		return fmt.Errorf("error occurred while creating %s, %v", filepath.Join(testsRoot, "logs"), err)
-	}
-
-	// Change working dir to Bal project
-	err = os.Chdir(testsRoot)
-	if err != nil {
-		return fmt.Errorf("error occurred while changing working directory, %v", err)
-	}
-
-	isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
-	if !isExistsSourceBal {
-		fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
-		if fileCopyError != nil {
-			return fmt.Errorf("error occurred while copying source bal file, %v", fileCopyError)
-		}
-	}
-
-	err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, testsRoot)
-	if err != nil {
-		return fmt.Errorf("error occurred while creating the ballerina.conf, %v", fileCopyError)
-	}
-
-	//if incell {
-	//	cmdArgs = append(cmdArgs, "--groups", "incell")
-	//} else {
-	//	cmdArgs = append(cmdArgs, "--disable-groups", "incell")
-	//}
 
 	var balEnvVars []*ballerina.EnvironmentVariable
 	// Set celleryImageDirEnvVar environment variable.
@@ -346,13 +260,98 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 		return fmt.Errorf("failed to get run command arguements, %v", err)
 	}
 
+	// Construct test artifact names
 	if debug {
+		balProjectName = filepath.Base(projLocation)
+		testsRoot, err = filepath.Abs(projLocation)
+		if err != nil {
+			return err
+		}
 		PromtConfirmation(assumeYes, testsRoot)
 		balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
 			Key:   "DEBUG",
 			Value: "true",
 		})
+	} else {
+		var balModule string
+
+		if instanceName != "" {
+			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
+		} else {
+			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
+		}
+		isTestDirExists, _ := util.FileExists(testsPath)
+		var isBallerinaProject bool
+
+		read, err := ioutil.ReadFile(balFilePath)
+		containsTests := strings.Contains(string(read), "@test")
+		if err != nil {
+			return err
+		}
+		if !isTestDirExists && !containsTests {
+			return fmt.Errorf("no tests found in the cell image %v", imageTag)
+		}
+		err = util.RemoveDir(testsRoot)
+		if err != nil {
+			return fmt.Errorf("error occurred while deleting filepath, %s", err)
+		}
+
+		// Create Ballerina project
+		isBallerinaProject, err = util.FileExists(balTomlPath)
+		if exePath != "" {
+			cmd := exec.Command(exePath, "new", balProjectName)
+			if verbose {
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+			}
+			err = cmd.Run()
+			if err != nil {
+				return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
+			}
+		} else {
+			err = util.CleanOrCreateDir(testsRoot)
+			if err != nil {
+				return fmt.Errorf("error occurred while creating %s, %v", testsRoot, err)
+			}
+		}
+
+		// Copy artifacts for running tests
+		if isBallerinaProject {
+			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
+			if fileCopyError != nil {
+				return fmt.Errorf("error occurred while copying %s, %v", constants.BallerinaToml, fileCopyError)
+			}
+		}
+		fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZipTests))
+		if fileCopyError != nil {
+			return fmt.Errorf("error occurred while copying tests folder, %v", fileCopyError)
+		}
+
+		err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
+		if err != nil {
+			return fmt.Errorf("error occurred while creating %s, %v", filepath.Join(testsRoot, "logs"), err)
+		}
+
+		// Change working dir to Bal project
+		err = os.Chdir(testsRoot)
+		if err != nil {
+			return fmt.Errorf("error occurred while changing working directory, %v", err)
+		}
+
+		isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
+		if !isExistsSourceBal {
+			fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
+			if fileCopyError != nil {
+				return fmt.Errorf("error occurred while copying source bal file, %v", fileCopyError)
+			}
+		}
 	}
+
+	err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, testsRoot)
+	if err != nil {
+		return fmt.Errorf("error occurred while creating the ballerina.conf, %v", err)
+	}
+
 	if err = cli.BalExecutor().Test(filepath.Join(testsRoot, constants.BallerinaConf), testCmdArgs, balEnvVars); err != nil {
 		StopTelepresence(telepresenceYamlPath)
 		return fmt.Errorf("failed to run bal file, %v", err)

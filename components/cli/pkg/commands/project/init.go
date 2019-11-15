@@ -209,9 +209,14 @@ func initTest(cli cli.Cli, balFile string) error {
 	}
 
 	writer, projectTestDir, err := createTestBalFile(balAbsPath)
-	err = writeCellTemplate(writer, TestTemplate)
 	if err != nil {
 		return err
+	}
+	if writer != nil {
+		err = writeCellTemplate(writer, TestTemplate)
+		if err != nil {
+			return err
+		}
 	}
 
 	//Create ballerina project
@@ -263,7 +268,11 @@ func writeCellTemplate(writer io.Writer, cellTemplate string) error {
 // createBalFile creates a bal file at the current location.
 func createTestBalFile(balFilePath string) (*os.File, *string, error) {
 	projectTestDir := filepath.Join(filepath.Dir(balFilePath), "tests")
-	err := util.CreateDir(projectTestDir)
+	isExistsTests, err := util.FileExists(projectTestDir)
+	if isExistsTests {
+		return nil, &projectTestDir, nil
+	}
+	err = util.CreateDir(projectTestDir)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize tests, %v", err)
 	}
