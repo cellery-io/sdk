@@ -269,6 +269,10 @@ public class CreateInstance {
             // Apply yaml file of the instance
             KubernetesClient.apply(cellYAMLPath);
             KubernetesClient.waitFor("Ready", 30 * 60, instanceArg, "default");
+            if (CelleryConstants.CELL.equals(image.getStringValue("kind"))) {
+                KubernetesClient.waitFor("Available", 30 * 60, "deployments.apps/" +
+                        instanceName + "--sts-deployment", "default");
+            }
             return bValueArray;
         } catch (IOException e) {
             String error = "Unable to persist updated composite yaml " + destinationPath;
