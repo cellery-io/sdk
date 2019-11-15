@@ -23,6 +23,7 @@ import (
 
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestRunListDependencies(t *testing.T) {
@@ -36,12 +37,6 @@ func TestRunListDependencies(t *testing.T) {
 			},
 			{
 				CellMetaData: kubernetes.K8SMetaData{
-					Name:              "stock",
-					CreationTimestamp: "2019-10-19T11:40:36Z",
-				},
-			},
-			{
-				CellMetaData: kubernetes.K8SMetaData{
 					Name:              "hr",
 					CreationTimestamp: "2019-10-19T11:40:36Z",
 					Annotations: kubernetes.CellAnnotations{
@@ -51,23 +46,76 @@ func TestRunListDependencies(t *testing.T) {
 			},
 		},
 	}
-	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells))
+	composites := kubernetes.Composites{
+		Items: []kubernetes.Composite{
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "stock",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "foo",
+					CreationTimestamp: "2019-10-19T11:40:36Z",
+					Annotations: kubernetes.CellAnnotations{
+						Dependencies: "[{\"org\":\"myorg\",\"bar\":\"employee\",\"version\":\"1.0.0\",\"instance\":\"bar\",\"kind\":\"Composite\"},{\"org\":\"myorg\",\"name\":\"zoo\",\"version\":\"1.0.0\",\"instance\":\"zoo\",\"kind\":\"Composite\"}]",
+					},
+				},
+			},
+		},
+	}
+	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))
 	mockCli := test.NewMockCli(test.SetKubeCli(mockKubeCli))
 
 	tests := []struct {
-		name     string
-		instance string
+		name             string
+		instance         string
+		expectedToPass   bool
+		expectedErrorMsg string
 	}{
 		{
-			name:     "list dependencies",
-			instance: "hr",
+			name:             "list dependencies of cell instance with dependencies",
+			instance:         "hr",
+			expectedToPass:   true,
+			expectedErrorMsg: "",
+		},
+		{
+			name:             "list dependencies of cell instance without dependencies",
+			instance:         "employee",
+			expectedToPass:   false,
+			expectedErrorMsg: "no dependencies found in instance employee",
+		},
+		{
+			name:             "list dependencies of composite instance with dependencies",
+			instance:         "foo",
+			expectedToPass:   true,
+			expectedErrorMsg: "",
+		},
+		{
+			name:             "list dependencies of composite instance without dependencies",
+			instance:         "stock",
+			expectedToPass:   false,
+			expectedErrorMsg: "no dependencies found in instance stock",
+		},
+		{
+			name:             "list dependencies of non-existing instance",
+			instance:         "hello",
+			expectedToPass:   false,
+			expectedErrorMsg: "failed to retrieve dependencies of hello, instance not available in the runtime",
 		},
 	}
-	for _, testIteration := range tests {
-		t.Run(testIteration.name, func(t *testing.T) {
-			err := RunListDependencies(mockCli, testIteration.instance)
-			if err != nil {
-				t.Errorf("error in RunListDependencies, %v", err)
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunListDependencies(mockCli, tst.instance)
+			if tst.expectedToPass {
+				if err != nil {
+					t.Errorf("error in RunListDependencies, %v", err)
+				}
+			} else {
+				if diff := cmp.Diff(tst.expectedErrorMsg, err.Error()); diff != "" {
+					t.Errorf("invalid error message (-want, +got)\n%v", diff)
+				}
 			}
 		})
 	}

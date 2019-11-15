@@ -48,13 +48,18 @@ func TestRunExtractResources(t *testing.T) {
 	}{
 		{
 			name:    "extract resources of existing cell image with output path",
-			image:   "myorg/hello:1.0.0",
+			image:   "myorg/employee:1.0.0",
 			outPath: extractDir,
 		},
 		{
 			name:    "extract resources of existing cell image without output path",
-			image:   "myorg/hello:1.0.0",
+			image:   "myorg/employee:1.0.0",
 			outPath: "",
+		},
+		{
+			name:    "extract resources of existing cell image (without resources) with output path",
+			image:   "myorg/hello:1.0.0",
+			outPath: extractDir,
 		},
 	}
 	for _, testIteration := range tests {

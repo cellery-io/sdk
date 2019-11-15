@@ -61,7 +61,7 @@ func RunListDependencies(cli cli.Cli, instanceName string) error {
 		return err
 	}
 	if len(dependencies) == 0 {
-		return fmt.Errorf("no dependencies found in cell instance %s", instanceName)
+		return fmt.Errorf("no dependencies found in instance %s", instanceName)
 	}
 	var tableData [][]string
 	for _, dependency := range dependencies {
