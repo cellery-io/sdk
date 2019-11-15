@@ -22,7 +22,8 @@ GIT_REVISION := $(shell git rev-parse --verify HEAD)
 BALLERINA_VERSION ?= 1.0.3
 
 DISTRIBUTION_VERSION ?= master
-DISTRIBUTION_ARTIFACTS := https://github.com/wso2-cellery/distribution/archive/$(DISTRIBUTION_VERSION).zip
+DISTRIBUTION_ARCHIVE_VERSION ?= master
+DISTRIBUTION_ARTIFACTS := https://github.com/wso2-cellery/distribution/archive/$(DISTRIBUTION_ARCHIVE_VERSION).zip
 OBSERVABILITY_BUILD ?= lastSuccessfulBuild
 
 OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/$(OBSERVABILITY_BUILD)
@@ -97,7 +98,7 @@ copy-k8s-artefacts:
 	cd ${PROJECT_ROOT}/installers; \
 	mkdir -p build-artifacts && cd build-artifacts;\
 	curl -LO --retry 5 $(DISTRIBUTION_ARTIFACTS); \
-	unzip $(DISTRIBUTION_VERSION).zip && mv distribution-$(DISTRIBUTION_VERSION)/installer/k8s-artefacts .; \
+	unzip $(DISTRIBUTION_ARCHIVE_VERSION).zip && mv distribution-$(DISTRIBUTION_VERSION)/installer/k8s-artefacts .; \
 	curl --retry 5 $(OBSERVABILITY_ARTIFACTS_PATH)/$(OBSERVABILITY_ARTIFACTS) --output $(OBSERVABILITY_ARTIFACTS); \
 	unzip $(OBSERVABILITY_ARTIFACTS); \
 	unzip $(OBSERVABILITY_SIDDHI_ARTIFACT) -d k8s-artefacts/observability/siddhi; \
