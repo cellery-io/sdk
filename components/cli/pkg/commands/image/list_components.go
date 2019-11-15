@@ -52,10 +52,13 @@ func RunListComponents(cli cli.Cli, name string) error {
 
 func getCellImageCompoents(cli cli.Cli, cellImage string) ([]string, error) {
 	var components []string
-	cellYamlContent := image.ReadCellImageYaml(cli.FileSystem().Repository(), cellImage)
+	cellYamlContent, err := image.ReadCellImageYaml(cli.FileSystem().Repository(), cellImage)
+	if err != nil {
+		return nil, fmt.Errorf("error while reading cell image content, %v", err)
+	}
 	cellImageContent := &image.Cell{}
 	if err := yaml.Unmarshal(cellYamlContent, cellImageContent); err != nil {
-		return nil, fmt.Errorf("error while reading cell image content, %v", err)
+		return nil, fmt.Errorf("error while unmarshalling cell image content, %v", err)
 	}
 	for _, component := range cellImageContent.Spec.Components {
 		components = append(components, component.Metadata.Name)

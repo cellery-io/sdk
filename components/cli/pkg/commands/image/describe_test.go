@@ -82,22 +82,39 @@ func TestRunDescribeImage(t *testing.T) {
 	mockFileSystem := test.NewMockFileSystem(test.SetRepository(mockRepo))
 	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem))
 	tests := []struct {
-		name    string
-		image   string
-		want    string
-		MockCli *test.MockCli
+		name             string
+		image            string
+		want             string
+		expectedToPass   bool
+		expectedErrorMsg string
+		MockCli          *test.MockCli
 	}{
 		{
-			name:  "describe cell instance",
-			want:  "employee",
-			image: "myorg/hello:1.0.0",
+			name:             "describe cell image",
+			want:             "employee",
+			image:            "myorg/hello:1.0.0",
+			expectedToPass:   true,
+			expectedErrorMsg: "",
+		},
+		{
+			name:             "describe cell non-existing image",
+			want:             "employee",
+			image:            "foo/bar:1.0.0",
+			expectedToPass:   false,
+			expectedErrorMsg: "error describing cell image, error occurred while extracting cell image, open testdata/repo/foo/bar/1.0.0/bar.zip: no such file or directory",
 		},
 	}
-	for _, testIteration := range tests {
-		t.Run(testIteration.name, func(t *testing.T) {
-			err := RunDescribe(mockCli, testIteration.image)
-			if err != nil {
-				t.Errorf("error in RunDescribe image")
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			err := RunDescribe(mockCli, tst.image)
+			if tst.expectedToPass {
+				if err != nil {
+					t.Errorf("error in RunDescribe image")
+				}
+			} else {
+				if diff := cmp.Diff(tst.expectedErrorMsg, err.Error()); diff != "" {
+					t.Errorf("invalid error message (-want, +got)\n%v", diff)
+				}
 			}
 		})
 	}

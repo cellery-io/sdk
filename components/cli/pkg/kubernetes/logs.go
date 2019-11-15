@@ -56,7 +56,7 @@ func (kubeCli *CelleryKubeCli) GetComponentLogs(cellName, componentName string) 
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
-		constants.GroupName+"/cell="+cellName + "," + constants.GroupName+"/component",
+		constants.GroupName+"/cell="+cellName+","+constants.GroupName+"/component",
 		"-c",
 		componentName,
 	)

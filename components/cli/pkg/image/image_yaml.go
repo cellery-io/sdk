@@ -20,6 +20,7 @@
 package image
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -28,7 +29,7 @@ import (
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func ReadCellImageYaml(repo, cellImage string) []byte {
+func ReadCellImageYaml(repo, cellImage string) ([]byte, error) {
 	parsedCellImage, err := ParseImageTag(cellImage)
 	cellImageZip := path.Join(repo, parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion, parsedCellImage.ImageName+constants.CellImageExt)
@@ -40,17 +41,17 @@ func ReadCellImageYaml(repo, cellImage string) []byte {
 	}
 	err = util.Unzip(cellImageZip, tmpPath)
 	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while extracting cell image", err)
+		return nil, fmt.Errorf("error occurred while extracting cell image, %v", err)
 	}
 	cellYamlContent, err := ioutil.ReadFile(filepath.Join(tmpPath, constants.ZipArtifacts, "cellery",
 		parsedCellImage.ImageName+".yaml"))
 	if err != nil {
-		util.ExitWithErrorMessage("Error while reading cell image content", err)
+		return nil, fmt.Errorf("error while reading cell image content, %v", err)
 	}
 	// Delete tmp directory
 	err = util.CleanOrCreateDir(tmpPath)
 	if err != nil {
-		util.ExitWithErrorMessage("Error while deleting temporary file", err)
+		return nil, fmt.Errorf("error while deleting temporary file, %v", err)
 	}
-	return cellYamlContent
+	return cellYamlContent, nil
 }

@@ -83,8 +83,7 @@ func RunExtractResources(cli cli.Cli, cellImage string, outputPath string) error
 		fmt.Fprintf(cli.Out(), fmt.Sprintf("\nExtracted Resources: %s", util.Bold(absOutputPath)))
 		util.PrintSuccessMessage(fmt.Sprintf("Successfully extracted cell image resources: %s", util.Bold(cellImage)))
 	} else {
-		fmt.Fprintf(cli.Out(), fmt.Sprintf("\n%s No resources available in %s\n", util.CyanBold("\U00002139"),
-			util.Bold(cellImage)))
+		fmt.Fprintf(cli.Out(), fmt.Sprintf("\nNo resources available in %s\n", util.Bold(cellImage)))
 	}
 	return nil
 }

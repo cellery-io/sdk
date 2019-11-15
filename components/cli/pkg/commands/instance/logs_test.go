@@ -38,25 +38,25 @@ func TestRunLogs(t *testing.T) {
 		name      string
 		instance  string
 		component string
-		sysLog bool
+		sysLog    bool
 	}{
 		{
 			name:      "logs of cell instance (all components)",
 			instance:  "employee",
 			component: "",
-			sysLog:false,
+			sysLog:    false,
 		},
 		{
 			name:      "logs of cell instance (user components)",
 			instance:  "employee",
 			component: "",
-			sysLog:true,
+			sysLog:    true,
 		},
 		{
 			name:      "logs of cell component",
 			instance:  "employee",
 			component: "job",
-			sysLog:false,
+			sysLog:    false,
 		},
 	}
 	for _, tst := range tests {

@@ -21,9 +21,10 @@ package instance
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cellery-io/sdk/components/cli/internal/test"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestRunListDependencies(t *testing.T) {

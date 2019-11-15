@@ -37,7 +37,11 @@ func RunDescribe(cli cli.Cli, name string) error {
 		}
 	} else {
 		// If the input of user is a cell image print the cell yaml
-		fmt.Fprintln(cli.Out(), string(image.ReadCellImageYaml(cli.FileSystem().Repository(), name)))
+		cellYamlContent, err := image.ReadCellImageYaml(cli.FileSystem().Repository(), name)
+		if err != nil {
+			return fmt.Errorf("error describing cell image, %v", err)
+		}
+		fmt.Fprintln(cli.Out(), string(cellYamlContent))
 	}
 	return nil
 }

@@ -204,11 +204,14 @@ func displayCellInstanceApisTable(cli cli.Cli, cell kubernetes.Cell, cellInstanc
 }
 
 func displayImageApisTable(cli cli.Cli, imageName string) error {
-	cellYamlContent := image.ReadCellImageYaml(cli.FileSystem().Repository(), imageName)
-	cellImageContent := &image.Cell{}
-	err := yaml.Unmarshal(cellYamlContent, cellImageContent)
+	cellYamlContent, err := image.ReadCellImageYaml(cli.FileSystem().Repository(), imageName)
 	if err != nil {
 		return fmt.Errorf("error while reading cell image content, %v", err)
+	}
+	cellImageContent := &image.Cell{}
+	err = yaml.Unmarshal(cellYamlContent, cellImageContent)
+	if err != nil {
+		return fmt.Errorf("error while unmarshalling cell image content, %v", err)
 	}
 
 	if cellImageContent.Kind == "Cell" {
