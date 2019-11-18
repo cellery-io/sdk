@@ -962,7 +962,7 @@ public class CreateInstance {
         String image = registry + File.separator + org + File.separator + name + ":" + version;
         printInfo("Pulling image " + image);
         CelleryUtils.executeShellCommand(null, CelleryUtils::printInfoWithCarriageReturn,
-                CelleryUtils::printInfoWithCarriageReturn, environment, "io/cellery", "pull", "--silent", image);
+                CelleryUtils::printInfoWithCarriageReturn, environment, "cellery", "pull", "--silent", image);
         printInfo("\nImage pull completed.");
     }
 
