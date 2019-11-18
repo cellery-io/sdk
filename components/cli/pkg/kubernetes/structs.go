@@ -152,10 +152,12 @@ type Ingress struct {
 type Extensions struct {
 	ApiPublisher   ApiPublisherConfig `json:"apiPublisher,omitempty"`
 	ClusterIngress ClusterIngress     `json:"clusterIngress"`
+	Oidc           interface{}        `json:"oidc,omitempty"`
 }
 
 type ClusterIngress struct {
-	Host string `json:"host"`
+	Host string      `json:"host,omitempty"`
+	Tls  interface{} `json:"tls,omitempty"`
 }
 
 type GatewayHttpApi struct {
@@ -180,10 +182,10 @@ type APIDefinition struct {
 }
 
 type ApiPublisherConfig struct {
-	Authenticate bool   `json:"authenticate"`
-	Backend      string `json:"backend"`
-	Context      string `json:"context"`
-	Version      string `json:"version"`
+	Authenticate bool   `json:"authenticate,omitempty"`
+	Backend      string `json:"backend,omitempty"`
+	Context      string `json:"context,omitempty"`
+	Version      string `json:"version,omitempty"`
 }
 
 type GatewayTcpApi struct {
