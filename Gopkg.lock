@@ -191,6 +191,20 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:1d1cbf539d9ac35eb3148129f96be5537f1a1330cadcc7e3a83b4e72a59672a3"
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/internal/diff",
+    "cmp/internal/flags",
+    "cmp/internal/function",
+    "cmp/internal/value",
+  ]
+  pruneopts = "UT"
+  revision = "2d0692c2e9617365a95b295612ac0d4415ba4627"
+  version = "v0.3.1"
+
+[[projects]]
   digest = "1:856bd1e35f6da8ce5671a5df09d0e89bf01e9b74b3dabb6d097d39b3813801e1"
   name = "github.com/googleapis/gax-go"
   packages = ["v2"]
@@ -608,6 +622,7 @@
     "github.com/docker/libtrust",
     "github.com/fatih/color",
     "github.com/ghodss/yaml",
+    "github.com/google/go-cmp/cmp",
     "github.com/manifoldco/promptui",
     "github.com/mattbaird/jsonpatch",
     "github.com/nokia/docker-registry-client/registry",

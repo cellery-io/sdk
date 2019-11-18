@@ -52,19 +52,19 @@ func RunStatus(cli cli.Cli, instance string) error {
 				return fmt.Errorf("error checking if composite exists, %v", err)
 			}
 		}
-		return displayCompositeStatus(instance, creationTime, status)
+		return displayCompositeStatus(cli, instance, creationTime, status)
 	} else {
-		return displayCellStatus(instance, creationTime, status)
+		return displayCellStatus(cli, instance, creationTime, status)
 	}
 	return nil
 }
 
-func displayCellStatus(instance, cellCreationTime, cellStatus string) error {
+func displayCellStatus(cli cli.Cli, instance, cellCreationTime, cellStatus string) error {
 	displayStatusSummaryTable(cellCreationTime, cellStatus)
 	fmt.Println()
 	fmt.Println("  -COMPONENTS-")
 	fmt.Println()
-	pods, err := kubernetes.GetPodsForCell(instance)
+	pods, err := cli.KubeCli().GetPodsForCell(instance)
 	if err != nil {
 		return fmt.Errorf("error getting pods information of cell %s, %v", instance, err)
 	}
@@ -72,12 +72,12 @@ func displayCellStatus(instance, cellCreationTime, cellStatus string) error {
 	return nil
 }
 
-func displayCompositeStatus(instance, cellCreationTime, cellStatus string) error {
+func displayCompositeStatus(cli cli.Cli, instance, cellCreationTime, cellStatus string) error {
 	displayStatusSummaryTable(cellCreationTime, cellStatus)
 	fmt.Println()
 	fmt.Println("  -COMPONENTS-")
 	fmt.Println()
-	pods, err := kubernetes.GetPodsForComposite(instance)
+	pods, err := cli.KubeCli().GetPodsForComposite(instance)
 	if err != nil {
 		return fmt.Errorf("error getting pods information of composite %s, %v", instance, err)
 	}

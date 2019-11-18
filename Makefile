@@ -57,16 +57,14 @@ GO_LDFLAGS += -X $(PROJECT_PKG)/components/cli/pkg/version.buildTime=$(shell dat
 DOCKER_REPO ?= wso2cellery
 DOCKER_IMAGE_TAG ?= $(VERSION)
 
-all: code.format build-lang build-docs-view test-cli build-cli
+all: code.format build-lang build-docs-view build-cli test-cli
 
 .PHONY: install
 install: install-lang install-cli install-docs-view
 
 .PHONY: test-cli
 test-cli:
-	for f in $(shell ls ${PROJECT_ROOT}/components/cli/pkg/commands); do \
-	cd ${PROJECT_ROOT}/components/cli/pkg/commands/$${f} && go test; \
-	done
+	go test -race -covermode=atomic -coverprofile=$(PROJECT_ROOT)/coverage.txt ./components/cli/pkg/commands/...
 
 .PHONY: build-lang
 build-lang:

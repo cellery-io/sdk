@@ -45,6 +45,8 @@ type KubeCli interface {
 	ApplyFile(file string) error
 	GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error)
 	GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{}, error)
+	GetPodsForCell(cellName string) (Pods, error)
+	GetPodsForComposite(compName string) (Pods, error)
 }
 
 type CelleryKubeCli struct {

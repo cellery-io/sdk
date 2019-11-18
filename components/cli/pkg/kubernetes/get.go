@@ -262,7 +262,7 @@ func GetComposite(compositeName string) (Composite, error) {
 	return jsonOutput, err
 }
 
-func GetPodsForCell(cellName string) (Pods, error) {
+func (kubeCli *CelleryKubeCli) GetPodsForCell(cellName string) (Pods, error) {
 	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"pods",
@@ -281,7 +281,7 @@ func GetPodsForCell(cellName string) (Pods, error) {
 	return jsonOutput, err
 }
 
-func GetPodsForComposite(compName string) (Pods, error) {
+func (kubeCli *CelleryKubeCli) GetPodsForComposite(compName string) (Pods, error) {
 	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"pods",

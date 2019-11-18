@@ -34,7 +34,7 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:CellImage helloCell = check cellery:constructCellImage(iName);
+    cellery:CellImage helloCell = check cellery:constructCellImage(<@untainted> iName);
     string vhostName = config:getAsString("VHOST_NAME");
     if (vhostName !== "") {
         cellery:WebIngress web = <cellery:WebIngress>helloCell.components["helloComp"]["ingresses"]["webUI"];

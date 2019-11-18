@@ -192,3 +192,11 @@ func (kubeCli *MockKubeCli) GetCellInstanceAsMapInterface(cell string) (map[stri
 func (kubeCli *MockKubeCli) GetCompositeInstanceAsMapInterface(composite string) (map[string]interface{}, error) {
 	return nil, nil
 }
+
+func (kubeCli *MockKubeCli) GetPodsForCell(cellName string) (kubernetes.Pods, error) {
+	return kubernetes.Pods{}, nil
+}
+
+func (kubeCli *MockKubeCli) GetPodsForComposite(compName string) (kubernetes.Pods, error) {
+	return kubernetes.Pods{}, nil
+}
