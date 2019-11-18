@@ -138,20 +138,21 @@ func displayCellInstanceApisTable(cli cli.Cli, cell kubernetes.Cell, cellInstanc
 			tableData = append(tableData, tableRecord)
 		}
 		for j := 0; j < len(apiArray[i].Definitions); j++ {
+			gatewayUrl := url
 			path := apiArray[i].Definitions[j].Path
 			method := apiArray[i].Definitions[j].Method
 			// Add the path of the API definition
 			if path != "/" {
-				if !strings.HasSuffix(url, "/") {
+				if !strings.HasSuffix(gatewayUrl, "/") {
 					if !strings.HasPrefix(path, "/") {
-						url += "/"
+						gatewayUrl += "/"
 					}
 				} else {
 					if strings.HasPrefix(path, "/") {
-						url = strings.TrimSuffix(url, "/")
+						gatewayUrl = strings.TrimSuffix(gatewayUrl, "/")
 					}
 				}
-				url += path
+				gatewayUrl += path
 			}
 			// Add the global api url if globally exposed
 			globalUrl := ""
@@ -164,7 +165,7 @@ func displayCellInstanceApisTable(cli cli.Cli, cell kubernetes.Cell, cellInstanc
 					globalUrl = constants.Wso2ApimHost + strings.Replace("/"+globalUrlContext+"/"+context+"/"+globalUrlVersion, "//", "/", -1)
 				}
 			}
-			tableRecord := []string{context, ingressType, version, method, path, url, globalUrl}
+			tableRecord := []string{context, ingressType, version, method, path, gatewayUrl, globalUrl}
 			tableData = append(tableData, tableRecord)
 		}
 	}
