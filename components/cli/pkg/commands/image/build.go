@@ -317,7 +317,7 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 	currentTime := time.Now()
 	timestamp := currentTime.Format("27065102350415")
 	imgDir := filepath.Join(cli.FileSystem().TempDir(), timestamp)
-	
+
 	if err = util.CopyDir(targetDir, filepath.Join(imgDir, artifacts)); err != nil {
 		return "", fmt.Errorf("error occurred copying artifacts directory, %v", err)
 	}
@@ -331,7 +331,7 @@ func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) 
 	if err != nil {
 		return "", err
 	}
-	
+
 	balParent := filepath.Dir(filepath.Join(absFilePath))
 	if balParent == "." {
 		absBalParent, err := filepath.Abs(balParent)
