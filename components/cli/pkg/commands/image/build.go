@@ -96,9 +96,10 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	}
 	// Create the artifacts zip file.
 	artifactsZip := parsedCellImage.ImageName + cellImageExt
+	var zipSrc string
 	if err = cli.ExecuteTask("Creating the cell image zip file", "Failed to create the image zip",
 		"", func() error {
-			err := createArtifactsZip(cli, artifactsZip, projectDir, fileName)
+			zipSrc, err = createArtifactsZip(cli, artifactsZip, projectDir, fileName)
 			return err
 		}); err != nil {
 		return err
@@ -118,7 +119,6 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	if err = util.CreateDir(repoLocation); err != nil {
 		return fmt.Errorf("error occurred while creating image location, %v", err)
 	}
-	zipSrc := filepath.Join(projectDir, artifactsZip)
 	zipDst := filepath.Join(repoLocation, artifactsZip)
 
 	if err = util.CopyFile(zipSrc, zipDst); err != nil {
@@ -311,64 +311,69 @@ func executeTempBalFile(ballerinaExecutor ballerina.BalExecutor, tempBuildFileNa
 	return nil
 }
 
-func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) error {
+func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) (string, error) {
 	var err error
 	targetDir := filepath.Join(projectDir, "target")
-	if err = util.CopyDir(targetDir, filepath.Join(projectDir, artifacts)); err != nil {
-		return fmt.Errorf("error occurred copying artifacts directory, %v", err)
+	currentTime := time.Now()
+	timestamp := currentTime.Format("27065102350415")
+	imgDir := filepath.Join(cli.FileSystem().TempDir(), timestamp)
+	
+	if err = util.CopyDir(targetDir, filepath.Join(imgDir, artifacts)); err != nil {
+		return "", fmt.Errorf("error occurred copying artifacts directory, %v", err)
 	}
-	if err = util.CleanOrCreateDir(filepath.Join(projectDir, src)); err != nil {
-		return fmt.Errorf("error occurred while creating src directory, %v", err)
+	if err = util.CleanOrCreateDir(filepath.Join(imgDir, src)); err != nil {
+		return "", fmt.Errorf("error occurred while creating src directory, %v", err)
 	}
-	if err = util.CopyFile(fileName, filepath.Join(projectDir, src, filepath.Base(fileName))); err != nil {
-		return fmt.Errorf("error occurred copying bal file to src directory, %v", err)
+	if err = util.CopyFile(fileName, filepath.Join(imgDir, src, filepath.Base(fileName))); err != nil {
+		return "", fmt.Errorf("error occurred copying bal file to src directory, %v", err)
 	}
-	balParent := filepath.Dir(filepath.Join(fileName))
+	absFilePath, err := filepath.Abs(fileName)
+	if err != nil {
+		return "", err
+	}
+	
+	balParent := filepath.Dir(filepath.Join(absFilePath))
 	if balParent == "." {
 		absBalParent, err := filepath.Abs(balParent)
 		if err != nil {
-			return fmt.Errorf("error while retrieving absolute path of current directory, %v", err)
+			return "", fmt.Errorf("error while retrieving absolute path of current directory, %v", err)
 		}
 		balParent = absBalParent
 	}
-	balTomlParent := filepath.Dir(balParent)
+	balTomlParent := filepath.Dir(filepath.Dir(filepath.Dir(filepath.Join(absFilePath))))
 	var balTomlfileExist bool
 	if balTomlfileExist, err = util.FileExists(filepath.Join(balTomlParent, ballerinaToml)); err != nil {
-		return fmt.Errorf("error occurred while checking if Ballerina.toml exists, %v", err)
+		return "", fmt.Errorf("error occurred while checking if Ballerina.toml exists, %v", err)
 	}
 	if balTomlfileExist {
 		if err = util.CopyFile(filepath.Join(balTomlParent, ballerinaToml),
-			filepath.Join(projectDir, src, ballerinaToml)); err != nil {
-			return fmt.Errorf("error occured while copying the %s, %v", ballerinaToml, err)
-		}
-		if err = util.CopyDir(filepath.Join(balTomlParent, ballerinaLocalRepo),
-			filepath.Join(projectDir, src, ballerinaLocalRepo)); err != nil {
-			return fmt.Errorf("error occured while copying the %s, %v", ballerinaLocalRepo, err)
+			filepath.Join(imgDir, src, ballerinaToml)); err != nil {
+			return "", fmt.Errorf("error occured while copying the %s, %v", ballerinaToml, err)
 		}
 	}
 	isTestDirExists, _ := util.FileExists(filepath.Join(balParent, constants.ZipTests))
-	folders := []string{filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifacts), filepath.Join(cli.FileSystem().WorkingDirRelativePath(), src)}
+	folders := []string{filepath.Join(imgDir, artifacts), filepath.Join(imgDir, src)}
 
-	if balParent != projectDir && isTestDirExists {
+	if balParent != imgDir && isTestDirExists {
 		if err = util.CopyDir(filepath.Join(balParent, constants.ZipTests),
-			filepath.Join(projectDir, constants.ZipTests)); err != nil {
-			return fmt.Errorf("error occured while copying the %s, %v", constants.ZipTests, err)
+			filepath.Join(imgDir, constants.ZipTests)); err != nil {
+			return "", fmt.Errorf("error occured while copying the %s, %v", constants.ZipTests, err)
 		}
 	}
 	if isTestDirExists {
-		folders = append(folders, filepath.Join(cli.FileSystem().WorkingDirRelativePath(), constants.ZipTests))
+		folders = append(folders, filepath.Join(imgDir, constants.ZipTests))
 	}
 	// Todo: Check if WorkingDirRelativePath could be omitted.
 	// For actual scenario WorkingDirRelativePath == ""
 	// However, since the current dir is different to the running location, exact path has to be provided when running unit tests.
-	if err = util.RecursiveZip(nil, folders, filepath.Join(cli.FileSystem().WorkingDirRelativePath(), artifactsZip)); err != nil {
-		return fmt.Errorf("error occurred while creating the image, %v", err)
+	if err = util.RecursiveZip(nil, folders, filepath.Join(imgDir, artifactsZip)); err != nil {
+		return "", fmt.Errorf("error occurred while creating the image, %v", err)
 	}
-	if err = os.RemoveAll(filepath.Join(projectDir, artifacts)); err != nil {
-		return fmt.Errorf("error occurred while removing artifacts dir, %v", err)
+	if err = os.RemoveAll(filepath.Join(imgDir, artifacts)); err != nil {
+		return "", fmt.Errorf("error occurred while removing artifacts dir, %v", err)
 	}
-	if err = os.RemoveAll(filepath.Join(projectDir, src)); err != nil {
-		return fmt.Errorf("error occurred while removing src dir, %v", err)
+	if err = os.RemoveAll(filepath.Join(imgDir, src)); err != nil {
+		return "", fmt.Errorf("error occurred while removing src dir, %v", err)
 	}
-	return nil
+	return filepath.Join(imgDir, artifactsZip), nil
 }

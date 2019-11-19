@@ -52,5 +52,5 @@ func ReadMetaData(repo, organization, project, version string) (*MetaData, error
 }
 
 func MetaDataFile() string {
-	return filepath.Join("artifacts", "cellery", "metadata.json")
+	return filepath.Join("/artifacts", "cellery", "metadata.json")
 }
