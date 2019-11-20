@@ -127,7 +127,7 @@ func displayCellInstanceApisTable(cli cli.Cli, cell kubernetes.Cell, cellInstanc
 	for i := 0; i < len(apiArray); i++ {
 		url := cellInstanceName + "--gateway-service"
 		context := apiArray[i].Context
-		version := apiArray[i].Version
+		version := getPublishedApiVersion(globalVersion, apiArray[i].Version)
 		// Add the context of the Cell
 		if !strings.HasPrefix(context, "/") {
 			url += "/"
@@ -156,8 +156,8 @@ func displayCellInstanceApisTable(cli cli.Cli, cell kubernetes.Cell, cellInstanc
 			}
 			// Add the global api url if globally exposed
 			globalUrl := ""
-			globalUrlContext := getGlobalUrlContext(globalContext, cellInstanceName)
-			globalUrlVersion := getGlobalUrlVersion(globalVersion, version)
+			globalUrlContext := getPublishedApiRootContext(globalContext, cellInstanceName)
+			globalUrlVersion := getPublishedApiVersion(globalVersion, version)
 			if apiArray[i].Global {
 				if path != "/" {
 					globalUrl = constants.Wso2ApimHost + strings.Replace("/"+globalUrlContext+"/"+context+path+"/"+globalUrlVersion, "//", "/", -1)
@@ -399,7 +399,7 @@ func getIngressValues(cli cli.Cli, cellImageContent string) (kubernetes.Cell, er
 	return cell, nil
 }
 
-func getGlobalUrlContext(globalContext string, cellInstanceName string) string {
+func getPublishedApiRootContext(globalContext string, cellInstanceName string) string {
 	if globalContext != "" {
 		return globalContext
 	} else {
@@ -407,7 +407,7 @@ func getGlobalUrlContext(globalContext string, cellInstanceName string) string {
 	}
 }
 
-func getGlobalUrlVersion(globalVersion string, apiVersion string) string {
+func getPublishedApiVersion(globalVersion string, apiVersion string) string {
 	if globalVersion != "" {
 		return globalVersion
 	} else {
