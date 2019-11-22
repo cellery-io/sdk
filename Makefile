@@ -45,7 +45,7 @@ TELEPRESENCE_URL := https://s3.amazonaws.com/datawire-static-files/telepresence/
 
 MAIN_PACKAGES := cli
 
-VERSION ?= 0.5.0-SNAPSHOT
+VERSION ?= 0.6.0-SNAPSHOT
 INSTALLER_VERSION ?= $(GIT_REVISION)
 
 # Go build time flags
