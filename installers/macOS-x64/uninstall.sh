@@ -79,13 +79,24 @@ else
   echo "[2/4] [ERROR] Could not delete cellery informations" >&2
 fi
 
+#remove cellery caches files.
+rm -r ${HOME}/.ballerina/balo_cache/celleryio &&
+rm -r ${HOME}/.ballerina/jar_cache-*/celleryio &&
+rm -r ${HOME}/.ballerina/bir_cache-*/celleryio
+if [ $? -eq 0 ]
+then
+  echo "[3/4] [DONE] Successfully removed caches"
+else
+  echo "[3/4] [ERROR] Could not delete caches" >&2
+fi
+
 #remove cellery source distribution
 [ -e "/Library/Cellery" ] && rm -rf "/Library/Cellery"
 if [ $? -eq 0 ]
 then
-  echo "[3/4] [DONE] Successfully deleted cellery"
+  echo "[4/4] [DONE] Successfully deleted cellery"
 else
-  echo "[3/4] [ERROR] Could not delete cellery" >&2
+  echo "[4/4] [ERROR] Could not delete cellery" >&2
 fi
 
 
