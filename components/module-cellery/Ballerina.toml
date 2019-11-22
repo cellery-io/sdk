@@ -1,6 +1,8 @@
 [project]
 org-name= "celleryio"
-version= "0.5.0"
+version= "0.6.0"
+keywords = ["cellery","microservices","kubernetes"]
+repository = "https://github.com/wso2-cellery/sdk"
 
 [dependencies]
 
@@ -9,4 +11,4 @@ target = "java8"
 
   [[platform.libraries]]
   module = "cellery"
-  path = "./cellery-utils/target/cellery-utils-0.5.0-SNAPSHOT.jar"
+  path = "./cellery-utils/target/cellery-utils-0.6.0-SNAPSHOT.jar"

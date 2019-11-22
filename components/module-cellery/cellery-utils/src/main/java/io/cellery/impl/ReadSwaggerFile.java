@@ -66,8 +66,8 @@ public class ReadSwaggerFile {
                 CELLERY_PKG_NAME, CELLERY_PKG_VERSION), API_DEFINITION);
         swagger.getPaths().forEach((path, pathDefinition) ->
                 pathDefinition.getOperationMap().forEach((httpMethod, operation) -> {
-                    MapValue<String, Object> resource = BallerinaValues.createRecordValue(new BPackage("celleryio",
-                            "cellery", "0.5.0"), "ResourceDefinition");
+                    MapValue<String, Object> resource = BallerinaValues.createRecordValue(new BPackage(CELLERY_PKG_ORG,
+                            CELLERY_PKG_NAME, CELLERY_PKG_VERSION), RESOURCE_DEFINITION);
                     resource.put("path", finalBasePath + path);
                     resource.put("method", httpMethod.toString());
                     arrayValue.add(runCount.getAndIncrement(), resource);

@@ -27,7 +27,7 @@ public class CelleryConstants {
     public static final String CELLERY_RESOURCE_VERSION = "mesh.cellery.io/v1alpha2";
     public static final String CELLERY_PKG_ORG = "celleryio";
     public static final String CELLERY_PKG_NAME = "cellery";
-    public static final String CELLERY_PKG_VERSION = "0.5.0";
+    public static final String CELLERY_PKG_VERSION = "0.6.0";
 
     public static final String RESOURCE_DEFINITION = "ResourceDefinition";
     public static final String API_DEFINITION = "ApiDefinition";
