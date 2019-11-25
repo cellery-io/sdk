@@ -25,11 +25,11 @@ type MockCredManager struct {
 }
 
 func NewMockCredManager(opts ...func(*MockCredManager)) *MockCredManager {
-	cli := &MockCredManager{}
+	manager := &MockCredManager{}
 	for _, opt := range opts {
-		opt(cli)
+		opt(manager)
 	}
-	return cli
+	return manager
 }
 
 func SetCredentials(registry, userName, password string) func(*MockCredManager) {

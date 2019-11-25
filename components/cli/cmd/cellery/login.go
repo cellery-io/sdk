@@ -23,12 +23,14 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/commands/hub"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // newLoginCommand saves the credentials for a particular registry
-func newLoginCommand() *cobra.Command {
+func newLoginCommand(cli cli.Cli) *cobra.Command {
 	var username string
 	var password string
 	cmd := &cobra.Command{
@@ -46,9 +48,13 @@ func newLoginCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 1 {
-				hub.RunLogin(args[0], username, password)
+				if err := hub.RunLogin(cli, args[0], username, password); err != nil {
+					util.ExitWithErrorMessage("Cellery login command failed", err)
+				}
 			} else {
-				hub.RunLogin(constants.CentralRegistryHost, username, password)
+				if err := hub.RunLogin(cli, constants.CentralRegistryHost, username, password); err != nil {
+					util.ExitWithErrorMessage("Cellery login command failed", err)
+				}
 			}
 		},
 		Example: "  cellery login\n" +

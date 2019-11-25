@@ -39,6 +39,7 @@ type MockCli struct {
 	manager           cli.FileSystemManager
 	docker            docker.Docker
 	credManager       credentials.CredManager
+	credReader        credentials.CredReader
 }
 
 // NewMockCli returns a mock cli for the cli.Cli interface.
@@ -87,6 +88,12 @@ func SetBalExecutor(balExecutor ballerina.BalExecutor) func(*MockCli) {
 func SetCredManager(manager credentials.CredManager) func(*MockCli) {
 	return func(cli *MockCli) {
 		cli.credManager = manager
+	}
+}
+
+func SetCredReader(reader credentials.CredReader) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.credReader = reader
 	}
 }
 
@@ -142,4 +149,9 @@ func (cli *MockCli) DockerCli() docker.Docker {
 // CredManager returns a mock CredManager instance.
 func (cli *MockCli) CredManager() credentials.CredManager {
 	return cli.credManager
+}
+
+// CredReader returns a CredReader instance.
+func (cli *MockCli) CredReader() credentials.CredReader {
+	return cli.credReader
 }

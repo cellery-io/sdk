@@ -60,7 +60,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newDescribeCommand(cli),
 		newStatusCommand(cli),
 		newLogsCommand(cli),
-		newLoginCommand(),
+		newLoginCommand(cli),
 		newLogoutCommand(cli),
 		newPushCommand(cli),
 		newPullCommand(cli),
@@ -102,12 +102,14 @@ func main() {
 	if err != nil {
 		util.ExitWithErrorMessage("Failed configuring credentials manager", err)
 	}
+	credReader := credentials.NewCelleryCredReader()
 	// Initialize the Cellery CLI.
 	celleryCli := cli.NewCelleryCli(
 		cli.SetRegistry(registry.NewCelleryRegistry()),
 		cli.SetFileSystem(fileSystem),
 		cli.SetBallerinaExecutor(ballerinaExecutor),
 		cli.SetCredManager(credManager),
+		cli.SetCredReader(credReader),
 	)
 	util.CreateCelleryDirStructure()
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CelleryHome, "logs")

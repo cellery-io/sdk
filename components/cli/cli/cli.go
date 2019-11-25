@@ -47,6 +47,7 @@ type Cli interface {
 	OpenBrowser(url string) error
 	DockerCli() docker.Docker
 	CredManager() credentials.CredManager
+	CredReader() credentials.CredReader
 }
 
 // CelleryCli is an instance of the cellery command line client.
@@ -58,6 +59,7 @@ type CelleryCli struct {
 	registry          registry.Registry
 	docker            docker.Docker
 	credManager       credentials.CredManager
+	credReader        credentials.CredReader
 }
 
 // NewCelleryCli returns a CelleryCli instance.
@@ -96,6 +98,12 @@ func SetCredManager(credManager credentials.CredManager) func(*CelleryCli) {
 	}
 }
 
+func SetCredReader(credReader credentials.CredReader) func(*CelleryCli) {
+	return func(cli *CelleryCli) {
+		cli.credReader = credReader
+	}
+}
+
 // Out returns the writer used for the stdout.
 func (cli *CelleryCli) Out() io.Writer {
 	return os.Stdout
@@ -111,13 +119,13 @@ func (cli *CelleryCli) ExecuteTask(startMessage, errorMessage, successMessage st
 	if err != nil {
 		spinner.Stop(false)
 		if errorMessage != "" {
-			fmt.Println(errorMessage)
+			fmt.Fprintln(cli.Out(), errorMessage)
 		}
 		return err
 	}
 	spinner.Stop(true)
 	if successMessage != "" {
-		fmt.Println(successMessage)
+		fmt.Fprintln(cli.Out(), successMessage)
 	}
 	return nil
 }
@@ -150,6 +158,11 @@ func (cli *CelleryCli) DockerCli() docker.Docker {
 // CredManager returns a CredManager instance.
 func (cli *CelleryCli) CredManager() credentials.CredManager {
 	return cli.credManager
+}
+
+// CredReader returns a CredReader instance.
+func (cli *CelleryCli) CredReader() credentials.CredReader {
+	return cli.credReader
 }
 
 // OpenBrowser opens up the provided URL in a browser

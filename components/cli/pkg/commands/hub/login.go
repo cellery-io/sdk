@@ -25,31 +25,29 @@ import (
 
 	"github.com/nokia/docker-registry-client/registry"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
 // RunLogin requests the user for credentials and logs into a Cellery Registry
-func RunLogin(registryURL string, username string, password string) {
-	fmt.Println("Logging into Registry: " + util.Bold(registryURL))
+func RunLogin(cli cli.Cli, registryURL string, username string, password string) error {
+	var err error
+	cli.CredReader().SetRegistry(registryURL)
+	cli.CredReader().SetUserName(username)
+	fmt.Fprintln(cli.Out(), "Logging into Registry: "+util.Bold(registryURL))
 
 	var registryCredentials = &credentials.RegistryCredentials{
 		Registry: registryURL,
 		Username: username,
 		Password: password,
 	}
-	isCredentialsProvided := registryCredentials.Username != "" &&
-		registryCredentials.Password != ""
-
-	credManager, err := credentials.NewCredManager()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while creating Credentials Manager", err)
-	}
+	isCredentialsProvided := registryCredentials.Username != "" && registryCredentials.Password != ""
 	var isCredentialsAlreadyPresent bool
 	if !isCredentialsProvided {
 		// Reading the existing credentials
-		registryCredentials, err = credManager.GetCredentials(registryURL)
+		registryCredentials, err = cli.CredManager().GetCredentials(registryURL)
 		if registryCredentials == nil {
 			registryCredentials = &credentials.RegistryCredentials{
 				Registry: registryURL,
@@ -59,115 +57,77 @@ func RunLogin(registryURL string, username string, password string) {
 		isCredentialsAlreadyPresent = err == nil && registryCredentials.Username != "" &&
 			registryCredentials.Password != ""
 	}
-	var isAuthorized chan bool
-	var done chan bool
-	runPreExitWithErrorTasks := func(spinner *util.Spinner) {
-		if isAuthorized != nil {
-			isAuthorized <- false
-		}
-		if done != nil {
-			<-done
-		}
-		if spinner != nil {
-			spinner.Stop(false)
-		}
-	}
 	if isCredentialsProvided {
-		fmt.Println("Logging in with provided Credentials")
+		fmt.Fprintln(cli.Out(), "Logging in with provided Credentials")
 	} else if isCredentialsAlreadyPresent {
-		fmt.Println("Logging in with existing Credentials")
+		fmt.Fprintln(cli.Out(), "Logging in with existing Credentials")
 	} else {
 		if password == "" {
-			isAuthorized, done, err = requestCredentialsFromUser(registryCredentials)
+			registryCredentials.Username, registryCredentials.Password, err = cli.CredReader().Read()
 			if err != nil {
-				runPreExitWithErrorTasks(nil)
-				util.ExitWithErrorMessage("Error occurred while reading Credentials", err)
+				cli.CredReader().Shutdown(false)
+				return fmt.Errorf("error occurred while reading Credentials, %v", err)
 			}
-		} else {
-			registryCredentials.Username = username
-			registryCredentials.Password = password
 		}
 	}
 
-	fmt.Println()
-	spinner := util.StartNewSpinner("Logging into Cellery Registry " + registryURL)
+	fmt.Fprintln(cli.Out(), fmt.Sprintf("Logging into Cellery Registry %s", registryURL))
 	err = validateCredentialsWithRegistry(registryCredentials)
 	if err != nil {
-		runPreExitWithErrorTasks(spinner)
+		cli.CredReader().Shutdown(false)
 		if strings.Contains(err.Error(), "401") {
 			if isCredentialsAlreadyPresent {
-				fmt.Println("\r\x1b[2K\U0000274C Failed to authenticate with existing credentials")
+				fmt.Fprintln(cli.Out(), "\r\x1b[2K\U0000274C Failed to authenticate with existing credentials")
 				registryCredentials.Username = ""
 				registryCredentials.Password = ""
 				// Requesting credentials from user since the existing credentials failed
-				isAuthorized, done, err = requestCredentialsFromUser(registryCredentials)
+				registryCredentials.Username, registryCredentials.Password, err = cli.CredReader().Read()
 				if err != nil {
-					runPreExitWithErrorTasks(nil)
-					util.ExitWithErrorMessage("Error occurred while reading Credentials", err)
+					cli.CredReader().Shutdown(false)
+					return fmt.Errorf("error occurred while reading Credentials, %v", err)
 				}
-
-				spinner = util.StartNewSpinner("Logging into Cellery Registry " + registryURL)
-				err = validateCredentialsWithRegistry(registryCredentials)
-				if err != nil {
-					runPreExitWithErrorTasks(spinner)
-					if strings.Contains(err.Error(), "401") {
-						util.ExitWithErrorMessage("Invalid Credentials", err)
-					} else {
-						util.ExitWithErrorMessage("Error occurred while initializing connection to the Cellery Registry",
-							err)
-					}
+				if err = cli.ExecuteTask(fmt.Sprintf("Logging into Cellery Registry %s", registryURL),
+					fmt.Sprintf("Failed logging into Cellery Registry %s", registryURL), "", func() error {
+						err = validateCredentialsWithRegistry(registryCredentials)
+						if err != nil {
+							cli.CredReader().Shutdown(false)
+							if strings.Contains(err.Error(), "401") {
+								return fmt.Errorf("invalid Credentials, %v", err)
+							} else {
+								return fmt.Errorf("error occurred while initializing connection to the Cellery Registry, %v",
+									err)
+							}
+						}
+						isCredentialsAlreadyPresent = false // To save the new credentials
+						return nil
+					}); err != nil {
+					return err
 				}
-				isCredentialsAlreadyPresent = false
 			} else {
-				util.ExitWithErrorMessage("Invalid Credentials", err)
+				return fmt.Errorf("invalid Credentials, %v", err)
 			}
 		} else {
-			util.ExitWithErrorMessage("Error occurred while initializing connection to the Cellery Registry",
+			return fmt.Errorf("error occurred while initializing connection to the Cellery Registry, %v",
 				err)
 		}
 	}
 
 	if !isCredentialsAlreadyPresent {
 		// Saving the credentials
-		spinner.SetNewAction("Saving credentials")
-		err = credManager.StoreCredentials(registryCredentials)
-		if err != nil {
-			runPreExitWithErrorTasks(spinner)
-			util.ExitWithErrorMessage("Error occurred while saving Credentials", err)
+		if err = cli.ExecuteTask("Saving credentials", "Failed to save credentials", "", func() error {
+			err = cli.CredManager().StoreCredentials(registryCredentials)
+			if err != nil {
+				cli.CredReader().Shutdown(false)
+				return fmt.Errorf("error occurred while saving Credentials, %v", err)
+			}
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
-	if isAuthorized != nil {
-		isAuthorized <- true
-	}
-	if done != nil {
-		<-done
-	}
-	spinner.Stop(true)
+	cli.CredReader().Shutdown(true)
 	util.PrintSuccessMessage(fmt.Sprintf("Successfully logged into Registry: %s", util.Bold(registryURL)))
-}
-
-// requestCredentialsFromUser requests the user for credentials and returns the channels (or nil) created
-func requestCredentialsFromUser(registryCredentials *credentials.RegistryCredentials) (chan bool, chan bool, error) {
-	var isAuthorized chan bool
-	var done chan bool
-	var err error
-	regex, err := regexp.Compile(constants.CentralRegistryHostRegx)
-	if err != nil {
-		return nil, nil, err
-	}
-	if registryCredentials.Username == "" && regex.MatchString(registryCredentials.Registry) {
-		isAuthorized = make(chan bool)
-		done = make(chan bool)
-		registryCredentials.Username, registryCredentials.Password, err = credentials.FromBrowser(
-			registryCredentials.Username, isAuthorized, done)
-	} else {
-		registryCredentials.Username, registryCredentials.Password, err = credentials.FromTerminal(
-			registryCredentials.Username)
-	}
-	if err != nil {
-		return nil, nil, err
-	}
-	return isAuthorized, done, nil
+	return nil
 }
 
 // validateCredentialsWithRegistry initiates a connection to Cellery Registry to validate credentials
@@ -181,8 +141,5 @@ func validateCredentialsWithRegistry(registryCredentials *credentials.RegistryCr
 		registryPassword = registryPassword + ":ping"
 	}
 	_, err = registry.New("https://"+registryCredentials.Registry, registryCredentials.Username, registryPassword)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
