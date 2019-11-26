@@ -1,5 +1,4 @@
 Cellery is a code-first approach to building, integrating, running and managing composite applications on Kubernetes.
-[//]: # (above is the module summary)
 
 # Module Overview
 

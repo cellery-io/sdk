@@ -19,6 +19,14 @@ import ballerina/log;
 import ballerina/stringutils;
 import ballerinax/java;
 
+
+# Cell/Composite image identifier details.
+#
+# + org - Organization name
+# + name - Cell/Composite Image Name
+# + ver - Cell Image version
+# + instanceName -  Cell/Composite instanceName
+# + isRoot - Is this the root cell/composite
 public type ImageName record {|
     string org;
     string name;
@@ -27,6 +35,11 @@ public type ImageName record {|
     boolean isRoot?;
 |};
 
+# Labels with default optional fields.
+#
+# + team - Team name
+# + maintainer - Maintainer name
+# + owner - Owner name
 public type Label record {
     string team?;
     string maintainer?;
@@ -40,38 +53,69 @@ public type ImageType "Cell" | "Composite";
 
 public type ComponentType "Job" | "Deployment" | "StatefulSet";
 
+# Dockerfile as a component source.
+#
+# + dockerDir - Path to Dockerfile directory
+# + tag - Tag to for generated Docker Image
 public type DockerSource record {|
     string dockerDir;
     string tag;
 |};
 
+# Docker image as a component source.
+#
+# + image - Source docker image tag
 public type ImageSource record {|
     string image;
 |};
 
+# Git repository URL as a component source.
+#
+# + gitRepo - Git repository URL
+# + tag - Tag to for generated Docker Image 
 public type GitSource record {|
     string gitRepo;
     string tag;
 |};
 
+# File path to the test source file directory.
+#
+# + filepath - Path to the test source file directory
 public type FileSource record {|
     string filepath;
 |};
 
+# API resource.
+#
+# + path - Resource path
+# + method - Resource HTTP method
 public type ResourceDefinition record {|
     string path;
     string method;
 |};
 
+# API Definition as an array of resources.
+#
+# + resources - Resource definitions
 public type ApiDefinition record {|
     ResourceDefinition[] resources;
 |};
 
+# ZeroScalingPolicy details.
+#
+# + maxReplicas - Maximum number of replicas
+# + concurrencyTarget - Concurrency Target to scale
 public type ZeroScalingPolicy record {|
     int maxReplicas?;
     int concurrencyTarget?;
 |};
 
+# Autoscaling policy details.
+#
+# + overridable - Is autosaling policy overridable
+# + minReplicas - Minimum number of replicas
+# + maxReplicas - Maximum number of replicas
+# + metrics - Scaling metrics
 public type AutoScalingPolicy record {|
     boolean overridable = true;
     int minReplicas;
@@ -79,25 +123,48 @@ public type AutoScalingPolicy record {|
     Metrics metrics;
 |};
 
+# Autoscaling metrics.
+#
+# + cpu - CPU utilazation
+# + memory - Memory utilization
 public type Metrics record {|
     Value | Percentage cpu?;
     Value | Percentage memory?;
 |};
 
+# Thrshold as a Target Average Value
+#
+# + threshold - Threshold TargetAverageValue
 public type Value record {|
     string threshold;
 |};
 
+# Thrshold as a Target Average Utilization
+#
+# + threshold - Threshold as TargetAverageUtilization
 public type Percentage record {|
     int threshold;
 |};
 
+# Dependency information of a component.
+#
+# + components - Depending components
+# + cells - Depending cells
+# + composites - Depending composites
 public type Dependencies record {|
     Component?[] components?;
     map<ImageName | string> cells?;
     map<ImageName | string> composites?;
 |};
 
+# Probes configurations.
+#
+# + initialDelaySeconds - Initial delay seconds before first probe
+# + periodSeconds - Period in between two probes
+# + timeoutSeconds - Timeout for the probes
+# + failureThreshold - No of allowed failures 
+# + successThreshold - Required number of successful probes
+# + kind - Probe Kind
 public type Probe record {|
     int initialDelaySeconds = 0;
     int periodSeconds = 10;
@@ -107,36 +174,74 @@ public type Probe record {|
     TcpSocket | Exec | HttpGet kind;
 |};
 
+# TCP Socket probe.
+#
+# + port - port TCP port
+# + host - host TCP host
 public type TcpSocket record {|
     int port;
     string host?;
 |};
 
+# HttpGet probe.
+#
+# + path - Reosource path
+# + port - Server port
+# + httpHeaders - HttpHeader parameters
 public type HttpGet record {|
     string path;
     int port;
     map<string> httpHeaders?;
 |};
 
+# Command(Exec) based probe.
+#
+# + commands - commands to be executed.
 public type Exec record {|
     string[] commands;
 |};
 
+# Component probe configurations.
+#
+# + readiness - Readiness probe
+# + liveness - Liveness probe
 public type Probes record {|
     Probe readiness?;
     Probe liveness?;
 |};
 
+# Resource quotas.
+#
+# + requests - requests allowed
+# + limits - limits allowed.
 public type Resources record {|
     Quota requests?;
     Quota limits?;
 |};
 
+# Quota configurataions.
+#
+# + memory - Memory limts
+# + cpu - CPU limits
 public type Quota record {|
     string memory?;
     string cpu?;
 |};
 
+# Component configurations.
+#
+# + name - Component name
+# + src - Component source
+# + replicas - No of replicas
+# + ingresses - Component ingresses
+# + labels - Labels to be applied to component
+# + envVars - Environment variables
+# + dependencies - Component dependencies
+# + scalingPolicy - scalingPolicy Parameter Description 
+# + probes - Component probes
+# + resources - Component resource quotas
+# + componentType - Component type
+# + volumes - Volume mounts for component
 public type Component record {|
     string name;
     ImageSource | DockerSource src;
@@ -152,18 +257,36 @@ public type Component record {|
     map<VolumeMount> volumes?;
 |};
 
+# TCP ingress configurations.
+#
+# + backendPort - Backend service port
+# + gatewayPort - Gateway port to expose
+# + ingressTypeTCP - Ingress Type
 public type TCPIngress record {|
     int backendPort;
     int gatewayPort?;
     string ingressTypeTCP = "TCP";
 |};
 
+# GRPC ingress configurations.
+#
+# + protoFile - Proto file path
+# + ingressType - Ingress Type
 public type GRPCIngress record {|
     *TCPIngress;
     string protoFile?;
     string ingressType = "GRPC";
 |};
 
+# HTTP API ingress configurations.
+#
+# + port - API service port
+# + context - API context 
+# + definition - API definition
+# + apiVersion - API version
+# + ingressType - Ingress Type
+# + expose - Expose API via local or global gateway
+# + authenticate - should API be authenticated?
 public type HttpApiIngress record {|
     int port;
     string context?;
@@ -174,21 +297,37 @@ public type HttpApiIngress record {|
     boolean authenticate = true;
 |};
 
+# Web Ingress configurations.
+#
+# + port - Service port
+# + gatewayConfig - Gateway configurations
+# + ingressType - Ingress type
 public type WebIngress record {|
     int port;
     GatewayConfig gatewayConfig;
     string ingressType = "Web";
 |};
 
+# HTTP port Ingress configuration.
+#
+# + port - HTTP service port
+# + ingressType - Ingress type
 public type HttpPortIngress record {|
     int port;
     string ingressType = "Http";
 |};
 
+# HTTPS port Ingress configuration.
 public type HttpsPortIngress record {|
     *HttpPortIngress;
 |};
 
+# Gateway configurations.
+#
+# + vhost - Virtual host
+# + context - Gateway context
+# + tls - TLS configurations
+# + oidc - Open ID Connect configurations
 public type GatewayConfig record {|
     string vhost;
     string context = "/";
@@ -196,16 +335,25 @@ public type GatewayConfig record {|
     OIDC oidc?;
 |};
 
-public type URI record {|
-    string vhost;
-    string context = "/";
-|};
-
+# TLS configurations.
+#
+# + key - TLS key
+# + cert - TLS cert
 public type TLS record {|
     string key;
     string cert;
 |};
 
+# OpenID connect configurations.
+#
+# + nonSecurePaths - Non secure paths
+# + securePaths - Secure paths
+# + providerUrl - OIDC provider URL
+# + clientId - OIDC client ID
+# + clientSecret - OIDC client secret
+# + redirectUrl - Redirect URL
+# + baseUrl - Base URL
+# + subjectClaim - ODIC subject claim
 public type OIDC record {|
     string[] nonSecurePaths = [];
     string[] securePaths = [];
@@ -217,31 +365,53 @@ public type OIDC record {|
     string subjectClaim?;
 |};
 
+# Dynamic client registrations configurations.
+#
+# + dcrUrl - DCR url
+# + dcrUser - DCR username
+# + dcrPassword - DCR password
 public type DCR record {|
     string dcrUrl?;
     string dcrUser;
     string dcrPassword;
 |};
 
+# Environment variable value.
+#
+# + value - environment variable value
 public type ParamValue record {
     string | int | boolean | float value?;
 };
 
+# Environment variable.
 public type Env record {|
     *ParamValue;
 |};
 
+# Gloabal API publisher configurations.
+#
+# + context - Global API context 
+# + apiVersion - Global API version
 public type GlobalApiPublisher record {|
     string context?;
     string apiVersion?;
 |};
 
+# Cell Image descriptor.
+#
+# + kind - Image kind
+# + globalPublisher - Global publisher configs
+# + components - Cell image components 
 public type CellImage record {|
     ImageType kind = "Cell";
     GlobalApiPublisher globalPublisher?;
     map<Component> components;
 |};
 
+# Composite Image descriptor.
+#
+# + kind - Image kind
+# + components - Composite image components 
 public type Composite record {|
     ImageType kind = "Composite";
     map<Component> components;
@@ -252,22 +422,38 @@ public type Reference record {
 
 };
 
+# Test configurations.
+#
+# + name - Test name
+# + src - Test source
+# + envVars - Environment variables required for tests
 public type Test record {|
     string name;
     ImageSource | FileSource src;
     map<Env> envVars?;
 |};
 
+# Test suite configuration.
+#
+# + tests - Test descriptors
 public type TestSuite record {|
     Test?[] tests = [];
 |};
 
+# Image instance state holder.
+#
+# + iName - Image name descriptor
+# + isRunning - Is instance running
+# + alias - Instance alias
 public type InstanceState record {|
     ImageName iName;
     boolean isRunning;
     string alias = "";
 |};
 
+# Kubernetes shared persistence configurations.
+#
+# + name - PVC name
 public type K8sSharedPersistence record {|
     string name;
 |};
@@ -276,17 +462,34 @@ public type Mode "Filesystem" | "Block";
 
 public type AccessMode "ReadWriteOnce" | "ReadOnlyMany" | "ReadWriteMany";
 
+# Selector expression.
+#
+# + key - Expression key
+# + operator - Expression operator
+# + values - Expression values
 public type Expression record {|
     string key;
     string operator;
     string[] values;
 |};
 
+# Node selector lookup configurations.
+#
+# + labels - Labels parameter  
+# + expressions - Expression descriptors 
 public type Lookup record {|
     map<string> labels?;
     Expression?[] expressions?;
 |};
 
+# Kubernetes non shared persistence volume claim configs.
+#
+# + name - Volume name 
+# + mode - Volume mode 
+# + storageClass - Storage class 
+# + accessMode - Access Mode
+# + lookup - Lookup 
+# + request - Request
 public type K8sNonSharedPersistence record {|
     string name;
     Mode mode?;
@@ -296,23 +499,43 @@ public type K8sNonSharedPersistence record {|
     string request;
 |};
 
+# Shared config map descriptor.
+#
+# + name - Config map name
 public type SharedConfiguration record {|
     string name;
 |};
 
+# Non shared config map descriptor.
+#
+# + name - Config map name 
+# + data - Config map data
 public type NonSharedConfiguration record {|
     string name;
     map<string> data;
 |};
 
+# Shared secret.
+#
+# + name - Secret name
 public type SharedSecret record {|
     string name;
 |};
+
+# Shared secret.
+#
+# + name - Secret name 
+# + data - Secret data
 public type NonSharedSecret record {|
     string name;
     map<string> data;
 |};
 
+# Volume mount configurations.
+#
+# + path - Mount path
+# + readOnly - Is volume mount read only?
+# + volume - volume configurations
 public type VolumeMount record {|
     string path;
     boolean readOnly = false;
@@ -342,6 +565,9 @@ public function createImage(CellImage | Composite image, ImageName iName) return
 }
 
 
+# Description
+#
+# + image - image Parameter Description
 function validateCell(CellImage | Composite image) {
     image.components.forEach(function (Component component) {
         if (!(component["ingresses"] is ())){
@@ -402,6 +628,10 @@ public function constructCellImage(ImageName iName) returns @tainted (CellImage 
     return image;
 }
 
+# Construct composite image from image descriptor.
+#
+# + iName - Image name descriptor.
+# + return - Return composite image or error
 public function constructImage(ImageName iName) returns @tainted (Composite | error) {
     string filePath = config:getAsString("CELLERY_IMAGE_DIR") + "/artifacts/cellery/" + iName.name + "_meta.json";
     var rResult = read(filePath);
@@ -413,7 +643,7 @@ public function constructImage(ImageName iName) returns @tainted (Composite | er
     return image;
 }
 
-# Returns a Reference record with url information
+# Returns a Reference record with url information.
 #
 # + iName - The cell instance name
 # + return - Reference record
@@ -430,7 +660,7 @@ public function resolveReference(ImageName iName) returns (Reference) {
     Reference myRef = <Reference>ref;
     return replaceInRef(myRef);
 }
-# Returns a Reference record with url information
+# Returns a Reference record with url information.
 #
 # + component - Component
 # + dependencyAlias - Dependency alias
@@ -466,7 +696,7 @@ public function getReference(Component component, string dependencyAlias) return
 }
 
 
-# Returns the Image Name of the cell
+# Returns the Image Name of the cell.
 #
 # + return - ImageName
 public function getCellImage() returns @tainted ImageName {
@@ -485,7 +715,7 @@ public function getCellImage() returns @tainted ImageName {
     return <ImageName>iName;
 }
 
-# Get cell dependencies map
+# Get cell dependencies map.
 #
 # + return - map of dependencies ImageName
 public function getDependencies() returns @tainted map<ImageName> {
@@ -504,7 +734,7 @@ public function getDependencies() returns @tainted map<ImageName> {
     return <map<ImageName>>iNameMap;
 }
 
-# Returns cell gateway URL of the started cell
+# Returns cell gateway URL of the started cell.
 #
 # + iNameList - list of InstanceState
 # + alias - (optional) dependency alias of instance
@@ -550,6 +780,11 @@ public function getCellEndpoints(InstanceState[] iNameList, string alias = "", s
     return tempRef;
 }
 
+# Start docker based tests.
+#
+# + imageName - Image name descriptor
+# + envVars - Enviroment variables
+# + return - Return error if occured
 public function runDockerTest(string imageName, map<Env> envVars) returns (error?){
     ImageName iName = getCellImage();
     string? instanceNameResult = iName["instanceName"];
@@ -573,6 +808,10 @@ public function runDockerTest(string imageName, map<Env> envVars) returns (error
     return runTestSuite(getCellImage(), testSuite);
 }
 
+# Pared dependecy alias and get image name descriptor
+#
+# + alias - Dependecy alias
+# + return - Return Image name descriptor
 function parseCellDependency(string alias) returns ImageName {
     string org = alias.substring(0, <int>alias.indexOf("/"));
     string name = alias.substring(<int>alias.indexOf("/") + 1, <int>alias.indexOf(":"));
@@ -637,12 +876,19 @@ public function getPort(Component component) returns (int) {
     return port;
 }
 
+# Get a valid kubernetes name.
+#
+# + name - Name 
+# + return - Return valid k8s name
 function getValidName(string name) returns string {
     string validName = name.toLowerAscii();
     validName = stringutils:replaceAll(validName, "_", "-");
     return stringutils:replaceAll(validName, "\\.", "-");
 }
 
+# Close readable character channel.
+#
+# + rc - ReadableCharacterChannel
 function closeRc(io:ReadableCharacterChannel rc) {
     var result = rc.close();
     if (result is error) {
@@ -651,6 +897,9 @@ function closeRc(io:ReadableCharacterChannel rc) {
     }
 }
 
+# Close WritableCharacterChannel.
+#
+# + wc - WritableCharacterChannel
 function closeWc(io:WritableCharacterChannel wc) {
     var result = wc.close();
     if (result is error) {
@@ -659,6 +908,11 @@ function closeWc(io:WritableCharacterChannel wc) {
     }
 }
 
+# Write json to a file.
+#
+# + content - JSON content
+# + path - target file path
+# + return - Return error if occured
 function write(json content, string path) returns @tainted error? {
     io:WritableByteChannel wbc = check io:openWritableFile(path);
     io:WritableCharacterChannel wch = new (wbc, "UTF8");
@@ -667,6 +921,10 @@ function write(json content, string path) returns @tainted error? {
     return result;
 }
 
+# Read JSON content from file.
+#
+# + path - File path.
+# + return - Return JSON content or error.
 function read(string path) returns @tainted json | error {
     io:ReadableByteChannel rbc = check io:openReadableFile(path);
     io:ReadableCharacterChannel rch = new (rbc, "UTF8");
@@ -675,6 +933,12 @@ function read(string path) returns @tainted json | error {
     return result;
 }
 
+# Replace alias place holder in Reference records.
+#
+# + ref - Reference value.
+# + alias - Alias name
+# + name -  Instance name of alias
+# + return - Return Value Description
 function replaceInRef(Reference ref, string alias = "", string name = "") returns Reference {
     foreach var [key, value] in ref.entries() {
         string temp = <string>value;
@@ -765,6 +1029,11 @@ public function runInstances(ImageName iName, map<ImageName> instances) returns 
     class: "io.cellery.impl.RunInstances"
 } external;
 
+# Start test suite.
+#
+# + iName - Image name descriptor
+# + testSuite - Test suite configs
+# + return - Return error if occured
 public function runTestSuite(ImageName iName, TestSuite testSuite) returns (error?) = @java:Method {
     class: "io.cellery.impl.RunTestSuite"
 } external;
