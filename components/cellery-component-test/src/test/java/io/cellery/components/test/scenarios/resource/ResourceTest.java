@@ -98,6 +98,12 @@ public class ResourceTest {
         Assert.assertEquals(api.getContext(), "/stock");
         Assert.assertEquals(api.getDefinitions().get(0).getMethod(), "GET");
         Assert.assertEquals(api.getDefinitions().get(0).getPath(), "/options");
+        final API api2 = cell.getSpec().getGateway().getSpec().getIngress().getHttp().get(1);
+        Assert.assertEquals(api2.getDestination().getHost(), "stock");
+        Assert.assertEquals(api2.getContext(), "/stockv2");
+        Assert.assertEquals(api2.getDefinitions().get(0).getMethod(), "GET");
+        Assert.assertEquals(api2.getDefinitions().get(0).getPath(), "/options");
+
     }
 
     @Test(groups = "build")
@@ -107,6 +113,7 @@ public class ResourceTest {
         final Container container = spec.getTemplate().getContainers().get(0);
         Assert.assertEquals(container.getImage(), "wso2cellery/sampleapp-stock:0.3.0");
         Assert.assertEquals(container.getPorts().get(0).getContainerPort().intValue(), 8080);
+        Assert.assertEquals(container.getPorts().get(1).getContainerPort().intValue(), 8085);
         final ResourceRequirements resources = spec.getTemplate().getContainers().get(0).getResources();
         Assert.assertEquals(resources.getLimits().get("cpu"), new Quantity("500m"));
         Assert.assertEquals(resources.getLimits().get("memory"), new Quantity("128Mi"));

@@ -11,14 +11,28 @@ public function build(cellery:ImageName iName) returns error? {
             image: "wso2cellery/sampleapp-stock:0.3.0"
         },
         ingresses: {
-            stock: <cellery:HttpApiIngress>{ port: 8080,
+            stock: <cellery:HttpApiIngress>{
+                port: 8080,
                 context: "stock",
                 definition: {
                     resources: [
-                        {
-                            path: "/options",
-                            method: "GET"
-                        }
+                    {
+                        path: "/options",
+                        method: "GET"
+                    }
+                    ]
+                },
+                expose: "local"
+            },
+            stockv1: <cellery:HttpApiIngress>{
+                port: 8085,
+                context: "stockv2",
+                definition: {
+                    resources: [
+                    {
+                        path: "/options",
+                        method: "GET"
+                    }
                     ]
                 },
                 expose: "local"
@@ -41,14 +55,14 @@ public function build(cellery:ImageName iName) returns error? {
             stockComp: stockComponent
         }
     };
-    return <@untainted> cellery:createImage(stockCell, iName);
+    return <@untainted>cellery:createImage(stockCell, iName);
 }
 
-public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
+public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
     cellery:CellImage stockCell = check cellery:constructCellImage(iName);
-    stockCell.components["stockComp"]["resources"]["requests"]= {
-            memory: "256Mi",
-            cpu: "256m"
-        };
-    return <@untainted> cellery:createInstance(stockCell, iName, instances, startDependencies, shareDependencies);
+    stockCell.components["stockComp"]["resources"]["requests"] = {
+        memory: "256Mi",
+        cpu: "256m"
+    };
+    return <@untainted>cellery:createInstance(stockCell, iName, instances, startDependencies, shareDependencies);
 }
