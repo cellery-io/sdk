@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
@@ -31,14 +32,14 @@ type origComponentData struct {
 	ContainerPorts []int32 `json:"containerPorts"`
 }
 
-func buildRoutesForCompositeTarget(src string, newTarget *kubernetes.Composite, currentTarget *kubernetes.Composite,
+func buildRoutesForCompositeTarget(cli cli.Cli, src string, newTarget *kubernetes.Composite, currentTarget *kubernetes.Composite,
 	percentage int) (*kubernetes.VirtualService, error) {
 	// check if components in previous dependency and this dependency matches
 	if !doComponentsMatch(&currentTarget.CompositeSpec.ComponentTemplates,
 		&newTarget.CompositeSpec.ComponentTemplates) {
 		return nil, fmt.Errorf("all components do not match in current and target composite instances")
 	}
-	vs, err := kubernetes.GetVirtualService(getVsName(src))
+	vs, err := cli.KubeCli().GetVirtualService(getVsName(src))
 	if err != nil {
 		return nil, err
 	}

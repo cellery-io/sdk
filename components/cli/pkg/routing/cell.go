@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
@@ -32,8 +33,8 @@ const k8sMetadata = "metadata"
 const k8sAnnotations = "annotations"
 const instanceIdHeaderName = "x-instance-id"
 
-func buildRoutesForCellTarget(newTarget *kubernetes.Cell, src string, currentTarget string, percentage int, isSessionAware bool) (*kubernetes.VirtualService, error) {
-	vs, err := kubernetes.GetVirtualService(getVsName(src))
+func buildRoutesForCellTarget(cli cli.Cli, newTarget *kubernetes.Cell, src string, currentTarget string, percentage int, isSessionAware bool) (*kubernetes.VirtualService, error) {
+	vs, err := cli.KubeCli().GetVirtualService(getVsName(src))
 	if err != nil {
 		return nil, err
 	}

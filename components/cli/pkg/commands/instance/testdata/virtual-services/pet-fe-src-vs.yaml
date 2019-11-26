@@ -1,0 +1,112 @@
+{
+  "kind": "VirtualService",
+  "spec": {
+    "hosts": [
+      "pet-be-dep--gateway-service"
+    ],
+    "http": [
+    {
+      "route": [
+      {
+        "destination": {
+          "host": "pet-be-dep--gateway-service"
+        }
+      }
+      ],
+      "match": [
+      {
+        "headers": {
+          "x-instance-id": {
+            "exact": "1"
+          }
+        },
+        "sourceLabels": {
+          "mesh.cellery.io.component": "true",
+          "mesh.cellery.io.cell": "pet-fe-src"
+        },
+        "authority": {
+          "regex": "^(pet-be-dep)(--gateway-service)(\\S*)$"
+        }
+      }
+      ]
+    },
+    {
+      "route": [
+      {
+        "destination": {
+          "host": "pet-be-dep--gateway-service"
+        }
+      }
+      ],
+      "match": [
+      {
+        "headers": {
+          "x-instance-id": {
+            "exact": "2"
+          }
+        },
+        "sourceLabels": {
+          "mesh.cellery.io.component": "true",
+          "mesh.cellery.io.cell": "pet-fe-src"
+        },
+        "authority": {
+          "regex": "^(pet-be-dep)(--gateway-service)(\\S*)$"
+        }
+      }
+      ]
+    },
+    {
+      "route": [
+      {
+        "destination": {
+          "host": "pet-be-dep--gateway-service"
+        }
+      }
+      ],
+      "match": [
+      {
+        "sourceLabels": {
+          "mesh.cellery.io.component": "true",
+          "mesh.cellery.io.cell": "pet-fe-src"
+        },
+        "authority": {
+          "regex": "^(pet-be-dep)(--gateway-service)(\\S*)$"
+        }
+      }
+      ]
+    }
+    ],
+    "gateways": [
+      "mesh"
+    ]
+  },
+  "apiVersion": "networking.istio.io/v1alpha3",
+  "metadata": {
+    "name": "pet-fe-src--vs",
+    "generation": 1,
+    "labels": {
+      "mesh.cellery.io/cell": "pet-fe-src",
+      "mesh.cellery.io.cell": "pet-fe-src",
+      "observability.mesh.cellery.io/instance-kind": "Cell",
+      "observability.mesh.cellery.io/instance": "pet-fe-src"
+    },
+    "namespace": "default",
+    "resourceVersion": "35831",
+    "ownerReferences": [
+    {
+      "kind": "Cell",
+      "blockOwnerDeletion": true,
+      "uid": "2db30dd3-1034-11ea-af02-0800270ce1fe",
+      "controller": true,
+      "apiVersion": "mesh.cellery.io/v1alpha2",
+      "name": "pet-fe-src"
+    }
+    ],
+    "creationTimestamp": "2019-11-26T10:04:48Z",
+    "annotations": {
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"kind\":\"VirtualService\",\"apiVersion\":\"networking.istio.io/v1alpha3\",\"metadata\":{\"name\":\"pet-fe-src--vs\",\"namespace\":\"default\",\"creationTimestamp\":null},\"spec\":{\"hosts\":[\"pet-be-dep--gateway-service\"],\"gateways\":[\"mesh\"],\"http\":[{\"match\":[{\"authority\":{\"regex\":\"^(pet-be-dep)(--gateway-service)(\\\\S*)$\"},\"headers\":{\"x-instance-id\":{\"exact\":\"1\"}},\"sourceLabels\":{\"mesh.cellery.io.cell\":\"pet-fe-src\",\"mesh.cellery.io.component\":\"true\"}}],\"route\":[{\"destination\":{\"host\":\"pet-be-dep--gateway-service\"}}]},{\"match\":[{\"authority\":{\"regex\":\"^(pet-be-dep)(--gateway-service)(\\\\S*)$\"},\"headers\":{\"x-instance-id\":{\"exact\":\"2\"}},\"sourceLabels\":{\"mesh.cellery.io.cell\":\"pet-fe-src\",\"mesh.cellery.io.component\":\"true\"}}],\"route\":[{\"destination\":{\"host\":\"pet-be-dep--gateway-service\"}}]},{\"match\":[{\"authority\":{\"regex\":\"^(pet-be-dep)(--gateway-service)(\\\\S*)$\"},\"sourceLabels\":{\"mesh.cellery.io.cell\":\"pet-fe-src\",\"mesh.cellery.io.component\":\"true\"}}],\"route\":[{\"destination\":{\"host\":\"pet-be-dep--gateway-service\"}}]}]}}"
+    },
+    "selfLink": "/apis/networking.istio.io/v1alpha3/namespaces/default/virtualservices/pet-fe-src--vs",
+    "uid": "2dfbb574-1034-11ea-af02-0800270ce1fe"
+  }
+}

@@ -320,7 +320,7 @@ func (kubeCli *CelleryKubeCli) GetServices(cellName string) (Services, error) {
 	return jsonOutput, err
 }
 
-func GetVirtualService(vs string) (VirtualService, error) {
+func (kubeCli *CelleryKubeCli) GetVirtualService(vs string) (VirtualService, error) {
 	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"virtualservice",

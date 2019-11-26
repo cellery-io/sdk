@@ -1,0 +1,57 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: pet-fe-src--vs
+spec:
+  hosts:
+  - pet-be-dep--gateway-service
+  http:
+  - match:
+    - authority:
+        regex: ^(pet-be-dep)(--gateway-service)(\S*)$
+      headers:
+        x-instance-id:
+          exact: "1"
+      sourceLabels:
+        mesh.cellery.io.cell: pet-fe-src
+        mesh.cellery.io.component: "true"
+    route:
+    - destination:
+        host: pet-be-dep--gateway-service
+      weight: 60
+    - destination:
+        host: pet-be-target--gateway-service
+      weight: 40
+  - match:
+    - authority:
+        regex: ^(pet-be-dep)(--gateway-service)(\S*)$
+      headers:
+        x-instance-id:
+          exact: "2"
+      sourceLabels:
+        mesh.cellery.io.cell: pet-fe-src
+        mesh.cellery.io.component: "true"
+    route:
+    - destination:
+        host: pet-be-dep--gateway-service
+      weight: 60
+    - destination:
+        host: pet-be-target--gateway-service
+      weight: 40
+  - match:
+    - authority:
+        regex: ^(pet-be-dep)(--gateway-service)(\S*)$
+      sourceLabels:
+        mesh.cellery.io.cell: pet-fe-src
+        mesh.cellery.io.component: "true"
+    route:
+    - destination:
+        host: pet-be-dep--gateway-service
+      weight: 60
+    - destination:
+        host: pet-be-target--gateway-service
+      weight: 40
+---
+null
+---
+null

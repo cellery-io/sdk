@@ -24,6 +24,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
@@ -48,8 +49,8 @@ func (router *CellToCellRoute) Check() error {
 	return nil
 }
 
-func (router *CellToCellRoute) Build(percentage int, isSessionAware bool, routesFile string) error {
-	modfiedVss, err := buildRoutesForCellTarget(&router.NewTarget, router.Src.CellMetaData.Name,
+func (router *CellToCellRoute) Build(cli cli.Cli, percentage int, isSessionAware bool, routesFile string) error {
+	modfiedVss, err := buildRoutesForCellTarget(cli, &router.NewTarget, router.Src.CellMetaData.Name,
 		router.CurrentTarget.CellMetaData.Name, percentage, isSessionAware)
 	if err != nil {
 		return err

@@ -1,0 +1,145 @@
+{
+  "apiVersion": "mesh.cellery.io/v1alpha2",
+  "kind": "Cell",
+  "metadata": {
+    "annotations": {
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"mesh.cellery.io/v1alpha2\",\"kind\":\"Cell\",\"metadata\":{\"annotations\":{\"mesh.cellery.io/cell-dependencies\":\"[{\\\"org\\\":\\\"myorg\\\",\\\"name\\\":\\\"petbe\\\",\\\"version\\\":\\\"1.0.0\\\",\\\"instance\\\":\\\"pet-be-dep\\\",\\\"kind\\\":\\\"Cell\\\"}]\",\"mesh.cellery.io/cell-image-name\":\"petfe\",\"mesh.cellery.io/cell-image-org\":\"myorg\",\"mesh.cellery.io/cell-image-version\":\"1.0.0\"},\"labels\":{},\"name\":\"pet-fe-src\",\"namespace\":\"default\"},\"spec\":{\"components\":[{\"metadata\":{\"annotations\":{},\"labels\":{},\"name\":\"portal\"},\"spec\":{\"configurations\":[],\"ports\":[{\"name\":\"portal\",\"port\":80,\"protocol\":\"http\",\"targetContainer\":\"portal\",\"targetPort\":80}],\"secrets\":[],\"template\":{\"containers\":[{\"env\":[{\"name\":\"PORTAL_PORT\",\"value\":\"80\"},{\"name\":\"BASE_PATH\",\"value\":\".\"},{\"name\":\"PET_STORE_CELL_URL\",\"value\":\"http://pet-be-dep--gateway-service:80/controller\"}],\"image\":\"wso2cellery/samples-pet-store-portal\",\"name\":\"portal\",\"ports\":[{\"containerPort\":80}]}]},\"type\":null,\"volumeClaims\":[]}}],\"gateway\":{\"spec\":{\"ingress\":{\"extensions\":{\"clusterIngress\":{\"host\":\"pet-store.com\",\"tls\":{}},\"oidc\":{\"baseUrl\":\"http://pet-store.com/\",\"clientId\":\"petstoreapplication\",\"clientSecret\":null,\"dcrPassword\":\"admin\",\"dcrUrl\":null,\"dcrUser\":\"admin\",\"nonSecurePaths\":[\"/app/*\",\"/\"],\"providerUrl\":\"https://idp.cellery-system/oauth2/token\",\"redirectUrl\":\"http://pet-store.com/_auth/callback\",\"securePaths\":[],\"subjectClaim\":\"given_name\"}},\"grpc\":[],\"http\":[{\"authenticate\":false,\"context\":\"/\",\"destination\":{\"host\":\"portal\",\"port\":80},\"global\":false,\"port\":80}],\"tcp\":[]}}},\"sts\":{\"spec\":{\"unsecuredPaths\":[]}}}}\n",
+      "mesh.cellery.io/cell-dependencies": "[{\"org\":\"myorg\",\"name\":\"petbe\",\"version\":\"1.0.0\",\"instance\":\"pet-be-dep\",\"kind\":\"Cell\"}]",
+      "mesh.cellery.io/cell-image-name": "petfe",
+      "mesh.cellery.io/cell-image-org": "myorg",
+      "mesh.cellery.io/cell-image-version": "1.0.0"
+    },
+    "creationTimestamp": "2019-11-26T08:14:13Z",
+    "generation": 1,
+    "name": "pet-fe-src",
+    "namespace": "default",
+    "resourceVersion": "24687",
+    "selfLink": "/apis/mesh.cellery.io/v1alpha2/namespaces/default/cells/pet-fe-src",
+    "uid": "bb22bc10-1024-11ea-af02-0800270ce1fe"
+  },
+  "spec": {
+    "components": [
+    {
+      "metadata": {
+        "annotations": {},
+        "labels": {},
+        "name": "portal"
+      },
+      "spec": {
+        "configurations": [],
+        "ports": [
+        {
+          "name": "portal",
+          "port": 80,
+          "protocol": "http",
+          "targetContainer": "portal",
+          "targetPort": 80
+        }
+        ],
+        "secrets": [],
+        "template": {
+          "containers": [
+          {
+            "env": [
+            {
+              "name": "PORTAL_PORT",
+              "value": "80"
+            },
+            {
+              "name": "BASE_PATH",
+              "value": "."
+            },
+            {
+              "name": "PET_STORE_CELL_URL",
+              "value": "http://pet-be-dep--gateway-service:80/controller"
+            }
+            ],
+            "image": "wso2cellery/samples-pet-store-portal",
+            "name": "portal",
+            "ports": [
+            {
+              "containerPort": 80
+            }
+            ]
+          }
+          ]
+        },
+        "type": null,
+        "volumeClaims": []
+      }
+    }
+    ],
+    "gateway": {
+      "spec": {
+        "ingress": {
+          "extensions": {
+            "clusterIngress": {
+              "host": "pet-store.com",
+              "tls": {}
+            },
+            "oidc": {
+              "baseUrl": "http://pet-store.com/",
+              "clientId": "petstoreapplication",
+              "clientSecret": null,
+              "dcrPassword": "admin",
+              "dcrUrl": null,
+              "dcrUser": "admin",
+              "nonSecurePaths": [
+                "/app/*",
+                "/"
+              ],
+              "providerUrl": "https://idp.cellery-system/oauth2/token",
+              "redirectUrl": "http://pet-store.com/_auth/callback",
+              "securePaths": [],
+              "subjectClaim": "given_name"
+            }
+          },
+          "grpc": [],
+          "http": [
+          {
+            "authenticate": false,
+            "context": "/",
+            "destination": {
+              "host": "portal",
+              "port": 80
+            },
+            "global": false,
+            "port": 80
+          }
+          ],
+          "tcp": []
+        }
+      }
+    },
+    "sts": {
+      "spec": {
+        "unsecuredPaths": []
+      }
+    }
+  },
+  "status": {
+    "activeComponentCount": 1,
+    "componentCount": 1,
+    "componentGenerations": {
+      "pet-fe-src--portal": 1
+    },
+    "componentStatuses": {
+      "pet-fe-src--portal": "Ready"
+    },
+    "conditions": [
+    {
+      "status": "True",
+      "type": "Ready"
+    }
+    ],
+    "gatewayGeneration": 1,
+    "gatewayServiceName": "pet-fe-src--gateway-service",
+    "gatewayStatus": "Ready",
+    "networkPolicyGeneration": 1,
+    "observedGeneration": 1,
+    "routingVsGeneration": 1,
+    "status": "Ready",
+    "tokenServiceGeneration": 1,
+    "tokenServiceStatus": "Ready"
+  }
+}

@@ -22,35 +22,54 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 	"github.com/cellery-io/sdk/components/cli/pkg/routing"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
 )
 
-func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string, targetInstance string, percentage int,
+func RunRouteTrafficCommand(cli cli.Cli, sourceInstances []string, dependencyInstance string, targetInstance string, percentage int,
 	enableUserBasedSessionAwareness bool, assumeYes bool) error {
-	spinner := util.StartNewSpinner(fmt.Sprintf("Starting to route %d%% of traffic to instance %s", percentage,
+	var err error
+	artifactFile := fmt.Sprintf("./%s-routing-artifacts.yaml", dependencyInstance)
+	defer func() error {
+		return os.Remove(artifactFile)
+	}()
+	BuildRouteArtifact(cli, sourceInstances, dependencyInstance, targetInstance, percentage,
+		enableUserBasedSessionAwareness, assumeYes)
+
+	if err = cli.ExecuteTask("Applying modified rules", "Failed to apply modified rules", "", func() error {
+		err = cli.KubeCli().ApplyFile(artifactFile)
+		if err != nil {
+			return fmt.Errorf("error occurred while applying modified rules, %v", err)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully routed %d%% of traffic to instance %s", percentage,
+		targetInstance))
+	return nil
+}
+
+func BuildRouteArtifact(cli cli.Cli, sourceInstances []string, dependencyInstance string, targetInstance string, percentage int,
+	enableUserBasedSessionAwareness bool, assumeYes bool) error {
+	fmt.Fprintln(cli.Out(), fmt.Sprintf("Starting to route %d%% of traffic to instance %s", percentage,
 		targetInstance))
 
 	// check the source instance and see if the dependency exists in the source
-	routes, err := routing.GetRoutes(sourceInstances, dependencyInstance, targetInstance)
+	routes, err := routing.GetRoutes(cli, sourceInstances, dependencyInstance, targetInstance)
 	if err != nil {
-		spinner.Stop(false)
 		return err
 	}
 	// now we have the source instance list which actually depend on the given dependency instance.
 	// get the virtual services corresponding to the given source instances and modify accordingly.
 	if len(routes) == 0 {
 		// no depending instances
-		spinner.Stop(false)
 		return fmt.Errorf("cell/composite instance %s not found among dependencies of source instance(s)",
 			dependencyInstance)
 	}
 	artifactFile := fmt.Sprintf("./%s-routing-artifacts.yaml", dependencyInstance)
-	defer func() {
-		_ = os.Remove(artifactFile)
-	}()
 	for _, route := range routes {
 		err := route.Check()
 		if err != nil {
@@ -58,43 +77,29 @@ func RunRouteTrafficCommand(sourceInstances []string, dependencyInstance string,
 			if versionErr, match := err.(errorpkg.CellGwApiVersionMismatchError); match {
 				if !assumeYes {
 					// prompt confirmation from user
-					spinner.Pause()
 					canContinue, err := canContinueWithWarning(versionErr.ApiContext, versionErr.CurrentTargetApiVersion, versionErr.NewTargetApiVersion)
-					spinner.Resume()
 					if err != nil {
-						spinner.Stop(false)
 						return err
 					}
 					if !canContinue {
-						spinner.SetNewAction("Aborting traffic routing")
-						spinner.Stop(true)
+						fmt.Fprintln(cli.Out(), "Aborting traffic routing")
 						return nil
 					}
 				}
 			} else {
-				spinner.Stop(false)
 				return err
 			}
 		}
-		spinner.SetNewAction("Building modified rules")
-		err = route.Build(percentage, enableUserBasedSessionAwareness, artifactFile)
-		if err != nil {
-			spinner.Stop(false)
+		if err = cli.ExecuteTask("Building modified rules", "Failed to build modified rules", "", func() error {
+			return route.Build(cli, percentage, enableUserBasedSessionAwareness, artifactFile)
+			if err != nil {
+				return fmt.Errorf("error occurred while building modified rules, %v", err)
+			}
+			return nil
+		}); err != nil {
 			return err
 		}
 	}
-
-	spinner.SetNewAction("Applying modified rules")
-	// perform kubectl apply
-	err = kubernetes.ApplyFile(artifactFile)
-	if err != nil {
-		spinner.Stop(false)
-		return err
-	}
-
-	spinner.Stop(true)
-	util.PrintSuccessMessage(fmt.Sprintf("Successfully routed %d%% of traffic to instance %s", percentage,
-		targetInstance))
 	return nil
 }
 

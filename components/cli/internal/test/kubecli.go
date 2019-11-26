@@ -37,6 +37,7 @@ type MockKubeCli struct {
 	services         map[string]kubernetes.Services
 	cellLogs         map[string]string
 	componentsLogs   map[string]string
+	virtualServices  map[string]kubernetes.VirtualService
 }
 
 func (kubeCli *MockKubeCli) SetVerboseMode(enable bool) {
@@ -78,6 +79,12 @@ func WithComponentLogs(componentLogs map[string]string) func(*MockKubeCli) {
 	}
 }
 
+func WithVirtualServices(virtualServices map[string]kubernetes.VirtualService) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.virtualServices = virtualServices
+	}
+}
+
 func SetK8sVersions(serverVersion, clientVersion string) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.k8sServerVersion = serverVersion
@@ -108,6 +115,14 @@ func (kubeCli *MockKubeCli) GetCell(cellName string) (kubernetes.Cell, error) {
 		if cell.CellMetaData.Name == cellName {
 			return cell, nil
 		}
+	}
+	if kubeCli.cellsBytes[cellName] != nil {
+		cell := kubernetes.Cell{}
+		err := json.Unmarshal(kubeCli.cellsBytes[cellName], &cell)
+		if err != nil {
+			return kubernetes.Cell{}, err
+		}
+		return cell, nil
 	}
 	return kubernetes.Cell{}, fmt.Errorf("cell %s not found", cellName)
 }
@@ -199,4 +214,8 @@ func (kubeCli *MockKubeCli) GetPodsForCell(cellName string) (kubernetes.Pods, er
 
 func (kubeCli *MockKubeCli) GetPodsForComposite(compName string) (kubernetes.Pods, error) {
 	return kubernetes.Pods{}, nil
+}
+
+func (kubeCli *MockKubeCli) GetVirtualService(vs string) (kubernetes.VirtualService, error) {
+	return kubeCli.virtualServices[vs], nil
 }

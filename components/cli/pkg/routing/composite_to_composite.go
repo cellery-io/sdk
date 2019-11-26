@@ -23,6 +23,7 @@ import (
 
 	"github.com/ghodss/yaml"
 
+	"github.com/cellery-io/sdk/components/cli/cli"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
 )
 
@@ -36,9 +37,9 @@ func (router *CompositeToCompositeRoute) Check() error {
 	return nil
 }
 
-func (router *CompositeToCompositeRoute) Build(percentage int, isSessionAware bool, routesFile string) error {
+func (router *CompositeToCompositeRoute) Build(cli cli.Cli, percentage int, isSessionAware bool, routesFile string) error {
 
-	modfiedVs, err := buildRoutesForCompositeTarget(router.Src.CompositeMetaData.Name, &router.NewTarget,
+	modfiedVs, err := buildRoutesForCompositeTarget(cli, router.Src.CompositeMetaData.Name, &router.NewTarget,
 		&router.CurrentTarget, percentage)
 	if err != nil {
 		return err
