@@ -136,7 +136,7 @@ public class CelleryUtils {
         port.setPort(CelleryConstants.DEFAULT_GATEWAY_PORT);
         port.setProtocol(CelleryConstants.DEFAULT_GATEWAY_PROTOCOL);
         port.setTargetContainer(component.getName());
-        port.setTargetPort(component.getContainerPort());
+        port.setTargetPort(Math.toIntExact(attributeMap.getIntValue("port")));
         component.addPort(port);
         webIngress.setHttpAPI(httpAPI);
         webIngress.setVhost(gatewayConfig.getStringValue("vhost"));
@@ -171,13 +171,6 @@ public class CelleryUtils {
         if (attributeMap.containsKey("apiVersion")) {
             httpAPI.setVersion(attributeMap.getStringValue("apiVersion"));
         }
-        int containerPort = Math.toIntExact(attributeMap.getIntValue("port"));
-        // Validate the container port is same for all the ingresses.
-        if (component.getContainerPort() > 0 && containerPort != component.getContainerPort()) {
-            throw new BallerinaException("Invalid container port" + containerPort + ". Multiple container ports are " +
-                    "not supported.");
-        }
-        component.setContainerPort(containerPort);
         return httpAPI;
     }
 

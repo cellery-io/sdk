@@ -55,6 +55,7 @@ import io.cellery.models.internal.ImageComponent;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
@@ -263,13 +264,12 @@ public class CreateCellImage {
                 copyResourceToTarget(protoFile);
             }
         }
-        component.setContainerPort(destination.getPort());
         Port port = new Port();
         port.setName(component.getName());
         port.setPort(destination.getPort());
         port.setProtocol(CelleryConstants.PROTOCOL_GRPC);
         port.setTargetContainer(component.getName());
-        port.setTargetPort(component.getContainerPort());
+        port.setTargetPort(destination.getPort());
         grpc.setDestination(destination);
         if (attributeMap.containsKey(CelleryConstants.GATEWAY_PORT)) {
             grpc.setPort(Math.toIntExact(attributeMap.getIntValue(CelleryConstants.GATEWAY_PORT)));
@@ -285,13 +285,12 @@ public class CreateCellImage {
         destination.setPort(Math.toIntExact(attributeMap.getIntValue("backendPort")));
         tcp.setDestination(destination);
         component.setProtocol(CelleryConstants.PROTOCOL_TCP);
-        component.setContainerPort(destination.getPort());
         Port port = new Port();
         port.setName(component.getName());
         port.setPort(destination.getPort());
         port.setProtocol(CelleryConstants.PROTOCOL_TCP);
         port.setTargetContainer(component.getName());
-        port.setTargetPort(component.getContainerPort());
+        port.setTargetPort(destination.getPort());
         if (attributeMap.containsKey(CelleryConstants.GATEWAY_PORT)) {
             tcp.setPort(Math.toIntExact(attributeMap.getIntValue(CelleryConstants.GATEWAY_PORT)));
         }
@@ -348,7 +347,7 @@ public class CreateCellImage {
         port.setPort(CelleryConstants.DEFAULT_GATEWAY_PORT);
         port.setProtocol(CelleryConstants.DEFAULT_GATEWAY_PROTOCOL);
         port.setTargetContainer(component.getName());
-        port.setTargetPort(component.getContainerPort());
+        port.setTargetPort(Math.toIntExact(attributeMap.getIntValue("port")));
         component.addPort(port);
         component.addApi(httpAPI);
     }
@@ -587,10 +586,12 @@ public class CreateCellImage {
                 .withResources(component.getResources())
                 .withReadinessProbe(component.getReadinessProbe())
                 .withLivenessProbe(component.getLivenessProbe());
-        if (component.getContainerPort() != 0) {
-            containerBuilder.withPorts(new ContainerPortBuilder()
-                    .withContainerPort(component.getContainerPort()).build());
-        }
+        List<ContainerPort> containerPorts = new ArrayList<>();
+        component.getPorts().forEach(port -> {
+            containerPorts.add(new ContainerPortBuilder()
+                    .withContainerPort(port.getTargetPort()).build());
+        });
+        containerBuilder.withPorts(containerPorts);
         return containerBuilder.build();
     }
 

@@ -54,7 +54,6 @@ public class ImageComponent {
     private String service;
     private String protocol;
     private List<Port> ports;
-    private int containerPort;
     private ScalingPolicy scalingPolicy;
     private List<String> unsecuredPaths;
     private Probe readinessProbe;
