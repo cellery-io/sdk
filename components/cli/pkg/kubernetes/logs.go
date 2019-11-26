@@ -19,40 +19,41 @@
 package kubernetes
 
 import (
-	"fmt"
 	"os/exec"
 
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/osexec"
 )
 
-func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(cellName string) (string, error) {
+func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(cellName string, follow bool) (bool, error) {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
 		constants.GroupName+"/cell="+cellName+","+constants.GroupName+"/component",
 		"--all-containers=true",
 	)
+	if follow {
+		cmd.Args = append(cmd.Args, "-f", "--max-log-requests=20")
+	}
 	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	fmt.Print(string(out))
-	return string(out), err
+	return osexec.FollowCommandOutput(cmd)
 }
 
-func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(cellName string) (string, error) {
+func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(cellName string, follow bool) (bool, error) {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
 		constants.GroupName+"/cell="+cellName,
 		"--all-containers=true",
 	)
+	if follow {
+		cmd.Args = append(cmd.Args, "-f", "--max-log-requests=20")
+	}
 	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	fmt.Print(string(out))
-	return string(out), err
+	return osexec.FollowCommandOutput(cmd)
 }
 
-func (kubeCli *CelleryKubeCli) GetComponentLogs(cellName, componentName string) (string, error) {
+func (kubeCli *CelleryKubeCli) GetComponentLogs(cellName, componentName string, follow bool) (bool, error) {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
@@ -60,8 +61,9 @@ func (kubeCli *CelleryKubeCli) GetComponentLogs(cellName, componentName string) 
 		"-c",
 		componentName,
 	)
+	if follow {
+		cmd.Args = append(cmd.Args, "-f")
+	}
 	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	fmt.Print(string(out))
-	return string(out), err
+	return osexec.FollowCommandOutput(cmd)
 }

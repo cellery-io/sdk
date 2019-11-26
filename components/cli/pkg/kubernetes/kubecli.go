@@ -38,9 +38,9 @@ type KubeCli interface {
 	DescribeCell(cellName string) error
 	Version() (string, string, error)
 	GetServices(cellName string) (Services, error)
-	GetCellLogsUserComponents(cellName string) (string, error)
-	GetCellLogsAllComponents(cellName string) (string, error)
-	GetComponentLogs(cellName, componentName string) (string, error)
+	GetCellLogsUserComponents(cellName string, follow bool) (bool, error)
+	GetCellLogsAllComponents(cellName string, follow bool) (bool, error)
+	GetComponentLogs(cellName, componentName string, follow bool) (bool, error)
 	JsonPatch(kind, instance, jsonPatch string) error
 	ApplyFile(file string) error
 	GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error)

@@ -107,6 +107,45 @@ func GetCommandOutputFromTextFile(cmd *exec.Cmd) ([]byte, error) {
 	return out, err
 }
 
+func FollowCommandOutput(cmd *exec.Cmd) (bool, error) {
+	exitCode := 0
+	var output string
+	logsFound := false
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			fmt.Println(stdoutScanner.Text())
+			logsFound = true
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Println(stderrScanner.Text())
+			logsFound = true
+		}
+	}()
+	err := cmd.Start()
+	if err != nil {
+		return logsFound, err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exit, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+				exitCode = exit.ExitStatus()
+			}
+			if exitCode == 1 {
+				return logsFound, fmt.Errorf(output)
+			}
+		}
+		return logsFound, err
+	}
+	return logsFound, err
+}
+
 // Cannot use userHomeDir function in util package since it creates a cyclic dependency
 func userHomeDir() string {
 	if runtime.GOOS == "windows" {

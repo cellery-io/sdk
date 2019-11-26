@@ -177,16 +177,16 @@ func (kubeCli *MockKubeCli) GetServices(cellName string) (kubernetes.Services, e
 	return kubeCli.services[cellName], nil
 }
 
-func (kubeCli *MockKubeCli) GetCellLogsUserComponents(cellName string) (string, error) {
-	return kubeCli.cellLogs[cellName], nil
+func (kubeCli *MockKubeCli) GetCellLogsUserComponents(cellName string, follow bool) (bool, error) {
+	return true, nil
 }
 
-func (kubeCli *MockKubeCli) GetCellLogsAllComponents(cellName string) (string, error) {
-	return kubeCli.cellLogs[cellName], nil
+func (kubeCli *MockKubeCli) GetCellLogsAllComponents(cellName string, follow bool) (bool, error) {
+	return false, nil
 }
 
-func (kubeCli *MockKubeCli) GetComponentLogs(cellName, componentName string) (string, error) {
-	return kubeCli.componentsLogs[cellName+":"+componentName], nil
+func (kubeCli *MockKubeCli) GetComponentLogs(cellName, componentName string, follow bool) (bool, error) {
+	return false, nil
 }
 
 func (kubeCli *MockKubeCli) JsonPatch(kind, instance, jsonPatch string) error {

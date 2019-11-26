@@ -33,6 +33,7 @@ import (
 func newLogsCommand(cli cli.Cli) *cobra.Command {
 	var component string
 	var syslog bool
+	var follow bool
 	cmd := &cobra.Command{
 		Use:   "logs <instance-name>",
 		Short: "Displays logs for either the cell instance, or a component of a running cell instance.",
@@ -54,7 +55,7 @@ func newLogsCommand(cli cli.Cli) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := instance.RunLogs(cli, args[0], component, syslog); err != nil {
+			if err := instance.RunLogs(cli, args[0], component, syslog, follow); err != nil {
 				util.ExitWithErrorMessage("Cellery logs command failed", err)
 			}
 		},
@@ -63,5 +64,6 @@ func newLogsCommand(cli cli.Cli) *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&component, "component", "c", "", "component of the cell")
 	cmd.Flags().BoolVarP(&syslog, "syslog", "s", false, "view system logs")
+	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "follow logs")
 	return cmd
 }
