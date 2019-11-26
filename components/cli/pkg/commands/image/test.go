@@ -191,7 +191,7 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	if err != nil {
 		return err
 	}
-	balFilePath := filepath.Join(imageDir, constants.ZipBallerinaSource, balFileName)
+	cellBalFilePath := filepath.Join(imageDir, constants.ZipBallerinaSource, balFileName)
 
 	currentDir := cli.FileSystem().CurrentDir()
 	if err != nil {
@@ -259,47 +259,127 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	}
 
 	// If --debug flag is passed, start a Telepresence shell
-	// Else run Telepresence with ballerina test command
+	// Else create a ballerina project, copy files from image and execute ballerina test command via Telepresence
 	if debug {
 		balProjectName = filepath.Base(projLocation)
 		testsRoot, err = filepath.Abs(projLocation)
 		if err != nil {
 			return err
 		}
-		PromtConfirmation(assumeYes, testsRoot)
+		if !assumeYes {
+			isConfirmed, err := PromtConfirmation(testsRoot, debug)
+			if err != nil {
+				return err
+			}
+			if !isConfirmed {
+				return fmt.Errorf("cell testing aborted")
+			}
+		}
 		balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
 			Key:   "DEBUG",
 			Value: "true",
 		})
 	} else {
-		var balModule string
+		var isBallerinaProject bool
+		var balModulePath string
+		var isTestsContainBeforeSuite bool
+		var isTestsContainAfterSuite bool
 
-		if instanceName != "" && instanceName != "test" {
-			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
-		} else {
-			balModule = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
-		}
+		//Check if tests exist in the cell image
+		// Return an error if tests not found
 		isTestDirExists, err := util.FileExists(testsPath)
 		if err != nil {
 			return err
 		}
-		var isBallerinaProject bool
-
-		read, err := ioutil.ReadFile(balFilePath)
+		isSourceBalContainsTests, err := util.FindPatternInFile("@test:Config.*", cellBalFilePath)
 		if err != nil {
 			return err
 		}
-		containsTests := strings.Contains(string(read), "@test")
-		if !isTestDirExists && !containsTests {
+		if !isTestDirExists && !isSourceBalContainsTests {
 			return fmt.Errorf("no tests found in the cell image %v", imageTag)
 		}
-		err = util.RemoveDir(testsRoot)
+
+		// Check if @test:BeforeSuite and @test:AfterSuite functions are defined in cell bal file or test bal files
+		// Print a warning if at least one of the functions are missing and prompt for confirmation to continue
+		if isSourceBalContainsTests {
+			isTestsContainBeforeSuite, err = util.FindPatternInFile("@test:BeforeSuite", cellBalFilePath)
+			if err != nil {
+				return err
+			}
+			isTestsContainAfterSuite, err = util.FindPatternInFile("@test:AfterSuite", cellBalFilePath)
+			if err != nil {
+				return err
+			}
+		}
+
+		testFiles, err := ioutil.ReadDir(testsPath)
 		if err != nil {
 			return err
 		}
+		if !isTestsContainBeforeSuite {
+			for _, f := range testFiles {
+				isTestsContainBeforeSuite, err = util.FindPatternInFile(
+					"@test:BeforeSuite", filepath.Join(testsPath, f.Name()))
+				if err != nil {
+					return err
+				}
+				if isTestsContainBeforeSuite {
+					break
+				}
+			}
+		}
+		if !isTestsContainAfterSuite {
+			for _, f := range testFiles {
+				isTestsContainAfterSuite, err = util.FindPatternInFile(
+					"@test:AfterSuite", filepath.Join(testsPath, f.Name()))
+				if err != nil {
+					return err
+				}
+				if isTestsContainAfterSuite {
+					break
+				}
+			}
+		}
 
-		// Create Ballerina project
+		// Print a warning message if atleast one of the functions are missing
+		// Prompt for confirmation to continue
+		if !isTestsContainBeforeSuite || !isTestsContainAfterSuite {
+			var missingFunctions []string
+			if !isTestsContainBeforeSuite {
+				missingFunctions = append(missingFunctions, "@BeforeSuite")
+			}
+			if !isTestsContainAfterSuite {
+				missingFunctions = append(missingFunctions, "@AfterSuite")
+			}
+
+			util.PrintWarningMessage(fmt.Sprintf(
+				"Missing function(s) %s in test files. "+
+					"Please make sure the instances are already available in the cluster or abort to write the missing functions.",
+				util.CyanBold(strings.Join(missingFunctions, ", "))))
+
+			if !assumeYes {
+				// passing an empty string for bal project path
+				// since it is used only to print the message for the debug mode
+				isConfirmed, err := PromtConfirmation("", debug)
+				if err != nil {
+					return err
+				}
+				if !isConfirmed {
+					return fmt.Errorf("cell testing aborted")
+				}
+			}
+			err = util.RemoveDir(testsRoot)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Create a Ballerina project named target
 		isBallerinaProject, err = util.FileExists(balTomlPath)
+		if err != nil {
+			return err
+		}
+		err = util.RemoveDir(testsRoot)
 		if err != nil {
 			return err
 		}
@@ -313,21 +393,33 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 			if err != nil {
 				return err
 			}
-		} else {
-			err = util.CleanOrCreateDir(testsRoot)
-			if err != nil {
-				return err
-			}
 		}
 
-		// Copy artifacts for running tests
+		// Copy Ballerina.toml from image if exists for running tests
 		if isBallerinaProject {
 			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
 			if fileCopyError != nil {
 				return fileCopyError
 			}
 		}
-		fileCopyError := util.CopyDir(testsPath, filepath.Join(balModule, constants.ZipTests))
+
+		// Set ballerina module name and copy source file and tests
+		if instanceName != "" && instanceName != "test" {
+			balModulePath = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
+		} else {
+			balModulePath = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
+		}
+		err = util.CreateDir(balModulePath)
+		if err != nil {
+			return err
+		}
+
+		fileCopyError := util.CopyFile(cellBalFilePath, filepath.Join(balModulePath, filepath.Base(cellBalFilePath)))
+		if fileCopyError != nil {
+			return fileCopyError
+		}
+
+		fileCopyError = util.CopyDir(testsPath, filepath.Join(balModulePath, constants.ZipTests))
 		if fileCopyError != nil {
 			return fileCopyError
 		}
@@ -337,21 +429,10 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 			return err
 		}
 
-		// Change working dir to Bal project
+		// Change working dir to Bal project to execute tests
 		err = os.Chdir(testsRoot)
 		if err != nil {
 			return fmt.Errorf("error occurred while changing working directory, %v", err)
-		}
-
-		isExistsSourceBal, err := util.FileExists(filepath.Join(balModule, filepath.Base(balFilePath)))
-		if err != nil {
-			return err
-		}
-		if !isExistsSourceBal {
-			fileCopyError := util.CopyFile(balFilePath, filepath.Join(balModule, filepath.Base(balFilePath)))
-			if fileCopyError != nil {
-				return err
-			}
 		}
 	}
 
@@ -377,30 +458,33 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	return nil
 }
 
-func PromtConfirmation(assumeYes bool, balProj string) error {
-	if !assumeYes {
+func PromtConfirmation(balProj string, debug bool) (bool, error) {
+	if !debug {
+		fmt.Printf("%s "+util.Bold("Do you wish to continue running tests (Y/n)? "), util.YellowBold("?"))
+	} else {
 		balConf := filepath.Join(balProj, constants.BallerinaConf)
 		var debugMsg string
 		isExists, err := util.FileExists(balConf)
 		if err != nil {
-			return fmt.Errorf("error occured while checking if %v exists, %v", balConf, err)
+			return false, fmt.Errorf("error occured while checking if %v exists, %v", balConf, err)
 		}
 		if isExists {
 			debugMsg = constants.BallerinaConf + " already exists in project location: " + balProj + ". This will be overridden to debug tests. "
 		} else {
 			debugMsg = constants.BallerinaConf + " file will be created in project location: " + balProj + " to debug tests."
 		}
-		fmt.Printf("%s "+util.Bold(debugMsg+"Do you wish to continue with debugging the tests (Y/n)? "), util.YellowBold("?"))
-		reader := bufio.NewReader(os.Stdin)
-		confirmation, err := reader.ReadString('\n')
-		if err != nil {
-			return err
-		}
-		if strings.ToLower(strings.TrimSpace(confirmation)) == "n" {
-			return fmt.Errorf("Cell testing aborted")
-		}
+		fmt.Printf("%s "+util.Bold(debugMsg+"Do you wish to continue debugging tests (Y/n)? "), util.YellowBold("?"))
 	}
-	return nil
+
+	reader := bufio.NewReader(os.Stdin)
+	confirmation, err := reader.ReadString('\n')
+	if err != nil {
+		return false, err
+	}
+	if strings.ToLower(strings.TrimSpace(confirmation)) == "n" {
+		return false, nil
+	}
+	return true, nil
 }
 
 func CreateBallerinaConf(iName string, verboseMode string, imageDir string, dependencyLinks string,

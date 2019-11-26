@@ -30,6 +30,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
@@ -206,6 +207,27 @@ func FindInDirectory(directory, suffix string) []string {
 		}
 	}
 	return fileList
+}
+
+func FindPatternInFile(searchString string, filePath string) (bool, error) {
+	// Read file content
+	content, err := ioutil.ReadFile(filePath)
+	contentStr := string(content)
+
+	// Remove comments
+	regex, err := regexp.Compile(`\s*(/{2,}|#+).*`)
+	if err != nil {
+		return false, err
+	}
+	contentStr = regex.ReplaceAllString(contentStr, "")
+
+	// Search for the given string
+	matchStr := regexp.MustCompile(`[\n;}]\s*` + searchString)
+	if err != nil {
+		return false, err
+	}
+
+	return matchStr.MatchString(contentStr), nil
 }
 
 func CreateDir(dirPath string) error {

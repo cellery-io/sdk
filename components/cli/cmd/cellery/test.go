@@ -92,7 +92,7 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 					}
 				}
 				if disableTelepresence {
-					return fmt.Errorf("Telepresence is required to run on debug mode")
+					return fmt.Errorf("Telepresence is required to debug tests")
 				}
 			}
 			return nil
