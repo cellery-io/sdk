@@ -207,17 +207,18 @@ func ballerinaInstallationPath() (string, error) {
 	return exePath + ballerina, nil
 }
 
+// Test executes the ballerina test command on a Ballerina project
+// If the --disable-telepresence flag is passed to the CLI, the args will be an empty array meaning the
+// tests should be run without starting Telepresence
 func (balExecutor *LocalBalExecutor) Test(fileName string, args []string, envVars []*EnvironmentVariable) error {
+	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
 	cmd := &exec.Cmd{}
 	exePath, err := balExecutor.ExecutablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
-	cmd.Env = os.Environ()
-	// Export environment variables defined by user
-	for _, envVar := range envVars {
-		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
-	}
+
+	// Check if debug mode flag is passed
 	var debug bool
 	for _, envVar := range envVars {
 		if envVar.Key == "DEBUG" {
@@ -227,24 +228,37 @@ func (balExecutor *LocalBalExecutor) Test(fileName string, args []string, envVar
 			}
 		}
 	}
+	// If debug mode is enabled, start Telepresence and run ballerina test
+	// Else start the telepresence shell
 	if !debug {
-		balArgs := []string{exePath, "test", "--all"}
-		args = append(args, "--run")
-		args = append(args, balArgs...)
+		// If args array is not empty, the tests should run with Telepresence
+		// Else we should spin up the ballerina docker container using the usual docker run command
+		if len(args) > 0 {
+			args = append(args, "--run", exePath, "test", "--all")
+			cmd = exec.Command(telepresenceExecPath, args...)
+		} else {
+			cmd = exec.Command(exePath, "test", "--all")
+		}
+	} else {
+		cmd = exec.Command(telepresenceExecPath, args...)
 	}
-	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
-	cmd.Path = telepresenceExecPath
-	cmd.Args = args
+
+	cmd.Env = os.Environ()
+	// Export environment variables defined by user
+	for _, envVar := range envVars {
+		cmd.Env = append(cmd.Env, envVar.Key+"="+envVar.Value)
+	}
+
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
-		return fmt.Errorf("error occurred while running tests, %v", err)
+		return err
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return fmt.Errorf("error occurred while waiting for tests to complete, %v", err)
+		return err
 	}
 	return nil
 }

@@ -38,6 +38,7 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 	var debug bool
 	var verbose bool
 	var incell bool
+	var disableTelepresence bool
 	var startDependencies bool
 	var shareAllInstances bool
 	var assumeYes bool
@@ -90,23 +91,24 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 						return fmt.Errorf("path %s does not exist", filepath.Join(projLocation, constants.BallerinaToml))
 					}
 				}
+				if disableTelepresence {
+					return fmt.Errorf("Telepresence is required to run on debug mode")
+				}
 			}
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := image2.RunTest(cli, args[0], name, startDependencies, shareAllInstances, dependencyLinks, envVars,
-				assumeYes, debug, verbose, incell, projLocation); err != nil {
+				assumeYes, debug, verbose, disableTelepresence, incell, projLocation); err != nil {
 				util.ExitWithErrorMessage("Cellery test command failed", err)
 			}
 		},
 		Example: "  cellery test cellery-samples/hr:1.0.0 -n hr-inst\n" +
-			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst -y\n" +
-			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst --assume-yes\n" +
+			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst \n" +
+			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst \n" +
+			"  cellery test cellery-samples/hr:1.0.0 -n hr-inst --disable-telepresence\n" +
 			"  cellery test registry.foo.io/cellery-samples/hr:1.0.0 -n hr-inst -l employee:employee-inst" +
-			" -l stock:stock-inst \n" +
-			" -v\n" +
-			" --debug\n" +
-			" -p ~/cellery-samples/cells/employee-portal/hr_proj",
+			" -l stock:stock-inst -v --debug -p ~/cellery-samples/cells/employee-portal/hr_proj",
 	}
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Name of the cell instance")
 	cmd.Flags().BoolVarP(&assumeYes, "assume-yes", "y", false,
@@ -119,8 +121,8 @@ func newTestCommand(cli cli.Cli) *cobra.Command {
 		"Link an instance with a dependency alias")
 	cmd.Flags().StringArrayVarP(&envVars, "env", "e", []string{},
 		"Set an environment variable for the cellery test method in the Cell file")
-
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Run on verbose mode")
+	cmd.Flags().BoolVar(&disableTelepresence, "disable-telepresence", false, "Disable Telepresence")
 	cmd.Flags().BoolVar(&debug, "debug", false, "Enable test debug mode")
 	cmd.Flags().StringVarP(&projLocation, "project-location", "p", "", "Ballerina Project location")
 	cmd.Flags().BoolVar(&incell, "incell", false, "Enable in-cell testing")

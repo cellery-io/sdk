@@ -321,6 +321,9 @@ func (balExecutor *DockerBalExecutor) Init(projectDir string) error {
 	return nil
 }
 
+// Test executes the ballerina test command on a Ballerina project
+// If the --disable-telepresence flag is passed to the CLI, the args will be an empty array meaning the
+// tests should be run without starting Telepresence
 func (balExecutor *DockerBalExecutor) Test(fileName string, args []string, envVars []*EnvironmentVariable) error {
 	//Replace imagedir
 	read, err := ioutil.ReadFile(fileName)
@@ -337,44 +340,60 @@ func (balExecutor *DockerBalExecutor) Test(fileName string, args []string, envVa
 		return err
 	}
 	cmd := &exec.Cmd{}
+	dockerCmdArgs := []string{}
+
 	// This will override any env vars with identical names (prefixed with 'CELLERY') set previously.
 	for _, envVar := range envVars {
 		if envVar.Key == celleryImageDirEnvVar {
 			envVar.Value = strings.Replace(envVar.Value, util.UserHomeDir(), "/home/cellery", 1)
 		}
-		cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
+		dockerCmdArgs = append(dockerCmdArgs, "-e", envVar.Key+"="+envVar.Value)
 	}
 	cliUser, err := user.Current()
 	if err != nil {
 		return fmt.Errorf("error while retrieving the current user, %v", err)
 	}
-	dockerCmdArgs := []string{
+
+	//Construct the arguments for docker run
+	dockerCmdArgs = append(dockerCmdArgs, []string{
 		"-l", "ballerina-runtime=" + version.BuildVersion(),
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".ballerina,target=/home/cellery/.ballerina",
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".cellery,target=/home/cellery/.cellery",
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".kube,target=/home/cellery/.kube",
 		"--mount", "type=bind,source=" + currentDir + ",target=/home/cellery/tmp",
 		"-w", "/home/cellery/",
-		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
-	}
+	}...)
+	dockerCmdArgs = append(dockerCmdArgs, "wso2cellery/ballerina-runtime:"+version.BuildVersion())
 	dockerCommand := []string{"./" + constants.BalTestExecFIle, cliUser.Uid, cliUser.Username, runtime.GOOS}
 	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
-	args = append(args, "--docker-run")
-	args = append(args, dockerCmdArgs...)
-	bashArgs := []string{"/bin/bash", "-c", strings.Join(args, " ")}
+
+	// If args array is not empty, the tests should run with Telepresence with --docker-run option
+	// Else we should spin up the ballerina docker container using the usual docker run command
+	if len(args) > 0 {
+		telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
+		args = []string{telepresenceExecPath, strings.Join(args, " ")}
+		args = append(args, "--docker-run")
+		args = append(args, dockerCmdArgs...)
+		bashArgs := []string{"/bin/bash", "-c", strings.Join(args, " ")}
+		cmd.Path = "/bin/bash"
+		cmd.Args = bashArgs
+	} else {
+		args = append(args, "run")
+		args = append(args, dockerCmdArgs...)
+		cmd = exec.Command("docker", args...)
+	}
+
 	cmd.Env = os.Environ()
-	cmd.Path = "/bin/bash"
-	cmd.Args = bashArgs
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
-		return fmt.Errorf("error occurred while running tests, %v", err)
+		return err
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return fmt.Errorf("error occurred while waiting for tests to complete, %v", err)
+		return err
 	}
 	return nil
 }

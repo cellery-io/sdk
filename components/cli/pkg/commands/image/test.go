@@ -43,7 +43,7 @@ const CelleryTestVerboseMode = "CELLERY_DEBUG_MODE"
 
 // RunTest starts Cell instance (along with dependency instances if specified by the user)\
 func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
-	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, incell bool, projLocation string) error {
+	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, disableTelepresence bool, incell bool, projLocation string) error {
 	var err error
 	var imageDir string
 	var parsedCellImage *image.CellImage
@@ -168,14 +168,15 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 	}
 
 	err = startTestCellInstance(cli, imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
-		shareDependencies, rootNodeDependencies, verbose, debug, incell, assumeYes, projLocation)
+		shareDependencies, rootNodeDependencies, verbose, debug, disableTelepresence, incell, assumeYes, projLocation)
 	if err != nil {
 		return fmt.Errorf("failed to test Cell instance "+instanceName+", %v", err)
 	}
-	//Remove Ballerina toml and local repo to avoid failing cellery build and run
-	if !debug {
-		os.Remove(constants.BallerinaToml)
-		os.Remove(constants.BallerinaConf)
+
+	//Cleanup telepresence deployment started for tests
+	err = kubernetes.DeleteFile(filepath.Join(imageDir, "telepresence.yaml"))
+	if err != nil {
+		return err
 	}
 	util.PrintSuccessMessage(fmt.Sprintf("Completed running tests for instance %s", util.Bold(instanceName)))
 	return nil
@@ -183,7 +184,7 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 
 func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, runningNode *dependencyTreeNode,
 	envVars []*environmentVariable, startDependencies bool, shareDependencies bool, dependencyLinks map[string]*dependencyInfo,
-	verbose bool, debug bool, incell bool, assumeYes bool, projLocation string) error {
+	verbose bool, debug bool, onlyDocker bool, incell bool, assumeYes bool, projLocation string) error {
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
 		runningNode.MetaData.Version)
 	balFileName, err := util.GetSourceFileName(filepath.Join(imageDir, constants.ZipBallerinaSource))
@@ -221,8 +222,6 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 		return err
 	}
 	verboseMode := strconv.FormatBool(verbose)
-
-	telepresenceYamlPath := filepath.Join(imageDir, "telepresence.yaml")
 	if debug && exePath == "" {
 		return fmt.Errorf("Ballerina should be installed to debug tests.")
 	}
@@ -259,7 +258,8 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 		}
 	}
 
-	// Construct test artifact names
+	// If --debug flag is passed, start a Telepresence shell
+	// Else run Telepresence with ballerina test command
 	if debug {
 		balProjectName = filepath.Base(projLocation)
 		testsRoot, err = filepath.Abs(projLocation)
@@ -361,23 +361,16 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	}
 
 	var testCmdArgs []string
-	if testCmdArgs, err = testCommandArgs(cli, incell, imageDir, instanceName); err != nil {
-		return err
+	// if --disable-telepresence flag is passed, pass an empty array to Bal executor since telepresence is not required
+	if !onlyDocker {
+		if testCmdArgs, err = testCommandArgs(cli, incell, imageDir, instanceName); err != nil {
+			return err
+		}
 	}
 
 	if err = cli.BalExecutor().Test(filepath.Join(testsRoot, constants.BallerinaConf), testCmdArgs, balEnvVars); err != nil {
-		StopTelepresence(telepresenceYamlPath)
 		return err
 	}
-	if err != nil {
-		StopTelepresence(telepresenceYamlPath)
-		return err
-	}
-	StopTelepresence(telepresenceYamlPath)
-	return nil
-}
-func StopTelepresence(filepath string) error {
-	err := kubernetes.DeleteFile(filepath)
 	if err != nil {
 		return err
 	}
@@ -498,8 +491,6 @@ func testCommandArgs(cli cli.Cli, incell bool, imageDir string, instanceName str
 		}); err != nil {
 		return nil, err
 	}
-
-	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
-	var telArgs = []string{telepresenceExecPath, "--deployment", *deploymentName}
+	var telArgs = []string{"--deployment", *deploymentName}
 	return telArgs, nil
 }
