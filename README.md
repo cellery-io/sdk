@@ -1,10 +1,10 @@
 ![Cellery Logo](docs/images/cellery-logo.svg)
 
-[![Build Status](https://travis-ci.org/wso2-cellery/sdk.svg?branch=master)](https://travis-ci.org/wso2-cellery/sdk)
-[![codecov](https://codecov.io/gh/wso2-cellery/sdk/branch/master/graph/badge.svg)](https://codecov.io/gh/wso2-cellery/sdk)
-[![GitHub (pre-)release](https://img.shields.io/github/release/wso2-cellery/sdk/all.svg)](https://github.com/wso2-cellery/sdk/releases)
-[![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/wso2-cellery/sdk.svg)](https://github.com/wso2-cellery/sdk/releases)
-[![GitHub last commit](https://img.shields.io/github/last-commit/wso2-cellery/sdk.svg)](https://github.com/wso2-cellery/sdk/commits/master)
+[![Build Status](https://travis-ci.org/wso2/cellery.svg?branch=master)](https://travis-ci.org/wso2/cellery)
+[![codecov](https://codecov.io/gh/wso2/cellery/branch/master/graph/badge.svg)](https://codecov.io/gh/wso2/cellery)
+[![GitHub (pre-)release](https://img.shields.io/github/release/wso2/cellery/all.svg)](https://github.com/wso2/cellery/releases)
+[![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/wso2/cellery.svg)](https://github.com/wso2/cellery/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/wso2/celley.svg)](https://github.com/wso2/celley/commits/master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
@@ -32,11 +32,11 @@ In addition, here are some other documents you may wish to read:
 - [Cellery Architecture](docs/cellery-architecture.md) - explains the high-level architecture of Cellery.
 - [How to code cells?](docs/cellery-syntax.md) - explains how Cellery cells are written.
 - [CLI commands](docs/cli-reference.md) - reference for CLI commands.
-- [Samples](https://github.com/wso2-cellery/samples) - a collection of useful samples.
+- [Samples](https://github.com/wso2/cellery-samples) - a collection of useful samples.
 - [Kubernetes Resources Overview](docs/kubernetes-resources.md) - explains Kubernetes resources used by the Cellery.
 - [Blogs](https://medium.com/wso2-cellery) - a collection of useful integration and user stories. 
 - [Cellery community](docs/community.md) - describes how to get involved and contribute to the Cellery project.
-- [Cellery roadmap](https://github.com/wso2-cellery/sdk/wiki) - provides the roadmap of the Cellery project.
+- [Cellery roadmap](https://github.com/wso2/cellery/wiki) - provides the roadmap of the Cellery project.
 
 ## Introduction
 
@@ -218,7 +218,7 @@ Now let's look at the steps required to run this cell.
     
 ## What's next?
 * [Installation Options](docs/installation-options.md) - lists all installation options with Cellery.
-* [Samples](https://github.com/wso2-cellery/samples/tree/master) - a collection of useful samples.
+* [Samples](https://github.com/wso2/cellery-samples/tree/master) - a collection of useful samples.
 * [CLI commands](docs/cli-reference.md) - reference for CLI commands.
 
 Learn about full lifecycle of cells in Cellery from,
