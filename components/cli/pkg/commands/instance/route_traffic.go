@@ -35,7 +35,7 @@ func RunRouteTrafficCommand(cli cli.Cli, sourceInstances []string, dependencyIns
 	defer func() error {
 		return os.Remove(artifactFile)
 	}()
-	BuildRouteArtifact(cli, sourceInstances, dependencyInstance, targetInstance, percentage,
+	buildRouteArtifact(cli, sourceInstances, dependencyInstance, targetInstance, percentage,
 		enableUserBasedSessionAwareness, assumeYes)
 
 	if err = cli.ExecuteTask("Applying modified rules", "Failed to apply modified rules", "", func() error {
@@ -52,7 +52,7 @@ func RunRouteTrafficCommand(cli cli.Cli, sourceInstances []string, dependencyIns
 	return nil
 }
 
-func BuildRouteArtifact(cli cli.Cli, sourceInstances []string, dependencyInstance string, targetInstance string, percentage int,
+func buildRouteArtifact(cli cli.Cli, sourceInstances []string, dependencyInstance string, targetInstance string, percentage int,
 	enableUserBasedSessionAwareness bool, assumeYes bool) error {
 	fmt.Fprintln(cli.Out(), fmt.Sprintf("Starting to route %d%% of traffic to instance %s", percentage,
 		targetInstance))

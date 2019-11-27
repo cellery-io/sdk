@@ -27,7 +27,7 @@ import (
 )
 
 func TestRunApplyAutoscalePolicies(t *testing.T) {
-	petBeAutoCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-auto.yaml"))
+	petBeAutoCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-auto.json"))
 	if err != nil {
 		t.Errorf("failed to read mock cell yaml file")
 	}

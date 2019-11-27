@@ -33,15 +33,15 @@ import (
 )
 
 func TestRunRouteTraffic(t *testing.T) {
-	petBeDepCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-dep.yaml"))
+	petBeDepCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-dep.json"))
 	if err != nil {
 		t.Errorf("failed to read mock pet-be-dep cell yaml file")
 	}
-	petBeTargetCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-target.yaml"))
+	petBeTargetCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-target.json"))
 	if err != nil {
 		t.Errorf("failed to read mock pet-be-target cell yaml file")
 	}
-	petFeSrcCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-fe-src.yaml"))
+	petFeSrcCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-fe-src.json"))
 	if err != nil {
 		t.Errorf("failed to read mock pet-fe-src cell yaml file")
 	}
@@ -80,15 +80,15 @@ func TestRunRouteTraffic(t *testing.T) {
 }
 
 func TestBuildRouteArtifact(t *testing.T) {
-	petBeDepCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-dep.yaml"))
+	petBeDepCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-dep.json"))
 	if err != nil {
 		t.Errorf("failed to read mock pet-be-dep cell yaml file")
 	}
-	petBeTargetCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-target.yaml"))
+	petBeTargetCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-be-target.json"))
 	if err != nil {
 		t.Errorf("failed to read mock pet-be-target cell yaml file")
 	}
-	petFeSrcCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-fe-src.yaml"))
+	petFeSrcCell, err := ioutil.ReadFile(filepath.Join("testdata", "cells", "pet-fe-src.json"))
 	if err != nil {
 		t.Errorf("failed to read mock pet-fe-src cell yaml file")
 	}
@@ -97,7 +97,7 @@ func TestBuildRouteArtifact(t *testing.T) {
 	cellMap["pet-be-target"] = petBeTargetCell
 	cellMap["pet-fe-src"] = petFeSrcCell
 
-	petFeSrcVsBytes, err := ioutil.ReadFile(filepath.Join("testdata", "virtual-services", "pet-fe-src-vs.yaml"))
+	petFeSrcVsBytes, err := ioutil.ReadFile(filepath.Join("testdata", "virtual-services", "pet-fe-src-vs.json"))
 	if err != nil {
 		t.Errorf("failed to read mock pet-fe-src-vs cell yaml file")
 	}
@@ -137,10 +137,10 @@ func TestBuildRouteArtifact(t *testing.T) {
 					t.Errorf("failed to remove artifacts file, %v", err)
 				}
 			}()
-			err := BuildRouteArtifact(mockCli, tst.sourceInstances, tst.dependencyInstance, tst.targetInstance,
+			err := buildRouteArtifact(mockCli, tst.sourceInstances, tst.dependencyInstance, tst.targetInstance,
 				tst.percentage, false, true)
 			if err != nil {
-				t.Errorf("error in BuildRouteArtifact, %v", err)
+				t.Errorf("error in buildRouteArtifact, %v", err)
 			}
 			actualArtifacts, err := ioutil.ReadFile(artifactFile)
 			if err != nil {
