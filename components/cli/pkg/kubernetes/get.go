@@ -425,3 +425,25 @@ func GetService(service, namespace string) (Service, error) {
 	err = json.Unmarshal(out, &jsonOutput)
 	return jsonOutput, err
 }
+
+func GetContainerCount(cellName string, considerSystemPods bool) (int, error) {
+	cmd := exec.Command(
+		constants.KubeCtl,
+		"get",
+		"pods",
+		"-o",
+		"jsonpath={.items[*].spec['containers','initContainers'][*].name}",
+	)
+	if considerSystemPods {
+		cmd.Args = append(cmd.Args, "-l", constants.GroupName+"/cell="+cellName)
+	} else {
+		cmd.Args = append(cmd.Args, "-l",
+			constants.GroupName+"/cell="+cellName+","+constants.GroupName+"/component")
+	}
+	out, err := cmd.Output()
+	displayVerboseOutput(cmd)
+	if err != nil {
+		return 0, err
+	}
+	return len(strings.Split(string(out), " ")), nil
+}

@@ -19,6 +19,7 @@
 package kubernetes
 
 import (
+	"fmt"
 	"os/exec"
 
 	"cellery.io/cellery/components/cli/pkg/constants"
@@ -33,7 +34,11 @@ func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(cellName string, follow
 		"--all-containers=true",
 	)
 	if follow {
-		cmd.Args = append(cmd.Args, "-f", "--max-log-requests=20")
+		noOfContainers, err := GetContainerCount(cellName, false)
+		if err != nil {
+			return false, err
+		}
+		cmd.Args = append(cmd.Args, "-f", fmt.Sprintf("--max-log-requests=%d", noOfContainers))
 	}
 	displayVerboseOutput(cmd)
 	return osexec.FollowCommandOutput(cmd)
@@ -47,7 +52,11 @@ func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(cellName string, follow 
 		"--all-containers=true",
 	)
 	if follow {
-		cmd.Args = append(cmd.Args, "-f", "--max-log-requests=20")
+		noOfContainers, err := GetContainerCount(cellName, true)
+		if err != nil {
+			return false, err
+		}
+		cmd.Args = append(cmd.Args, "-f", fmt.Sprintf("--max-log-requests=%d", noOfContainers))
 	}
 	displayVerboseOutput(cmd)
 	return osexec.FollowCommandOutput(cmd)
