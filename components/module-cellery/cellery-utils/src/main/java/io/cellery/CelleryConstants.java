@@ -89,7 +89,6 @@ public class CelleryConstants {
     public static final int DEFAULT_GATEWAY_PORT = 80;
     public static final String DEFAULT_PARAMETER_VALUE = "";
     public static final String CELLERY_IMAGE_DIR_ENV_VAR = "CELLERY_IMAGE_DIR";
-    public static final String IMAGE_NAME_ENV_VAR = "IMAGE_NAME";
     public static final String TEST_MODULE_ENV_VAR = "TEST_MODULE";
     public static final String GATEWAY_SERVICE = "--gateway-service";
     public static final String INSTANCE_NAME_PLACEHOLDER = "{{instance_name}}";

@@ -424,11 +424,6 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 			return fileCopyError
 		}
 
-		err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
-		if err != nil {
-			return err
-		}
-
 		// Change working dir to Bal project to execute tests
 		err = os.Chdir(testsRoot)
 		if err != nil {
@@ -436,7 +431,15 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 		}
 	}
 
-	err = CreateBallerinaConf(string(iName), verboseMode, imageDir, string(dependencyLinksJson), envVars, testsRoot)
+	//Create ballerina.conf to pass CLI flags to the Ballerina process
+	err = CreateBallerinaConf(string(iName), string(dependencyLinksJson), startDependencies, shareDependencies,
+		verboseMode, imageDir, envVars, testsRoot)
+	if err != nil {
+		return err
+	}
+
+	//Create logs directory for test execution logs
+	err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
 	if err != nil {
 		return err
 	}
@@ -448,13 +451,11 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 			return err
 		}
 	}
-
 	if err = cli.BalExecutor().Test(filepath.Join(testsRoot, constants.BallerinaConf), testCmdArgs, balEnvVars); err != nil {
+		DeleteTelepresenceResouces(imageDir)
 		return err
 	}
-	if err != nil {
-		return err
-	}
+	DeleteTelepresenceResouces(imageDir)
 	return nil
 }
 
@@ -462,18 +463,11 @@ func PromtConfirmation(balProj string, debug bool) (bool, error) {
 	if !debug {
 		fmt.Printf("%s "+util.Bold("Do you wish to continue running tests (Y/n)? "), util.YellowBold("?"))
 	} else {
-		balConf := filepath.Join(balProj, constants.BallerinaConf)
-		var debugMsg string
-		isExists, err := util.FileExists(balConf)
-		if err != nil {
-			return false, fmt.Errorf("error occured while checking if %v exists, %v", balConf, err)
-		}
-		if isExists {
-			debugMsg = constants.BallerinaConf + " already exists in project location: " + balProj + ". This will be overridden to debug tests. "
-		} else {
-			debugMsg = constants.BallerinaConf + " file will be created in project location: " + balProj + " to debug tests."
-		}
-		fmt.Printf("%s "+util.Bold(debugMsg+"Do you wish to continue debugging tests (Y/n)? "), util.YellowBold("?"))
+		debugMsg := "The following will be created/overridden in your project location %s:\n" +
+			"  1) %s\n" +
+			"  2) %s\n"
+		fmt.Printf(util.CyanBold(fmt.Sprintf(debugMsg, balProj, constants.BallerinaConf, "logs/")))
+		fmt.Printf("%s"+util.Bold(" Do you wish to continue debugging tests (Y/n)? "), util.YellowBold("?"))
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -487,17 +481,20 @@ func PromtConfirmation(balProj string, debug bool) (bool, error) {
 	return true, nil
 }
 
-func CreateBallerinaConf(iName string, verboseMode string, imageDir string, dependencyLinks string,
-	envVars []*environmentVariable, balProj string) error {
+func CreateBallerinaConf(iName string, dependencyLinks string, startDependencies bool, shareDependencies bool,
+	verboseMode string, imageDir string, envVars []*environmentVariable, balProj string) error {
 
 	content := []string{fmt.Sprintf(CelleryTestVerboseMode+"=\"%s\"\n", verboseMode)}
 	content = append(content, fmt.Sprintf(constants.CelleryImageDirEnvVar+"=\"%s\"\n", imageDir))
 	for _, envVar := range envVars {
 		content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
 	}
+	content = append(content, "[test.config]\n")
 	content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(iName, "\"", "\\\"", -1)))
 	content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
 		strings.Replace(dependencyLinks, "\"", "\\\"", -1)))
+	content = append(content, fmt.Sprintf("START_DEPENDENCIES=%s\n", strconv.FormatBool(startDependencies)))
+	content = append(content, fmt.Sprintf("SHARE_DEPENDENCIES=%s\n", strconv.FormatBool(shareDependencies)))
 
 	ballerinaConfPath := filepath.Join(balProj, constants.BallerinaConf)
 
@@ -527,7 +524,7 @@ func CreateBallerinaConf(iName string, verboseMode string, imageDir string, depe
 	return nil
 }
 
-func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName string) (*string, error) {
+func CreateTelepresenceResources(incell bool, imageDir string, instanceName string) (*string, error) {
 	var srcYamlFile string
 	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
 	var deploymentName string
@@ -564,13 +561,20 @@ func CreateTelepresenceDeployment(incell bool, imageDir string, instanceName str
 	return &deploymentName, nil
 }
 
+func DeleteTelepresenceResouces(imageDir string) {
+	err := kubernetes.DeleteFile(filepath.Join(imageDir, "telepresence.yaml"))
+	if err != nil {
+		util.PrintWarningMessage(fmt.Sprintf("Failed to delete telepresence resources in the Kubernetes cluster, %v ", err))
+	}
+}
+
 func testCommandArgs(cli cli.Cli, incell bool, imageDir string, instanceName string) ([]string, error) {
 	var err error
 	var deploymentName *string
 	if err = cli.ExecuteTask("Creating telepresence k8s resources",
 		"Failed to create telepresence k8s resources",
 		"", func() error {
-			deploymentName, err = CreateTelepresenceDeployment(incell, imageDir, instanceName)
+			deploymentName, err = CreateTelepresenceResources(incell, imageDir, instanceName)
 			return err
 		}); err != nil {
 		return nil, err

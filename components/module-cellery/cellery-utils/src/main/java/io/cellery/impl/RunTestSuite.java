@@ -260,7 +260,7 @@ public class RunTestSuite {
             printInfo("Executing test " + testName + "...");
 
             // Wait for job to be available
-            Thread.sleep(5000);
+            Thread.sleep(10000);
 
             String jobName = testName + "--" + testName + "-job";
             String podInfo = CelleryUtils.executeShellCommand("kubectl get pods | grep " + testName + "--" +

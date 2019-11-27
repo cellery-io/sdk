@@ -59,7 +59,7 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[] | error?) {
-    cellery:CellImage stockCell = check cellery:constructCellImage(iName);
+    cellery:CellImage|cellery:Composite stockCell = cellery:constructImage(iName);
     stockCell.components["stockComp"]["resources"]["requests"] = {
         memory: "256Mi",
         cpu: "256m"

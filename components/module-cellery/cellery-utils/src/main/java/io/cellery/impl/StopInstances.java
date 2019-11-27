@@ -33,7 +33,7 @@ import static io.cellery.CelleryUtils.printInfo;
  */
 public class StopInstances {
 
-    public static void stopInstances(ArrayValue instanceList) throws BallerinaCelleryException {
+    public static void stopInstancesExternal(ArrayValue instanceList) throws BallerinaCelleryException {
         IntStream.range(0, instanceList.size()).forEach(index -> {
             MapValue instance = (MapValue) instanceList.get(index);
             boolean wasRunning = instance.getBooleanValue("isRunning");

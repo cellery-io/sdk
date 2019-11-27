@@ -51,6 +51,6 @@ public function build(cellery:ImageName iName) returns error? {
 }
 
 public function run(cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns (cellery:InstanceState[]|error?) {
-    cellery:Composite mysqlComposite = check cellery:constructImage(iName);
+    cellery:CellImage|cellery:Composite mysqlComposite = cellery:constructImage(iName);
     return <@untainted> cellery:createInstance(mysqlComposite, iName, instances, startDependencies, shareDependencies);
 }

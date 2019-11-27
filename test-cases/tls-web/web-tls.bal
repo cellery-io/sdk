@@ -39,7 +39,7 @@ public function run(cellery:ImageName iName, map<cellery:ImageName> instances, b
     string tlsCert = readFile(config:getAsString("tls.cert", "./certs/95749524_hello.com.cert"));
 
     //Assign values to cell
-    cellery:CellImage webCell = check cellery:constructCellImage(iName);
+    cellery:CellImage|cellery:Composite webCell = cellery:constructImage(iName);
     cellery:WebIngress webUI = <cellery:WebIngress>webCell.components["webComp"]["ingresses"]["webUI"];
     webUI.gatewayConfig.tls.key = tlsKey;
     webUI.gatewayConfig.tls.cert = tlsCert;
