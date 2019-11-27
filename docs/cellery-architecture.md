@@ -41,7 +41,7 @@ tokens in order to securely communicate by workloads. Each STS has its own confi
 token issuance and validations. Furthermore, each cell STS has an Open Policy Agent instance which is used to enforce 
 fine grained access control. Cell deployers can enforce authorization policies for inter cell communication as 
 well as intra cell communications. The detailed information about the security of Cellery can be found in 
-[mesh-security](https://github.com/wso2-cellery/mesh-security).
+[mesh-security](https://github.com/wso2/cellery-security).
 
 #### Global Control Plane
 Global control plane controls the request flow from external systems, and also provide overall control of cells globally, 
@@ -76,8 +76,8 @@ uses Open Policy Agent to enforce fine grained access control within cell and in
 
 All these operations and checks are enforced through sidecars which are running along side workloads. Considering 
 security aspects of a service and passing user context or information will be out of component developers tasks and 
-will be managed by Cellery within the mesh.  Refer [mesh-security](https://github.com/wso2-cellery/mesh-security). for more information on Cellery Security and how to 
-enforce policies. The detailed information about the security of Cellery can be found [mesh-security](https://github.com/wso2-cellery/mesh-security).
+will be managed by Cellery within the mesh.  Refer [mesh-security](https://github.com/wso2/cellery-security). for more information on Cellery Security and how to 
+enforce policies. The detailed information about the security of Cellery can be found [mesh-security](https://github.com/wso2/cellery-security).
 
 ### Cell Based Architecture
 
@@ -88,6 +88,6 @@ composite, integration-first applications on a distributed compute platform.
 
 ## What's Next?
 - [Quick Start](../README.md) - Includes an introduction and steps to get started with Cellery. 
-- [Cell Specification](https://github.com/wso2-cellery/spec/blob/master/README.md) - Key concepts of Cellery.
+- [Cell Specification](https://github.com/wso2/cellery-spec/blob/master/README.md) - Key concepts of Cellery.
 - [How to code cells?](cellery-syntax.md) - explains how Cellery cells are written
-- [Samples](https://github.com/wso2-cellery/samples/tree/master) - a collection of useful samples
+- [Samples](https://github.com/wso2/cellery-samples/tree/master) - a collection of useful samples

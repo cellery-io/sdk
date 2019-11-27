@@ -1,18 +1,18 @@
 ## Contribute to Cellery
 The Cellery Team is pleased to welcome all contributors willing to join with us in our journey. 
 Cellery project is divided into few repositories as explained below. 
-- [wso2-cellery/sdk](https://github.com/wso2-cellery/sdk/) - This repository contains the cellery specification 
+- [wso2/cellery](https://github.com/wso2/cellery/) - This repository contains the cellery specification 
 implementation, 
 CLI implementation, and installers for different operating systems.  
-- [wso2-cellery/distribution](https://github.com/wso2-cellery/distribution/) - This repository contains kubernetes 
+- [wso2/cellery-distribution](https://github.com/wso2/cellery-distribution/) - This repository contains kubernetes 
 artifacts 
 for cellery mesh runtime, and docker image generation for Global and cell API Manager.   
-- [wso2-cellery/mesh-controller](https://github.com/wso2-cellery/mesh-controller/) - This repository includes the 
+- [wso2/cellery-controller](https://github.com/wso2/cellery-controller/) - This repository includes the 
 controller 
 for cell CRD in kubernetes.  
-- [wso2-cellery/mesh-security](https://github.com/wso2-cellery/mesh-security) - This includes cell based control plane 
+- [wso2/cellery-security](https://github.com/wso2/cellery-security) - This includes cell based control plane 
 components such as STS, and other related security functionality for overall cellery mesh.  
-- [wso2-cellery/mesh-observability](https://github.com/wso2-cellery/mesh-observability) - This repository includes the 
+- [wso2/cellery-observability](https://github.com/wso2/cellery-observability) - This repository includes the 
 observability related components such as WSO2 stream processor extensions, siddhi applications for tracing, telemetry 
 processing, dependency model generation, observability portal, etc, and docker images for observability control plane.  
 
@@ -31,7 +31,7 @@ processing, dependency model generation, observability portal, etc, and docker i
 ```
 $ mkdir -p $GOPATH/src/github.com/cellery-io/
 $ cd $GOPATH/src/github.com/cellery-io/
-$ git clone https://github.com/wso2-cellery/sdk.git
+$ git clone https://github.com/wso2/cellery.git
 ```
 2. Building and installing the Ballerina language extensions.
 ```
@@ -47,7 +47,7 @@ $ make install-cli
 ### Issue Management
 We use GitHub issues to track all of our bugs and feature requests. Please feel free to open an issue about any 
 question, bug report or feature request that you have in mind. It will be ideal to report bugs in the relevant 
-repository as mentioned in above, but if you are not sure about the repository, you can create issues to [wso2-cellery/sdk](https://github.com/wso2-cellery/sdk/issues) 
+repository as mentioned in above, but if you are not sure about the repository, you can create issues to [wso2/cellery](https://github.com/wso2/cellery/issues) 
 repository, and we’ll analyze the issue and then move it to relevant repository. 
 We also welcome any external contributors who are willing to contribute. You can join a conversation in any existing issue and even send PRs to contribute
 Each issue we track has a variety of metadata which you can select with labels:

@@ -14,7 +14,7 @@ This README covers,
     * [Distributed Search](#distributed-tracing)
 
 For additional information, 
-* Checkout the [Observability repo](https://github.com/wso2-cellery/mesh-observability/tree/master).
+* Checkout the [Observability repo](https://github.com/wso2/cellery-observability/tree/master).
 
 ## Enable observability
 [Basic cellery installation](installation-options.md#basic-vs-complete-installations) does not include the Observability 

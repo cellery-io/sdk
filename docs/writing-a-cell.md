@@ -107,7 +107,7 @@ Note `CELLERY_HUB_ORG` is your organization name in [Cellery hub](https://hub.ce
 6. Note that in the cell file's run method at step-2, it's looking for runtime parameters `VHOST_NAME` and `HELLO_NAME`, 
 and if it's available then it'll will be using those as vhost and greeting name. 
 Therefore run the built Cellery image with `cellery run` command,  and pass `my-hello-world.com` for `VHOST_NAME`, 
-and your name for `HELLO_NAME` as shown below. Environment variables can be passed into the Cellery file as explained [here](https://github.com/wso2-cellery/spec).
+and your name for `HELLO_NAME` as shown below. Environment variables can be passed into the Cellery file as explained [here](https://github.com/wso2/cellery-spec).
     ```
     $ cellery run <CELLERY_HUB_ORG>/hello-world-cell:1.0.0 -e VHOST_NAME=my-hello-world.com -e HELLO_NAME=WSO2 -n my-hello-world
        ✔ Extracting Cell Image  <CELLERY_HUB_ORG>/hello-world-cell:1.0.0
@@ -200,8 +200,8 @@ You can terminate the cells that are started during this guide.
     $ cellery term --all
     ```
 ### What's Next?
-- [Cell Specification](https://github.com/wso2-cellery/spec/blob/master/README.md) - Key concepts of Cellery.
+- [Cell Specification](https://github.com/wso2/cellery-spec/blob/master/README.md) - Key concepts of Cellery.
 - [How to code cells?](cellery-syntax.md) - explains how Cellery cells are written.
 - [CLI commands](cli-reference.md) - reference for CLI commands.
 - [Cell API versioning](cell-api-versioning.md) - api versioning for cells. 
-- [Samples](https://github.com/wso2-cellery/samples/tree/master) - a collection of useful samples.
+- [Samples](https://github.com/wso2/cellery-samples/tree/master) - a collection of useful samples.

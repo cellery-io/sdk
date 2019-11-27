@@ -13,7 +13,7 @@ This README includes,
     * [Syntax](#syntax-for-zero-scaling)
 * [Manual scaling](#manual-scaling)
 
-A [component](https://github.com/wso2-cellery/spec/tree/master#component) can have either Autoscaling policy or zero scaling policy. Based on that, the underneath autoscaler will be determined. 
+A [component](https://github.com/wso2/cellery-spec/tree/master#component) can have either Autoscaling policy or zero scaling policy. Based on that, the underneath autoscaler will be determined. 
 Generally the autoscaling policy has minimum replica count greater than 0, and hence the [horizontal pod autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 will be used to scale up and down the components. The zero-scaling has minimum replica count `0`, and hence when the 
 component did not get any request, the component will be terminated and it will be running back once a request was directed to the component. 

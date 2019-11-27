@@ -2,7 +2,7 @@
 org-name= "celleryio"
 version= "0.6.0"
 keywords = ["cellery","microservices","kubernetes"]
-repository = "https://github.com/wso2-cellery/sdk"
+repository = "https://github.com/wso2/cellery"
 
 [dependencies]
 

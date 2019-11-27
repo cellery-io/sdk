@@ -21,7 +21,7 @@ The cell spec has following major configurations,
 * components: List of [Component](#Component) templates 
 * sts: [TokenService](#TokenService) template for defining security policies
 
-See [Todo-API](https://github.com/wso2-cellery/mesh-controller/blob/master/samples/todo-api/todos.yaml) for example configuration
+See [Todo-API](https://github.com/wso2/cellery-controller/blob/master/samples/todo-api/todos.yaml) for example configuration
 
 ## Composite
 

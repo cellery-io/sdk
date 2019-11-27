@@ -11,7 +11,7 @@ Visit [Cellery website](https://wso2-cellery.github.io/) for more info.
 ## Samples
 
 Sample Hello World program is as below. 
-Please visit [Cellery Samples Repository](https://github.com/wso2-cellery/samples) for more examples. 
+Please visit [Cellery Samples Repository](https://github.com/wso2/cellery-samples) for more examples. 
 
 ```ballerina
 import ballerina/config;

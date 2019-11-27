@@ -1,7 +1,7 @@
 ## Cellery Language Syntax
 This section focuses on the Cellery syntax and explain how to compose cells. 
 
-- To get more information on the concepts and specification, please check [Cellery specification](https://github.com/wso2-cellery/spec/tree/master).
+- To get more information on the concepts and specification, please check [Cellery specification](https://github.com/wso2/cellery-spec/tree/master).
 
 The Cellery Language is a subset of Ballerina and Ballerina extensions. Therefore the language syntax of Cellery 
 resembles with normal Ballerina language syntax.
@@ -1058,4 +1058,4 @@ returns the host name of the running stock cell instance as `http://stock-app--g
 
 # What's Next?
 - [Developing a Cell](writing-a-cell.md) - step by step explanation on how you could define your own cells.
-- [Samples](https://github.com/wso2-cellery/samples/tree/master) - a collection of useful samples.
+- [Samples](https://github.com/wso2/cellery-samples/tree/master) - a collection of useful samples.

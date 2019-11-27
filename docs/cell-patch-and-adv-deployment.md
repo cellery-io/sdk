@@ -85,8 +85,8 @@ If the API versions do not match, the user is prompted to continue with traffic 
 Refer to [CLI docs](cli-reference.md#cellery-route-traffic) for a complete guide on managing advanced deployments with cell instances.
 
 ## Try with sample
-[Pet-store application sample](https://github.com/wso2-cellery/samples/tree/master/cells/pet-store) walks through the cell upate scenario. 
-Find more information on the steps [here](https://github.com/wso2-cellery/samples/blob/master/docs/pet-store/update-cell.md).
+[Pet-store application sample](https://github.com/wso2/cellery-samples/tree/master/cells/pet-store) walks through the cell upate scenario. 
+Find more information on the steps [here](https://github.com/wso2/cellery-samples/blob/master/docs/pet-store/update-cell.md).
 
 # What's Next?
 - [Developing and runing a Cell](writing-a-cell.md) - step by step explanation on how you could define your own cells.

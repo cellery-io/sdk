@@ -39,7 +39,7 @@ Follow below steps to configure your GCP setup to install cellery system on to i
 1. Create GKE k8s cluster.  
 **Note: Follow steps - 2, 3, 4 only if you want to create cellery system with [persisted volume](#1-persistent-volume)** 
 2. Create NFS server and  MySQL server in the same GCP compute region and the zone i.
-3. User can find the [SQL script](https://raw.githubusercontent.com/wso2-cellery/distribution/master/installer/k8s-artefacts/mysql/dbscripts/init.sql) file in the Cellery distribution repository. 
+3. User can find the [SQL script](https://raw.githubusercontent.com/wso2/cellery-distribution/master/installer/k8s-artefacts/mysql/dbscripts/init.sql) file in the Cellery distribution repository. 
 Please note to replace the database username (`DATABASE_USERNAME`) and the password (`DATABASE_PASSWORD`) accordingly.
 4. Import the script that was prepared in step-2 into MySQL database.
 
@@ -244,7 +244,7 @@ Please refer readme for [managing cellery runtimes](./manage-setup.md) for detai
 
 ## What's Next?
 - [Developing a Cell](../writing-a-cell.md) - step by step explanation on how you could define your own cells.
-- [Cell Specification](https://github.com/wso2-cellery/spec/blob/master/README.md) - Key concepts of Cellery.
+- [Cell Specification](https://github.com/wso2/cellery-spec/blob/master/README.md) - Key concepts of Cellery.
 - [How to code cells?](../cellery-syntax.md) - explains how Cellery cells are written.
 - [CLI commands](../cli-reference.md) - reference for CLI commands.
-- [Samples](https://github.com/wso2-cellery/samples/tree/master) - a collection of useful samples.
+- [Samples](https://github.com/wso2/cellery-samples/tree/master) - a collection of useful samples.

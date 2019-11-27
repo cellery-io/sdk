@@ -23,7 +23,7 @@ BALLERINA_VERSION ?= 1.0.3
 
 DISTRIBUTION_VERSION ?= master
 DISTRIBUTION_ARCHIVE_VERSION ?= master
-DISTRIBUTION_ARTIFACTS := https://github.com/wso2-cellery/distribution/archive/$(DISTRIBUTION_ARCHIVE_VERSION).zip
+DISTRIBUTION_ARTIFACTS := https://github.com/wso2/cellery-distribution/archive/$(DISTRIBUTION_ARCHIVE_VERSION).zip
 OBSERVABILITY_BUILD ?= lastSuccessfulBuild
 
 OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/$(OBSERVABILITY_BUILD)

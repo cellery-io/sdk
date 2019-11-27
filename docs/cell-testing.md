@@ -99,7 +99,7 @@ public function cleanUp() {
 ```
 [back to helper functions](#helper-functions)
 
-For more information and samples about writing integration tests please refer [here](https://github.com/wso2-cellery/samples/blob/master/docs/pet-store/test-be-cell.md)
+For more information and samples about writing integration tests please refer [here](https://github.com/wso2/cellery-samples/blob/master/docs/pet-store/test-be-cell.md)
 
 #### Function```runDockerTest```
  
@@ -128,4 +128,4 @@ The ```cellery test``` command supports all the input params as same as the run 
    instance already exists in the runtime and if so, the tests are executed against that instance. Otherwise, new
     instances with the provided name is started, and those are be terminated once the tests are finished.
   
-  For more information and samples about writing docker image based tests please refer [here](https://github.com/wso2-cellery/samples/blob/master/docs/pet-store/test-be-cell.md)
+  For more information and samples about writing docker image based tests please refer [here](https://github.com/wso2/cellery-samples/blob/master/docs/pet-store/test-be-cell.md)
