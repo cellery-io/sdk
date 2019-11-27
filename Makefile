@@ -23,10 +23,10 @@ BALLERINA_VERSION ?= 1.0.3
 
 DISTRIBUTION_VERSION ?= master
 DISTRIBUTION_ARCHIVE_VERSION ?= master
-DISTRIBUTION_ARTIFACTS := https://github.com/wso2-cellery/distribution/archive/$(DISTRIBUTION_ARCHIVE_VERSION).zip
+DISTRIBUTION_ARTIFACTS := https://github.com/wso2/cellery-distribution/archive/$(DISTRIBUTION_ARCHIVE_VERSION).zip
 OBSERVABILITY_BUILD ?= lastSuccessfulBuild
 
-OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/mesh-observability/$(OBSERVABILITY_BUILD)
+OBSERVABILITY_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/cellery-observability/$(OBSERVABILITY_BUILD)
 OBSERVABILITY_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/components/global/*zip*
 OBSERVABILITY_ARTIFACTS := global.zip
 
@@ -36,7 +36,7 @@ OBSERVABILITY_PORTAL_ARTIFACTS_PATH := $(OBSERVABILITY_LAST_BUILD)/artifact/comp
 OBSERVABILITY_SIDDHI_ARTIFACT := global/core/io.cellery.observability.siddhi.apps/target/io.cellery.observability.siddhi.apps-*.zip
 OBSERVABILITY_PORTAL_ARTIFACT := global/portal/io.cellery.observability.ui/target/io.cellery.observability.ui-*.zip
 
-DISTRIBUTION_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/distribution/lastSuccessfulBuild
+DISTRIBUTION_LAST_BUILD := https://wso2.org/jenkins/job/cellery/job/cellery-distribution/lastSuccessfulBuild
 DISTRIBUTION_ARTIFACTS_PATH := $(DISTRIBUTION_LAST_BUILD)/artifact
 DISTRIBUTION_K8S_ARTIFACT := k8s-artefacts.tar.gz
 
