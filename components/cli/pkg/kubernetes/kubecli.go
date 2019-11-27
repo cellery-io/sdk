@@ -38,9 +38,9 @@ type KubeCli interface {
 	DescribeCell(cellName string) error
 	Version() (string, string, error)
 	GetServices(cellName string) (Services, error)
-	GetCellLogsUserComponents(cellName string, follow bool) (bool, error)
-	GetCellLogsAllComponents(cellName string, follow bool) (bool, error)
-	GetComponentLogs(cellName, componentName string, follow bool) (bool, error)
+	GetCellLogsUserComponents(instanceName string, follow bool) (bool, error)
+	GetCellLogsAllComponents(instanceName string, follow bool) (bool, error)
+	GetComponentLogs(instanceName, componentName string, follow bool) (bool, error)
 	JsonPatch(kind, instance, jsonPatch string) error
 	ApplyFile(file string) error
 	GetCellInstanceAsMapInterface(cell string) (map[string]interface{}, error)
@@ -48,6 +48,7 @@ type KubeCli interface {
 	GetPodsForCell(cellName string) (Pods, error)
 	GetPodsForComposite(compName string) (Pods, error)
 	GetVirtualService(vs string) (VirtualService, error)
+	IsInstanceAvailable(instanceName string) (bool, error)
 }
 
 type CelleryKubeCli struct {

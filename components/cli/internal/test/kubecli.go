@@ -177,15 +177,15 @@ func (kubeCli *MockKubeCli) GetServices(cellName string) (kubernetes.Services, e
 	return kubeCli.services[cellName], nil
 }
 
-func (kubeCli *MockKubeCli) GetCellLogsUserComponents(cellName string, follow bool) (bool, error) {
+func (kubeCli *MockKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) (bool, error) {
 	return true, nil
 }
 
-func (kubeCli *MockKubeCli) GetCellLogsAllComponents(cellName string, follow bool) (bool, error) {
+func (kubeCli *MockKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) (bool, error) {
 	return false, nil
 }
 
-func (kubeCli *MockKubeCli) GetComponentLogs(cellName, componentName string, follow bool) (bool, error) {
+func (kubeCli *MockKubeCli) GetComponentLogs(instanceName, componentName string, follow bool) (bool, error) {
 	return false, nil
 }
 
@@ -218,4 +218,8 @@ func (kubeCli *MockKubeCli) GetPodsForComposite(compName string) (kubernetes.Pod
 
 func (kubeCli *MockKubeCli) GetVirtualService(vs string) (kubernetes.VirtualService, error) {
 	return kubeCli.virtualServices[vs], nil
+}
+
+func (kubeCli *MockKubeCli) IsInstanceAvailable(instanceName string) (bool, error) {
+	return true, nil
 }

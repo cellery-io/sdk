@@ -24,32 +24,32 @@ import (
 	"cellery.io/cellery/components/cli/cli"
 )
 
-func RunLogs(cli cli.Cli, cellName, componentName string, sysLog bool, follow bool) error {
+func RunLogs(cli cli.Cli, instanceName string, componentName string, sysLog bool, follow bool) error {
 	if componentName == "" {
-		var logsFound bool
+		var instanceAvailable bool
 		var err error
 		if sysLog {
-			logsFound, err = cli.KubeCli().GetCellLogsAllComponents(cellName, follow)
+			instanceAvailable, err = cli.KubeCli().GetCellLogsAllComponents(instanceName, follow)
 		} else {
-			logsFound, err = cli.KubeCli().GetCellLogsUserComponents(cellName, follow)
+			instanceAvailable, err = cli.KubeCli().GetCellLogsUserComponents(instanceName, follow)
 		}
 
 		if err != nil {
-			return fmt.Errorf(fmt.Sprintf("Error getting logs for instance %s", cellName), err)
+			return fmt.Errorf(fmt.Sprintf("Error getting logs for instance %s", instanceName), err)
 		}
-		if !logsFound {
+		if !instanceAvailable {
 			return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find cell "+
-				"instance %s", cellName))
+				"instance %s", instanceName))
 		}
 	} else {
-		logsFound, err := cli.KubeCli().GetComponentLogs(cellName, componentName, follow)
+		instanceAvailable, err := cli.KubeCli().GetComponentLogs(instanceName, componentName, follow)
 		if err != nil {
 			return fmt.Errorf(fmt.Sprintf("Error getting logs for component %s of instance %s",
-				componentName, cellName), err)
+				componentName, instanceName), err)
 		}
-		if !logsFound {
+		if !instanceAvailable {
 			return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component "+
-				"%s of cell instance %s", componentName, cellName))
+				"%s of cell instance %s", componentName, instanceName))
 		}
 	}
 	return nil
