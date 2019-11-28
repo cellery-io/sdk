@@ -25,31 +25,28 @@ import (
 )
 
 func RunLogs(cli cli.Cli, instanceName string, componentName string, sysLog bool, follow bool) error {
+	err := cli.KubeCli().IsInstanceAvailable(instanceName)
+	if err != nil {
+		return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find running "+
+			"instance %s", instanceName))
+	}
+
 	if componentName == "" {
-		var instanceAvailable bool
 		var err error
 		if sysLog {
-			instanceAvailable, err = cli.KubeCli().GetCellLogsAllComponents(instanceName, follow)
+			err = cli.KubeCli().GetCellLogsAllComponents(instanceName, follow)
 		} else {
-			instanceAvailable, err = cli.KubeCli().GetCellLogsUserComponents(instanceName, follow)
+			err = cli.KubeCli().GetCellLogsUserComponents(instanceName, follow)
 		}
 
 		if err != nil {
 			return fmt.Errorf(fmt.Sprintf("Error getting logs for instance %s", instanceName), err)
 		}
-		if !instanceAvailable {
-			return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find cell "+
-				"instance %s", instanceName))
-		}
 	} else {
-		instanceAvailable, err := cli.KubeCli().GetComponentLogs(instanceName, componentName, follow)
+		err := cli.KubeCli().GetComponentLogs(instanceName, componentName, follow)
 		if err != nil {
 			return fmt.Errorf(fmt.Sprintf("Error getting logs for component %s of instance %s",
 				componentName, instanceName), err)
-		}
-		if !instanceAvailable {
-			return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component "+
-				"%s of cell instance %s", componentName, instanceName))
 		}
 	}
 	return nil

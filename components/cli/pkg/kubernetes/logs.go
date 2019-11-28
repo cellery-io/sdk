@@ -26,14 +26,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/osexec"
 )
 
-func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) (bool, error) {
-	instanceAvailable, err := IsInstanceAvailable(instanceName)
-	if err != nil {
-		return false, err
-	}
-	if !instanceAvailable {
-		return false, nil
-	}
+func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) error {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
@@ -43,22 +36,15 @@ func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, fo
 	if follow {
 		noOfContainers, err := getContainerCount(instanceName, false)
 		if err != nil {
-			return false, err
+			return err
 		}
 		cmd.Args = append(cmd.Args, "-f", fmt.Sprintf("--max-log-requests=%d", noOfContainers))
 	}
 	displayVerboseOutput(cmd)
-	return true, osexec.PrintCommandOutput(cmd)
+	return osexec.PrintCommandOutput(cmd)
 }
 
-func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) (bool, error) {
-	instanceAvailable, err := IsInstanceAvailable(instanceName)
-	if err != nil {
-		return false, err
-	}
-	if !instanceAvailable {
-		return false, nil
-	}
+func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) error {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
@@ -68,22 +54,15 @@ func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, fol
 	if follow {
 		noOfContainers, err := getContainerCount(instanceName, true)
 		if err != nil {
-			return false, err
+			return err
 		}
 		cmd.Args = append(cmd.Args, "-f", fmt.Sprintf("--max-log-requests=%d", noOfContainers))
 	}
 	displayVerboseOutput(cmd)
-	return true, osexec.PrintCommandOutput(cmd)
+	return osexec.PrintCommandOutput(cmd)
 }
 
-func (kubeCli *CelleryKubeCli) GetComponentLogs(instanceName string, componentName string, follow bool) (bool, error) {
-	instanceAvailable, err := IsInstanceAvailable(instanceName)
-	if err != nil {
-		return false, err
-	}
-	if !instanceAvailable {
-		return false, nil
-	}
+func (kubeCli *CelleryKubeCli) GetComponentLogs(instanceName string, componentName string, follow bool) error {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
@@ -95,5 +74,5 @@ func (kubeCli *CelleryKubeCli) GetComponentLogs(instanceName string, componentNa
 		cmd.Args = append(cmd.Args, "-f")
 	}
 	displayVerboseOutput(cmd)
-	return true, osexec.PrintCommandOutput(cmd)
+	return osexec.PrintCommandOutput(cmd)
 }

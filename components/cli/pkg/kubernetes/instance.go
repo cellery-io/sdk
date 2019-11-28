@@ -21,32 +21,32 @@ package kubernetes
 import (
 	"fmt"
 
-	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
+	errorpkg "cellery.io/cellery/components/cli/pkg/error"
 )
 
-func IsInstanceAvailable(instanceName string) (bool, error) {
+func (kubeCli *CelleryKubeCli) IsInstanceAvailable(instanceName string) error {
 	var canBeComposite bool
-	_, err := GetCell(instanceName)
+	_, err := kubeCli.GetCell(instanceName)
 	if err != nil {
 		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
 			canBeComposite = true
 		} else {
-			return false, fmt.Errorf("failed to check available Cells, %v", err)
+			return fmt.Errorf("failed to check available Cells, %v", err)
 		}
 	} else {
-		return true, nil
+		return nil
 	}
 	if canBeComposite {
-		_, err := GetComposite(instanceName)
+		_, err := kubeCli.GetComposite(instanceName)
 		if err != nil {
 			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
-				return false, fmt.Errorf("instance %s not available in the runtime", instanceName)
+				return fmt.Errorf("instance %s not available in the runtime", instanceName)
 			} else {
-				return false, fmt.Errorf("failed to check available Composites, %v", err)
+				return fmt.Errorf("failed to check available Composites, %v", err)
 			}
 		} else {
-			return true, nil
+			return nil
 		}
 	}
-	return false, nil
+	return nil
 }

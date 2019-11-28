@@ -24,10 +24,50 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"cellery.io/cellery/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
 func TestRunLogs(t *testing.T) {
-	mockKubeCli := test.NewMockKubeCli(test.WithRunningInstance(true))
+	cells := kubernetes.Cells{
+		Items: []kubernetes.Cell{
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "employee",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "hr",
+					CreationTimestamp: "2019-10-19T11:40:36Z",
+					Annotations: kubernetes.CellAnnotations{
+						Dependencies: "[{\"org\":\"myorg\",\"name\":\"employee\",\"version\":\"1.0.0\",\"instance\":\"employee\",\"kind\":\"Cell\"},{\"org\":\"myorg\",\"name\":\"stock\",\"version\":\"1.0.0\",\"instance\":\"stock\",\"kind\":\"Cell\"}]",
+					},
+				},
+			},
+		},
+	}
+	composites := kubernetes.Composites{
+		Items: []kubernetes.Composite{
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "stock",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
+				},
+			},
+			{
+				CompositeMetaData: kubernetes.K8SMetaData{
+					Name:              "foo",
+					CreationTimestamp: "2019-10-19T11:40:36Z",
+					Annotations: kubernetes.CellAnnotations{
+						Dependencies: "[{\"org\":\"myorg\",\"bar\":\"employee\",\"version\":\"1.0.0\",\"instance\":\"bar\",\"kind\":\"Composite\"},{\"org\":\"myorg\",\"name\":\"zoo\",\"version\":\"1.0.0\",\"instance\":\"zoo\",\"kind\":\"Composite\"}]",
+					},
+				},
+			},
+		},
+	}
+
+	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))
 	mockCli := test.NewMockCli(test.SetKubeCli(mockKubeCli))
 
 	tests := []struct {
@@ -101,19 +141,18 @@ func TestRunLogsError(t *testing.T) {
 			name:       "No logs of cell instance",
 			instance:   "employee",
 			component:  "",
-			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find cell instance employee)",
+			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find running instance employee)",
 		},
 		{
 			name:       "No logs of cell component",
 			instance:   "employee",
 			component:  "job",
-			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find component job of cell instance employee)",
+			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find running instance employee)",
 		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(
-				test.WithRunningInstance(false)))), tst.instance, tst.component,
+			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli())), tst.instance, tst.component,
 				false, false)
 			if diff := cmp.Diff(tst.errMessage, err.Error()); diff != "" {
 				t.Errorf("RunLogs: unexpected error (-want, +got)\n%v", diff)

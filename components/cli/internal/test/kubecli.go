@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	errorpkg "cellery.io/cellery/components/cli/pkg/error"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
@@ -29,14 +30,13 @@ const celleryInstance = "cells.mesh.cellery.io"
 const celleryComposite = "composites.mesh.cellery.io"
 
 type MockKubeCli struct {
-	cells               kubernetes.Cells
-	composites          kubernetes.Composites
-	cellsBytes          map[string][]byte
-	isInstanceAvailable bool
-	k8sServerVersion    string
-	k8sClientVersion    string
-	services            map[string]kubernetes.Services
-	virtualServices     map[string]kubernetes.VirtualService
+	cells            kubernetes.Cells
+	composites       kubernetes.Composites
+	cellsBytes       map[string][]byte
+	k8sServerVersion string
+	k8sClientVersion string
+	services         map[string]kubernetes.Services
+	virtualServices  map[string]kubernetes.VirtualService
 }
 
 func (kubeCli *MockKubeCli) SetVerboseMode(enable bool) {
@@ -63,12 +63,6 @@ func WithCellsAsBytes(cellsBytes map[string][]byte) func(*MockKubeCli) {
 func WithServices(services map[string]kubernetes.Services) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.services = services
-	}
-}
-
-func WithRunningInstance(isInstanceAvailable bool) func(*MockKubeCli) {
-	return func(cli *MockKubeCli) {
-		cli.isInstanceAvailable = isInstanceAvailable
 	}
 }
 
@@ -170,16 +164,16 @@ func (kubeCli *MockKubeCli) GetServices(cellName string) (kubernetes.Services, e
 	return kubeCli.services[cellName], nil
 }
 
-func (kubeCli *MockKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) (bool, error) {
-	return kubeCli.isInstanceAvailable, nil
+func (kubeCli *MockKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) error {
+	return nil
 }
 
-func (kubeCli *MockKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) (bool, error) {
-	return kubeCli.isInstanceAvailable, nil
+func (kubeCli *MockKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) error {
+	return nil
 }
 
-func (kubeCli *MockKubeCli) GetComponentLogs(instanceName, componentName string, follow bool) (bool, error) {
-	return kubeCli.isInstanceAvailable, nil
+func (kubeCli *MockKubeCli) GetComponentLogs(instanceName, componentName string, follow bool) error {
+	return nil
 }
 
 func (kubeCli *MockKubeCli) JsonPatch(kind, instance, jsonPatch string) error {
@@ -211,4 +205,31 @@ func (kubeCli *MockKubeCli) GetPodsForComposite(compName string) (kubernetes.Pod
 
 func (kubeCli *MockKubeCli) GetVirtualService(vs string) (kubernetes.VirtualService, error) {
 	return kubeCli.virtualServices[vs], nil
+}
+
+func (kubeCli *MockKubeCli) IsInstanceAvailable(instanceName string) error {
+	var canBeComposite bool
+	_, err := kubeCli.GetCell(instanceName)
+	if err != nil {
+		if cellNotFound, _ := errorpkg.IsCellInstanceNotFoundError(instanceName, err); cellNotFound {
+			canBeComposite = true
+		} else {
+			return fmt.Errorf("failed to check available Cells, %v", err)
+		}
+	} else {
+		return nil
+	}
+	if canBeComposite {
+		_, err := kubeCli.GetComposite(instanceName)
+		if err != nil {
+			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
+				return fmt.Errorf("instance %s not available in the runtime", instanceName)
+			} else {
+				return fmt.Errorf("failed to check available Composites, %v", err)
+			}
+		} else {
+			return nil
+		}
+	}
+	return nil
 }
