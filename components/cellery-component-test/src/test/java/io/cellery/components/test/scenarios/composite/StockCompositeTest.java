@@ -90,7 +90,7 @@ public class StockCompositeTest {
         Assert.assertEquals(spec.getTemplate().getContainers().get(0).getPorts().get(0).getContainerPort().intValue(),
                 8080);
         Assert.assertEquals(spec.getPorts().get(0).getPort(), 80);
-        Assert.assertEquals(spec.getPorts().get(0).getName(), "stock");
+        Assert.assertEquals(spec.getPorts().get(0).getName(), "stock8080");
         Assert.assertEquals(spec.getPorts().get(0).getTargetPort(), 8080);
     }
 
