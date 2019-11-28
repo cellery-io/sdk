@@ -66,6 +66,7 @@ func buildObservabilityYamlPaths() []string {
 		filepath.Join(base, "portal", "observability-portal.yaml"),
 		filepath.Join(base, "prometheus", "k8s-metrics-prometheus.yaml"),
 		filepath.Join(base, "grafana", "k8s-metrics-grafana.yaml"),
-		filepath.Join(base, "mixer-adapter", "mixer-adapter.yaml"),
+		filepath.Join(base, "observability-agent", "telemetry-agent.yaml"),
+		filepath.Join(base, "observability-agent", "tracing-agent.yaml"),
 	}
 }
