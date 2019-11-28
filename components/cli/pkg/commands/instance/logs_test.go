@@ -27,11 +27,7 @@ import (
 )
 
 func TestRunLogs(t *testing.T) {
-	logsMap := make(map[string]string)
-	componentLogsMap := make(map[string]string)
-	logsMap["employee"] = "employee cell is running"
-	componentLogsMap["employee:job"] = "job component is running"
-	mockKubeCli := test.NewMockKubeCli(test.WithCellLogs(logsMap), test.WithComponentLogs(componentLogsMap))
+	mockKubeCli := test.NewMockKubeCli(test.WithRunningInstance(true))
 	mockCli := test.NewMockCli(test.SetKubeCli(mockKubeCli))
 
 	tests := []struct {
@@ -116,7 +112,8 @@ func TestRunLogsError(t *testing.T) {
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli())), tst.instance, tst.component,
+			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(
+				test.WithRunningInstance(false)))), tst.instance, tst.component,
 				false, false)
 			if diff := cmp.Diff(tst.errMessage, err.Error()); diff != "" {
 				t.Errorf("RunLogs: unexpected error (-want, +got)\n%v", diff)

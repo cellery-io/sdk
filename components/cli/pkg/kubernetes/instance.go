@@ -24,7 +24,7 @@ import (
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 )
 
-func (kubeCli *CelleryKubeCli) IsInstanceAvailable(instanceName string) (bool, error) {
+func GetInstanceAvailability(instanceName string) (bool, error) {
 	var canBeComposite bool
 	_, err := GetCell(instanceName)
 	if err != nil {

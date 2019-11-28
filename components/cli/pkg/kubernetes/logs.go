@@ -27,7 +27,7 @@ import (
 )
 
 func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) (bool, error) {
-	instanceAvailable, err := kubeCli.IsInstanceAvailable(instanceName)
+	instanceAvailable, err := GetInstanceAvailability(instanceName)
 	if err != nil {
 		return false, err
 	}
@@ -52,7 +52,7 @@ func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, fo
 }
 
 func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) (bool, error) {
-	instanceAvailable, err := kubeCli.IsInstanceAvailable(instanceName)
+	instanceAvailable, err := GetInstanceAvailability(instanceName)
 	if err != nil {
 		return false, err
 	}
@@ -77,7 +77,7 @@ func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, fol
 }
 
 func (kubeCli *CelleryKubeCli) GetComponentLogs(instanceName string, componentName string, follow bool) (bool, error) {
-	instanceAvailable, err := kubeCli.IsInstanceAvailable(instanceName)
+	instanceAvailable, err := GetInstanceAvailability(instanceName)
 	if err != nil {
 		return false, err
 	}
