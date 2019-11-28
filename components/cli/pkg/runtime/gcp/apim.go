@@ -21,8 +21,8 @@ package gcp
 import (
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/runtime"
 )
 
 func CreateGlobalGatewayConfigMaps() error {

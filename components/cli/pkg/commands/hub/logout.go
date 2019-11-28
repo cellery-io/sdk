@@ -21,8 +21,8 @@ package hub
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 // RunLogout removes the saved credentials for a particular registry

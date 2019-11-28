@@ -25,9 +25,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands/project"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/commands/project"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func newInitCommand(cli cli.Cli) *cobra.Command {

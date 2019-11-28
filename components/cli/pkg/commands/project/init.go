@@ -27,12 +27,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
+	"cellery.io/cellery/components/cli/cli"
 
 	"github.com/fatih/color"
 	"github.com/oxequa/interact"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 const CellTemplate = `

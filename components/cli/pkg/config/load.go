@@ -23,8 +23,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 const configFile = "config.json"

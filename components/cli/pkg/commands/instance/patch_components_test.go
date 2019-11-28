@@ -23,8 +23,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cellery-io/sdk/components/cli/internal/test"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
 func TestRunPatchForSingleComponent(t *testing.T) {

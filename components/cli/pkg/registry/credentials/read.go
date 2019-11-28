@@ -34,8 +34,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/config"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/config"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 const callBackDefaultPort = 8888

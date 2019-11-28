@@ -21,8 +21,8 @@ package runtime
 import (
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func createPersistentVolume(artifactsPath string, hasNfs bool) error {

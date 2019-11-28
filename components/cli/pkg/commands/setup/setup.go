@@ -25,9 +25,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/runtime"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func RunSetup() {

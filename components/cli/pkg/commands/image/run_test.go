@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cellery-io/sdk/components/cli/internal/test"
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"cellery.io/cellery/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/pkg/image"
 )
 
 func TestRunRun(t *testing.T) {

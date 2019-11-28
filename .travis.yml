@@ -24,10 +24,11 @@ cache:
     - $HOME/.m2
 before_install:
   - npm i -g npm
-  - mkdir -p $HOME/gopath/src/github.com/cellery-io
-  - mv ${TRAVIS_BUILD_DIR} $GOPATH/src/github.com/cellery-io/sdk
-  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/cellery-io/sdk
-  - cd $HOME/gopath/src/github.com/cellery-io/sdk
-script: make all
+  - mkdir -p $HOME/gopath/src/cellery.io
+  - mv ${TRAVIS_BUILD_DIR} $GOPATH/src/cellery.io/cellery
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/cellery.io/cellery
+  - cd $HOME/gopath/src/cellery.io/cellery
+script:
+  - make all
 after_success:
   - bash <(curl -s https://codecov.io/bash)

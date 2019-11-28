@@ -23,10 +23,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	image2 "github.com/cellery-io/sdk/components/cli/pkg/commands/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	image2 "cellery.io/cellery/components/cli/pkg/commands/image"
+	"cellery.io/cellery/components/cli/pkg/image"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func newPushCommand(cli cli.Cli) *cobra.Command {

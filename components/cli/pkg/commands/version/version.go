@@ -25,9 +25,9 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/version"
 )
 
 func RunVersion(cli cli.Cli) error {

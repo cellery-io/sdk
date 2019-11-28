@@ -35,8 +35,8 @@ import (
 	registry2 "github.com/nokia/docker-registry-client/registry"
 	"github.com/opencontainers/go-digest"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/image"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 type Registry interface {

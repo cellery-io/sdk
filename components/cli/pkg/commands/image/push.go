@@ -29,11 +29,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/image"
+	"cellery.io/cellery/components/cli/pkg/registry/credentials"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 // RunPush parses the cell image name to recognize the Cellery Registry (A Docker Registry), Organization and version

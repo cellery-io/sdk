@@ -25,8 +25,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/cellery-io/sdk/components/cli/internal/test"
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"cellery.io/cellery/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/pkg/image"
 )
 
 func TestRunPull(t *testing.T) {

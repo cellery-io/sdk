@@ -24,7 +24,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/cellery-io/sdk/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/internal/test"
 )
 
 func TestRunView(t *testing.T) {

@@ -18,7 +18,7 @@
 
 package test
 
-import "github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
+import "cellery.io/cellery/components/cli/pkg/registry/credentials"
 
 type MockCredManager struct {
 	storedCredentials []*credentials.RegistryCredentials

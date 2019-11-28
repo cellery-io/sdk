@@ -33,7 +33,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func DownloadFromS3Bucket(bucket, item, path string, displayProgressBar bool) {

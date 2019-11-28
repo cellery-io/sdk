@@ -32,9 +32,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/version"
 )
 
 const homeCellery = "/home/cellery"

@@ -21,8 +21,8 @@ package instance
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func RunTerminate(cli cli.Cli, terminatingInstances []string, terminateAll bool) error {

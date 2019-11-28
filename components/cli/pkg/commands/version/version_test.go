@@ -21,7 +21,7 @@ package version
 import (
 	"testing"
 
-	"github.com/cellery-io/sdk/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/internal/test"
 )
 
 func TestRunVersion(t *testing.T) {

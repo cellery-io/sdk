@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cellery-io/sdk/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/internal/test"
 )
 
 func TestExportAutoscalePolicies(t *testing.T) {

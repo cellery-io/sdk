@@ -22,7 +22,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func (kubeCli *CelleryKubeCli) JsonPatch(kind, instance, jsonPatch string) error {

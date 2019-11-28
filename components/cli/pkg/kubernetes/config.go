@@ -25,8 +25,8 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/osexec"
 
 	"github.com/ghodss/yaml"
 )

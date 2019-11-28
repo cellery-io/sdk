@@ -24,9 +24,9 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-	"github.com/cellery-io/sdk/components/cli/pkg/routing"
+	"cellery.io/cellery/components/cli/cli"
+	errorpkg "cellery.io/cellery/components/cli/pkg/error"
+	"cellery.io/cellery/components/cli/pkg/routing"
 )
 
 func RunListDependencies(cli cli.Cli, instanceName string) error {

@@ -21,7 +21,7 @@ package hub
 import (
 	"testing"
 
-	"github.com/cellery-io/sdk/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/internal/test"
 )
 
 func TestRunLogin(t *testing.T) {

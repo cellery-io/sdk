@@ -26,9 +26,9 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/mattbaird/jsonpatch"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func RunApplyAutoscalePolicies(cli cli.Cli, kind kubernetes.InstanceKind, instance string, file string) error {

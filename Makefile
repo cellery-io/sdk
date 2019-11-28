@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------
 
 PROJECT_ROOT := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-PROJECT_PKG := github.com/cellery-io/sdk
+PROJECT_PKG := cellery.io/cellery
 GO_BUILD_DIRECTORY := $(PROJECT_ROOT)/components/build
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GIT_REVISION := $(shell git rev-parse --verify HEAD)

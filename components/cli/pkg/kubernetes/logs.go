@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/osexec"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/osexec"
 )
 
 func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(cellName string) (string, error) {

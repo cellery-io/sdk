@@ -33,7 +33,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 // File copies a single file from src to dst

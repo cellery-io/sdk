@@ -23,8 +23,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
-	"github.com/cellery-io/sdk/components/cli/pkg/vbox"
+	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/vbox"
 )
 
 func newSetupCleanupLocalCommand() *cobra.Command {

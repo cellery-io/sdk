@@ -24,9 +24,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/runtime"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 var apimEnabled = false

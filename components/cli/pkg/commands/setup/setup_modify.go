@@ -25,8 +25,8 @@ import (
 
 	"github.com/manifoldco/promptui"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/runtime"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/runtime"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 type changedComponent struct {

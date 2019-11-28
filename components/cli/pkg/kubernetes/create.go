@@ -22,7 +22,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func CreateFile(file string) error {

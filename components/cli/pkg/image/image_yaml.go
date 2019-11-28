@@ -25,8 +25,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func ReadCellImageYaml(repo, cellImage string) ([]byte, error) {

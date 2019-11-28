@@ -31,11 +31,11 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/olekukonko/tablewriter"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	errorpkg "cellery.io/cellery/components/cli/pkg/error"
+	"cellery.io/cellery/components/cli/pkg/image"
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
 func RunListIngresses(cli cli.Cli, name string) error {

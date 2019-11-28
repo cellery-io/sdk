@@ -21,9 +21,9 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/commands/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/commands/image"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 // newViewCommand creates a new command which can be executed to view a particular image

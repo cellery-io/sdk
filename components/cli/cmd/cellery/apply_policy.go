@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
+	"cellery.io/cellery/components/cli/cli"
 )
 
 func newApplyPolicyCommand(cli cli.Cli) *cobra.Command {

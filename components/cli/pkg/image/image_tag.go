@@ -25,7 +25,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 // ParseImageTag parses the given image name string and returns a CellImage struct with the relevant information.

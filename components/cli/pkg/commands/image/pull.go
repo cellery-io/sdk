@@ -25,11 +25,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
-	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
-	"github.com/cellery-io/sdk/components/cli/pkg/version"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/image"
+	"cellery.io/cellery/components/cli/pkg/registry/credentials"
+	"cellery.io/cellery/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/version"
 )
 
 // RunPull connects to the Cellery Registry and pulls the cell image and saves it in the local repository.

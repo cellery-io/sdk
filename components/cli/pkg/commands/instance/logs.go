@@ -21,7 +21,7 @@ package instance
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
+	"cellery.io/cellery/components/cli/cli"
 )
 
 func RunLogs(cli cli.Cli, cellName, componentName string, sysLog bool) error {

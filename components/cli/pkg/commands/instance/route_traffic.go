@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
-	"github.com/cellery-io/sdk/components/cli/pkg/routing"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	errorpkg "cellery.io/cellery/components/cli/pkg/error"
+	"cellery.io/cellery/components/cli/pkg/routing"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func RunRouteTrafficCommand(cli cli.Cli, sourceInstances []string, dependencyInstance string, targetInstance string, percentage int,

@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/commands/setup"
 )
 
 func newSetupListClustersCommand() *cobra.Command {

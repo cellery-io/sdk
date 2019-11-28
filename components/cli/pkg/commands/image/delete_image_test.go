@@ -26,7 +26,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cellery-io/sdk/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/internal/test"
 )
 
 func TestDeleteImage(t *testing.T) {

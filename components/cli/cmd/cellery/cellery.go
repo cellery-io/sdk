@@ -27,12 +27,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/ballerina"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/registry"
-	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/ballerina"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/registry"
+	"cellery.io/cellery/components/cli/pkg/registry/credentials"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func newCliCommand(cli cli.Cli) *cobra.Command {

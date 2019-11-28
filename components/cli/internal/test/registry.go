@@ -22,7 +22,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/image"
+	"cellery.io/cellery/components/cli/pkg/image"
 )
 
 type MockRegistry struct {

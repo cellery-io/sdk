@@ -21,8 +21,8 @@ package setup
 import (
 	"fmt"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/kubernetes"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func RunSwitchCommand(context string) error {

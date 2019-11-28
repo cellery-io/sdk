@@ -26,8 +26,8 @@ import (
 	"os/user"
 	"path"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 // Credentials are stored in a file in the Cellery user home. Only the owner of the file has permissions to this file.

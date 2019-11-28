@@ -25,10 +25,10 @@ import (
 
 	"github.com/nokia/docker-registry-client/registry"
 
-	"github.com/cellery-io/sdk/components/cli/cli"
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
-	"github.com/cellery-io/sdk/components/cli/pkg/registry/credentials"
-	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/registry/credentials"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 // RunLogin requests the user for credentials and logs into a Cellery Registry

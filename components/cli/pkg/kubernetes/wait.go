@@ -24,7 +24,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func WaitForDeployment(condition string, timeoutSeconds int, resourceName string, namespace string) error {
