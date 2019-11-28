@@ -265,7 +265,7 @@ public class CreateCellImage {
             }
         }
         Port port = new Port();
-        port.setName(component.getName());
+        port.setName(component.getName() + destination.getPort());
         port.setPort(destination.getPort());
         port.setProtocol(CelleryConstants.PROTOCOL_GRPC);
         port.setTargetContainer(component.getName());
@@ -286,7 +286,7 @@ public class CreateCellImage {
         tcp.setDestination(destination);
         component.setProtocol(CelleryConstants.PROTOCOL_TCP);
         Port port = new Port();
-        port.setName(component.getName());
+        port.setName(component.getName() + destination.getPort());
         port.setPort(destination.getPort());
         port.setProtocol(CelleryConstants.PROTOCOL_TCP);
         port.setTargetContainer(component.getName());
@@ -338,18 +338,23 @@ public class CreateCellImage {
                 }
             }
         }
+        extractPorts(component, attributeMap, httpAPI);
+        component.addApi(httpAPI);
+    }
+
+    public static void extractPorts(ImageComponent component, MapValue attributeMap, API httpAPI) {
         Destination destination = new Destination();
         destination.setHost(component.getName());
         destination.setPort(CelleryConstants.DEFAULT_GATEWAY_PORT);
         httpAPI.setDestination(destination);
         Port port = new Port();
-        port.setName(component.getName());
+        final Long containerPort = attributeMap.getIntValue("port");
+        port.setName(component.getName() + containerPort);
         port.setPort(CelleryConstants.DEFAULT_GATEWAY_PORT);
         port.setProtocol(CelleryConstants.DEFAULT_GATEWAY_PROTOCOL);
         port.setTargetContainer(component.getName());
-        port.setTargetPort(Math.toIntExact(attributeMap.getIntValue("port")));
+        port.setTargetPort(Math.toIntExact(containerPort));
         component.addPort(port);
-        component.addApi(httpAPI);
     }
 
 
