@@ -24,7 +24,7 @@ import (
 	errorpkg "github.com/cellery-io/sdk/components/cli/pkg/error"
 )
 
-func GetInstanceAvailability(instanceName string) (bool, error) {
+func IsInstanceAvailable(instanceName string) (bool, error) {
 	var canBeComposite bool
 	_, err := GetCell(instanceName)
 	if err != nil {
@@ -40,7 +40,7 @@ func GetInstanceAvailability(instanceName string) (bool, error) {
 		_, err := GetComposite(instanceName)
 		if err != nil {
 			if compositeNotFound, _ := errorpkg.IsCompositeInstanceNotFoundError(instanceName, err); compositeNotFound {
-				return false, fmt.Errorf("failed to retrieve dependencies of %s, instance not available in the runtime", instanceName)
+				return false, fmt.Errorf("instance %s not available in the runtime", instanceName)
 			} else {
 				return false, fmt.Errorf("failed to check available Composites, %v", err)
 			}

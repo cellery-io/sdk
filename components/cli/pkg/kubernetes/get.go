@@ -426,7 +426,7 @@ func GetService(service, namespace string) (Service, error) {
 	return jsonOutput, err
 }
 
-func GetContainerCount(cellName string, considerSystemPods bool) (int, error) {
+func getContainerCount(cellName string, considerSystemPods bool) (int, error) {
 	cmd := exec.Command(
 		constants.KubeCtl,
 		"get",

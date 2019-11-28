@@ -27,7 +27,7 @@ import (
 )
 
 func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) (bool, error) {
-	instanceAvailable, err := GetInstanceAvailability(instanceName)
+	instanceAvailable, err := IsInstanceAvailable(instanceName)
 	if err != nil {
 		return false, err
 	}
@@ -41,7 +41,7 @@ func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, fo
 		"--all-containers=true",
 	)
 	if follow {
-		noOfContainers, err := GetContainerCount(instanceName, false)
+		noOfContainers, err := getContainerCount(instanceName, false)
 		if err != nil {
 			return false, err
 		}
@@ -52,7 +52,7 @@ func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, fo
 }
 
 func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) (bool, error) {
-	instanceAvailable, err := GetInstanceAvailability(instanceName)
+	instanceAvailable, err := IsInstanceAvailable(instanceName)
 	if err != nil {
 		return false, err
 	}
@@ -66,7 +66,7 @@ func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, fol
 		"--all-containers=true",
 	)
 	if follow {
-		noOfContainers, err := GetContainerCount(instanceName, true)
+		noOfContainers, err := getContainerCount(instanceName, true)
 		if err != nil {
 			return false, err
 		}
@@ -77,7 +77,7 @@ func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, fol
 }
 
 func (kubeCli *CelleryKubeCli) GetComponentLogs(instanceName string, componentName string, follow bool) (bool, error) {
-	instanceAvailable, err := GetInstanceAvailability(instanceName)
+	instanceAvailable, err := IsInstanceAvailable(instanceName)
 	if err != nil {
 		return false, err
 	}
