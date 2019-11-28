@@ -96,7 +96,7 @@ copy-k8s-artefacts:
 	cd ${PROJECT_ROOT}/installers; \
 	mkdir -p build-artifacts && cd build-artifacts;\
 	curl -LO --retry 5 $(DISTRIBUTION_ARTIFACTS); \
-	unzip $(DISTRIBUTION_ARCHIVE_VERSION).zip && mv distribution-$(DISTRIBUTION_VERSION)/installer/k8s-artefacts .; \
+	unzip $(DISTRIBUTION_ARCHIVE_VERSION).zip && mv cellery-distribution-$(DISTRIBUTION_VERSION)/installer/k8s-artefacts .; \
 	curl --retry 5 $(OBSERVABILITY_ARTIFACTS_PATH)/$(OBSERVABILITY_ARTIFACTS) --output $(OBSERVABILITY_ARTIFACTS); \
 	unzip $(OBSERVABILITY_ARTIFACTS); \
 	unzip $(OBSERVABILITY_SIDDHI_ARTIFACT) -d k8s-artefacts/observability/siddhi; \
