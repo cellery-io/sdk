@@ -182,11 +182,11 @@ func (kubeCli *MockKubeCli) GetCellLogsUserComponents(instanceName string, follo
 }
 
 func (kubeCli *MockKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) (bool, error) {
-	return false, nil
+	return true, nil
 }
 
 func (kubeCli *MockKubeCli) GetComponentLogs(instanceName, componentName string, follow bool) (bool, error) {
-	return false, nil
+	return true, nil
 }
 
 func (kubeCli *MockKubeCli) JsonPatch(kind, instance, jsonPatch string) error {

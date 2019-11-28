@@ -39,29 +39,54 @@ func TestRunLogs(t *testing.T) {
 		instance  string
 		component string
 		sysLog    bool
+		follow    bool
 	}{
 		{
 			name:      "logs of cell instance (all components)",
 			instance:  "employee",
 			component: "",
 			sysLog:    false,
+			follow:    false,
 		},
 		{
 			name:      "logs of cell instance (user components)",
 			instance:  "employee",
 			component: "",
 			sysLog:    true,
+			follow:    false,
 		},
 		{
 			name:      "logs of cell component",
 			instance:  "employee",
 			component: "job",
 			sysLog:    false,
+			follow:    false,
+		},
+		{
+			name:      "follow logs of cell instance (all components)",
+			instance:  "employee",
+			component: "",
+			sysLog:    false,
+			follow:    true,
+		},
+		{
+			name:      "follow logs of cell instance (user components)",
+			instance:  "employee",
+			component: "",
+			sysLog:    true,
+			follow:    true,
+		},
+		{
+			name:      "follow logs of cell component",
+			instance:  "employee",
+			component: "job",
+			sysLog:    false,
+			follow:    true,
 		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunLogs(mockCli, tst.instance, tst.component, tst.sysLog)
+			err := RunLogs(mockCli, tst.instance, tst.component, tst.sysLog, tst.follow)
 			if err != nil {
 				t.Errorf("error in RunLogs, %v", err)
 			}
@@ -91,7 +116,8 @@ func TestRunLogsError(t *testing.T) {
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli())), tst.instance, tst.component, false)
+			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli())), tst.instance, tst.component,
+				false, false)
 			if diff := cmp.Diff(tst.errMessage, err.Error()); diff != "" {
 				t.Errorf("RunLogs: unexpected error (-want, +got)\n%v", diff)
 			}
