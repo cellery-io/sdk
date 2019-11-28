@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/wso2/cellery/branch/master/graph/badge.svg)](https://codecov.io/gh/wso2/cellery)
 [![GitHub (pre-)release](https://img.shields.io/github/release/wso2/cellery/all.svg)](https://github.com/wso2/cellery/releases)
 [![GitHub (Pre-)Release Date](https://img.shields.io/github/release-date-pre/wso2/cellery.svg)](https://github.com/wso2/cellery/releases)
-[![GitHub last commit](https://img.shields.io/github/last-commit/wso2/celley.svg)](https://github.com/wso2/celley/commits/master)
+[![GitHub last commit](https://img.shields.io/github/last-commit/wso2/cellery.svg)](https://github.com/wso2/cellery/commits/master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 

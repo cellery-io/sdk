@@ -342,6 +342,13 @@ public class CreateCellImage {
         component.addApi(httpAPI);
     }
 
+    /**
+     * Extract the ports and destination.
+     *
+     * @param component    Component
+     * @param attributeMap Ingress attributes
+     * @param httpAPI      API definition
+     */
     public static void extractPorts(ImageComponent component, MapValue attributeMap, API httpAPI) {
         Destination destination = new Destination();
         destination.setHost(component.getName());
