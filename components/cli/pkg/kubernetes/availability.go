@@ -19,11 +19,12 @@
 package kubernetes
 
 import (
-	"cellery.io/cellery/components/cli/pkg/constants"
-	"cellery.io/cellery/components/cli/pkg/osexec"
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/osexec"
 
 	errorpkg "cellery.io/cellery/components/cli/pkg/error"
 )

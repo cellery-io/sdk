@@ -20,27 +20,16 @@ package setup
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
-	"math/rand"
-	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 
-	"cloud.google.com/go/storage"
 	"github.com/manifoldco/promptui"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/container/v1"
-	"google.golang.org/api/file/v1"
-	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 
 	"cellery.io/cellery/components/cli/pkg/constants"
+	gcpPlatform "cellery.io/cellery/components/cli/pkg/gcp"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/runtime/gcp"
@@ -51,29 +40,27 @@ var projectName string
 var accountName string
 var region string
 var zone string
-var uniqueNumber string
 
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-	uniqueNumber = strconv.Itoa(rand.Intn(1000))
-}
+func RunSetupCreateGcp(isCompleteSetup bool) error {
+	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
+	gcpSpinner := util.StartNewSpinner("Creating Cellery runtime on gcp")
+	platform, err := gcpPlatform.NewGcp()
+	if err != nil {
+		return fmt.Errorf("failed to initialize gcp platform, %v", err)
+	}
+	err = platform.Create()
+	if err != nil {
+		gcpSpinner.Stop(false)
+	}
+	gcpSpinner.SetNewAction("Installing cellery runtime")
 
-func RunSetupCreateGcp(isCompleteSetup bool) {
-	projectName, accountName, region, zone = getGcpData()
-	if region == "" {
-		util.ExitWithErrorMessage("Error creating cluster", fmt.Errorf("region not found in gcloud "+
-			"config list. Please run `gcloud init` to set the region"))
-	}
-	if zone == "" {
-		util.ExitWithErrorMessage("Error creating cluster", fmt.Errorf("zone not found in gcloud "+
-			"config list. Please run `gcloud init` to set the zone"))
-	}
 	if isCompleteSetup {
 		createCompleteGcpRuntime()
 	} else {
 		createMinimalGcpRuntime()
 	}
 	runtime.WaitFor(true, false)
+	return nil
 }
 
 func createGcp() error {
@@ -106,468 +93,51 @@ func createGcp() error {
 }
 
 func createMinimalGcpRuntime() {
-	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
-	gcpBucketName := configureGCPCredentials()
-	_ = configureGCPCredentials()
-	ctx := context.Background()
-
-	// Create a GKE client
-	gcpSpinner := util.StartNewSpinner("Creating GKE client")
-	createKubernetesClusterOnGcp(ctx, gcpSpinner)
-
-	sqlService, serviceAccountEmailAddress := configureMysqlOnGcp(ctx, gcpSpinner)
-
-	configureBucketOnGcp(ctx, gcpSpinner, gcpBucketName, serviceAccountEmailAddress, sqlService)
-
-	configureNfsOnGcp(gcpSpinner, ctx)
-
 	// Deploy cellery runtime
-	gcpSpinner.SetNewAction("Deploying Cellery runtime")
 	deployMinimalCelleryRuntime()
 	util.RemoveDir(filepath.Join(util.UserHomeCelleryDir(), constants.K8sArtifacts))
-	gcpSpinner.Stop(true)
 }
 
 func createCompleteGcpRuntime() error {
-	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
-	gcpBucketName := configureGCPCredentials()
-	ctx := context.Background()
-
-	// Create a GKE client
-	gcpSpinner := util.StartNewSpinner("Creating GKE client")
-	createKubernetesClusterOnGcp(ctx, gcpSpinner)
-
-	sqlService, serviceAccountEmailAddress := configureMysqlOnGcp(ctx, gcpSpinner)
-
-	configureBucketOnGcp(ctx, gcpSpinner, gcpBucketName, serviceAccountEmailAddress, sqlService)
-
-	configureNfsOnGcp(gcpSpinner, ctx)
-
 	// Deploy cellery runtime
-	gcpSpinner.SetNewAction("Deploying Cellery runtime")
 	deployCompleteCelleryRuntime()
 	util.RemoveDir(filepath.Join(util.UserHomeCelleryDir(), constants.K8sArtifacts))
-	gcpSpinner.Stop(true)
 	return nil
 }
 
-func configureNfsOnGcp(gcpSpinner *util.Spinner, ctx context.Context) {
-	// Create NFS server
-	gcpSpinner.SetNewAction("Creating NFS server")
-	hcNfs, err := google.DefaultClient(ctx, file.CloudPlatformScope)
-	if err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error getting authenticated client: %v", err)
-	}
-	nfsService, err := file.New(hcNfs)
-	if err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error creating nfs service: %v", err)
-	}
-	if err := createNfsServer(nfsService); err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error creating NFS server: %v", err)
-	}
-	nfsIpAddress, errIp := getNfsServerIp(nfsService)
-	fmt.Printf("Nfs Ip address : %v", nfsIpAddress)
-	if errIp != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error getting NFS server IP address: %v", errIp)
-	}
-	if err := gcp.UpdateNfsServerDetails(nfsIpAddress, "/data"); err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error replacing in file artifacts-persistent-volume.yaml: %v", err)
-	}
-}
-
-func configureBucketOnGcp(ctx context.Context, gcpSpinner *util.Spinner, gcpBucketName string,
-	serviceAccountEmailAddress string, sqlService *sqladmin.Service) {
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error creating storage client: %v", err)
-	}
-	// Create bucket
-	gcpSpinner.SetNewAction("Creating gcp bucket")
-	if err := createGcpStorage(client, projectName, gcpBucketName); err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error creating storage client: %v", err)
-	}
-	// Upload init file to S3 bucket
-	gcpSpinner.SetNewAction("Uploading init.sql file to GCP bucket")
-	if err := uploadSqlFile(client, gcpBucketName, constants.InitSql); err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error Uploading Sql file: %v", err)
-	}
-	// Update bucket permission
-	gcpSpinner.SetNewAction("Updating bucket permission")
-	if err := updateBucketPermission(gcpBucketName, serviceAccountEmailAddress); err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error Updating bucket permission: %v", err)
-	}
-	// Import sql script
-	gcpSpinner.SetNewAction("Importing sql script")
-	var uri = "gs://" + gcpBucketName + "/init.sql"
-	if err := importSqlScript(sqlService, projectName, constants.GcpDbInstanceName+uniqueNumber, uri); err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error Updating bucket permission: %v", err)
-	}
-	time.Sleep(30 * time.Second)
-	// Update sql instance
-	gcpSpinner.SetNewAction("Updating sql instance")
-	if err := updateInstance(sqlService, projectName, constants.GcpDbInstanceName+uniqueNumber); err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error Updating sql instance: %v", err)
-	}
-}
-
-func configureMysqlOnGcp(ctx context.Context, gcpSpinner *util.Spinner) (*sqladmin.Service, string) {
-	hcSql, err := google.DefaultClient(ctx, sqladmin.CloudPlatformScope)
-	if err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error creating client: %v", err)
-	}
-	sqlService, err := sqladmin.New(hcSql)
-	if err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error creating sql service: %v", err)
-	}
-	//Create sql instance
-	gcpSpinner.SetNewAction("Creating sql instance")
-	_, err = createSqlInstance(sqlService, projectName, region, region, constants.GcpDbInstanceName+uniqueNumber)
-	if err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error creating sql instance: %v", err)
-	}
-	sqlIpAddress, serviceAccountEmailAddress := getSqlServieAccount(ctx, sqlService, projectName,
-		constants.GcpDbInstanceName+uniqueNumber)
-	fmt.Printf("Sql Ip address : %v", sqlIpAddress)
-
-	if err := gcp.UpdateMysqlCredentials(constants.GcpSqlUserName, constants.GcpSqlPassword+uniqueNumber,
-		sqlIpAddress); err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Error updating file: %v", err)
-	}
-
-	return sqlService, serviceAccountEmailAddress
-}
-
-func createKubernetesClusterOnGcp(ctx context.Context, gcpSpinner *util.Spinner) {
-	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)
-	if err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Could not get authenticated client: %v", err)
-	}
-	gcpService, err := container.New(gkeClient)
-	if err != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Could not initialize gke client: %v", err)
-	}
-	// Create GCP cluster
-	gcpSpinner.SetNewAction("Creating GCP cluster " + constants.GcpClusterName + uniqueNumber)
-	errCreate := createGcpCluster(gcpService, constants.GcpClusterName+uniqueNumber)
-	if errCreate != nil {
-		gcpSpinner.Stop(false)
-		fmt.Printf("Could not create cluster: %v", errCreate)
-	}
-	// Update kube config file
-	gcpSpinner.SetNewAction("Updating kube config cluster")
-	updateKubeConfig()
-}
-
-func configureGCPCredentials() string {
-	// Get the GCP cluster data
-	projectName, accountName, region, zone = getGcpData()
-	var gcpBucketName = constants.GcpBucketName + uniqueNumber
-	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.GCP),
-		".json")
-	if len(jsonAuthFile) > 0 {
-		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
-	} else {
-		util.ExitWithErrorMessage("Failed to create gcp cluster", fmt.Errorf(
-			"Could not find authentication json file in : %s. Please copy GCP service account credentials"+
-				" json file into this directory.\n", filepath.Join(util.UserHomeDir(),
-				constants.CelleryHome, constants.GCP)))
-	}
-	return gcpBucketName
-}
-
-func createGcpCluster(gcpService *container.Service, clusterName string) error {
-	gcpGKENode := &container.NodeConfig{
-		ImageType:   constants.GcpClusterImageType,
-		MachineType: constants.GcpClusterMachineType,
-		DiskSizeGb:  constants.GcpClusterDiskSizeGb,
-	}
-	gcpCluster := &container.Cluster{
-		Name:                  clusterName,
-		Description:           "k8s cluster",
-		InitialClusterVersion: "1.14",
-		InitialNodeCount:      1,
-		Location:              zone,
-		NodeConfig:            gcpGKENode,
-		ResourceLabels:        getCreatedByLabel(),
-	}
-	createClusterRequest := &container.CreateClusterRequest{
-		ProjectId: projectName,
-		Zone:      zone,
-		Cluster:   gcpCluster,
-	}
-
-	k8sCluster, err := gcpService.Projects.Zones.Clusters.Create(projectName, zone, createClusterRequest).Do()
-
-	// Loop until cluster status becomes RUNNING
-	for i := 0; i < 30; i++ {
-		resp, err := gcpService.Projects.Zones.Clusters.Get(projectName, zone, constants.GcpClusterName+uniqueNumber).Do()
-		if err != nil {
-			time.Sleep(30 * time.Second)
-		} else {
-			if resp.Status == "RUNNING" {
-				fmt.Printf("Cluster: %v created", k8sCluster.Name)
-				return nil
-			}
-			time.Sleep(15 * time.Second)
-		}
-	}
-	return fmt.Errorf("failed to create clusters: %v", err)
-}
-
-func createSqlInstance(service *sqladmin.Service, projectId string, region string, zone string,
-	instanceName string) ([]*sqladmin.DatabaseInstance, error) {
-	settings := &sqladmin.Settings{
-		DataDiskSizeGb: constants.GcpSqlDiskSizeGb,
-		Tier:           constants.GcpSqlTier,
-		UserLabels:     getCreatedByLabel(),
-	}
-
-	dbInstance := &sqladmin.DatabaseInstance{
-		Name:            instanceName,
-		Project:         projectId,
-		Region:          region,
-		GceZone:         zone,
-		BackendType:     "SECOND_GEN",
-		DatabaseVersion: "MYSQL_5_7",
-		Settings:        settings,
-	}
-
-	if _, err := service.Instances.Insert(projectId, dbInstance).Do(); err != nil {
-		fmt.Printf("Error in sql instance creation")
-	}
-	return nil, nil
-}
-
-func createGcpStorage(client *storage.Client, projectID, bucketName string) error {
-	ctx := context.Background()
-	attributes := &storage.BucketAttrs{
-		Labels: getCreatedByLabel(),
-	}
-	if err := client.Bucket(bucketName).Create(ctx, projectID, attributes); err != nil {
-		return err
-	}
-	return nil
-}
-
-func uploadSqlFile(client *storage.Client, bucket, object string) error {
-	ctx := context.Background()
-	if err := gcp.UpdateInitSql(constants.GcpSqlUserName, constants.GcpSqlPassword+uniqueNumber); err != nil {
-		return err
-	}
-	f, err := os.Open(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.K8sArtifacts,
-		constants.MySql, constants.DbScripts, constants.InitSql))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	wc := client.Bucket(bucket).Object(object).NewWriter(ctx)
-	if _, err = io.Copy(wc, f); err != nil {
-		return err
-	}
-	if err := wc.Close(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func updateKubeConfig() {
-	cmd := exec.Command("bash", "-c", "gcloud container clusters get-credentials "+constants.GcpClusterName+uniqueNumber+" --zone "+zone+" --project "+projectName)
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err = cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-	defer cmd.Wait()
-
-	go io.Copy(os.Stdout, stderr)
-}
-
-func createNfsServer(nfsService *file.Service) error {
-	fileShare := &file.FileShareConfig{
-		Name:       constants.GcpNfsConfigName,
-		CapacityGb: constants.GcpNfsConfigCapacity,
-	}
-
-	fileShares := append([]*file.FileShareConfig{}, fileShare)
-
-	network := &file.NetworkConfig{
-		Network: "default",
-	}
-
-	networks := append([]*file.NetworkConfig{}, network)
-
-	nfsInstance := &file.Instance{
-		FileShares: fileShares,
-		Networks:   networks,
-		Tier:       "STANDARD",
-		Labels:     getCreatedByLabel(),
-	}
-
-	if _, err := nfsService.Projects.Locations.Instances.Create("projects/"+projectName+"/locations/"+zone,
-		nfsInstance).InstanceId(constants.GcpNfsServerInstance + uniqueNumber).Do(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func getNfsServerIp(nfsService *file.Service) (string, error) {
-	serverIp := ""
-	for true {
-		inst, err := nfsService.Projects.Locations.Instances.Get("projects/" + projectName + "/locations/" + zone +
-			"/instances/" + constants.GcpNfsServerInstance + uniqueNumber).Do()
-		if err != nil {
-			return serverIp, err
-		} else {
-			if inst.State == "READY" {
-				serverIp = inst.Networks[0].IpAddresses[0]
-				return serverIp, nil
-			} else {
-				time.Sleep(10 * time.Second)
-			}
-		}
-	}
-	return serverIp, nil
-}
-
-func getSqlServieAccount(ctx context.Context, gcpService *sqladmin.Service, projectId string, instanceName string) (string, string) {
-	for i := 0; i < 30; i++ {
-		resp, err := gcpService.Instances.Get(projectId, instanceName).Context(ctx).Do()
-		if err != nil {
-			time.Sleep(60 * time.Second)
-		} else {
-			if resp.State == "RUNNABLE" {
-				return resp.IpAddresses[0].IpAddress, resp.ServiceAccountEmailAddress
-			}
-			time.Sleep(15 * time.Second)
-		}
-	}
-	return "", ""
-}
-
-func updateBucketPermission(bucketName string, svcAccount string) (err error) {
-	scCtx := context.Background()
-	c, err := storage.NewClient(scCtx)
-	if err != nil {
-		return err
-	}
-
-	ctx := context.Background()
-
-	bucket := c.Bucket(bucketName)
-	policy, err := bucket.IAM().Policy(ctx)
-	if err != nil {
-		return err
-	}
-
-	policy.Add(strings.Join([]string{"serviceAccount:", svcAccount}, ""), "roles/storage.objectViewer")
-	if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
-		return err
-	}
-	return nil
-}
-
-func importSqlScript(service *sqladmin.Service, projectId string, instanceName string, uri string) error {
-	ic := &sqladmin.ImportContext{
-		FileType: "SQL",
-		Uri:      uri,
-	}
-
-	iIR := &sqladmin.InstancesImportRequest{
-		ImportContext: ic,
-	}
-
-	_, err := service.Instances.Import(projectId, instanceName, iIR).Do()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func updateInstance(service *sqladmin.Service, projectId string, instanceName string) error {
-	aclEntry := &sqladmin.AclEntry{
-		Value: "0.0.0.0/0",
-	}
-
-	var aclEntryList []*sqladmin.AclEntry
-	aclEntryList = append(aclEntryList, aclEntry)
-
-	ipConfigs := &sqladmin.IpConfiguration{
-		AuthorizedNetworks: aclEntryList,
-	}
-
-	newSettings := &sqladmin.Settings{
-		IpConfiguration: ipConfigs,
-	}
-
-	newDbInstance := &sqladmin.DatabaseInstance{
-		Settings: newSettings,
-	}
-
-	_, err := service.Instances.Patch(projectId, instanceName, newDbInstance).Do()
-	if err != nil {
-		fmt.Printf("Error updating instance :%v", err)
-	}
-	return nil
-}
-
-func createController(errorMessage string) {
+func createController(errorMessage string) error {
 	// Give permission to the user
 	if err := kubernetes.CreateClusterRoleBinding("cluster-admin", accountName); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+		return fmt.Errorf("error creating cluster role binding, %v", err)
 	}
-
-	// Setup Celley namespace
+	// Setup Cellery namespace
 	if err := runtime.CreateCelleryNameSpace(); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+		return fmt.Errorf("error creating cellery namespace, %v", err)
 	}
-
 	// Apply Istio CRDs
 	if err := runtime.ApplyIstioCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+		return fmt.Errorf("error applying istio crds, %v", err)
 	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
 	time.Sleep(20 * time.Second)
-
 	// Enabling Istio injection
 	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
 		false); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+		return err
 	}
-
 	// Install istio
 	if err := runtime.InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+		return err
 	}
-
 	// Install knative serving
 	if err := runtime.InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+		return err
 	}
-
 	// Apply controller CRDs
 	if err := runtime.InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+		return err
 	}
+	return nil
 }
 
 func deployMinimalCelleryRuntime() error {
@@ -670,12 +240,4 @@ func getGcpData() (string, string, string, string) {
 		fmt.Println(errJson)
 	}
 	return jsonOutput.Core.Project, jsonOutput.Core.Account, jsonOutput.Compute.Region, jsonOutput.Compute.Zone
-}
-
-func getCreatedByLabel() map[string]string {
-	// Add a label to identify the user who created it
-	labels := make(map[string]string)
-	createdBy := util.ConvertToAlphanumeric(accountName, "_")
-	labels["created_by"] = createdBy
-	return labels
 }

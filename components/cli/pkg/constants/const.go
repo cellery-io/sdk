@@ -60,20 +60,7 @@ const AwsRegion = "ap-south-1"
 const VmName = "cellery-runtime-local"
 
 const GcpClusterName = "cellery-cluster"
-const GcpDbInstanceName = "cellery-sql"
-const GcpBucketName = "cellery-gcp-bucket"
-const GcpSqlUserName = "cellery-sql-user"
-const GcpSqlPassword = "cellery-sql-user"
 const MysqlHostNameForExistingCluster = "wso2apim-with-analytics-rdbms-service"
-const GcpNfsServerInstance = "nfs-server"
-
-const GcpNfsConfigName = "data"
-const GcpNfsConfigCapacity = 1024
-const GcpClusterImageType = "cos_containerd"
-const GcpClusterMachineType = "n1-standard-4"
-const GcpClusterDiskSizeGb = 100
-const GcpSqlTier = "db-n1-standard-1"
-const GcpSqlDiskSizeGb = 20
 
 const ZipBallerinaSource = "src"
 const ZipArtifacts = "artifacts"
@@ -86,8 +73,6 @@ const K8sArtifacts = "k8s-artefacts"
 const VM = "vm"
 const MySql = "mysql"
 const SP = "sp"
-const DbScripts = "dbscripts"
-const InitSql = "init.sql"
 const TELEPRESENCE = "telepresence"
 
 const KubeCtl = "kubectl"
@@ -112,8 +97,6 @@ const BalTestExecFIle = "test.sh"
 const BalInitTestExecFIle = "init-test.sh"
 const BalProjExt = "_proj"
 
-const DockerCliBallerinaExecutablePath = "/usr/lib/ballerina/ballerina-" + BallerinaVersion + "/bin/ballerina"
-
 const Wso2ApimHost = "https://wso2-apim-gateway"
 
 const CelleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
@@ -132,8 +115,6 @@ const CellerySqlPassword = "cellery-sql-user"
 
 const IngressModeNodePort = "Node port [kubeadm, minikube]"
 const IngressModeLoadBalancer = "Load balancer [gcp, docker for desktop]"
-
-const CelleryDockerCliUserId = "1000"
 
 const TelepresenceExecPath = "telepresence-0.101/bin/"
 
