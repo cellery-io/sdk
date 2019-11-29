@@ -26,7 +26,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/osexec"
 )
 
-func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) error {
+func (kubeCli *CelleryKubeCli) StreamCellLogsUserComponents(instanceName string, follow bool) error {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
@@ -44,7 +44,7 @@ func (kubeCli *CelleryKubeCli) GetCellLogsUserComponents(instanceName string, fo
 	return osexec.PrintCommandOutput(cmd)
 }
 
-func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) error {
+func (kubeCli *CelleryKubeCli) StreamCellLogsAllComponents(instanceName string, follow bool) error {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
@@ -62,11 +62,11 @@ func (kubeCli *CelleryKubeCli) GetCellLogsAllComponents(instanceName string, fol
 	return osexec.PrintCommandOutput(cmd)
 }
 
-func (kubeCli *CelleryKubeCli) GetComponentLogs(instanceName string, componentName string, follow bool) error {
+func (kubeCli *CelleryKubeCli) StreamComponentLogs(instanceName string, componentName string, follow bool) error {
 	cmd := exec.Command(constants.KubeCtl,
 		"logs",
 		"-l",
-		constants.GroupName+"/cell="+instanceName+","+constants.GroupName+"/component",
+		constants.GroupName+"/cell="+instanceName+","+constants.GroupName+"/component="+instanceName+"--"+componentName,
 		"-c",
 		componentName,
 	)

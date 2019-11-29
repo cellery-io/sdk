@@ -33,9 +33,9 @@ func RunLogs(cli cli.Cli, instanceName string, componentName string, sysLog bool
 	if componentName == "" {
 		var err error
 		if sysLog {
-			err = cli.KubeCli().GetCellLogsAllComponents(instanceName, follow)
+			err = cli.KubeCli().StreamCellLogsAllComponents(instanceName, follow)
 		} else {
-			err = cli.KubeCli().GetCellLogsUserComponents(instanceName, follow)
+			err = cli.KubeCli().StreamCellLogsUserComponents(instanceName, follow)
 		}
 
 		if err != nil {
@@ -46,7 +46,7 @@ func RunLogs(cli cli.Cli, instanceName string, componentName string, sysLog bool
 			return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component "+
 				"%s of cell instance %s", componentName, instanceName))
 		}
-		if err := cli.KubeCli().GetComponentLogs(instanceName, componentName, follow); err != nil {
+		if err := cli.KubeCli().StreamComponentLogs(instanceName, componentName, follow); err != nil {
 			return fmt.Errorf(fmt.Sprintf("Error getting logs for component %s of instance %s",
 				componentName, instanceName), err)
 		}

@@ -171,15 +171,15 @@ func (kubeCli *MockKubeCli) GetServices(cellName string) (kubernetes.Services, e
 	return kubeCli.services[cellName], nil
 }
 
-func (kubeCli *MockKubeCli) GetCellLogsUserComponents(instanceName string, follow bool) error {
+func (kubeCli *MockKubeCli) StreamCellLogsUserComponents(instanceName string, follow bool) error {
 	return nil
 }
 
-func (kubeCli *MockKubeCli) GetCellLogsAllComponents(instanceName string, follow bool) error {
+func (kubeCli *MockKubeCli) StreamCellLogsAllComponents(instanceName string, follow bool) error {
 	return nil
 }
 
-func (kubeCli *MockKubeCli) GetComponentLogs(instanceName, componentName string, follow bool) error {
+func (kubeCli *MockKubeCli) StreamComponentLogs(instanceName, componentName string, follow bool) error {
 	return nil
 }
 
