@@ -19,7 +19,11 @@
 package kubernetes
 
 import (
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/osexec"
 	"fmt"
+	"os/exec"
+	"strings"
 
 	errorpkg "cellery.io/cellery/components/cli/pkg/error"
 )
@@ -47,6 +51,23 @@ func (kubeCli *CelleryKubeCli) IsInstanceAvailable(instanceName string) error {
 		} else {
 			return nil
 		}
+	}
+	return nil
+}
+
+func (kubeCli *CelleryKubeCli) IsComponentAvailable(instanceName, componentName string) error {
+	cmd := exec.Command(constants.KubeCtl,
+		"get",
+		"component",
+		instanceName+"--"+componentName,
+	)
+	displayVerboseOutput(cmd)
+	_, err := osexec.GetCommandOutputFromTextFile(cmd)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return fmt.Errorf("component %s not found", componentName)
+		}
+		return fmt.Errorf("unknown error: %v", err)
 	}
 	return nil
 }

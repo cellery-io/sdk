@@ -43,6 +43,10 @@ type Cells struct {
 	Items []Cell `json:"items"`
 }
 
+type Components struct {
+	Items []Component `json:"items"`
+}
+
 type Composites struct {
 	Items []Composite `json:"items"`
 }
@@ -55,6 +59,14 @@ type Cell struct {
 	CellMetaData K8SMetaData                `json:"metadata"`
 	CellSpec     CellSpec                   `json:"spec"`
 	CellStatus   CellStatus                 `json:"status"`
+}
+
+type Component struct {
+	Kind              string                `json:"kind"`
+	APIVersion        string                `json:"apiVersion"`
+	ComponentMetaData K8SMetaData           `json:"metadata"`
+	ComponentSpec     ComponentTemplateSpec `json:"spec"`
+	ComponentStatus   ComponentStatus       `json:"status"`
 }
 
 type ComponentDetail struct {
@@ -222,6 +234,12 @@ type CellStatus struct {
 	Status       string `json:"status"`
 	Gateway      string `json:"gatewayServiceName"`
 	ServiceCount int    `json:"componentCount"`
+}
+
+type ComponentStatus struct {
+	Status      string `json:"status"`
+	Type        string `json:"componentType"`
+	ServiceName string `json:"serviceName"`
 }
 
 type CompositeStatus struct {

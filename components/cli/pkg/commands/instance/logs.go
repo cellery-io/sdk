@@ -25,8 +25,7 @@ import (
 )
 
 func RunLogs(cli cli.Cli, instanceName string, componentName string, sysLog bool, follow bool) error {
-	err := cli.KubeCli().IsInstanceAvailable(instanceName)
-	if err != nil {
+	if err := cli.KubeCli().IsInstanceAvailable(instanceName); err != nil {
 		return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find running "+
 			"instance %s", instanceName))
 	}
@@ -43,8 +42,11 @@ func RunLogs(cli cli.Cli, instanceName string, componentName string, sysLog bool
 			return fmt.Errorf(fmt.Sprintf("Error getting logs for instance %s", instanceName), err)
 		}
 	} else {
-		err := cli.KubeCli().GetComponentLogs(instanceName, componentName, follow)
-		if err != nil {
+		if err := cli.KubeCli().IsComponentAvailable(instanceName, componentName); err != nil {
+			return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find component "+
+				"%s of cell instance %s", componentName, instanceName))
+		}
+		if err := cli.KubeCli().GetComponentLogs(instanceName, componentName, follow); err != nil {
 			return fmt.Errorf(fmt.Sprintf("Error getting logs for component %s of instance %s",
 				componentName, instanceName), err)
 		}

@@ -31,6 +31,7 @@ const celleryComposite = "composites.mesh.cellery.io"
 
 type MockKubeCli struct {
 	cells            kubernetes.Cells
+	components       kubernetes.Components
 	composites       kubernetes.Composites
 	cellsBytes       map[string][]byte
 	k8sServerVersion string
@@ -51,6 +52,12 @@ func WithCells(cells kubernetes.Cells) func(*MockKubeCli) {
 func WithComposites(composites kubernetes.Composites) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.composites = composites
+	}
+}
+
+func WithComponents(components kubernetes.Components) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.components = components
 	}
 }
 
@@ -232,4 +239,13 @@ func (kubeCli *MockKubeCli) IsInstanceAvailable(instanceName string) error {
 		}
 	}
 	return nil
+}
+
+func (kubeCli *MockKubeCli) IsComponentAvailable(instanceName, componentName string) error {
+	for _, component := range kubeCli.components.Items {
+		if component.ComponentMetaData.Name == componentName {
+			return nil
+		}
+	}
+	return fmt.Errorf("component %s not found", componentName)
 }

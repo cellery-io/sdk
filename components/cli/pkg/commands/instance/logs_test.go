@@ -36,15 +36,6 @@ func TestRunLogs(t *testing.T) {
 					CreationTimestamp: "2019-10-18T11:40:36Z",
 				},
 			},
-			{
-				CellMetaData: kubernetes.K8SMetaData{
-					Name:              "hr",
-					CreationTimestamp: "2019-10-19T11:40:36Z",
-					Annotations: kubernetes.CellAnnotations{
-						Dependencies: "[{\"org\":\"myorg\",\"name\":\"employee\",\"version\":\"1.0.0\",\"instance\":\"employee\",\"kind\":\"Cell\"},{\"org\":\"myorg\",\"name\":\"stock\",\"version\":\"1.0.0\",\"instance\":\"stock\",\"kind\":\"Cell\"}]",
-					},
-				},
-			},
 		},
 	}
 	composites := kubernetes.Composites{
@@ -55,19 +46,21 @@ func TestRunLogs(t *testing.T) {
 					CreationTimestamp: "2019-10-18T11:40:36Z",
 				},
 			},
+		},
+	}
+	components := kubernetes.Components{
+		Items: []kubernetes.Component{
 			{
-				CompositeMetaData: kubernetes.K8SMetaData{
-					Name:              "foo",
-					CreationTimestamp: "2019-10-19T11:40:36Z",
-					Annotations: kubernetes.CellAnnotations{
-						Dependencies: "[{\"org\":\"myorg\",\"bar\":\"employee\",\"version\":\"1.0.0\",\"instance\":\"bar\",\"kind\":\"Composite\"},{\"org\":\"myorg\",\"name\":\"zoo\",\"version\":\"1.0.0\",\"instance\":\"zoo\",\"kind\":\"Composite\"}]",
-					},
+				ComponentMetaData: kubernetes.K8SMetaData{
+					Name:              "job",
+					CreationTimestamp: "2019-10-18T11:40:36Z",
 				},
 			},
 		},
 	}
 
-	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites))
+	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites),
+		test.WithComponents(components))
 	mockCli := test.NewMockCli(test.SetKubeCli(mockKubeCli))
 
 	tests := []struct {
@@ -119,6 +112,48 @@ func TestRunLogs(t *testing.T) {
 			sysLog:    false,
 			follow:    true,
 		},
+		{
+			name:      "logs of composite instance (all components)",
+			instance:  "stock",
+			component: "",
+			sysLog:    false,
+			follow:    false,
+		},
+		{
+			name:      "logs of composite instance (user components)",
+			instance:  "stock",
+			component: "",
+			sysLog:    true,
+			follow:    false,
+		},
+		{
+			name:      "logs of composite component",
+			instance:  "stock",
+			component: "job",
+			sysLog:    false,
+			follow:    false,
+		},
+		{
+			name:      "follow logs of composite instance (all components)",
+			instance:  "stock",
+			component: "",
+			sysLog:    false,
+			follow:    true,
+		},
+		{
+			name:      "follow logs of composite instance (user components)",
+			instance:  "stock",
+			component: "",
+			sysLog:    true,
+			follow:    true,
+		},
+		{
+			name:      "follow logs of composite component",
+			instance:  "stock",
+			component: "job",
+			sysLog:    false,
+			follow:    true,
+		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
@@ -131,6 +166,16 @@ func TestRunLogs(t *testing.T) {
 }
 
 func TestRunLogsError(t *testing.T) {
+	cells := kubernetes.Cells{
+		Items: []kubernetes.Cell{
+			{
+				CellMetaData: kubernetes.K8SMetaData{
+					Name:              "hr",
+					CreationTimestamp: "2019-11-29T11:15:36Z",
+				},
+			},
+		},
+	}
 	tests := []struct {
 		name       string
 		instance   string
@@ -144,16 +189,22 @@ func TestRunLogsError(t *testing.T) {
 			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find running instance employee)",
 		},
 		{
-			name:       "No logs of cell component",
+			name:       "No logs of cell component (both instance and component not available)",
 			instance:   "employee",
 			component:  "job",
 			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find running instance employee)",
 		},
+		{
+			name:       "No logs of cell component (cell instance is available, component is not available)",
+			instance:   "hr",
+			component:  "hr",
+			errMessage: "No logs found%!(EXTRA *errors.errorString=cannot find component hr of cell instance hr)",
+		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli())), tst.instance, tst.component,
-				false, false)
+			err := RunLogs(test.NewMockCli(test.SetKubeCli(test.NewMockKubeCli(test.WithCells(cells)))),
+				tst.instance, tst.component, false, false)
 			if diff := cmp.Diff(tst.errMessage, err.Error()); diff != "" {
 				t.Errorf("RunLogs: unexpected error (-want, +got)\n%v", diff)
 			}

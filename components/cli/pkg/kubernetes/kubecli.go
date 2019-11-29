@@ -49,6 +49,7 @@ type KubeCli interface {
 	GetPodsForComposite(compName string) (Pods, error)
 	GetVirtualService(vs string) (VirtualService, error)
 	IsInstanceAvailable(instanceName string) error
+	IsComponentAvailable(instanceName, componentName string) error
 }
 
 type CelleryKubeCli struct {
