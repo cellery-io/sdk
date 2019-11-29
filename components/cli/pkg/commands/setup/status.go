@@ -19,6 +19,7 @@
 package setup
 
 import (
+	"cellery.io/cellery/components/cli/cli"
 	"fmt"
 	"os"
 	"os/exec"
@@ -43,7 +44,7 @@ type SystemComponent struct {
 	status    string
 }
 
-func RunSetupStatusCommand() {
+func RunSetupStatusCommand(cli cli.Cli) {
 	var err error
 	cmd := exec.Command(
 		constants.KubeCtl,
@@ -64,7 +65,7 @@ func RunSetupStatusCommand() {
 		{runtime.HPA, false, "Disabled"}}
 
 	for _, systemComponent := range systemComponents {
-		systemComponent.enabled, err = runtime.IsComponentEnabled(systemComponent.component)
+		systemComponent.enabled, err = cli.Runtime().IsComponentEnabled(systemComponent.component)
 		if err != nil {
 			util.ExitWithErrorMessage(fmt.Sprintf("Error checking if %s is enabled",
 				systemComponent.component), err)
