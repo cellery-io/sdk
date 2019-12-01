@@ -19,20 +19,15 @@
 package setup
 
 import (
-	"cellery.io/cellery/components/cli/cli"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
 
-	"cellery.io/cellery/components/cli/pkg/constants"
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
-	"cellery.io/cellery/components/cli/pkg/osexec"
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/runtime"
-	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 var componentColor = color.New(color.FgWhite).Add(color.Bold).SprintFunc()
@@ -44,20 +39,14 @@ type SystemComponent struct {
 	status    string
 }
 
-func RunSetupStatusCommand(cli cli.Cli) {
-	var err error
-	cmd := exec.Command(
-		constants.KubeCtl,
-		"version",
-	)
-	out, err := osexec.GetCommandOutput(cmd)
+func RunSetupStatus(cli cli.Cli) error {
+	k8sServerVersion, _, err := cli.KubeCli().Version()
 	if err != nil {
-		if strings.Contains(out, "Unable to connect to the server") {
-			util.ExitWithErrorMessage("Failed to get setup status", fmt.Errorf(
+		if strings.Contains(k8sServerVersion, "Unable to connect to the server") {
+			return fmt.Errorf("failed to get setup status, %v", fmt.Errorf(
 				"unable to connect to the kubernetes cluster"))
 		}
 	}
-
 	var clusterName string
 	systemComponents := []*SystemComponent{{runtime.ApiManager, false, "Disabled"},
 		{runtime.Observability, false, "Disabled"},
@@ -67,19 +56,20 @@ func RunSetupStatusCommand(cli cli.Cli) {
 	for _, systemComponent := range systemComponents {
 		systemComponent.enabled, err = cli.Runtime().IsComponentEnabled(systemComponent.component)
 		if err != nil {
-			util.ExitWithErrorMessage(fmt.Sprintf("Error checking if %s is enabled",
+			return fmt.Errorf(fmt.Sprintf("error checking if %s is enabled",
 				systemComponent.component), err)
 		}
 		if systemComponent.enabled {
 			systemComponent.status = "Enabled"
 		}
 	}
-	clusterName, err = kubernetes.GetContext()
+	clusterName, err = cli.KubeCli().GetContext()
 	if err != nil {
-		util.ExitWithErrorMessage("Error getting cluster name", err)
+		return fmt.Errorf("error getting cluster name, %v", err)
 	}
-	fmt.Printf(componentLabelColor("cluster name: %s\n\n"), componentColor(clusterName))
+	fmt.Fprintf(cli.Out(), componentLabelColor("cluster name: %s\n\n"), componentColor(clusterName))
 	displayClusterComponentsTable(systemComponents)
+	return nil
 }
 
 func displayClusterComponentsTable(systemComponents []*SystemComponent) {
@@ -98,7 +88,7 @@ func displayClusterComponentsTable(systemComponents []*SystemComponent) {
 		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{tablewriter.Bold})
 	table.SetColumnColor(
-		tablewriter.Colors{tablewriter.FgHiWhiteColor},
+		tablewriter.Colors{tablewriter.Bold},
 		tablewriter.Colors{})
 
 	table.AppendBulk(tableData)

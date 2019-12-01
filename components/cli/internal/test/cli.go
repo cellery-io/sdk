@@ -28,6 +28,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/registry"
 	"cellery.io/cellery/components/cli/pkg/registry/credentials"
+	"cellery.io/cellery/components/cli/pkg/runtime"
 )
 
 type MockCli struct {
@@ -40,6 +41,7 @@ type MockCli struct {
 	docker            docker.Docker
 	credManager       credentials.CredManager
 	credReader        credentials.CredReader
+	runtime           runtime.Runtime
 }
 
 // NewMockCli returns a mock cli for the cli.Cli interface.
@@ -154,4 +156,15 @@ func (cli *MockCli) CredManager() credentials.CredManager {
 // CredReader returns a CredReader instance.
 func (cli *MockCli) CredReader() credentials.CredReader {
 	return cli.credReader
+}
+
+// Runtime returns a Runtime instance.
+func (cli *MockCli) Runtime() runtime.Runtime {
+	return cli.runtime
+}
+
+func SetRuntime(runtime runtime.Runtime) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.runtime = runtime
+	}
 }
