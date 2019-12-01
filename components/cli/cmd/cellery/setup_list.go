@@ -18,16 +18,20 @@
 
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
 
-func newSetupListCommand() *cobra.Command {
+	"cellery.io/cellery/components/cli/cli"
+)
+
+func newSetupListCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list <command>",
 		Short: "List k8s clusters",
 	}
 
 	cmd.AddCommand(
-		newSetupListClustersCommand(),
+		newSetupListClustersCommand(cli),
 	)
 	return cmd
 }

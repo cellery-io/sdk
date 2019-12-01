@@ -22,30 +22,34 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
-	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func RunSetupListClusters() error {
-	for _, v := range getContexts() {
-		fmt.Println(v)
+func RunSetupListClusters(cli cli.Cli) error {
+	contexts, err := getContexts(cli)
+	if err != nil {
+		return fmt.Errorf("failed to get contexts, %v", err)
+	}
+	for _, v := range contexts {
+		fmt.Fprintln(cli.Out(), v)
 	}
 	return nil
 }
 
-func getContexts() []string {
+func getContexts(cli cli.Cli) ([]string, error) {
 	var contexts []string
 	jsonOutput := &kubernetes.Config{}
-	output, err := kubernetes.GetContexts()
+	output, err := cli.KubeCli().GetContexts()
 	if err != nil {
-		util.ExitWithErrorMessage("Error getting context list", err)
+		return nil, fmt.Errorf("error getting context list, %v", err)
 	}
 	err = json.Unmarshal(output, jsonOutput)
 	if err != nil {
-		util.ExitWithErrorMessage("Error trying to unmarshal contexts output", err)
+		return nil, fmt.Errorf("error trying to unmarshal contexts output, %v", err)
 	}
 	for i := 0; i < len(jsonOutput.Contexts); i++ {
 		contexts = append(contexts, jsonOutput.Contexts[i].Name)
 	}
-	return contexts
+	return contexts, nil
 }

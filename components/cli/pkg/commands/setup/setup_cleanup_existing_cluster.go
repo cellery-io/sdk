@@ -23,13 +23,14 @@ import (
 
 	"github.com/manifoldco/promptui"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func manageExistingCluster() error {
+func manageExistingCluster(cli cli.Cli) error {
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -54,7 +55,7 @@ func manageExistingCluster() error {
 		}
 	default:
 		{
-			manageEnvironment()
+			manageEnvironment(cli)
 		}
 	}
 	return nil

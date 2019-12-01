@@ -177,7 +177,7 @@ func (gcp *Gcp) authenticateCredentials() error {
 }
 
 func (gcp *Gcp) gcpClusterExist() bool {
-	clusters, err := gcp.getClusterList()
+	clusters, err := gcp.GetClusterList()
 	if err != nil {
 		return false
 	}
@@ -190,7 +190,7 @@ func (gcp *Gcp) gcpClusterExist() bool {
 	return false
 }
 
-func (gcp *Gcp) getClusterList() ([]string, error) {
+func (gcp *Gcp) GetClusterList() ([]string, error) {
 	var clusters []string
 	list, err := gcp.service.Projects.Zones.Clusters.List(gcp.projectName, gcp.zone).Do()
 	if err != nil {

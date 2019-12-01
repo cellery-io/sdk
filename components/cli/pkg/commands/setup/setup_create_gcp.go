@@ -28,6 +28,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	gcpPlatform "cellery.io/cellery/components/cli/pkg/gcp"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
@@ -63,7 +64,7 @@ func RunSetupCreateGcp(isCompleteSetup bool) error {
 	return nil
 }
 
-func createGcp() error {
+func createGcp(cli cli.Cli) error {
 	var isCompleteSelected = false
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -82,7 +83,7 @@ func createGcp() error {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
 	if value == constants.CellerySetupBack {
-		createEnvironment()
+		createEnvironment(cli)
 		return nil
 	}
 	if value == constants.COMPLETE {

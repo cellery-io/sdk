@@ -25,6 +25,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
@@ -72,7 +73,7 @@ func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime
 	runtime.WaitFor(knativeEnabled, hpaEnabled)
 }
 
-func modifyRuntime() {
+func modifyRuntime(cli cli.Cli) {
 	const done = "Apply changes"
 	const back = "BACK"
 	value := getPromptValue([]string{apim, autoscaling, observability, done, back}, "Modify system components "+
@@ -84,9 +85,9 @@ func modifyRuntime() {
 			if change != runtime.NoChange {
 				apimChange = change
 				if confirmModification() {
-					applyChanges()
+					applyChanges(cli)
 				} else {
-					modifyRuntime()
+					modifyRuntime(cli)
 				}
 				return
 			}
@@ -97,32 +98,32 @@ func modifyRuntime() {
 			if change != runtime.NoChange {
 				observabilityChange = change
 				if confirmModification() {
-					applyChanges()
+					applyChanges(cli)
 				} else {
-					modifyRuntime()
+					modifyRuntime(cli)
 				}
 				return
 			}
 		}
 	case autoscaling:
 		{
-			modifyAutoScalingPolicy()
+			modifyAutoScalingPolicy(cli)
 		}
 	case done:
 		{
-			applyChanges()
+			applyChanges(cli)
 			return
 		}
 	default:
 		{
-			RunSetup()
+			RunSetup(cli)
 			return
 		}
 	}
-	modifyRuntime()
+	modifyRuntime(cli)
 }
 
-func modifyAutoScalingPolicy() {
+func modifyAutoScalingPolicy(cli cli.Cli) {
 	var label = "Select system components to modify"
 	var value = ""
 	const back = "BACK"
@@ -138,9 +139,9 @@ func modifyAutoScalingPolicy() {
 			if change != runtime.NoChange {
 				knativeChange = change
 				if confirmModification() {
-					applyChanges()
+					applyChanges(cli)
 				} else {
-					modifyRuntime()
+					modifyRuntime(cli)
 				}
 				return
 			}
@@ -151,9 +152,9 @@ func modifyAutoScalingPolicy() {
 			if change != runtime.NoChange {
 				hpaChange = change
 				if confirmModification() {
-					applyChanges()
+					applyChanges(cli)
 				} else {
-					modifyRuntime()
+					modifyRuntime(cli)
 				}
 				return
 			}
@@ -165,7 +166,7 @@ func modifyAutoScalingPolicy() {
 		}
 	}
 	// Until back button is selected modifyAutoScalingPolicy function will get recursively called
-	modifyAutoScalingPolicy()
+	modifyAutoScalingPolicy(cli)
 }
 
 func getComponentChange(enableComponent *bool, label string) runtime.Selection {
@@ -264,7 +265,7 @@ func confirmModification() bool {
 	}
 }
 
-func applyChanges() {
+func applyChanges(cli cli.Cli) {
 	changes := []changedComponent{{apim, apimChange}, {observability,
 		observabilityChange}, {knative, knativeChange}, {hpa, hpaChange}}
 	enabledComponents, disabledComponents := getModifiedComponents(changes)
@@ -295,6 +296,6 @@ func applyChanges() {
 		}
 		os.Exit(0)
 	} else {
-		modifyRuntime()
+		modifyRuntime(cli)
 	}
 }

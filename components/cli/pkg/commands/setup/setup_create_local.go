@@ -27,6 +27,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
@@ -181,7 +182,7 @@ func downloadVmConfirmation(confirmed bool) bool {
 	return downloadVm
 }
 
-func createLocal() error {
+func createLocal(cli cli.Cli) error {
 	var isCompleteSelected = false
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -206,7 +207,7 @@ func createLocal() error {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
 	if index == 2 {
-		createEnvironment()
+		createEnvironment(cli)
 		return nil
 	}
 	if index == 1 {

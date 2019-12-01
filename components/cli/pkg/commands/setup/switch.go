@@ -21,19 +21,23 @@ package setup
 import (
 	"fmt"
 
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func RunSwitchCommand(context string) error {
-	if err := kubernetes.UseContext(context); err != nil {
-		util.ExitWithErrorMessage("Failed to switch cluster", err)
+func RunSetupSwitch(cli cli.Cli, context string) error {
+	if err := cli.KubeCli().UseContext(context); err != nil {
+		return fmt.Errorf("failed to switch cluster, %v", err)
 	}
 	return nil
 }
 
-func ValidateCluster(cluster string) error {
-	if !util.ContainsInStringArray(getContexts(), cluster) {
+func ValidateCluster(cli cli.Cli, cluster string) error {
+	contexts, err := getContexts(cli)
+	if err != nil {
+		return fmt.Errorf("failed to get contexts, %v", err)
+	}
+	if !util.ContainsInStringArray(contexts, cluster) {
 		return fmt.Errorf("cluster %s doesn't exist", cluster)
 	}
 	return nil
