@@ -51,6 +51,8 @@ type KubeCli interface {
 	IsInstanceAvailable(instanceName string) error
 	IsComponentAvailable(instanceName, componentName string) error
 	GetContext() (string, error)
+	GetContexts() ([]byte, error)
+	UseContext(context string) error
 }
 
 type CelleryKubeCli struct {

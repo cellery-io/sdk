@@ -24,9 +24,16 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"cellery.io/cellery/components/cli/internal/test"
+	"cellery.io/cellery/components/cli/pkg/runtime"
 )
 
 func TestRunSetupStatus(t *testing.T) {
+	sysComponentStatus := make(map[runtime.SystemComponent]bool)
+	sysComponentStatus[runtime.ApiManager] = false
+	sysComponentStatus[runtime.Observability] = false
+	sysComponentStatus[runtime.ScaleToZero] = true
+	sysComponentStatus[runtime.HPA] = true
+
 	tests := []struct {
 		name             string
 		expectedToPass   bool
@@ -35,24 +42,37 @@ func TestRunSetupStatus(t *testing.T) {
 	}{
 		{
 			name: "connected to a k8s cluster",
-			mockCli: test.NewMockCli(test.SetRuntime(test.NewMockRuntime()),
+			mockCli: test.NewMockCli(
+				test.SetRuntime(test.NewMockRuntime(test.SetSysComponentStatus(sysComponentStatus))),
 				test.SetKubeCli(test.NewMockKubeCli(test.SetK8sVersions("v1.14.1", "v1.10.3"),
 					test.SetClusterName("my-cluster")))),
 			expectedToPass: true,
 		},
 		{
 			name: "not connected to a k8s server",
-			mockCli: test.NewMockCli(test.SetRuntime(test.NewMockRuntime()),
+			mockCli: test.NewMockCli(
+				test.SetRuntime(test.NewMockRuntime()),
 				test.SetKubeCli(test.NewMockKubeCli())),
 			expectedToPass:   false,
 			expectedErrorMsg: "failed to get setup status, unable to connect to the kubernetes cluster",
 		},
 		{
 			name: "not connected to a k8s cluster",
-			mockCli: test.NewMockCli(test.SetRuntime(test.NewMockRuntime()),
+			mockCli: test.NewMockCli(test.SetRuntime(
+				test.NewMockRuntime(test.SetSysComponentStatus(sysComponentStatus))),
 				test.SetKubeCli(test.NewMockKubeCli(test.SetK8sVersions("v1.14.1", "v1.10.3")))),
 			expectedToPass:   false,
 			expectedErrorMsg: "error getting cluster name, not connected to a cluster",
+		},
+		{
+			name: "error getting system component status",
+			mockCli: test.NewMockCli(
+				test.SetRuntime(test.NewMockRuntime()),
+				test.SetKubeCli(test.NewMockKubeCli(test.SetK8sVersions("v1.14.1", "v1.10.3"),
+					test.SetClusterName("my-cluster")))),
+			expectedToPass: false,
+			expectedErrorMsg: "error checking if ApiManager is enabled%!(EXTRA *errors.errorString=failed to check " +
+				"status of runtime)",
 		},
 	}
 	for _, tst := range tests {

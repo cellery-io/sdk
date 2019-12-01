@@ -31,7 +31,7 @@ func newSetupCommand(cli cli.Cli) *cobra.Command {
 		Short: "Setup cellery runtime",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			setup.RunSetup()
+			setup.RunSetup(cli)
 		},
 		Example: "  cellery setup",
 	}
@@ -39,8 +39,8 @@ func newSetupCommand(cli cli.Cli) *cobra.Command {
 		newSetupCreateCommand(),
 		newSetupCleanupCommand(),
 		newSetupModifyCommand(),
-		newSetupListCommand(),
-		newSetupSwitchCommand(),
+		newSetupListCommand(cli),
+		newSetupSwitchCommand(cli),
 		newSetupStatusCommand(cli),
 	)
 	return cmd

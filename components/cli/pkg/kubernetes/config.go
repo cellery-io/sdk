@@ -126,7 +126,7 @@ func mergeContexts(old []*ContextInfo, new []*ContextInfo) []*ContextInfo {
 	return old
 }
 
-func UseContext(context string) error {
+func (kubeCli *CelleryKubeCli) UseContext(context string) error {
 	cmd := exec.Command(
 		constants.KubeCtl,
 		"config",
@@ -139,7 +139,7 @@ func UseContext(context string) error {
 	return nil
 }
 
-func GetContexts() ([]byte, error) {
+func (kubeCli *CelleryKubeCli) GetContexts() ([]byte, error) {
 	cmd := exec.Command(
 		constants.KubeCtl,
 		"config",

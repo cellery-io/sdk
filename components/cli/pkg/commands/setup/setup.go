@@ -25,12 +25,13 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func RunSetup() {
+func RunSetup(cli cli.Cli) {
 	selectTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -52,11 +53,11 @@ func RunSetup() {
 	switch value {
 	case constants.CellerySetupManage:
 		{
-			manageEnvironment()
+			manageEnvironment(cli)
 		}
 	case constants.CellerySetupCreate:
 		{
-			createEnvironment()
+			createEnvironment(cli)
 		}
 	case constants.CellerySetupModify:
 		{
@@ -81,11 +82,11 @@ func RunSetup() {
 				util.ExitWithErrorMessage("Failed check if hpa is enabled", err)
 			}
 			enableHpa = !hpaEnabled
-			modifyRuntime()
+			modifyRuntime(cli)
 		}
 	case constants.CellerySetupSwitch:
 		{
-			selectEnvironment()
+			selectEnvironment(cli)
 		}
 	default:
 		{
@@ -94,8 +95,11 @@ func RunSetup() {
 	}
 }
 
-func selectEnvironment() error {
-	contexts := getContexts()
+func selectEnvironment(cli cli.Cli) error {
+	contexts, err := getContexts(cli)
+	if err != nil {
+		return fmt.Errorf("failed to get contexts, %v", err)
+	}
 	contexts = append(contexts, constants.CellerySetupBack)
 	bold := color.New(color.Bold).SprintFunc()
 	cellTemplate := &promptui.SelectTemplates{
@@ -117,10 +121,10 @@ func selectEnvironment() error {
 	}
 
 	if value == constants.CellerySetupBack {
-		RunSetup()
+		RunSetup(cli)
 	}
 
-	RunSwitchCommand(value)
+	RunSetupSwitch(cli, value)
 	fmt.Printf(util.GreenBold("\n\U00002714") + " Successfully configured Cellery.\n")
 	fmt.Println()
 	fmt.Println(bold("What's next ?"))

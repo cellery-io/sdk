@@ -21,16 +21,18 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"cellery.io/cellery/components/cli/cli"
+
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
 )
 
-func newSetupListClustersCommand() *cobra.Command {
+func newSetupListClustersCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clusters",
 		Short: "List k8s clusters",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			setup.RunSetupListClusters()
+			setup.RunSetupListClusters(cli)
 		},
 		Example: "  cellery setup list cluster",
 	}

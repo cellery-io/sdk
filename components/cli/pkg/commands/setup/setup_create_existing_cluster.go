@@ -28,12 +28,13 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/oxequa/interact"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func createOnExistingCluster() error {
+func createOnExistingCluster(cli cli.Cli) error {
 	var isPersistentVolume = false
 	var hasNfsStorage = false
 	var isLoadBalancerIngressMode = false
@@ -58,7 +59,7 @@ func createOnExistingCluster() error {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
 	if value == constants.CellerySetupBack {
-		createEnvironment()
+		createEnvironment(cli)
 		return nil
 	}
 	if value == constants.PersistentVolume {
@@ -72,19 +73,19 @@ func createOnExistingCluster() error {
 			nfs, db, err = getPersistentVolumeDataWithNfs()
 		}
 		if isBackSelected {
-			createOnExistingCluster()
+			createOnExistingCluster(cli)
 			return nil
 		}
 	}
 	isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
 	runtime.SetCompleteSetup(isCompleteSetup)
 	if isBackSelected {
-		createOnExistingCluster()
+		createOnExistingCluster(cli)
 		return nil
 	}
 	isLoadBalancerIngressMode, isBackSelected = util.IsLoadBalancerIngressTypeSelected()
 	if isBackSelected {
-		createOnExistingCluster()
+		createOnExistingCluster(cli)
 		return nil
 	}
 	if !isLoadBalancerIngressMode {

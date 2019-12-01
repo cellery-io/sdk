@@ -21,10 +21,11 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
 )
 
-func newSetupSwitchCommand() *cobra.Command {
+func newSetupSwitchCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "switch <command>",
 		Short: "Switch into a k8s cluster",
@@ -33,10 +34,10 @@ func newSetupSwitchCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return setup.ValidateCluster(args[0])
+			return setup.ValidateCluster(cli, args[0])
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			setup.RunSwitchCommand(args[0])
+			setup.RunSetupSwitch(cli, args[0])
 		},
 		Example: "  cellery setup switch cellery-admin@cellery",
 	}

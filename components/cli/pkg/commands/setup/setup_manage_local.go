@@ -21,6 +21,7 @@ package setup
 import (
 	"fmt"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
@@ -29,7 +30,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-func manageLocal() error {
+func manageLocal(cli cli.Cli) error {
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -67,7 +68,7 @@ func manageLocal() error {
 		}
 	default:
 		{
-			manageEnvironment()
+			manageEnvironment(cli)
 		}
 	}
 	return nil

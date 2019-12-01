@@ -31,6 +31,8 @@ const celleryComposite = "composites.mesh.cellery.io"
 
 type MockKubeCli struct {
 	clusterName      string
+	contexts         []string
+	config           []byte
 	cells            kubernetes.Cells
 	components       kubernetes.Components
 	composites       kubernetes.Composites
@@ -99,6 +101,18 @@ func SetK8sVersions(serverVersion, clientVersion string) func(*MockKubeCli) {
 func SetClusterName(clusterName string) func(*MockKubeCli) {
 	return func(cli *MockKubeCli) {
 		cli.clusterName = clusterName
+	}
+}
+
+func SetContexts(contexts []string) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.contexts = contexts
+	}
+}
+
+func SetConfig(config []byte) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.config = config
 	}
 }
 
@@ -265,4 +279,20 @@ func (kubeCli *MockKubeCli) GetContext() (string, error) {
 		return kubeCli.clusterName, nil
 	}
 	return "", fmt.Errorf("not connected to a cluster")
+}
+
+func (kubeCli *MockKubeCli) GetContexts() ([]byte, error) {
+	if kubeCli.config != nil {
+		return kubeCli.config, nil
+	}
+	return nil, fmt.Errorf("failed to get config")
+}
+
+func (kubeCli *MockKubeCli) UseContext(context string) error {
+	for _, c := range kubeCli.contexts {
+		if c == context {
+			return nil
+		}
+	}
+	return fmt.Errorf("failed to use context")
 }

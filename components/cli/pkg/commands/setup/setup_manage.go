@@ -23,12 +23,13 @@ import (
 
 	"github.com/manifoldco/promptui"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/util"
 	"cellery.io/cellery/components/cli/pkg/vbox"
 )
 
-func manageEnvironment() error {
+func manageEnvironment(cli cli.Cli) error {
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -50,19 +51,19 @@ func manageEnvironment() error {
 	switch value {
 	case constants.CellerySetupLocal:
 		{
-			manageLocal()
+			manageLocal(cli)
 		}
 	case constants.CellerySetupGcp:
 		{
-			manageGcp()
+			manageGcp(cli)
 		}
 	case constants.CellerySetupExistingCluster:
 		{
-			manageExistingCluster()
+			manageExistingCluster(cli)
 		}
 	default:
 		{
-			RunSetup()
+			RunSetup(cli)
 		}
 	}
 	return nil

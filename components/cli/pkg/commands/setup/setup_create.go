@@ -24,12 +24,13 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/util"
 	"cellery.io/cellery/components/cli/pkg/vbox"
 )
 
-func createEnvironment() error {
+func createEnvironment(cli cli.Cli) error {
 	bold := color.New(color.Bold).SprintFunc()
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -51,19 +52,19 @@ func createEnvironment() error {
 	switch value {
 	case constants.CellerySetupLocal:
 		{
-			createLocal()
+			createLocal(cli)
 		}
 	case constants.CellerySetupGcp:
 		{
-			createGcp()
+			createGcp(cli)
 		}
 	case constants.CellerySetupExistingCluster:
 		{
-			createOnExistingCluster()
+			createOnExistingCluster(cli)
 		}
 	default:
 		{
-			RunSetup()
+			RunSetup(cli)
 			return nil
 		}
 	}

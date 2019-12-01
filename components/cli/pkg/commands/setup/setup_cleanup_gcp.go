@@ -19,22 +19,17 @@
 package setup
 
 import (
-	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/manifoldco/promptui"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/container/v1"
-
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/gcp"
 	"cellery.io/cellery/components/cli/pkg/util"
+	"github.com/manifoldco/promptui"
 )
 
-func manageGcp() error {
+func manageGcp(cli cli.Cli) error {
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -55,45 +50,29 @@ func manageGcp() error {
 	switch value {
 	case constants.CelleryManageCleanup:
 		{
-			cleanupGcp()
+			cleanupGcp(cli)
 		}
 	default:
 		{
-			manageEnvironment()
+			manageEnvironment(cli)
 		}
 	}
 	return nil
 }
 
-func cleanupGcp() error {
-	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.GCP),
-		".json")
-
-	if len(jsonAuthFile) > 0 {
-		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
-	} else {
-		util.ExitWithErrorMessage("Failed to cleanup gcp setup", fmt.Errorf("Could not find "+
-			"authentication json file in : %s. Please copy GCP service account credentials"+
-			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CelleryHome,
-			constants.GCP)))
-	}
-	ctx := context.Background()
-	projectName, accountName, region, zone = getGcpData()
-	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)
+func cleanupGcp(cli cli.Cli) error {
+	gcpPlatform, err := gcp.NewGcp()
 	if err != nil {
-		fmt.Printf("Failed to create gke client: %v", err)
+		return fmt.Errorf("failed to initialize gcp")
 	}
-
-	gcpService, err := container.New(gkeClient)
+	clusters, err := gcpPlatform.GetClusterList()
 	if err != nil {
-		fmt.Printf("Failed to create gcp service: %v", err)
+		return fmt.Errorf("failed to get cluster list")
 	}
-
-	clusters, err := getClusterList(gcpService, projectName, zone)
+	userCreatedGcpClusters, err := getGcpClustersCreatedByUser(cli, clusters)
 	if err != nil {
-		fmt.Printf("Failed to list clusters: %v", err)
+		return fmt.Errorf("failed to get clusters created by user, %v", err)
 	}
-	userCreatedGcpClusters := getGcpClustersCreatedByUser(clusters)
 
 	selectTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -112,7 +91,7 @@ func cleanupGcp() error {
 		util.ExitWithErrorMessage("Failed to select an option: %v", err)
 	}
 	if value == constants.CellerySetupBack {
-		manageGcp()
+		manageGcp(cli)
 		return nil
 	}
 	RunCleanupGcp(value)
@@ -121,27 +100,13 @@ func cleanupGcp() error {
 
 func ValidateGcpCluster(cluster string) (bool, error) {
 	valid := false
-	jsonAuthFile := util.FindInDirectory(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.GCP), ".json")
-
-	if len(jsonAuthFile) > 0 {
-		os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", jsonAuthFile[0])
-	} else {
-		return false, fmt.Errorf("Could not find authentication json file in : %s. Please copy GCP service account credentials"+
-			" json file into this directory.\n", filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.GCP))
-	}
-	ctx := context.Background()
-	gkeClient, err := google.DefaultClient(ctx, container.CloudPlatformScope)
+	gcpPlatform, err := gcp.NewGcp()
 	if err != nil {
-		return false, fmt.Errorf("failed to create gke client: %v", err)
+		return false, fmt.Errorf("failed to initialize gcp")
 	}
-	gcpService, err := container.New(gkeClient)
+	clusters, err := gcpPlatform.GetClusterList()
 	if err != nil {
-		return false, fmt.Errorf("failed to create gcp service: %v", err)
-	}
-	projectName, accountName, region, zone = getGcpData()
-	clusters, err := getClusterList(gcpService, projectName, zone)
-	if err != nil {
-		return false, fmt.Errorf("failed to list clusters: %v", err)
+		return false, fmt.Errorf("failed to get cluster list")
 	}
 	clusterNameSlice := strings.Split(cluster, constants.GcpClusterName)
 	if len(clusterNameSlice) > 1 {
@@ -166,23 +131,13 @@ func RunCleanupGcp(value string) error {
 	return nil
 }
 
-func getClusterList(service *container.Service, projectID, zone string) ([]string, error) {
-	var clusters []string
-	list, err := service.Projects.Zones.Clusters.List(projectID, zone).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list clusters: %v", err)
-	}
-
-	for _, cluster := range list.Clusters {
-		clusters = append(clusters, cluster.Name)
-	}
-	return clusters, nil
-}
-
-func getGcpClustersCreatedByUser(gcpClusters []string) []string {
+func getGcpClustersCreatedByUser(cli cli.Cli, gcpClusters []string) ([]string, error) {
 	var userCreatedGcpClusters []string
 	// Get the list of clusters created by the user
-	userCreatedClusters := getContexts()
+	userCreatedClusters, err := getContexts(cli)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get contexts, %v", err)
+	}
 	for _, gcpCluster := range gcpClusters {
 		for _, userCreatedCluster := range userCreatedClusters {
 			// Check if the given gcp cluster is created by the user
@@ -193,5 +148,5 @@ func getGcpClustersCreatedByUser(gcpClusters []string) []string {
 			}
 		}
 	}
-	return userCreatedGcpClusters
+	return userCreatedGcpClusters, nil
 }

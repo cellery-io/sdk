@@ -19,22 +19,34 @@
 package test
 
 import (
+	"fmt"
+
 	"cellery.io/cellery/components/cli/pkg/runtime"
 )
 
 type MockRuntime struct {
-	runtime runtime.Runtime
+	runtime            runtime.Runtime
+	sysComponentStatus map[runtime.SystemComponent]bool
 }
 
 // NewMockRuntime returns a mock runtime.
 func NewMockRuntime(opts ...func(*MockRuntime)) *MockRuntime {
-	runtime := &MockRuntime{}
+	mockRuntime := &MockRuntime{}
 	for _, opt := range opts {
-		opt(runtime)
+		opt(mockRuntime)
 	}
-	return runtime
+	return mockRuntime
+}
+
+func SetSysComponentStatus(status map[runtime.SystemComponent]bool) func(*MockRuntime) {
+	return func(mockRuntime *MockRuntime) {
+		mockRuntime.sysComponentStatus = status
+	}
 }
 
 func (runtime *MockRuntime) IsComponentEnabled(component runtime.SystemComponent) (bool, error) {
-	return false, nil
+	if runtime.sysComponentStatus != nil {
+		return runtime.sysComponentStatus[component], nil
+	}
+	return false, fmt.Errorf("failed to check status of runtime")
 }
