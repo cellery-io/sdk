@@ -19,10 +19,7 @@
 package setup
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -37,10 +34,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-var projectName string
 var accountName string
-var region string
-var zone string
 
 func RunSetupCreateGcp(isCompleteSetup bool) error {
 	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
@@ -106,7 +100,7 @@ func createCompleteGcpRuntime() error {
 	return nil
 }
 
-func createController(errorMessage string) error {
+func createController() error {
 	// Give permission to the user
 	if err := kubernetes.CreateClusterRoleBinding("cluster-admin", accountName); err != nil {
 		return fmt.Errorf("error creating cluster role binding, %v", err)
@@ -144,7 +138,7 @@ func createController(errorMessage string) error {
 func deployMinimalCelleryRuntime() error {
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
 
-	createController(errorDeployingCelleryRuntime)
+	createController()
 	createAllDeploymentArtifacts()
 	createIdpGcp(errorDeployingCelleryRuntime)
 	createNGinx(errorDeployingCelleryRuntime)
@@ -155,7 +149,7 @@ func deployMinimalCelleryRuntime() error {
 func deployCompleteCelleryRuntime() {
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
 
-	createController(errorDeployingCelleryRuntime)
+	createController()
 	createAllDeploymentArtifacts()
 
 	//Create gateway deployment and the service
@@ -204,41 +198,4 @@ func createAllDeploymentArtifacts() {
 	if err := gcp.CreateIdpConfigMaps(); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
-}
-
-func getGcpData() (string, string, string, string) {
-	cmd := exec.Command("gcloud", "config", "list", "--format", "json")
-	stdoutReader, _ := cmd.StdoutPipe()
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	output := ""
-	go func() {
-		for stdoutScanner.Scan() {
-			output = output + stdoutScanner.Text()
-		}
-	}()
-
-	stderrReader, _ := cmd.StderrPipe()
-	stderrScanner := bufio.NewScanner(stderrReader)
-
-	go func() {
-		for stderrScanner.Scan() {
-			fmt.Println(stderrScanner.Text())
-		}
-	}()
-	err := cmd.Start()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while getting gcp data", err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		util.ExitWithErrorMessage("Error occurred while getting gcp data", err)
-	}
-
-	jsonOutput := &util.Gcp{}
-
-	errJson := json.Unmarshal([]byte(output), jsonOutput)
-	if errJson != nil {
-		fmt.Println(errJson)
-	}
-	return jsonOutput.Core.Project, jsonOutput.Core.Account, jsonOutput.Compute.Region, jsonOutput.Compute.Zone
 }

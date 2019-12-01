@@ -101,21 +101,28 @@ func createOnExistingCluster(cli cli.Cli) error {
 	if err != nil {
 		return fmt.Errorf("failed to get user input: %v", err)
 	}
-	RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db, nodePortIpAddress)
-
-	return nil
+	return RunSetupCreateOnExistingCluster(cli, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db, nodePortIpAddress)
 }
 
-func RunSetupCreateOnExistingCluster(isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
-	nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) {
-	artifactsPath := filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.K8sArtifacts)
+func RunSetupCreateOnExistingCluster(cli cli.Cli, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
+	nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) error {
+	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
 	os.RemoveAll(artifactsPath)
-	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
-	if err := runtime.CreateRuntime(artifactsPath, isPersistentVolume, hasNfsStorage,
-		isLoadBalancerIngressMode, nfs, db, nodePortIpAddress); err != nil {
-		util.ExitWithErrorMessage("Failed to deploy cellery runtime", err)
+	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
+
+	cli.Runtime().SetArtifactsPath(artifactsPath)
+	cli.Runtime().SetPersistentVolume(isPersistentVolume)
+	cli.Runtime().SetHasNfsStorage(hasNfsStorage)
+	cli.Runtime().SetLoadBalancerIngressMode(isLoadBalancerIngressMode)
+	cli.Runtime().SetNfs(nfs)
+	cli.Runtime().SetDb(db)
+	cli.Runtime().SetNodePortIpAddress(nodePortIpAddress)
+
+	if err := cli.Runtime().Create(); err != nil {
+		return fmt.Errorf("failed to deploy cellery runtime, %v", err)
 	}
 	runtime.WaitFor(false, false)
+	return nil
 }
 
 func getPersistentVolumeDataWithNfs() (runtime.Nfs, runtime.MysqlDb, error) {
