@@ -21,10 +21,11 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
 )
 
-func newSetupCommand() *cobra.Command {
+func newSetupCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "setup",
 		Short: "Setup cellery runtime",
@@ -40,7 +41,7 @@ func newSetupCommand() *cobra.Command {
 		newSetupModifyCommand(),
 		newSetupListCommand(),
 		newSetupSwitchCommand(),
-		newSetupStatusCommand(),
+		newSetupStatusCommand(cli),
 	)
 	return cmd
 }

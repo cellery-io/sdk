@@ -32,6 +32,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/registry"
 	"cellery.io/cellery/components/cli/pkg/registry/credentials"
+	runtime2 "cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -64,7 +65,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newLogoutCommand(cli),
 		newPushCommand(cli),
 		newPullCommand(cli),
-		newSetupCommand(),
+		newSetupCommand(cli),
 		newExtractResourcesCommand(cli),
 		newInspectCommand(cli),
 		newViewCommand(cli),
@@ -103,6 +104,7 @@ func main() {
 		util.ExitWithErrorMessage("Failed configuring credentials manager", err)
 	}
 	credReader := credentials.NewCelleryCredReader()
+	runtime := runtime2.NewCelleryRuntime()
 	// Initialize the Cellery CLI.
 	celleryCli := cli.NewCelleryCli(
 		cli.SetRegistry(registry.NewCelleryRegistry()),
@@ -110,6 +112,7 @@ func main() {
 		cli.SetBallerinaExecutor(ballerinaExecutor),
 		cli.SetCredManager(credManager),
 		cli.SetCredReader(credReader),
+		cli.SetRuntime(runtime),
 	)
 	util.CreateCelleryDirStructure()
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CelleryHome, "logs")

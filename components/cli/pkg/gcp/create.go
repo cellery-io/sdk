@@ -31,7 +31,7 @@ import (
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/container/v1"
 	"google.golang.org/api/file/v1"
-	"google.golang.org/api/sqladmin/v1beta4"
+	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 
 	"cellery.io/cellery/components/cli/pkg/constants"
 	gcp2 "cellery.io/cellery/components/cli/pkg/runtime/gcp"

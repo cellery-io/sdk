@@ -50,6 +50,7 @@ type KubeCli interface {
 	GetVirtualService(vs string) (VirtualService, error)
 	IsInstanceAvailable(instanceName string) error
 	IsComponentAvailable(instanceName, componentName string) error
+	GetContext() (string, error)
 }
 
 type CelleryKubeCli struct {

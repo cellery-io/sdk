@@ -30,6 +30,7 @@ const celleryInstance = "cells.mesh.cellery.io"
 const celleryComposite = "composites.mesh.cellery.io"
 
 type MockKubeCli struct {
+	clusterName      string
 	cells            kubernetes.Cells
 	components       kubernetes.Components
 	composites       kubernetes.Composites
@@ -38,6 +39,15 @@ type MockKubeCli struct {
 	k8sClientVersion string
 	services         map[string]kubernetes.Services
 	virtualServices  map[string]kubernetes.VirtualService
+}
+
+// NewMockKubeCli returns a mock cli for the cli.KubeCli interface.
+func NewMockKubeCli(opts ...func(*MockKubeCli)) *MockKubeCli {
+	cli := &MockKubeCli{}
+	for _, opt := range opts {
+		opt(cli)
+	}
+	return cli
 }
 
 func (kubeCli *MockKubeCli) SetVerboseMode(enable bool) {
@@ -86,13 +96,10 @@ func SetK8sVersions(serverVersion, clientVersion string) func(*MockKubeCli) {
 	}
 }
 
-// NewMockKubeCli returns a mock cli for the cli.KubeCli interface.
-func NewMockKubeCli(opts ...func(*MockKubeCli)) *MockKubeCli {
-	cli := &MockKubeCli{}
-	for _, opt := range opts {
-		opt(cli)
+func SetClusterName(clusterName string) func(*MockKubeCli) {
+	return func(cli *MockKubeCli) {
+		cli.clusterName = clusterName
 	}
-	return cli
 }
 
 // GetCells returns cell instances array.
@@ -164,7 +171,10 @@ func (kubeCli *MockKubeCli) DescribeCell(cellName string) error {
 }
 
 func (kubeCli *MockKubeCli) Version() (string, string, error) {
-	return kubeCli.k8sServerVersion, kubeCli.k8sClientVersion, nil
+	if kubeCli.k8sServerVersion != "" && kubeCli.k8sClientVersion != "" {
+		return kubeCli.k8sServerVersion, kubeCli.k8sClientVersion, nil
+	}
+	return "Unable to connect to the server", kubeCli.k8sClientVersion, fmt.Errorf("failed to get k8s version")
 }
 
 func (kubeCli *MockKubeCli) GetServices(cellName string) (kubernetes.Services, error) {
@@ -248,4 +258,11 @@ func (kubeCli *MockKubeCli) IsComponentAvailable(instanceName, componentName str
 		}
 	}
 	return fmt.Errorf("component %s not found", componentName)
+}
+
+func (kubeCli *MockKubeCli) GetContext() (string, error) {
+	if kubeCli.clusterName != "" {
+		return kubeCli.clusterName, nil
+	}
+	return "", fmt.Errorf("not connected to a cluster")
 }

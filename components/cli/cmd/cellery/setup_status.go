@@ -22,16 +22,20 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func newSetupStatusCommand() *cobra.Command {
+func newSetupStatusCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Display status of cluster with a status list of system components",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			setup.RunSetupStatusCommand()
+			if err := setup.RunSetupStatus(cli); err != nil {
+				util.ExitWithErrorMessage("Cellery setup status command failed", err)
+			}
 		},
 		Example: "  cellery setup status",
 	}

@@ -151,7 +151,7 @@ func GetContexts() ([]byte, error) {
 	return osexec.GetCommandOutputFromTextFile(cmd)
 }
 
-func GetContext() (string, error) {
+func (kubeCli *CelleryKubeCli) GetContext() (string, error) {
 	cmd := exec.Command(
 		constants.KubeCtl,
 		"config",

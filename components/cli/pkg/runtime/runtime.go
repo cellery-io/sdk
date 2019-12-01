@@ -48,6 +48,19 @@ func SetCompleteSetup(completeSetup bool) {
 	isCompleteSetup = completeSetup
 }
 
+type Runtime interface {
+	IsComponentEnabled(component SystemComponent) (bool, error)
+}
+
+type CelleryRuntime struct {
+}
+
+// NewCelleryRuntime returns a CelleryRuntime instance.
+func NewCelleryRuntime() *CelleryRuntime {
+	runtime := &CelleryRuntime{}
+	return runtime
+}
+
 func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool, nfs Nfs,
 	db MysqlDb, nodePortIpAddress string) error {
 	spinner := util.StartNewSpinner("Creating cellery runtime")
@@ -334,7 +347,7 @@ func DeleteComponent(component SystemComponent) error {
 	}
 }
 
-func IsComponentEnabled(component SystemComponent) (bool, error) {
+func (runtime *CelleryRuntime) IsComponentEnabled(component SystemComponent) (bool, error) {
 	switch component {
 	case ApiManager:
 		return IsApimEnabled()
@@ -400,25 +413,6 @@ func IsGcpRuntime() bool {
 		}
 	}
 	return false
-}
-
-func GetInstancesNames() ([]string, error) {
-	var instances []string
-	runningCellInstances, err := kubernetes.GetCells()
-	if err != nil {
-		return nil, err
-	}
-	runningCompositeInstances, err := kubernetes.GetComposites()
-	if err != nil {
-		return nil, err
-	}
-	for _, runningInstance := range runningCellInstances.Items {
-		instances = append(instances, runningInstance.CellMetaData.Name)
-	}
-	for _, runningInstance := range runningCompositeInstances.Items {
-		instances = append(instances, runningInstance.CompositeMetaData.Name)
-	}
-	return instances, nil
 }
 
 func WaitFor(checkKnative, hpaEnabled bool) {

@@ -33,6 +33,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/registry"
 	"cellery.io/cellery/components/cli/pkg/registry/credentials"
+	runtime2 "cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -48,6 +49,7 @@ type Cli interface {
 	DockerCli() docker.Docker
 	CredManager() credentials.CredManager
 	CredReader() credentials.CredReader
+	Runtime() runtime2.Runtime
 }
 
 // CelleryCli is an instance of the cellery command line client.
@@ -60,6 +62,7 @@ type CelleryCli struct {
 	docker            docker.Docker
 	credManager       credentials.CredManager
 	credReader        credentials.CredReader
+	runtime           runtime2.Runtime
 }
 
 // NewCelleryCli returns a CelleryCli instance.
@@ -195,5 +198,16 @@ func (cli *CelleryCli) OpenBrowser(url string) error {
 		return nil
 	} else {
 		return errors.New(fmt.Sprintf("unsupported platform: %v", runtime.GOOS))
+	}
+}
+
+// Runtime returns a Runtime instance.
+func (cli *CelleryCli) Runtime() runtime2.Runtime {
+	return cli.runtime
+}
+
+func SetRuntime(runtime runtime2.Runtime) func(*CelleryCli) {
+	return func(cli *CelleryCli) {
+		cli.runtime = runtime
 	}
 }
