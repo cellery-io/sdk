@@ -49,44 +49,89 @@ func SetCompleteSetup(completeSetup bool) {
 }
 
 type Runtime interface {
+	Create() error
 	IsComponentEnabled(component SystemComponent) (bool, error)
+	SetArtifactsPath(artifactsPath string)
+	SetPersistentVolume(isPersistentVolume bool)
+	SetHasNfsStorage(hasNfsStorage bool)
+	SetLoadBalancerIngressMode(isLoadBalancerIngressMode bool)
+	SetNodePortIpAddress(nodePortIpAddress string)
+	SetDb(db MysqlDb)
+	SetNfs(nfs Nfs)
 }
 
 type CelleryRuntime struct {
+	artifactsPath             string
+	isPersistentVolume        bool
+	hasNfsStorage             bool
+	isLoadBalancerIngressMode bool
+	nfs                       Nfs
+	db                        MysqlDb
+	nodePortIpAddress         string
 }
 
 // NewCelleryRuntime returns a CelleryRuntime instance.
-func NewCelleryRuntime() *CelleryRuntime {
+func NewCelleryRuntime(opts ...func(*CelleryRuntime)) *CelleryRuntime {
 	runtime := &CelleryRuntime{}
+	for _, opt := range opts {
+		opt(runtime)
+	}
 	return runtime
 }
 
-func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool, nfs Nfs,
-	db MysqlDb, nodePortIpAddress string) error {
+func (runtime *CelleryRuntime) SetArtifactsPath(artifactsPath string) {
+	runtime.artifactsPath = artifactsPath
+}
+
+func (runtime *CelleryRuntime) SetPersistentVolume(isPersistentVolume bool) {
+	runtime.isPersistentVolume = isPersistentVolume
+}
+
+func (runtime *CelleryRuntime) SetHasNfsStorage(hasNfsStorage bool) {
+	runtime.hasNfsStorage = hasNfsStorage
+}
+
+func (runtime *CelleryRuntime) SetLoadBalancerIngressMode(isLoadBalancerIngressMode bool) {
+	runtime.isLoadBalancerIngressMode = isLoadBalancerIngressMode
+}
+
+func (runtime *CelleryRuntime) SetNodePortIpAddress(nodePortIpAddress string) {
+	runtime.nodePortIpAddress = nodePortIpAddress
+}
+
+func (runtime *CelleryRuntime) SetDb(db MysqlDb) {
+	runtime.db = db
+}
+
+func (runtime *CelleryRuntime) SetNfs(nfs Nfs) {
+	runtime.nfs = nfs
+}
+
+func (runtime *CelleryRuntime) Create() error {
 	spinner := util.StartNewSpinner("Creating cellery runtime")
-	if isPersistentVolume && !hasNfsStorage {
+	if runtime.isPersistentVolume && !runtime.hasNfsStorage {
 		createFoldersRequiredForMysqlPvc()
 		createFoldersRequiredForApimPvc()
 	}
 	dbHostName := constants.MysqlHostNameForExistingCluster
 	dbUserName := constants.CellerySqlUserName
 	dbPassword := constants.CellerySqlPassword
-	if hasNfsStorage {
-		dbHostName = db.DbHostName
-		dbUserName = db.DbUserName
-		dbPassword = db.DbPassword
-		updateNfsServerDetails(nfs.NfsServerIp, nfs.FileShare, artifactsPath)
+	if runtime.hasNfsStorage {
+		dbHostName = runtime.db.DbHostName
+		dbUserName = runtime.db.DbUserName
+		dbPassword = runtime.db.DbPassword
+		updateNfsServerDetails(runtime.nfs.NfsServerIp, runtime.nfs.FileShare, runtime.artifactsPath)
 	}
-	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, artifactsPath); err != nil {
+	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, runtime.artifactsPath); err != nil {
 		spinner.Stop(false)
 		return fmt.Errorf("error updating mysql credentials: %v", err)
 	}
-	if err := updateInitSql(dbUserName, dbPassword, artifactsPath); err != nil {
+	if err := updateInitSql(dbUserName, dbPassword, runtime.artifactsPath); err != nil {
 		spinner.Stop(false)
 		return fmt.Errorf("error updating mysql init script: %v", err)
 	}
 
-	if isPersistentVolume && !IsGcpRuntime() {
+	if runtime.isPersistentVolume && !IsGcpRuntime() {
 		nodeName, err := kubernetes.GetMasterNodeName()
 		if err != nil {
 			return fmt.Errorf("error getting master node name: %v", err)
@@ -103,12 +148,12 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 
 	// Apply Istio CRDs
 	spinner.SetNewAction("Applying istio crds")
-	if err := ApplyIstioCrds(artifactsPath); err != nil {
+	if err := ApplyIstioCrds(runtime.artifactsPath); err != nil {
 		return fmt.Errorf("error creating istio crds: %v", err)
 	}
 	// Apply nginx resources
 	spinner.SetNewAction("Creating ingress-nginx")
-	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
+	if err := installNginx(runtime.artifactsPath, runtime.isLoadBalancerIngressMode); err != nil {
 		return fmt.Errorf("error installing ingress-nginx: %v", err)
 	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
@@ -139,45 +184,45 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	}
 
 	spinner.SetNewAction("Configuring mysql")
-	if err := AddMysql(artifactsPath, isPersistentVolume); err != nil {
+	if err := AddMysql(runtime.artifactsPath, runtime.isPersistentVolume); err != nil {
 		return fmt.Errorf("error configuring mysql: %v", err)
 	}
 
 	spinner.SetNewAction("Creating ConfigMaps")
-	if err := CreateGlobalGatewayConfigMaps(artifactsPath); err != nil {
+	if err := CreateGlobalGatewayConfigMaps(runtime.artifactsPath); err != nil {
 		return fmt.Errorf("error creating gateway configmaps: %v", err)
 	}
-	if err := CreateObservabilityConfigMaps(artifactsPath); err != nil {
+	if err := CreateObservabilityConfigMaps(runtime.artifactsPath); err != nil {
 		return fmt.Errorf("error creating observability configmaps: %v", err)
 	}
-	if err := CreateIdpConfigMaps(artifactsPath); err != nil {
+	if err := CreateIdpConfigMaps(runtime.artifactsPath); err != nil {
 		return fmt.Errorf("error creating idp configmaps: %v", err)
 	}
 
-	if isPersistentVolume {
+	if runtime.isPersistentVolume {
 		spinner.SetNewAction("Creating Persistent Volume")
-		if err := createPersistentVolume(artifactsPath, hasNfsStorage); err != nil {
+		if err := createPersistentVolume(runtime.artifactsPath, runtime.hasNfsStorage); err != nil {
 			return fmt.Errorf("error creating persistent volume: %v", err)
 		}
 	}
 
 	if isCompleteSetup {
 		spinner.SetNewAction("Adding apim")
-		if err := addApim(artifactsPath, isPersistentVolume); err != nil {
+		if err := addApim(runtime.artifactsPath, runtime.isPersistentVolume); err != nil {
 			return fmt.Errorf("error creating apim deployment: %v", err)
 		}
 		spinner.SetNewAction("Adding observability")
-		if err := addObservability(artifactsPath); err != nil {
+		if err := addObservability(runtime.artifactsPath); err != nil {
 			return fmt.Errorf("error creating observability deployment: %v", err)
 		}
 	} else {
 		spinner.SetNewAction("Adding idp")
-		if err := addIdp(artifactsPath); err != nil {
+		if err := addIdp(runtime.artifactsPath); err != nil {
 			return fmt.Errorf("error creating idp deployment: %v", err)
 		}
 	}
-	if !isLoadBalancerIngressMode {
-		if nodePortIpAddress != "" {
+	if !runtime.isLoadBalancerIngressMode {
+		if runtime.nodePortIpAddress != "" {
 			spinner.SetNewAction("Adding node port ip address")
 			originalIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
 			if err != nil {
@@ -187,7 +232,7 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 			if err != nil {
 				return fmt.Errorf("error getting updated ingress-nginx: %v", err)
 			}
-			updatedIngressNginx.Spec.ExternalIPs = append(updatedIngressNginx.Spec.ExternalIPs, nodePortIpAddress)
+			updatedIngressNginx.Spec.ExternalIPs = append(updatedIngressNginx.Spec.ExternalIPs, runtime.nodePortIpAddress)
 
 			originalData, err := json.Marshal(originalIngressNginx)
 			if err != nil {

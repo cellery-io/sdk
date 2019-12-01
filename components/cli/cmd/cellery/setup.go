@@ -36,7 +36,7 @@ func newSetupCommand(cli cli.Cli) *cobra.Command {
 		Example: "  cellery setup",
 	}
 	cmd.AddCommand(
-		newSetupCreateCommand(),
+		newSetupCreateCommand(cli),
 		newSetupCleanupCommand(),
 		newSetupModifyCommand(),
 		newSetupListCommand(cli),

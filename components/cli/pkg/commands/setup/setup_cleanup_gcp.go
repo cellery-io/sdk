@@ -22,11 +22,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/manifoldco/promptui"
+
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/gcp"
 	"cellery.io/cellery/components/cli/pkg/util"
-	"github.com/manifoldco/promptui"
 )
 
 func manageGcp(cli cli.Cli) error {

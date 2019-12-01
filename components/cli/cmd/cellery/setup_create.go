@@ -20,9 +20,11 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+
+	"cellery.io/cellery/components/cli/cli"
 )
 
-func newSetupCreateCommand() *cobra.Command {
+func newSetupCreateCommand(cli cli.Cli) *cobra.Command {
 	var isComplete = false
 	cmd := &cobra.Command{
 		Use:   "create <command>",
@@ -31,7 +33,7 @@ func newSetupCreateCommand() *cobra.Command {
 	cmd.AddCommand(
 		newSetupCreateLocalCommand(&isComplete),
 		newSetupCreateGcpCommand(&isComplete),
-		newSetupCreateOnExistingClusterCommand(&isComplete),
+		newSetupCreateOnExistingClusterCommand(cli, &isComplete),
 	)
 	cmd.PersistentFlags().BoolVar(&isComplete, "complete", false, "Install complete setup")
 	return cmd
