@@ -19,6 +19,7 @@
 
 package io.cellery.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GRPC {
+    @JsonIgnore
+    private String name;
     private int port;
     private Destination destination;
 }

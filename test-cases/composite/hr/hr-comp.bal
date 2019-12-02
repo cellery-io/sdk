@@ -24,10 +24,10 @@ public function build(cellery:ImageName iName) returns error? {
     };
 
     cellery:Reference empRef = cellery:getReference(hrCompComponent, "employeeCompDep");
-    string empURL = "http://" +<string>empRef["employee_host"] + ":" +<string>empRef["employee_port"];
+    string empURL = "http://" +<string>empRef["employee_host"] + ":" +<string>empRef["employee_http_port"];
 
     cellery:Reference stockRef = cellery:getReference(hrCompComponent, "stockCompDep");
-    string stockURL = "http://" +<string>stockRef["stock_host"] + ":" +<string>stockRef["stock_port"];
+    string stockURL = "http://" +<string>stockRef["stock_host"] + ":" +<string>stockRef["stock_http_port"];
 
     hrCompComponent.envVars = {
         employee_api_url: {

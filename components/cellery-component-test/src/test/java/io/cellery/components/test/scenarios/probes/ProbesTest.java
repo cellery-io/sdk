@@ -109,10 +109,10 @@ public class ProbesTest {
         Assert.assertEquals(container.getEnv().get(0).getValue(), "{{instance_name}}--salary-service");
         Assert.assertEquals(container.getImage(), "docker.io/celleryio/sampleapp-employee");
         Assert.assertEquals(container.getPorts().get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(components.get(0).getSpec().getPorts().get(0).getPort(), 80);
+        Assert.assertEquals(components.get(0).getSpec().getPorts().get(0).getPort(), 8080);
         Assert.assertEquals(components.get(1).getMetadata().getName(), "salary");
         Assert.assertEquals(components.get(1).getSpec().getPorts().get(0).getTargetPort(), 8080);
-        Assert.assertEquals(components.get(1).getSpec().getPorts().get(0).getPort(), 80);
+        Assert.assertEquals(components.get(1).getSpec().getPorts().get(0).getPort(), 8080);
         Assert.assertEquals(components.get(1).getSpec().getPorts().get(0).getProtocol(), "http");
     }
 
@@ -215,7 +215,7 @@ public class ProbesTest {
         Assert.assertEquals(container.getEnv().get(0).getValue(), "probe-inst--salary-service");
         Assert.assertEquals(container.getImage(), "docker.io/celleryio/sampleapp-employee");
         Assert.assertEquals(container.getPorts().get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(servicesTemplates.get(0).getSpec().getPorts().get(0).getPort(), 80);
+        Assert.assertEquals(servicesTemplates.get(0).getSpec().getPorts().get(0).getPort(), 8080);
         Assert.assertEquals(servicesTemplates.get(1).getMetadata().getName(), "salary");
         Assert.assertEquals(servicesTemplates.get(1).getSpec().getTemplate().getContainers().get(0).getPorts()
                 .get(0).getContainerPort().intValue(), 8080);

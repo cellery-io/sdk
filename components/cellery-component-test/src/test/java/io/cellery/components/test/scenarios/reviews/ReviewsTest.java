@@ -138,7 +138,7 @@ public class ReviewsTest {
         Assert.assertEquals(container.getEnv().get(5).getValue(), "31406");
 
         Assert.assertEquals(container.getEnv().get(6).getName(), "CUSTOMERS_PORT");
-        Assert.assertEquals(container.getEnv().get(6).getValue(), "80");
+        Assert.assertEquals(container.getEnv().get(6).getValue(), "8080");
 
         Assert.assertEquals(container.getEnv().get(7).getName(), "CUSTOMERS_HOST");
         Assert.assertEquals(container.getEnv().get(7).getValue(), "{{customerProduct}}--gateway-service");
@@ -156,7 +156,7 @@ public class ReviewsTest {
         Assert.assertEquals(container.getEnv().get(11).getValue(), "{{instance_name}}--ratings-service");
 
         Assert.assertEquals(container.getEnv().get(12).getName(), "PRODUCTS_PORT");
-        Assert.assertEquals(container.getEnv().get(12).getValue(), "80");
+        Assert.assertEquals(container.getEnv().get(12).getValue(), "8080");
 
         Assert.assertEquals(container.getEnv().get(13).getName(), "DATABASE_PASSWORD");
         Assert.assertEquals(container.getEnv().get(13).getValue(), "root");
@@ -267,7 +267,7 @@ public class ReviewsTest {
         Assert.assertEquals(container.getEnv().get(5).getValue(), "31406");
 
         Assert.assertEquals(container.getEnv().get(6).getName(), "CUSTOMERS_PORT");
-        Assert.assertEquals(container.getEnv().get(6).getValue(), "80");
+        Assert.assertEquals(container.getEnv().get(6).getValue(), "8080");
 
         Assert.assertEquals(container.getEnv().get(7).getName(), "CUSTOMERS_HOST");
         Assert.assertEquals(container.getEnv().get(7).getValue(), "cust-inst--gateway-service");
@@ -285,7 +285,7 @@ public class ReviewsTest {
         Assert.assertEquals(container.getEnv().get(11).getValue(), "review-inst--ratings-service");
 
         Assert.assertEquals(container.getEnv().get(12).getName(), "PRODUCTS_PORT");
-        Assert.assertEquals(container.getEnv().get(12).getValue(), "80");
+        Assert.assertEquals(container.getEnv().get(12).getValue(), "8080");
 
         Assert.assertEquals(container.getEnv().get(13).getName(), "DATABASE_PASSWORD");
         Assert.assertEquals(container.getEnv().get(13).getValue(), "root");

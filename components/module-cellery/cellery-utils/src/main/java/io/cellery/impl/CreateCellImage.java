@@ -231,17 +231,18 @@ public class CreateCellImage {
     private static void processIngress(MapValue<?, ?> ingressMap, ImageComponent component) {
         ingressMap.forEach((key, ingressValues) -> {
             MapValue ingressValueMap = ((MapValue) ingressValues);
+            String ingressName = key.toString();
             switch (ingressValueMap.getType().getName()) {
                 case "HttpApiIngress":
                 case "HttpPortIngress":
                 case "HttpsPortIngress":
-                    processHttpIngress(component, ingressValueMap, key.toString());
+                    processHttpIngress(component, ingressValueMap, ingressName);
                     break;
                 case "TCPIngress":
-                    processTCPIngress(component, ingressValueMap);
+                    processTCPIngress(component, ingressValueMap, ingressName);
                     break;
                 case "GRPCIngress":
-                    processGRPCIngress(component, ingressValueMap);
+                    processGRPCIngress(component, ingressValueMap, ingressName);
                     break;
                 case "WebIngress":
                     processWebIngress(component, ingressValueMap);
@@ -253,8 +254,9 @@ public class CreateCellImage {
         });
     }
 
-    private static void processGRPCIngress(ImageComponent component, MapValue attributeMap) {
+    private static void processGRPCIngress(ImageComponent component, MapValue attributeMap, String ingressName) {
         GRPC grpc = new GRPC();
+        grpc.setName(ingressName);
         Destination destination = new Destination();
         destination.setPort(Math.toIntExact(attributeMap.getIntValue("backendPort")));
         destination.setHost(component.getService());
@@ -278,8 +280,9 @@ public class CreateCellImage {
         component.addGRPC(grpc);
     }
 
-    private static void processTCPIngress(ImageComponent component, MapValue attributeMap) {
+    private static void processTCPIngress(ImageComponent component, MapValue attributeMap, String ingressName) {
         TCP tcp = new TCP();
+        tcp.setName(ingressName);
         Destination destination = new Destination();
         destination.setHost(component.getService());
         destination.setPort(Math.toIntExact(attributeMap.getIntValue("backendPort")));
@@ -298,10 +301,10 @@ public class CreateCellImage {
         component.addTCP(tcp);
     }
 
-    private static void processHttpIngress(ImageComponent component, MapValue attributeMap, String key) {
+    private static void processHttpIngress(ImageComponent component, MapValue attributeMap, String ingressName) {
         API httpAPI = getApi(component, attributeMap);
-        httpAPI.setName(key);
-        httpAPI.setPort(CelleryConstants.DEFAULT_GATEWAY_PORT);
+        httpAPI.setName(ingressName);
+        httpAPI.setPort(Math.toIntExact(attributeMap.getIntValue("port")));
         component.setProtocol(CelleryConstants.DEFAULT_GATEWAY_PROTOCOL);
         // Process optional attributes
         if (attributeMap.containsKey(CelleryConstants.CONTEXT)) {
@@ -350,17 +353,17 @@ public class CreateCellImage {
      * @param httpAPI      API definition
      */
     public static void extractPorts(ImageComponent component, MapValue attributeMap, API httpAPI) {
+        final int containerPort = Math.toIntExact(attributeMap.getIntValue("port"));
         Destination destination = new Destination();
         destination.setHost(component.getName());
-        destination.setPort(CelleryConstants.DEFAULT_GATEWAY_PORT);
+        destination.setPort(containerPort);
         httpAPI.setDestination(destination);
         Port port = new Port();
-        final Long containerPort = attributeMap.getIntValue("port");
         port.setName(component.getName() + containerPort);
-        port.setPort(CelleryConstants.DEFAULT_GATEWAY_PORT);
+        port.setPort(containerPort);
         port.setProtocol(CelleryConstants.DEFAULT_GATEWAY_PROTOCOL);
         port.setTargetContainer(component.getName());
-        port.setTargetPort(Math.toIntExact(containerPort));
+        port.setTargetPort(containerPort);
         component.addPort(port);
     }
 
@@ -628,11 +631,12 @@ public class CreateCellImage {
                 String componentName = getValidName(component.getName());
                 json.put(componentName + "_host",
                         CelleryConstants.INSTANCE_NAME_PLACEHOLDER + "--" + componentName + "-service");
-                if (component.getApis().size() > 0) {
-                    json.put(componentName + "_port", CelleryConstants.DEFAULT_GATEWAY_PORT);
-                }
-                component.getTcpList().forEach(tcp -> json.put(componentName + "_tcp_port", tcp.getPort()));
-                component.getGrpcList().forEach(grpc -> json.put(componentName + "_grpc_port", grpc.getPort()));
+                component.getApis().forEach(api ->
+                        json.put(componentName + "_" + api.getName() + "_port", api.getPort()));
+                component.getTcpList().forEach(tcp ->
+                        json.put(componentName + "_" + tcp.getName() + "_tcp_port", tcp.getPort()));
+                component.getGrpcList().forEach(grpc ->
+                        json.put(componentName + "_" + grpc.getName() + "_grpc_port", grpc.getPort()));
             });
         } else {
             image.getComponentNameToComponentMap().forEach((componentName, component) -> {
@@ -643,13 +647,15 @@ public class CreateCellImage {
                         String url = CelleryConstants.DEFAULT_GATEWAY_PROTOCOL + "://" +
                                 CelleryConstants.INSTANCE_NAME_PLACEHOLDER +
                                 CelleryConstants.GATEWAY_SERVICE + ":"
-                                + CelleryConstants.DEFAULT_GATEWAY_PORT + "/" + context;
+                                + api.getPort() + "/" + context;
                         json.put(recordName + "_" + getValidRecordName(api.getName()) + "_api_url",
                                 url.replaceAll("(?<!http:)//", "/"));
                     }
                 });
-                component.getTcpList().forEach(tcp -> json.put(recordName + "_tcp_port", tcp.getPort()));
-                component.getGrpcList().forEach(grpc -> json.put(recordName + "_grpc_port", grpc.getPort()));
+                component.getTcpList().forEach(tcp ->
+                        json.put(recordName + "_" + tcp.getName() + "_tcp_port", tcp.getPort()));
+                component.getGrpcList().forEach(grpc ->
+                        json.put(recordName + "_" + grpc.getName() + "_grpc_port", grpc.getPort()));
             });
             json.put("gateway_host", CelleryConstants.INSTANCE_NAME_PLACEHOLDER + CelleryConstants.GATEWAY_SERVICE);
         }

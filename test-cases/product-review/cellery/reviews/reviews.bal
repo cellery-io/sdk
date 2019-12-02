@@ -97,7 +97,7 @@ public function build(cellery:ImageName iName) returns error? {
     reviewsComponent["envVars"]["PRODUCTS_CONTEXT"].value = <string>productComp["path"];
 
     cellery:Reference databaseRef = cellery:getReference(reviewsComponent, "database");
-    reviewsComponent["envVars"]["DATABASE_PORT"].value = <string>databaseRef["mysql_tcp_port"];
+    reviewsComponent["envVars"]["DATABASE_PORT"].value = <string>databaseRef["mysql_mysqlIngress_tcp_port"];
     reviewsComponent["envVars"]["DATABASE_HOST"].value = <string>databaseRef["gateway_host"];
 
     cellery:CellImage reviewCell = {
