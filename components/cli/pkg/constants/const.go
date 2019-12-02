@@ -109,8 +109,7 @@ const BallerinaToml = "Ballerina.toml"
 const TargetDirName = "target"
 const TempTestModule = "tmp"
 const BalTestExecFIle = "test.sh"
-const BalInitTestExecFIle = "init-test.sh"
-const BalProjExt = "_proj"
+const BalInitTestExecFIle = "init-project.sh"
 
 const DockerCliBallerinaExecutablePath = "/usr/lib/ballerina/ballerina-" + BallerinaVersion + "/bin/ballerina"
 

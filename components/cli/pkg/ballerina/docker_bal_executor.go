@@ -275,27 +275,18 @@ func (balExecutor *DockerBalExecutor) ExecutablePath() (string, error) {
 	return "", nil
 }
 
-func (balExecutor *DockerBalExecutor) Init(projectDir string) error {
+func (balExecutor *DockerBalExecutor) Init(workingDir string, projectName string, moduleName string) error {
 	cliUser, err := user.Current()
 	if err != nil {
 		return fmt.Errorf("error while retrieving the current user, %v", err)
 	}
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error in determining working directory, %v", err)
-	}
-	err = util.CleanAndCreateDir(filepath.Join(currentDir, constants.TargetDirName))
-	if err != nil {
-		return err
-	}
 	dockerCmdArgs := []string{
 		"-l", "ballerina-runtime=" + version.BuildVersion(),
-		"--mount", "type=bind,source=" + filepath.Join(currentDir, constants.TargetDirName) + ",target=/home/cellery/tmp",
-		"--mount", "type=bind,source=" + projectDir + ",target=/home/cellery/" + projectDir,
+		"--mount", "type=bind,source=" + workingDir + ",target=/home/cellery/tmp",
 		"-w", "/home/cellery/",
 		"wso2cellery/ballerina-runtime:" + version.BuildVersion(),
 	}
-	dockerCommand := []string{"./" + constants.BalInitTestExecFIle, cliUser.Uid, filepath.Base(projectDir), cliUser.Username, runtime.GOOS}
+	dockerCommand := []string{"./" + constants.BalInitTestExecFIle, cliUser.Uid, cliUser.Username, runtime.GOOS, projectName, moduleName}
 	dockerCmdArgs = append(dockerCmdArgs, dockerCommand...)
 	var bashArgs []string
 	bashArgs = append(bashArgs, "run")
@@ -308,15 +299,6 @@ func (balExecutor *DockerBalExecutor) Init(projectDir string) error {
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("error occurred while initializing tests using ballerina docker image, %v", err)
-	}
-	balProjectName := filepath.Base(projectDir) + "_proj"
-	err = util.CopyDir(filepath.Join(currentDir, constants.TargetDirName, balProjectName), filepath.Join(currentDir, balProjectName))
-	if err != nil {
-		return err
-	}
-	err = util.RemoveDir(filepath.Join(currentDir, constants.TargetDirName))
-	if err != nil {
-		return err
 	}
 	return nil
 }

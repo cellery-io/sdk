@@ -19,10 +19,6 @@
 package main
 
 import (
-	"fmt"
-	"path/filepath"
-	"strings"
-
 	"github.com/spf13/cobra"
 
 	"cellery.io/cellery/components/cli/cli"
@@ -32,46 +28,24 @@ import (
 
 func newInitCommand(cli cli.Cli) *cobra.Command {
 	var projectName = ""
-	var testStr = ""
+	var isBallerinaProject bool
 	cmd := &cobra.Command{
 		Use:   "init [PROJECT_NAME]",
 		Short: "Initialize a cell project",
-		Args: func(cmd *cobra.Command, args []string) error {
-			err := cobra.MaximumNArgs(2)(cmd, args)
-			if err != nil {
-				return err
-			}
-
-			if len(args) > 1 {
-				testStr = args[0]
-				if testStr != "test" {
-					return fmt.Errorf("invalid argument. expects %s, recieved %s", util.Bold("test"), testStr)
-				}
-				projectName = args[1]
-				if !(strings.HasSuffix(projectName, ".bal")) {
-					return fmt.Errorf("expects a valid bal file, recieved %v", projectName)
-				}
-				isExist, err := util.FileExists(filepath.Join(cli.FileSystem().CurrentDir(), projectName))
-				if err != nil {
-					return err
-				}
-				if !isExist {
-					return fmt.Errorf("expects a valid path, recieved %v", projectName)
-				}
-			} else if len(args) > 0 {
-				testStr = ""
+		Args:  cobra.MaximumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) > 0 {
 				projectName = args[0]
 			}
-			return nil
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := project.RunInit(cli, projectName, testStr); err != nil {
+			if err := project.RunInit(cli, projectName, isBallerinaProject); err != nil {
 				util.ExitWithErrorMessage("Cellery init command failed", err)
 			}
-
 		},
 		Example: "  cellery init [PROJECT_NAME]\n" +
-			"  cellery init test [PROJECT_PATH]/[PROJECT_NAME].bal",
+			"  cellery init test [PROJECT_NAME --project\n" +
+			"  cellery init test [PROJECT_NAME -p",
 	}
+	cmd.Flags().BoolVarP(&isBallerinaProject, "project", "p", false,
+		"Create a Ballerina project")
 	return cmd
 }

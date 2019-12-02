@@ -109,7 +109,7 @@ func (balExecutor *MockBalExecutor) Test(fileName string, args []string, envVars
 }
 
 // Build mocks execution of ballerina run for cellery init on an executable bal file.
-func (balExecutor *MockBalExecutor) Init(projectName string) error {
+func (balExecutor *MockBalExecutor) Init(workingDir string, projectName string, moduleName string) error {
 	return nil
 }
 

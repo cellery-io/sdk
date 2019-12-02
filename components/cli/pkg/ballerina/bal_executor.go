@@ -39,7 +39,7 @@ type BalExecutor interface {
 	Build(fileName string, args []string) error
 	Run(fileName string, args []string, envVars []*EnvironmentVariable) error
 	Test(fileName string, args []string, envVars []*EnvironmentVariable) error
-	Init(projectName string) error
+	Init(workingDir string, projectName string, moduleName string) error
 	Version() (string, error)
 	ExecutablePath() (string, error)
 }
@@ -137,8 +137,7 @@ func (balExecutor *LocalBalExecutor) Run(fileName string, args []string,
 }
 
 // Init initializes a ballerina project in the current working directory
-func (balExecutor *LocalBalExecutor) Init(projectDir string) error {
-	balProjectName := filepath.Base(projectDir) + constants.BalProjExt
+func (balExecutor *LocalBalExecutor) Init(workingDir string, balProjectName string, balModuleName string) error {
 	cmd := exec.Command(ballerina, "new", balProjectName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -146,6 +145,15 @@ func (balExecutor *LocalBalExecutor) Init(projectDir string) error {
 	if err != nil {
 		return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
 	}
+	cmd = exec.Command(ballerina, "add", balModuleName)
+	cmd.Dir = filepath.Join(balProjectName)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error occurred while initializing ballerina project for tests %v", err)
+	}
+
 	return nil
 }
 
