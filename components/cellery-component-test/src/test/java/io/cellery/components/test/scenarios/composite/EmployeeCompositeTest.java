@@ -101,7 +101,7 @@ public class EmployeeCompositeTest {
         Assert.assertEquals(container.getEnv().get(0).getValue(), "{{instance_name}}--salary-service");
         Assert.assertEquals(container.getImage(), "wso2cellery/sampleapp-employee:0.3.0");
         Assert.assertEquals(container.getPorts().get(0).getContainerPort().intValue(), 8080);
-        Assert.assertEquals(components.get(0).getSpec().getPorts().get(0).getPort(), 80);
+        Assert.assertEquals(components.get(0).getSpec().getPorts().get(0).getPort(), 8080);
         Assert.assertEquals(components.get(1).getMetadata().getName(), "salary");
         Assert.assertEquals(components.get(1).getMetadata().getLabels().get("owner"), "Alice");
         Assert.assertEquals(components.get(1).getMetadata().getLabels().get("team"), "Finance");
@@ -157,7 +157,7 @@ public class EmployeeCompositeTest {
                 "-employee:0.3.0");
         Assert.assertEquals(spec.getTemplate().getContainers().get(0).getPorts().get(0)
                 .getContainerPort().intValue(), 8080);
-        Assert.assertEquals(spec.getPorts().get(0).getPort(), 80);
+        Assert.assertEquals(spec.getPorts().get(0).getPort(), 8080);
         final Component salaryComponent = components.get(1);
         Assert.assertEquals(salaryComponent.getMetadata().getName(), "salary");
         Assert.assertEquals(salaryComponent.getMetadata().getLabels().get("owner"), "Alice");

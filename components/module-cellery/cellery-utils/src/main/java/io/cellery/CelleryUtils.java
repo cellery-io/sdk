@@ -124,7 +124,7 @@ public class CelleryUtils {
         MapValue gatewayConfig = attributeMap.getMapValue("gatewayConfig");
         API httpAPI = getApi(component, attributeMap);
         httpAPI.setGlobal(false);
-        httpAPI.setPort(CelleryConstants.DEFAULT_GATEWAY_PORT);
+        httpAPI.setPort(Math.toIntExact(attributeMap.getIntValue("port")));
         httpAPI.setContext(gatewayConfig.getStringValue("context"));
         CreateCellImage.extractPorts(component, attributeMap, httpAPI);
         webIngress.setHttpAPI(httpAPI);

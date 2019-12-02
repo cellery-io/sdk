@@ -148,10 +148,10 @@ public class HRCompositeTest {
         final ComponentSpec spec = runtimeComposite.getSpec().getComponents().get(0).getSpec();
         Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getName(), "stock_api_url");
         Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(0).getValue(), "http://stock-inst" +
-                "--stock-service:80");
+                "--stock-service:8080");
         Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(1).getName(), "employee_api_url");
         Assert.assertEquals(spec.getTemplate().getContainers().get(0).getEnv().get(1).getValue(), "http://emp-inst" +
-                "--employee-service:80");
+                "--employee-service:8080");
         Assert.assertEquals(spec.getTemplate().getContainers().get(0).getImage(), "wso2cellery/sampleapp-hr:0.3.0");
         Assert.assertEquals(spec.getTemplate().getContainers().get(0).getPorts().get(0).getContainerPort().intValue()
                 , 8080);

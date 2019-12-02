@@ -234,25 +234,25 @@ func displayCompositeImageApisTable(cli cli.Cli, compositeImageContent string) e
 	}
 	var tableData [][]string
 	for _, componentDetail := range cell.Component {
-		for _, ingressInfo := range componentDetail.Ingress {
+		for ingressKey, ingressInfo := range componentDetail.Ingress {
 			var ingressData []string
 			ingressData = append(ingressData, componentDetail.ComponentName)
-			if ingressInfo.IngressTypeTCP == constants.TcpIngress {
+			if ingressInfo.IngressTypeTCP == constants.TcpIngress && ingressInfo.IngressType != constants.GrpcIngress {
 				ingressData = append(ingressData, ingressInfo.IngressTypeTCP)
 			} else {
 				ingressData = append(ingressData, ingressInfo.IngressType)
 			}
-			if (int(ingressInfo.Port)) == 0 {
+			if (ingressInfo.Port) == 0 {
 				ingressData = append(ingressData, "--")
 			} else {
 				ingressData = append(ingressData, strconv.Itoa(int(ingressInfo.Port)))
 			}
 			if ingressInfo.IngressTypeTCP == constants.TcpIngress {
-				ingressData = append(ingressData, fmt.Sprintf("%s_%s, %s_tcp_%s", componentDetail.ComponentName,
-					constants.HOST, componentDetail.ComponentName, constants.PORT))
+				ingressData = append(ingressData, fmt.Sprintf("%s_%s, %s_%s_tcp_%s", componentDetail.ComponentName,
+					constants.HOST, componentDetail.ComponentName, ingressKey, constants.PORT))
 			} else {
-				ingressData = append(ingressData, fmt.Sprintf("%s_%s, %s_%s", componentDetail.ComponentName,
-					constants.HOST, componentDetail.ComponentName, constants.PORT))
+				ingressData = append(ingressData, fmt.Sprintf("%s_%s, %s_%s_%s", componentDetail.ComponentName,
+					constants.HOST, componentDetail.ComponentName, ingressKey, constants.PORT))
 			}
 			tableData = append(tableData, ingressData)
 		}
@@ -317,20 +317,22 @@ func displayCellImageApisTable(cli cli.Cli, cellImageContent string) error {
 				ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType, constants.NA,
 					constants.NA, strconv.Itoa(ingressInfo.GatewayPort), constants.NA, constants.NA, constants.NA,
 					ingressInfo.GatewayConfig.Vhost,
-					fmt.Sprintf("%s, %s_%s", constants.GatewayHost, componentDetail.ComponentName, "grpc_port")}
+					fmt.Sprintf("%s, %s_%s_%s", constants.GatewayHost, componentDetail.ComponentName,
+						ingress, "grpc_port")}
 				tableData = append(tableData, ingressData)
 
 			} else if ingressInfo.IngressTypeTCP == constants.TcpIngress {
-				if (int(ingressInfo.Port)) == 0 {
+				if (ingressInfo.GatewayPort) == 0 {
 					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressTypeTCP, constants.NA,
 						constants.NA, "--", constants.NA, constants.NA, ingressInfo.Expose,
-						ingressInfo.GatewayConfig.Vhost, fmt.Sprintf("%s, %s_tcp_%s", constants.GatewayHost,
-							componentDetail.ComponentName, constants.PORT)}
+						ingressInfo.GatewayConfig.Vhost, fmt.Sprintf("%s, %s_%s_tcp_%s", constants.GatewayHost,
+							componentDetail.ComponentName, ingress, constants.PORT)}
 				} else {
 					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressTypeTCP, constants.NA,
-						constants.NA, strconv.Itoa(int(ingressInfo.Port)), constants.NA, constants.NA,
+						constants.NA, strconv.Itoa(ingressInfo.GatewayPort), constants.NA, constants.NA,
 						ingressInfo.Expose, ingressInfo.GatewayConfig.Vhost,
-						fmt.Sprintf("%s, %s_tcp_%s", constants.GatewayHost, componentDetail.ComponentName, constants.PORT)}
+						fmt.Sprintf("%s, %s_%s_tcp_%s", constants.GatewayHost, componentDetail.ComponentName,
+							ingress, constants.PORT)}
 				}
 				tableData = append(tableData, ingressData)
 			}
