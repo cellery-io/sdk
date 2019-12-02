@@ -543,6 +543,12 @@ public type VolumeMount record {|
     | NonSharedSecret volume;
 |};
 
+# Test configurations mapped from flags given to cellery test command.
+# 
+# + iName - Image name descriptor
+# + dependencyLinks - dependency map
+# + startDependencies - should depenecies be started
+# + shareDependencies - shold dependencies be shared
 public type TestConfig record {|
     ImageName iName;
     map<ImageName> dependencyLinks = {};
