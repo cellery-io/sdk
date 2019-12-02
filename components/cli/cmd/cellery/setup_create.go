@@ -31,7 +31,6 @@ func newSetupCreateCommand(cli cli.Cli) *cobra.Command {
 		Short: "Create a Cellery runtime",
 	}
 	cmd.AddCommand(
-		newSetupCreateLocalCommand(&isComplete),
 		newSetupCreateGcpCommand(&isComplete),
 		newSetupCreateOnExistingClusterCommand(cli, &isComplete),
 	)

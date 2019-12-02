@@ -32,7 +32,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/registry"
 	"cellery.io/cellery/components/cli/pkg/registry/credentials"
-	runtime2 "cellery.io/cellery/components/cli/pkg/runtime"
+	celleryRuntime "cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -104,7 +104,7 @@ func main() {
 		util.ExitWithErrorMessage("Failed configuring credentials manager", err)
 	}
 	credReader := credentials.NewCelleryCredReader()
-	runtime := runtime2.NewCelleryRuntime()
+	runtime := celleryRuntime.NewCelleryRuntime()
 	// Initialize the Cellery CLI.
 	celleryCli := cli.NewCelleryCli(
 		cli.SetRegistry(registry.NewCelleryRegistry()),

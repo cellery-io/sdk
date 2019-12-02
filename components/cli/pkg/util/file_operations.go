@@ -27,7 +27,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -320,16 +319,6 @@ func GetFileSize(path string) (int64, error) {
 
 func RenameFile(oldName, newName string) error {
 	err := os.Rename(oldName, newName)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func ExtractTarGzFile(extractTo, archive_name string) error {
-	cmd := exec.Command("tar", "-zxvf", archive_name)
-	cmd.Dir = extractTo
-	err := ExecuteCommand(cmd)
 	if err != nil {
 		return err
 	}

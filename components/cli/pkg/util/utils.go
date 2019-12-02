@@ -36,10 +36,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/cheggaaa/pb.v1"
 
 	"cellery.io/cellery/components/cli/pkg/constants"
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
 var Bold = color.New(color.Bold).SprintFunc()
@@ -333,49 +331,6 @@ func OpenBrowser(url string) error {
 	}
 }
 
-func FormatBytesToString(size int64) string {
-	return pb.Format(size).To(pb.U_BYTES_DEC).String()
-}
-
-func MergeKubeConfig(newConfigFile string) error {
-	newConf, err := kubernetes.ReadConfig(newConfigFile)
-	if err != nil {
-		return err
-	}
-
-	confFile, err := kubernetes.DefaultConfigFile()
-	if err != nil {
-		return err
-	}
-
-	if _, err := os.Stat(confFile); err != nil {
-		if os.IsNotExist(err) {
-			// kube-config does not exist. Create a new one
-			confDir, err := kubernetes.DefaultConfigDir()
-			if err != nil {
-				return err
-			}
-			// Check for .kube directory and create if not present
-			if _, err := os.Stat(confDir); os.IsNotExist(err) {
-				err = os.Mkdir(confDir, 0755)
-				if err != nil {
-					return err
-				}
-			}
-			return kubernetes.WriteConfig(confFile, newConf)
-		} else {
-			return err
-		}
-	}
-
-	oldConf, err := kubernetes.ReadConfig(confFile)
-	if err != nil {
-		return err
-	}
-	merged := kubernetes.MergeConfig(oldConf, newConf)
-	return kubernetes.WriteConfig(confFile, merged)
-}
-
 func IsCompleteSetupSelected() (bool, bool) {
 	var isCompleteSelected = false
 	var isBackSelected = false
@@ -430,14 +385,6 @@ func IsLoadBalancerIngressTypeSelected() (bool, bool) {
 		isLoadBalancerSelected = true
 	}
 	return isLoadBalancerSelected, isBackSelected
-}
-
-func IsCommandAvailable(name string) bool {
-	cmd := exec.Command("/bin/sh", "-c", "command -v "+name)
-	if err := cmd.Run(); err != nil {
-		return false
-	}
-	return true
 }
 
 func CreateTempExecutableBalFile(file string, action string) (string, error) {

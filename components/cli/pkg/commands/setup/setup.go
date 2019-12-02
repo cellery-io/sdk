@@ -26,7 +26,6 @@ import (
 	"github.com/manifoldco/promptui"
 
 	"cellery.io/cellery/components/cli/cli"
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
@@ -40,9 +39,8 @@ func RunSetup(cli cli.Cli) {
 	}
 
 	cellPrompt := promptui.Select{
-		Label: util.YellowBold("?") + " Setup Cellery runtime",
-		Items: []string{constants.CellerySetupCreate, constants.CellerySetupManage,
-			constants.CellerySetupModify, constants.CellerySetupSwitch, constants.CellerySetupExit},
+		Label:     util.YellowBold("?") + " Setup Cellery runtime",
+		Items:     []string{create, manage, modify, setupSwitch, exit},
 		Templates: selectTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -51,15 +49,15 @@ func RunSetup(cli cli.Cli) {
 	}
 
 	switch value {
-	case constants.CellerySetupManage:
+	case manage:
 		{
 			manageEnvironment(cli)
 		}
-	case constants.CellerySetupCreate:
+	case create:
 		{
 			createEnvironment(cli)
 		}
-	case constants.CellerySetupModify:
+	case modify:
 		{
 			var err error
 			apimEnabled, err = runtime.IsApimEnabled()
@@ -84,7 +82,7 @@ func RunSetup(cli cli.Cli) {
 			enableHpa = !hpaEnabled
 			modifyRuntime(cli)
 		}
-	case constants.CellerySetupSwitch:
+	case setupSwitch:
 		{
 			selectEnvironment(cli)
 		}
@@ -100,7 +98,7 @@ func selectEnvironment(cli cli.Cli) error {
 	if err != nil {
 		return fmt.Errorf("failed to get contexts, %v", err)
 	}
-	contexts = append(contexts, constants.CellerySetupBack)
+	contexts = append(contexts, setupBack)
 	bold := color.New(color.Bold).SprintFunc()
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -120,7 +118,7 @@ func selectEnvironment(cli cli.Cli) error {
 		return fmt.Errorf("failed to select cluster: %v", err)
 	}
 
-	if value == constants.CellerySetupBack {
+	if value == setupBack {
 		RunSetup(cli)
 	}
 

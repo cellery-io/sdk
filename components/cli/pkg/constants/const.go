@@ -38,26 +38,7 @@ const JsonExt = ".json"
 
 const CentralRegistryHost = "registry.hub.cellery.io"
 const CentralRegistryHostRegx = "^.*registry.hub.cellery.(io|net)$"
-
-const CellerySetupManage = "Manage"
-const CellerySetupCreate = "Create"
-const CellerySetupModify = "Modify"
-const CellerySetupSwitch = "Switch"
 const CellerySetupBack = "BACK"
-const CellerySetupExit = "EXIT"
-
-const CellerySetupLocal = "Local"
-const CellerySetupExistingCluster = "Existing cluster"
-const CellerySetupGcp = "GCP"
-
-const CelleryManageStop = "stop"
-const CelleryManageStart = "start"
-const CelleryManageCleanup = "cleanup"
-
-const AwsS3Bucket = "cellery-runtime-installation"
-const AwsRegion = "ap-south-1"
-
-const VmName = "cellery-runtime-local"
 
 const GcpClusterName = "cellery-cluster"
 const MysqlHostNameForExistingCluster = "wso2apim-with-analytics-rdbms-service"
@@ -76,8 +57,6 @@ const SP = "sp"
 const TELEPRESENCE = "telepresence"
 
 const KubeCtl = "kubectl"
-const CREATE = "create"
-const DELETE = "delete"
 const BASIC = "Basic"
 const COMPLETE = "Complete"
 

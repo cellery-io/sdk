@@ -24,9 +24,7 @@ import (
 	"github.com/manifoldco/promptui"
 
 	"cellery.io/cellery/components/cli/cli"
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/util"
-	"cellery.io/cellery/components/cli/pkg/vbox"
 )
 
 func manageEnvironment(cli cli.Cli) error {
@@ -38,9 +36,8 @@ func manageEnvironment(cli cli.Cli) error {
 	}
 
 	cellPrompt := promptui.Select{
-		Label: util.YellowBold("?") + " Select a runtime",
-		Items: []string{constants.CellerySetupLocal, constants.CellerySetupGcp,
-			constants.CellerySetupExistingCluster, constants.CellerySetupBack},
+		Label:     util.YellowBold("?") + " Select a runtime",
+		Items:     []string{celleryGcp, existingCluster, setupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -49,15 +46,11 @@ func manageEnvironment(cli cli.Cli) error {
 	}
 
 	switch value {
-	case constants.CellerySetupLocal:
-		{
-			manageLocal(cli)
-		}
-	case constants.CellerySetupGcp:
+	case celleryGcp:
 		{
 			manageGcp(cli)
 		}
-	case constants.CellerySetupExistingCluster:
+	case existingCluster:
 		{
 			manageExistingCluster(cli)
 		}
@@ -67,29 +60,4 @@ func manageEnvironment(cli cli.Cli) error {
 		}
 	}
 	return nil
-}
-
-func getManageLabel() string {
-	var manageLabel string
-	if vbox.IsVmInstalled() {
-		if vbox.IsVmRunning() {
-			manageLabel = constants.VmName + " is running. Select `Stop` to stop the VM"
-		} else {
-			manageLabel = constants.VmName + " is installed. Select `Start` to start the VM"
-		}
-	} else {
-		manageLabel = "Cellery runtime is not installed"
-	}
-	return manageLabel
-}
-
-func getManageEnvOptions() []string {
-	if vbox.IsVmInstalled() {
-		if vbox.IsVmRunning() {
-			return []string{constants.CelleryManageStop, constants.CelleryManageCleanup, constants.CellerySetupBack}
-		} else {
-			return []string{constants.CelleryManageStart, constants.CelleryManageCleanup, constants.CellerySetupBack}
-		}
-	}
-	return []string{constants.CellerySetupBack}
 }

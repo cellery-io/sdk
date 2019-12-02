@@ -51,14 +51,14 @@ func createOnExistingCluster(cli cli.Cli) error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.PersistentVolume, constants.NonPersistentVolume, constants.CellerySetupBack},
+		Items:     []string{constants.PersistentVolume, constants.NonPersistentVolume, setupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
-	if value == constants.CellerySetupBack {
+	if value == setupBack {
 		createEnvironment(cli)
 		return nil
 	}

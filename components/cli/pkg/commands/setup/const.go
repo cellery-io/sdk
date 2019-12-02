@@ -16,20 +16,15 @@
  * under the License.
  */
 
-package main
+package setup
 
-import (
-	"github.com/spf13/cobra"
-)
-
-func newSetupCleanupCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "cleanup <command>",
-		Short: "Cleanup Cellery runtime",
-	}
-	cmd.AddCommand(
-		newSetupCleanupGcpCommand(),
-		newSetupCleanupExistingCommand(),
-	)
-	return cmd
-}
+const manage = "Manage"
+const create = "Create"
+const modify = "Modify"
+const setupSwitch = "Switch"
+const setupBack = "BACK"
+const exit = "EXIT"
+const existingCluster = "Existing cluster"
+const celleryGcp = "GCP"
+const cleanup = "cleanup"
+const gcpClusterName = "cellery-cluster"

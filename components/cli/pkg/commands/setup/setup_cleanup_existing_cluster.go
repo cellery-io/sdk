@@ -24,7 +24,6 @@ import (
 	"github.com/manifoldco/promptui"
 
 	"cellery.io/cellery/components/cli/cli"
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
@@ -40,7 +39,7 @@ func manageExistingCluster(cli cli.Cli) error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select `cleanup` to remove existing cluster",
-		Items:     []string{constants.CelleryManageCleanup, constants.CellerySetupBack},
+		Items:     []string{cleanup, setupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -49,7 +48,7 @@ func manageExistingCluster(cli cli.Cli) error {
 	}
 
 	switch value {
-	case constants.CelleryManageCleanup:
+	case cleanup:
 		{
 			cleanupExistingCluster()
 		}

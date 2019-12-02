@@ -38,10 +38,10 @@ var accountName string
 
 func RunSetupCreateGcp(isCompleteSetup bool) error {
 	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
-	gcpSpinner := util.StartNewSpinner("Creating Cellery runtime on gcp")
+	gcpSpinner := util.StartNewSpinner("Creating Cellery runtime on celleryGcp")
 	platform, err := gcpPlatform.NewGcp()
 	if err != nil {
-		return fmt.Errorf("failed to initialize gcp platform, %v", err)
+		return fmt.Errorf("failed to initialize celleryGcp platform, %v", err)
 	}
 	err = platform.Create()
 	if err != nil {
@@ -69,14 +69,14 @@ func createGcp(cli cli.Cli) error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.BASIC, constants.COMPLETE, constants.CellerySetupBack},
+		Items:     []string{constants.BASIC, constants.COMPLETE, setupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
-	if value == constants.CellerySetupBack {
+	if value == setupBack {
 		createEnvironment(cli)
 		return nil
 	}

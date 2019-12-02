@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"cellery.io/cellery/components/cli/cli"
-
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
 )
 

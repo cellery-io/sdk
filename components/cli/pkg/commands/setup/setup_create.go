@@ -25,9 +25,7 @@ import (
 	"github.com/manifoldco/promptui"
 
 	"cellery.io/cellery/components/cli/cli"
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/util"
-	"cellery.io/cellery/components/cli/pkg/vbox"
 )
 
 func createEnvironment(cli cli.Cli) error {
@@ -41,7 +39,7 @@ func createEnvironment(cli cli.Cli) error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select an environment to be installed",
-		Items:     getCreateEnvironmentList(),
+		Items:     []string{celleryGcp, existingCluster, setupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -50,15 +48,11 @@ func createEnvironment(cli cli.Cli) error {
 	}
 
 	switch value {
-	case constants.CellerySetupLocal:
-		{
-			createLocal(cli)
-		}
-	case constants.CellerySetupGcp:
+	case celleryGcp:
 		{
 			createGcp(cli)
 		}
-	case constants.CellerySetupExistingCluster:
+	case existingCluster:
 		{
 			createOnExistingCluster(cli)
 		}
@@ -76,13 +70,4 @@ func createEnvironment(cli cli.Cli) error {
 	fmt.Println("To create your first project, execute the command: ")
 	fmt.Println("  $ cellery init ")
 	return nil
-}
-
-func getCreateEnvironmentList() []string {
-	if util.IsCommandAvailable("VBoxManage") {
-		if !vbox.IsVmInstalled() {
-			return []string{constants.CellerySetupLocal, constants.CellerySetupGcp, constants.CellerySetupExistingCluster, constants.CellerySetupBack}
-		}
-	}
-	return []string{constants.CellerySetupGcp, constants.CellerySetupExistingCluster, constants.CellerySetupBack}
 }
