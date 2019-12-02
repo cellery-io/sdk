@@ -47,6 +47,17 @@ var Green = color.New(color.FgGreen).SprintfFunc()
 var GreenBold = color.New(color.FgGreen).Add(color.Bold).SprintFunc()
 var YellowBold = color.New(color.FgYellow).Add(color.Bold).SprintFunc()
 var Red = color.New(color.FgRed).Add(color.Bold).SprintFunc()
+var ballerinaMain = `
+public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns error? {
+	if(action == "build") {
+		return <@untainted> build(<@untainted> iName);
+	} else if (action == "run") {
+		 cellery:InstanceState[]|error? result = run(<@untainted> iName, instances, startDependencies, shareDependencies);
+		if (result is error?) {
+			return <@untainted> result;
+		}
+	}
+}`
 
 func PrintWhatsNextMessage(action string, cmd string) {
 	fmt.Println()
@@ -387,38 +398,7 @@ func IsLoadBalancerIngressTypeSelected() (bool, bool) {
 	return isLoadBalancerSelected, isBackSelected
 }
 
-func CreateTempExecutableBalFile(file string, action string) (string, error) {
-	var ballerinaMain = `
-public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns error? {
-	if(action == "build") {
-		return <@untainted> build(<@untainted> iName);
-	} else if (action == "run") {
-		 cellery:InstanceState[]|error? result = run(<@untainted> iName, instances, startDependencies, shareDependencies);
-		if (result is error?) {
-			return <@untainted> result;
-		}
-	}
-}`
-	testExists, err := TestMethodExists(file)
-	if err != nil {
-		return "", errors.New("invalid action:" + action)
-	}
-	if testExists {
-		ballerinaMain = `
-public function main(string action, cellery:ImageName iName, map<cellery:ImageName> instances, boolean startDependencies, boolean shareDependencies) returns error? {
-	if (action == "build") {
-		return <@untainted> build(<@untainted>iName);
-	} else if (action == "run") {
-		cellery:InstanceState[] | error? result = run(<@untainted>iName, instances, startDependencies, shareDependencies);
-		if (result is error?) {
-			return <@untainted> result;
-		}
-	} else if (action == "test") {
-		return <@untainted> test(<@untainted> iName, instances, startDependencies, shareDependencies);
-	}
-}`
-	}
-
+func CreateTempExecutableBalFile(file string, action string, tmpProjectDir string) (string, error) {
 	originalFilePath, _ := filepath.Abs(file)
 	input, err := ioutil.ReadFile(originalFilePath)
 	if err != nil {
@@ -428,21 +408,37 @@ public function main(string action, cellery:ImageName iName, map<cellery:ImageNa
 
 	balFileName := filepath.Base(originalFilePath)
 	var newFileName = strings.Replace(balFileName, ".bal", "", 1) + "_" + action + ".bal"
-	originalFileDir := filepath.Dir(originalFilePath)
-	targetAbs := filepath.Join(originalFileDir, "target")
-	if _, err := os.Stat(targetAbs); os.IsNotExist(err) {
-		err = os.Mkdir(targetAbs, 0777)
+	if _, err := os.Stat(tmpProjectDir); os.IsNotExist(err) {
+		err = os.Mkdir(tmpProjectDir, 0777)
 		if err != nil {
 			return "", err
 		}
 	}
-	targetFilePath := filepath.Join(targetAbs, newFileName)
+	targetFilePath := filepath.Join(tmpProjectDir, newFileName)
 	err = ioutil.WriteFile(targetFilePath, []byte(newFileContent), 0644)
 	if err != nil {
 		return "", err
 	}
 
 	return targetFilePath, nil
+}
+
+func CreateTempMainBalFile(moduleDir string) error {
+	var err error
+	mainBalContent := "import celleryio/cellery;\n" + ballerinaMain
+	tmpMainFilePath := filepath.Join(moduleDir, "main.bal")
+	writer, err := os.Create(tmpMainFilePath)
+	if err != nil {
+		return fmt.Errorf("error in creating Ballerina File, %v", err)
+	}
+	balW := bufio.NewWriter(writer)
+	if _, err = balW.WriteString(mainBalContent); err != nil {
+		return fmt.Errorf("failed to create writer for temporary main file, %v", err)
+	}
+	if _ = balW.Flush(); err != nil {
+		return fmt.Errorf("failed to cleanup writer for temporary main file, %v", err)
+	}
+	return nil
 }
 
 func ConvertToAlphanumeric(input, replacement string) string {

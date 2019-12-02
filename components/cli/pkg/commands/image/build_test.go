@@ -60,42 +60,53 @@ func TestRunBuild(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read metadata.json: %v", err)
 	}
+	fooReferenceJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "foo_reference.json"))
+	if err != nil {
+		t.Errorf("Failed to read reference.json: %v", err)
+	}
 	// Test data for building hr.bal
-	hrBal, err := copyFile(filepath.Join("testdata", "project", "foo.bal"), filepath.Join(currentDir, "hr.bal"))
+	hrBal, err := copyFile(filepath.Join("testdata", "project", "hr.bal"), filepath.Join(currentDir, "hr.bal"))
 	if err != nil {
 		t.Errorf("failed to copy hr.bal to mock location")
 	}
 	hrYamlContent, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "hr.yaml"))
 	if err != nil {
-		t.Errorf("Failed to read foo.yaml: %v", err)
+		t.Errorf("Failed to read hr.yaml: %v", err)
 	}
 	hrMetadataJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "hr_metadata.json"))
 	if err != nil {
 		t.Errorf("Failed to read metadata.json: %v", err)
 	}
+	hrReferenceJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "hr_reference.json"))
+	if err != nil {
+		t.Errorf("Failed to read reference.json: %v", err)
+	}
 	tests := []struct {
-		name         string
-		file         *os.File
-		image        string
-		yamlName     string
-		yaml         []byte
-		metadataJson []byte
+		name          string
+		file          *os.File
+		image         string
+		yamlName      string
+		yaml          []byte
+		metadataJson  []byte
+		referenceJson []byte
 	}{
 		{
-			name:         "build image",
-			image:        "myorg/foo:1.0.0",
-			file:         fooBal,
-			yamlName:     "foo.yaml",
-			yaml:         fooYamlContent,
-			metadataJson: fooMetadataJson,
+			name:          "build image",
+			image:         "myorg/foo:1.0.0",
+			file:          fooBal,
+			yamlName:      "foo.yaml",
+			yaml:          fooYamlContent,
+			metadataJson:  fooMetadataJson,
+			referenceJson: fooReferenceJson,
 		},
 		{
-			name:         "build image with dependencies",
-			image:        "myorg/hr:1.0.0",
-			file:         hrBal,
-			yamlName:     "hr.yaml",
-			yaml:         hrYamlContent,
-			metadataJson: hrMetadataJson,
+			name:          "build image with dependencies",
+			image:         "myorg/hr:1.0.0",
+			file:          hrBal,
+			yamlName:      "hr.yaml",
+			yaml:          hrYamlContent,
+			metadataJson:  hrMetadataJson,
+			referenceJson: hrReferenceJson,
 		},
 	}
 	for _, tst := range tests {
@@ -103,7 +114,8 @@ func TestRunBuild(t *testing.T) {
 			mockBalExecutor := test.NewMockBalExecutor(test.SetBalCurrentDir(currentDir),
 				test.SetYamlName(tst.yamlName),
 				test.SetYamlContent(tst.yaml),
-				test.SetMetadataJsonContent(tst.metadataJson))
+				test.SetMetadataJsonContent(tst.metadataJson),
+				test.SetReferenceJsonContent(tst.referenceJson))
 			err := RunBuild(test.NewMockCli(test.SetFileSystem(mockFileSystem), test.SetBalExecutor(mockBalExecutor)), tst.image, tst.file.Name())
 			if err != nil {
 				t.Errorf("error in RunBuild, %v", err)

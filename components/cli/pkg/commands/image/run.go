@@ -59,12 +59,6 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 		}); err != nil {
 		return err
 	}
-	defer func() error {
-		if err = os.RemoveAll(imageDir); err != nil {
-			return fmt.Errorf("error occurred while removing image, %v", err)
-		}
-		return nil
-	}()
 	// Reading Cell Image metadata
 	var metadataFileContent []byte
 	if metadataFileContent, err = ioutil.ReadFile(filepath.Join(imageDir, artifacts, "cellery",
@@ -163,18 +157,45 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runningNode *dependencyTreeNode,
 	envVars []*environmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo,
 	shareDependencies bool) error {
-	defer os.Remove(imageDir)
+	var tmpProjectDir string
+	var tempRunBalSource string
+
+	//defer os.Remove(imageDir)
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
 		runningNode.MetaData.Version)
-	balFileName, err := util.GetSourceFileName(filepath.Join(imageDir, src))
+	balSourceName, err := util.GetSourceName(filepath.Join(imageDir, src))
 	if err != nil {
 		return fmt.Errorf("failed to find source file in Image %s due to %v", imageTag, err)
 	}
-	balFilePath := filepath.Join(imageDir, src, balFileName)
-	var tempRunFileName string
-	if tempRunFileName, err = util.CreateTempExecutableBalFile(balFilePath, "run"); err != nil {
-		return fmt.Errorf("error creating temporarily executable bal file, %v", err)
+	balSource := filepath.Join(imageDir, src, balSourceName)
+	cellProjectInfo, err := os.Stat(balSource)
+	if err != nil {
+		return fmt.Errorf("error occured while getting fileInfo of cell project, %v", err)
 	}
+
+	// If the cell project is a Ballerina project, create a main.bal file in a temp project location
+	if cellProjectInfo.IsDir() {
+		// Validate that the project has only one module
+		modules, _ := ioutil.ReadDir(filepath.Join(balSource, "src"))
+		// Create a main.bal with a main function within the ballerina module in temp project directory
+		if err = cli.ExecuteTask("Creating temporary executable main bal file", "Failed to create temporary main bal file",
+			"", func() error {
+				err = util.CreateTempMainBalFile(filepath.Join(balSource, src, modules[0].Name()))
+				return err
+			}); err != nil {
+			return err
+		}
+		tmpProjectDir = balSource
+		tempRunBalSource = filepath.Join(tmpProjectDir, src, modules[0].Name())
+	} else {
+		tmpProjectDir = filepath.Join(imageDir, src)
+		if tempRunBalSource, err = util.CreateTempExecutableBalFile(balSource, "run", tmpProjectDir); err != nil {
+			return fmt.Errorf("error creating temporarily executable bal file, %v", err)
+		}
+	}
+
+	//balSource := filepath.Join(imageDir, src, balSource)
+
 	var balEnvVars []*ballerina.EnvironmentVariable
 	// Set celleryImageDirEnvVar environment variable.
 	balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
@@ -201,11 +222,8 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 	if runCommandArgs, err = runCmdArgs(instanceName, dependencyLinks, runningNode, startDependencies, shareDependencies); err != nil {
 		return fmt.Errorf("failed to get run command arguements, %v", err)
 	}
-	if err = cli.BalExecutor().Run(tempRunFileName, runCommandArgs, balEnvVars); err != nil {
+	if err = cli.BalExecutor().Run(filepath.Base(tempRunBalSource), runCommandArgs, balEnvVars, tmpProjectDir); err != nil {
 		return fmt.Errorf("failed to run bal file, %v", err)
-	}
-	if err = os.Remove(tempRunFileName); err != nil {
-		return fmt.Errorf("error removing temp run file %s", tempRunFileName)
 	}
 	return nil
 }

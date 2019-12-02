@@ -1,0 +1,1 @@
+{"gateway_host":"{{instance_name}}--gateway-service","hr_hr_api_url":"http://{{instance_name}}--gateway-service:80/hr"}

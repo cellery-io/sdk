@@ -28,11 +28,11 @@ import (
 	"strings"
 	"time"
 
+	"cellery.io/cellery/components/cli/pkg/constants"
+
 	"github.com/ghodss/yaml"
 
 	"cellery.io/cellery/components/cli/cli"
-	"cellery.io/cellery/components/cli/pkg/ballerina"
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/image"
 	"cellery.io/cellery/components/cli/pkg/util"
 	"cellery.io/cellery/components/cli/pkg/version"
@@ -40,11 +40,15 @@ import (
 
 // RunBuild executes the cell's build life cycle method and saves the generated cell image to the local repo.
 // This also copies the relevant ballerina files to the ballerina repo directory.
-func RunBuild(cli cli.Cli, tag string, fileName string) error {
+func RunBuild(cli cli.Cli, tag string, balSource string) error {
 	var err error
-	projectDir := cli.FileSystem().CurrentDir()
+	var tmpProjectDir string
+	var tmpCellSource string
 	var parsedCellImage *image.CellImage
 	var iName []byte
+	currentTime := time.Now()
+	tmpImageDirName := "cellery-cell-image" + currentTime.Format("27065102350415")
+
 	if parsedCellImage, err = image.ParseImageTag(tag); err != nil {
 		return fmt.Errorf("error occurred while parsing image, %v", err)
 	}
@@ -56,32 +60,67 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	if iName, err = json.Marshal(imageName); err != nil {
 		return fmt.Errorf("error in generating cellery:ImageName construct, %v", err)
 	}
-	var fileExist bool
-	if fileExist, err = util.FileExists(fileName); err != nil {
-		return fmt.Errorf("failed to check if file '%s' exists", util.Bold(fileName))
-	}
-	if !fileExist {
-		return fmt.Errorf("file '%s' does not exist", util.Bold(fileName))
-	}
 
-	// Removing the target directory if it exists
-	targetDir := filepath.Join(projectDir, "target")
-	if err = os.RemoveAll(targetDir); err != nil {
-		return fmt.Errorf("failed to cleanup target directory, %v", err)
+	cellProjectInfo, err := os.Stat(balSource)
+	if err != nil {
+		return fmt.Errorf("error occured while getting fileInfo of cell project, %v", err)
 	}
+	// If the cell project is a Ballerina project, create a main.bal file in a temp project location
+	if cellProjectInfo.IsDir() {
+		// Validate that the project has only one module
+		modules, _ := ioutil.ReadDir(filepath.Join(balSource, "src"))
+		if len(modules) > 1 {
+			return fmt.Errorf("cell project cannot contain more than one module. Found %s modules", string(len(modules)))
+		}
 
-	var tempBuildFileName string
-	if err = cli.ExecuteTask("Creating temporary executable bal file", "Failed to create temporary baf file",
-		"", func() error {
-			tempBuildFileName, err = createTempBalFile(cli, fileName)
+		// Create a temporary project location to execute bal files and to generate artifacts
+		tmpProjectDir = filepath.Join(cli.FileSystem().TempDir(), tmpImageDirName, balSource)
+		util.CreateDir(tmpProjectDir)
+		tmpCellSource = filepath.Join(tmpProjectDir, "src", modules[0].Name())
+		balModuleDirPath := filepath.Join(tmpProjectDir, "src", modules[0].Name())
+
+		// Copy project source files to temp project location
+		util.CopyDir(balSource, tmpProjectDir)
+
+		// Create a main.bal with a main function within the ballerina module in temp project directory
+		if err = cli.ExecuteTask("Creating temporary executable main bal file", "Failed to create temporary main bal file",
+			"", func() error {
+				err = util.CreateTempMainBalFile(balModuleDirPath)
+				return err
+			}); err != nil {
 			return err
-		}); err != nil {
-		return err
+		}
+	} else {
+		// Validate that the file exists
+		var fileExist bool
+		if fileExist, err = util.FileExists(balSource); err != nil {
+			return fmt.Errorf("failed to check if file '%s' exists", util.Bold(balSource))
+		}
+		if !fileExist {
+			return fmt.Errorf("file '%s' does not exist", util.Bold(balSource))
+		}
+
+		// Create a temporary project location to execute bal files and to generate artifacts
+		tmpProjectDir = filepath.Join(cli.FileSystem().TempDir(), tmpImageDirName)
+		util.CreateDir(tmpProjectDir)
+
+		// Create a temp cell file appending the main function in temp project directory
+		if err = cli.ExecuteTask("Creating temporary executable bal file", "Failed to create temporary bal file",
+			"", func() error {
+				tmpCellSource, err = createTempBalFile(balSource, tmpProjectDir)
+				return err
+			}); err != nil {
+			return err
+		}
+
 	}
+
 	// Execute ballerina build in temporary executable bal file.
 	if err = cli.ExecuteTask("Executing ballerina build", "Failed to execute ballerina build",
 		"", func() error {
-			err := executeTempBalFile(cli.BalExecutor(), tempBuildFileName, iName)
+			if err := cli.BalExecutor().Build(filepath.Base(tmpCellSource), []string{string(iName)}, tmpProjectDir); err != nil {
+				return err
+			}
 			return err
 		}); err != nil {
 		return err
@@ -89,22 +128,23 @@ func RunBuild(cli cli.Cli, tag string, fileName string) error {
 	// Generate metadata.
 	if err = cli.ExecuteTask("Generating metadata", "Failed to generate metadata",
 		"", func() error {
-			err := generateMetaData(cli, parsedCellImage, projectDir)
+			err := generateMetaData(cli, parsedCellImage, tmpProjectDir)
 			return err
 		}); err != nil {
 		return err
 	}
-	// Create the artifacts zip file.
+
+	// Create the image zip
 	artifactsZip := parsedCellImage.ImageName + cellImageExt
 	var zipSrc string
-	if err = cli.ExecuteTask("Creating the cell image zip file", "Failed to create the image zip",
+	if err = cli.ExecuteTask("Creating the image zip file", "Failed to create the image zip",
 		"", func() error {
-			zipSrc, err = createArtifactsZip(cli, artifactsZip, projectDir, fileName)
+			zipSrc, err = createArtifactsZip(artifactsZip, tmpProjectDir, balSource)
 			return err
 		}); err != nil {
 		return err
 	}
-	// Cleaning up the old image if it already exists.
+
 	repoLocation := filepath.Join(cli.FileSystem().Repository(), parsedCellImage.Organization,
 		parsedCellImage.ImageName, parsedCellImage.ImageVersion)
 	var hasOldImage bool
@@ -138,11 +178,11 @@ func generateMetaData(cli cli.Cli, cellImage *image.CellImage, projectDir string
 	var err error
 	var metadataJSON []byte
 	var cellYamlContent []byte
-	metadataFile := filepath.Join(targetDir, "cellery", "metadata.json")
+	metadataFile := filepath.Join(targetDir, constants.CELLERY, "metadata.json")
 	if metadataJSON, err = ioutil.ReadFile(metadataFile); err != nil {
 		return fmt.Errorf("error occurred while reading metadata %s, %v", metadataFile, err)
 	}
-	if cellYamlContent, err = ioutil.ReadFile(filepath.Join(targetDir, "cellery", cellImage.ImageName+".yaml")); err != nil {
+	if cellYamlContent, err = ioutil.ReadFile(filepath.Join(targetDir, constants.CELLERY, cellImage.ImageName+".yaml")); err != nil {
 		return fmt.Errorf("error reading cell yaml content, %v", err)
 	}
 	k8sCell := &image.Cell{}
@@ -273,7 +313,7 @@ func extractDependenciesFromMetaData(cli cli.Cli, dependencyMetadata *image.Meta
 	}
 	// Reading the dependency's metadata
 	var metadataJsonContent []byte
-	if metadataJsonContent, err = ioutil.ReadFile(filepath.Join(tempPath, artifacts, "cellery", "metadata.json")); err != nil {
+	if metadataJsonContent, err = ioutil.ReadFile(filepath.Join(tempPath, artifacts, constants.CELLERY, "metadata.json")); err != nil {
 		return nil, fmt.Errorf("metadata.json file not found for dependency: %s, %v", dependencyImage,
 			err)
 	}
@@ -288,92 +328,52 @@ func extractDependenciesFromMetaData(cli cli.Cli, dependencyMetadata *image.Meta
 	return dependencyMetadata, nil
 }
 
-func createTempBalFile(cli cli.Cli, fileName string) (string, error) {
+func createTempBalFile(fileName string, tmpProjectDir string) (string, error) {
 	var err error
 	var tempBuildFileName string
 	// First clean target directory if exists
-	projectDir := cli.FileSystem().CurrentDir()
-	targetDir := filepath.Join(projectDir, "target")
+	targetDir := filepath.Join(tmpProjectDir, "target")
 	_ = os.Remove(targetDir)
-	if tempBuildFileName, err = util.CreateTempExecutableBalFile(fileName, "build"); err != nil {
+	if tempBuildFileName, err = util.CreateTempExecutableBalFile(fileName, "build", tmpProjectDir); err != nil {
 		return "", fmt.Errorf("error creating executable bal file: %v", err)
 	}
 	return tempBuildFileName, nil
 }
 
-func executeTempBalFile(ballerinaExecutor ballerina.BalExecutor, tempBuildFileName string, iName []byte) error {
-	if err := ballerinaExecutor.Build(tempBuildFileName, []string{string(iName)}); err != nil {
-		return err
-	}
-	if err := os.Remove(tempBuildFileName); err != nil {
-		return err
-	}
-	return nil
-}
-
-func createArtifactsZip(cli cli.Cli, artifactsZip, projectDir, fileName string) (string, error) {
+func createArtifactsZip(artifactsZip, projectDir, projectSrc string) (string, error) {
 	var err error
 	targetDir := filepath.Join(projectDir, "target")
-	currentTime := time.Now()
-	timestamp := currentTime.Format("27065102350415")
-	imgDir := filepath.Join(cli.FileSystem().TempDir(), timestamp)
+	imgDir := filepath.Join(projectDir, "zip")
 
-	if err = util.CopyDir(targetDir, filepath.Join(imgDir, artifacts)); err != nil {
+	if err = util.CopyDir(filepath.Join(targetDir, constants.CELLERY), filepath.Join(imgDir, artifacts, constants.CELLERY)); err != nil {
 		return "", fmt.Errorf("error occurred copying artifacts directory, %v", err)
 	}
-	if err = util.CleanOrCreateDir(filepath.Join(imgDir, src)); err != nil {
+	if err = util.CopyDir(filepath.Join(targetDir, constants.Ref), filepath.Join(imgDir, artifacts, constants.Ref)); err != nil {
+		return "", fmt.Errorf("error occurred copying artifacts directory, %v", err)
+	}
+	if err = util.CreateDir(filepath.Join(imgDir, src)); err != nil {
 		return "", fmt.Errorf("error occurred while creating src directory, %v", err)
 	}
-	if err = util.CopyFile(fileName, filepath.Join(imgDir, src, filepath.Base(fileName))); err != nil {
-		return "", fmt.Errorf("error occurred copying bal file to src directory, %v", err)
-	}
-	absFilePath, err := filepath.Abs(fileName)
+	info, err := os.Stat(projectSrc)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error occured while getting fileInfo of cell project, %v", err)
 	}
-
-	balParent := filepath.Dir(filepath.Join(absFilePath))
-	if balParent == "." {
-		absBalParent, err := filepath.Abs(balParent)
-		if err != nil {
-			return "", fmt.Errorf("error while retrieving absolute path of current directory, %v", err)
+	if info.IsDir() {
+		if err = util.CopyDir(projectSrc, filepath.Join(imgDir, src, filepath.Base(projectSrc))); err != nil {
+			return "", fmt.Errorf("error occurred copying bal project to src directory, %v", err)
 		}
-		balParent = absBalParent
-	}
-	balTomlParent := filepath.Dir(filepath.Dir(filepath.Dir(filepath.Join(absFilePath))))
-	var balTomlfileExist bool
-	if balTomlfileExist, err = util.FileExists(filepath.Join(balTomlParent, ballerinaToml)); err != nil {
-		return "", fmt.Errorf("error occurred while checking if Ballerina.toml exists, %v", err)
-	}
-	if balTomlfileExist {
-		if err = util.CopyFile(filepath.Join(balTomlParent, ballerinaToml),
-			filepath.Join(imgDir, src, ballerinaToml)); err != nil {
-			return "", fmt.Errorf("error occured while copying the %s, %v", ballerinaToml, err)
+	} else {
+		if err = util.CopyFile(projectSrc, filepath.Join(imgDir, src, filepath.Base(projectSrc))); err != nil {
+			return "", fmt.Errorf("error occurred copying bal file to src directory, %v", err)
 		}
 	}
-	isTestDirExists, _ := util.FileExists(filepath.Join(balParent, constants.ZipTests))
 	folders := []string{filepath.Join(imgDir, artifacts), filepath.Join(imgDir, src)}
 
-	if balParent != imgDir && isTestDirExists {
-		if err = util.CopyDir(filepath.Join(balParent, constants.ZipTests),
-			filepath.Join(imgDir, constants.ZipTests)); err != nil {
-			return "", fmt.Errorf("error occured while copying the %s, %v", constants.ZipTests, err)
-		}
-	}
-	if isTestDirExists {
-		folders = append(folders, filepath.Join(imgDir, constants.ZipTests))
-	}
 	// Todo: Check if WorkingDirRelativePath could be omitted.
 	// For actual scenario WorkingDirRelativePath == ""
 	// However, since the current dir is different to the running location, exact path has to be provided when running unit tests.
 	if err = util.RecursiveZip(nil, folders, filepath.Join(imgDir, artifactsZip)); err != nil {
 		return "", fmt.Errorf("error occurred while creating the image, %v", err)
-	}
-	if err = os.RemoveAll(filepath.Join(imgDir, artifacts)); err != nil {
-		return "", fmt.Errorf("error occurred while removing artifacts dir, %v", err)
-	}
-	if err = os.RemoveAll(filepath.Join(imgDir, src)); err != nil {
-		return "", fmt.Errorf("error occurred while removing src dir, %v", err)
 	}
 	return filepath.Join(imgDir, artifactsZip), nil
 }

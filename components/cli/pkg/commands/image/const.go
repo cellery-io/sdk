@@ -28,6 +28,3 @@ const celleryArgEnvVarPattern = "(((?P<instance>" + celleryIdPattern + "):" +
 const src = "src"
 const celleryHome = ".cellery"
 const cellImageExt = ".zip"
-const ballerinaToml = "Ballerina.toml"
-const ballerinaLocalRepo = ".ballerina/"
-const zipTests = "tests"

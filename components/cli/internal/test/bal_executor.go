@@ -28,12 +28,13 @@ import (
 )
 
 type MockBalExecutor struct {
-	currentDir          string
-	version             string
-	executablePath      string
-	yamlName            string
-	yamlContent         []byte
-	metadataJsonContent []byte
+	currentDir           string
+	version              string
+	executablePath       string
+	yamlName             string
+	yamlContent          []byte
+	metadataJsonContent  []byte
+	referenceJsonContent []byte
 }
 
 // NewMockBalExecutor returns a MockBalExecutor instance.
@@ -76,30 +77,45 @@ func SetMetadataJsonContent(content []byte) func(*MockBalExecutor) {
 	}
 }
 
+func SetReferenceJsonContent(content []byte) func(*MockBalExecutor) {
+	return func(balExecutor *MockBalExecutor) {
+		balExecutor.referenceJsonContent = content
+	}
+}
+
 // Build mocks execution of ballerina build on an executable bal file.
-func (balExecutor *MockBalExecutor) Build(fileName string, args []string) error {
+func (balExecutor *MockBalExecutor) Build(fileName string, args []string, cmdDir string) error {
 	var err error
-	var metadataJson, yaml *os.File
-	if err := os.MkdirAll(filepath.Join(balExecutor.currentDir, "target", "cellery"), os.ModePerm); err != nil {
+	var metadataJson, yaml, referenceJson *os.File
+	if err := os.MkdirAll(filepath.Join(cmdDir, "target", "cellery"), os.ModePerm); err != nil {
 		return fmt.Errorf("failed to create target/cellery dir, %v", err)
 	}
-	if metadataJson, err = os.Create(filepath.Join(balExecutor.currentDir, "target", "cellery", "metadata.json")); err != nil {
+	if metadataJson, err = os.Create(filepath.Join(cmdDir, "target", "cellery", "metadata.json")); err != nil {
 		return fmt.Errorf("failed to create metadata.json, %v", err)
 	}
 	if err := ioutil.WriteFile(metadataJson.Name(), []byte(balExecutor.metadataJsonContent), os.ModePerm); err != nil {
 		return fmt.Errorf("failed to write to metadata.json, %v", err)
 	}
-	if yaml, err = os.Create(filepath.Join(balExecutor.currentDir, "target", "cellery", balExecutor.yamlName)); err != nil {
+	if yaml, err = os.Create(filepath.Join(cmdDir, "target", "cellery", balExecutor.yamlName)); err != nil {
 		return fmt.Errorf("failed to create %s, %v", balExecutor.yamlName, err)
 	}
 	if err := ioutil.WriteFile(yaml.Name(), []byte(balExecutor.yamlContent), os.ModePerm); err != nil {
 		return fmt.Errorf("failed to write to yaml, %v", err)
 	}
+	if err := os.MkdirAll(filepath.Join(cmdDir, "target", "ref"), os.ModePerm); err != nil {
+		return fmt.Errorf("failed to create target/cellery dir, %v", err)
+	}
+	if referenceJson, err = os.Create(filepath.Join(cmdDir, "target", "ref", "reference.json")); err != nil {
+		return fmt.Errorf("failed to create metadata.json, %v", err)
+	}
+	if err := ioutil.WriteFile(referenceJson.Name(), []byte(balExecutor.referenceJsonContent), os.ModePerm); err != nil {
+		return fmt.Errorf("failed to write to reference	.json, %v", err)
+	}
 	return nil
 }
 
 // Build mocks execution of ballerina run on an executable bal file.
-func (balExecutor *MockBalExecutor) Run(fileName string, args []string, envVars []*ballerina.EnvironmentVariable) error {
+func (balExecutor *MockBalExecutor) Run(fileName string, args []string, envVars []*ballerina.EnvironmentVariable, cmdDir string) error {
 	return nil
 }
 

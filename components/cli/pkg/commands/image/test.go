@@ -187,7 +187,7 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 	verbose bool, debug bool, onlyDocker bool, incell bool, assumeYes bool, projLocation string) error {
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
 		runningNode.MetaData.Version)
-	balFileName, err := util.GetSourceFileName(filepath.Join(imageDir, constants.ZipBallerinaSource))
+	balFileName, err := util.GetSourceName(filepath.Join(imageDir, constants.ZipBallerinaSource))
 	if err != nil {
 		return err
 	}

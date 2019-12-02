@@ -52,15 +52,11 @@ func NewDockerBalExecutor() *DockerBalExecutor {
 }
 
 // Build executes ballerina build when ballerina is not installed.
-func (balExecutor *DockerBalExecutor) Build(fileName string, args []string) error {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error in determining working directory, %v", err)
-	}
+func (balExecutor *DockerBalExecutor) Build(balSource string, args []string, cmdDir string) error {
 	// Retrieve the cellery cli docker instance status.
 	cmdDockerPs := exec.Command("docker", "ps", "--filter",
 		"label=ballerina-runtime="+version.BuildVersion(),
-		"--filter", "label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
+		"--filter", "label=currentDir="+cmdDir, "--filter", "status=running", "--format", "{{.ID}}")
 	containerId, err := cmdDockerPs.Output()
 	if err != nil {
 		return fmt.Errorf("error in retrieving cellery cli docker instance status, %v", err)
@@ -69,8 +65,7 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, args []string) erro
 	if string(containerId) == "" {
 		cmdDockerRun := exec.Command("docker", "run", "-d",
 			"-l", "ballerina-runtime="+version.BuildVersion(),
-			"-l", "current.dir="+currentDir,
-			"--mount", "type=bind,source="+currentDir+",target="+homeCellery+"/src",
+			"-l", "current.dir="+cmdDir,
 			"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target="+homeCellery+"/.ballerina",
 			"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target="+homeCellery+"/.cellery",
 			"wso2cellery/ballerina-runtime:"+version.BuildVersion(), "sleep", "600",
@@ -128,11 +123,10 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, args []string) erro
 			}
 		}
 	}
-	re := regexp.MustCompile("^" + currentDir + "/")
-	balFilePath := re.ReplaceAllString(fileName, "")
-	cmd := exec.Command("docker", "exec", "-w", homeCellery+"/src", "-u", cliUser.Uid,
-		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath, "run",
-		filepath.Join(homeCellery, "src", balFilePath), "build")
+	re := regexp.MustCompile(`^.*cellery-cell-image`)
+	cmdDir = re.ReplaceAllString(cmdDir, dockerCliCellImageDir)
+	cmd := exec.Command("docker", "exec", "-w", cmdDir, "-u", cliUser.Uid,
+		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath, "run", balSource, "build")
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, "{}", "false", "false")
 	var stderr bytes.Buffer
@@ -165,14 +159,10 @@ func (balExecutor *DockerBalExecutor) Build(fileName string, args []string) erro
 }
 
 // Run executes ballerina run when ballerina is not installed.
-func (balExecutor *DockerBalExecutor) Run(fileName string, args []string, envVars []*EnvironmentVariable) error {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error in determining working directory, %v", err)
-	}
+func (balExecutor *DockerBalExecutor) Run(fileName string, args []string, envVars []*EnvironmentVariable, cmdDir string) error {
 	//Retrieve the cellery cli docker instance status.
 	cmdDockerPs := exec.Command("docker", "ps", "--filter", "label=ballerina-runtime="+version.BuildVersion(),
-		"--filter", "label=currentDir="+currentDir, "--filter", "status=running", "--format", "{{.ID}}")
+		"--filter", "label=currentDir="+cmdDir, "--filter", "status=running", "--format", "{{.ID}}")
 
 	containerId, err := cmdDockerPs.Output()
 	if err != nil {
@@ -214,7 +204,7 @@ func (balExecutor *DockerBalExecutor) Run(fileName string, args []string, envVar
 	}
 	cmd := exec.Command("docker", "exec")
 	re := regexp.MustCompile(`^.*cellery-cell-image`)
-	fileName = re.ReplaceAllString(fileName, dockerCliCellImageDir)
+	cmdDir = re.ReplaceAllString(cmdDir, dockerCliCellImageDir)
 	shellEnvs := os.Environ()
 	// check if any env var prepended with `CELLERY` exists. If so, set them to docker exec command.
 	for _, shellEnv := range shellEnvs {
@@ -232,7 +222,7 @@ func (balExecutor *DockerBalExecutor) Run(fileName string, args []string, envVar
 			cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
 		}
 	}
-	cmd.Args = append(cmd.Args, "-w", "/home/cellery", "-u", exeUid,
+	cmd.Args = append(cmd.Args, "-w", cmdDir, "-u", exeUid,
 		strings.TrimSpace(string(containerId)), dockerCliBallerinaExecutablePath)
 	cmd.Args = append(cmd.Args, "run", fileName, "run")
 	cmd.Args = append(cmd.Args, args...)

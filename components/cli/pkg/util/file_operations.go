@@ -339,22 +339,30 @@ func ReplaceInFile(srcFile, oldString, newString string, replaceCount int) error
 	return nil
 }
 
-func GetSourceFileName(filePath string) (string, error) {
+func GetSourceName(filePath string) (string, error) {
 	d, err := os.Open(filePath)
 	if err != nil {
-		ExitWithErrorMessage("Error opening file "+filePath, err)
+		return "", fmt.Errorf("error opening file "+filePath, err)
 	}
 	defer d.Close()
 	fi, err := d.Readdir(-1)
 	if err != nil {
-		ExitWithErrorMessage("Error reading file "+filePath, err)
+		return "", fmt.Errorf("error reading file "+filePath, err)
 	}
 	for _, fi := range fi {
 		if fi.Mode().IsRegular() && strings.HasSuffix(fi.Name(), ".bal") {
 			return fi.Name(), nil
+		} else if fi.Mode().IsDir() {
+			var isTomlExists bool
+			if isTomlExists, err = FileExists(filepath.Join(filePath, fi.Name(), constants.BallerinaToml)); err != nil {
+				return "", fmt.Errorf("error occurred while searching for Ballerina source, %v", err)
+			}
+			if isTomlExists {
+				return fi.Name(), nil
+			}
 		}
 	}
-	return "", errors.New("Ballerina source file not found in extracted location: " + filePath)
+	return "", errors.New("Ballerina source not found in extracted location: " + filePath)
 }
 
 func CopyK8sArtifacts(outPath string) {

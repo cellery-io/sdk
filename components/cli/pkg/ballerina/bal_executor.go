@@ -36,8 +36,8 @@ const ballerina = "ballerina"
 const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
 
 type BalExecutor interface {
-	Build(fileName string, args []string) error
-	Run(fileName string, args []string, envVars []*EnvironmentVariable) error
+	Build(fileName string, args []string, cmdDir string) error
+	Run(fileName string, args []string, envVars []*EnvironmentVariable, cmdDir string) error
 	Test(fileName string, args []string, envVars []*EnvironmentVariable) error
 	Init(workingDir, projectName, moduleName string) error
 	Version() (string, error)
@@ -54,12 +54,13 @@ func NewLocalBalExecutor() *LocalBalExecutor {
 }
 
 // Build executes ballerina build on an executable bal file.
-func (balExecutor *LocalBalExecutor) Build(fileName string, args []string) error {
+func (balExecutor *LocalBalExecutor) Build(balSource string, args []string, cmdDir string) error {
 	exePath, err := balExecutor.ExecutablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
-	cmd := exec.Command(exePath, "run", fileName, "build")
+	cmd := exec.Command(exePath, "run", balSource, "build")
+	cmd.Dir = cmdDir
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, "{}", "false", "false")
 	var stderr bytes.Buffer
@@ -92,14 +93,15 @@ func (balExecutor *LocalBalExecutor) Build(fileName string, args []string) error
 }
 
 // Run executes ballerina run on an executable bal file.
-func (balExecutor *LocalBalExecutor) Run(fileName string, args []string,
-	envVars []*EnvironmentVariable) error {
+func (balExecutor *LocalBalExecutor) Run(balSource string, args []string,
+	envVars []*EnvironmentVariable, cmdDir string) error {
 	cmd := &exec.Cmd{}
 	exePath, err := balExecutor.ExecutablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path, %v", err)
 	}
-	cmd = exec.Command(exePath, "run", fileName, "run")
+	cmd = exec.Command(exePath, "run", balSource, "run")
+	cmd.Dir = cmdDir
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Env = os.Environ()
 	//cmd.Env = append(cmd.Env, celleryImageDirEnvVar+"="+imageDir)

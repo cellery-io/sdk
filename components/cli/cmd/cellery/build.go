@@ -20,6 +20,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
+	"cellery.io/cellery/components/cli/pkg/constants"
 
 	"github.com/spf13/cobra"
 
@@ -32,16 +36,27 @@ import (
 // newBuildCommand creates a cobra command which can be invoked to build a cell image from a cell file
 func newBuildCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "build <cell-file>",
+		Use:   "build <cell-file-or-project>",
 		Short: "Build an immutable cell image with the required dependencies",
 		Args: func(cmd *cobra.Command, args []string) error {
 			err := cobra.ExactArgs(2)(cmd, args)
 			if err != nil {
 				return err
 			}
-			isProperFile, err := util.FileExists(args[0])
-			if err != nil || !isProperFile {
-				return fmt.Errorf("expects a proper file as the cell-file, received %s", args[0])
+			fileinfo, err := os.Stat(args[0])
+			if err != nil {
+				return err
+			}
+			if fileinfo.IsDir() {
+				isProperProject, err := util.FileExists(filepath.Join(args[0], constants.BallerinaToml))
+				if err != nil || !isProperProject {
+					return fmt.Errorf("expects a proper ballerina project, received %s", args[0])
+				}
+			} else {
+				isProperFile, err := util.FileExists(args[0])
+				if err != nil || !isProperFile {
+					return fmt.Errorf("expects a proper file, received %s", args[0])
+				}
 			}
 			err = image.ValidateImageTag(args[1])
 			if err != nil {
@@ -54,7 +69,8 @@ func newBuildCommand(cli cli.Cli) *cobra.Command {
 				util.ExitWithErrorMessage("Cellery build command failed", err)
 			}
 		},
-		Example: "  cellery build employee.bal cellery-samples/employee:1.0.0",
+		Example: "  cellery build employee.bal cellery-samples/employee:1.0.0\n" +
+			"  cellery build employee/ cellery-samples/employee:1.0.0",
 	}
 	return cmd
 }

@@ -83,6 +83,7 @@ const RootDir = "/"
 const VAR = "var"
 const TMP = "tmp"
 const CELLERY = "cellery"
+const Ref = "ref"
 const ApimRepositoryDeploymentServer = "apim_repository_deployment_server"
 
 const PersistentVolume = "Persistent volume"
