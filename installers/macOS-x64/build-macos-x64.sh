@@ -170,7 +170,7 @@ copyBuildDirectory() {
     cp -R $RESOURCE_LOCATION/telepresence-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
 
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
-    cp ../../components/module-cellery/target/balo/cellery-2019r3-java8-0.5.0.balo ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
+    cp ../../components/module-cellery/target/balo/cellery-2019r3-java8-${CELLERY_VERSION_NUM}.balo ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}
 
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/docs-view
     cp -R ../../components/docs-view/build/* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/docs-view
