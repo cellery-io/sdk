@@ -26,7 +26,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func CreateCelleryNameSpace() error {
+func (runtime *CelleryRuntime) CreateCelleryNameSpace() error {
 	for _, v := range buildNameSpaceYamlPaths() {
 		err := kubernetes.ApplyFile(v)
 		if err != nil {

@@ -19,6 +19,10 @@
 package cli
 
 type Platform interface {
-	Create() error
+	CreateK8sCluster() error
+	ConfigureSqlInstance() error
+	CreateStorage() error
+	CreateNfs() error
 	TearDown() error
+	UpdateKubeConfig() error
 }

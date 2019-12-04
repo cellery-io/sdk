@@ -53,8 +53,8 @@ var enableObservability = false
 var enableKnative = false
 var enableHpa = false
 
-func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime.Selection) {
-	err := runtime.UpdateRuntime(addApimGlobalGateway, addObservability, knative, hpa)
+func RunSetupModify(cli cli.Cli, addApimGlobalGateway, addObservability, knative, hpa runtime.Selection) error {
+	err := cli.Runtime().Update(addApimGlobalGateway, addObservability, knative, hpa)
 	if err != nil {
 		util.ExitWithErrorMessage("Fail to modify the cluster", err)
 	}
@@ -62,15 +62,15 @@ func RunSetupModify(addApimGlobalGateway, addObservability, knative, hpa runtime
 	if err != nil {
 		util.ExitWithErrorMessage("Error while checking knative status", err)
 	}
-	hpaEnabled, err = runtime.IsHpaEnabled()
+	hpaEnabled, err = cli.Runtime().IsHpaEnabled()
 	if err != nil {
 		util.ExitWithErrorMessage("Error while checking hpa status", err)
 	}
-	isGcpRuntime := runtime.IsGcpRuntime()
+	isGcpRuntime := cli.Runtime().IsGcpRuntime()
 	if isGcpRuntime {
 		hpaEnabled = false
 	}
-	runtime.WaitFor(knativeEnabled, hpaEnabled)
+	return cli.Runtime().WaitFor(knativeEnabled, hpaEnabled)
 }
 
 func modifyRuntime(cli cli.Cli) {
@@ -127,7 +127,7 @@ func modifyAutoScalingPolicy(cli cli.Cli) {
 	var label = "Select system components to modify"
 	var value = ""
 	const back = "BACK"
-	if runtime.IsGcpRuntime() {
+	if cli.Runtime().IsGcpRuntime() {
 		value = getPromptValue([]string{knative, back}, label)
 	} else {
 		value = getPromptValue([]string{knative, hpa, back}, label)
@@ -292,7 +292,10 @@ func applyChanges(cli cli.Cli) {
 	}
 	if confirmModify {
 		if runtimeUpdated {
-			RunSetupModify(apimChange, observabilityChange, knativeChange, hpaChange)
+			err := RunSetupModify(cli, apimChange, observabilityChange, knativeChange, hpaChange)
+			if err != nil {
+				util.ExitWithErrorMessage("Failed to update cellery runtime", err)
+			}
 		}
 		os.Exit(0)
 	} else {

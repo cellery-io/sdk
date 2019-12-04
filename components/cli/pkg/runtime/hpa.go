@@ -46,10 +46,10 @@ func deleteHpa(artifactsPath string) error {
 	return nil
 }
 
-func IsHpaEnabled() (bool, error) {
+func (runtime *CelleryRuntime) IsHpaEnabled() (bool, error) {
 	var err error
 	enabled := true
-	if IsGcpRuntime() {
+	if runtime.IsGcpRuntime() {
 		_, err = kubernetes.GetDeployment("kube-system", "metrics-server-v0.3.1")
 	} else {
 		_, err = kubernetes.GetDeployment("kube-system", "metrics-server")

@@ -34,30 +34,12 @@ import (
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 
 	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	gcp2 "cellery.io/cellery/components/cli/pkg/runtime/gcp"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func (gcp *Gcp) Create() error {
-	if err := gcp.createK8sCluster(); err != nil {
-		return fmt.Errorf("failed to create k8s cluster on gcp")
-	}
-	if err := gcp.configureMysql(); err != nil {
-		return fmt.Errorf("failed to configure mysql on gcp")
-	}
-	if err := gcp.configureBucket(); err != nil {
-		return fmt.Errorf("failed to configure storage")
-	}
-	if err := gcp.configureNfsOnGcp(); err != nil {
-		return fmt.Errorf("failed to configure nfs")
-	}
-	if err := gcp.updateKubeConfig(); err != nil {
-		return fmt.Errorf("failed to update kube config")
-	}
-	return nil
-}
-
-func (gcp *Gcp) createK8sCluster() error {
+func (gcp *Gcp) CreateK8sCluster() error {
 	gcpGKENode := &container.NodeConfig{
 		ImageType:   clusterImageType,
 		MachineType: clusterMachineType,
@@ -92,6 +74,10 @@ func (gcp *Gcp) createK8sCluster() error {
 			time.Sleep(15 * time.Second)
 		}
 	}
+	// Give permission to the user
+	if err := kubernetes.CreateClusterRoleBinding("cluster-admin", gcp.accountName); err != nil {
+		return fmt.Errorf("error creating cluster role binding, %v", err)
+	}
 	return fmt.Errorf("failed to create clusters: %v", err)
 }
 
@@ -103,7 +89,7 @@ func (gcp *Gcp) getCreatedByLabel() map[string]string {
 	return labels
 }
 
-func (gcp *Gcp) configureMysql() error {
+func (gcp *Gcp) ConfigureSqlInstance() error {
 	//Create sql instance
 	_, err := gcp.createSqlInstance(gcp.sqlService, gcp.projectName, gcp.region, gcp.region, dbInstanceNamePrefix+uuid)
 	if err != nil {
@@ -159,7 +145,7 @@ func (gcp *Gcp) getSqlServiceAccount(ctx context.Context, gcpService *sqladmin.S
 	return "", ""
 }
 
-func (gcp *Gcp) configureBucket() error {
+func (gcp *Gcp) CreateStorage() error {
 	// Create bucketName
 	if err := gcp.createGcpStorage(); err != nil {
 		return fmt.Errorf("error creating storage client: %v", err)
@@ -284,7 +270,7 @@ func (gcp *Gcp) updateInstance() error {
 	return nil
 }
 
-func (gcp *Gcp) configureNfsOnGcp() error {
+func (gcp *Gcp) CreateNfs() error {
 	// Create NFS server
 	if err := gcp.createNfsServer(); err != nil {
 		return fmt.Errorf("error creating NFS server: %v", err)
@@ -346,7 +332,7 @@ func (gcp *Gcp) getNfsServerIp() (string, error) {
 	return serverIp, nil
 }
 
-func (gcp *Gcp) updateKubeConfig() error {
+func (gcp *Gcp) UpdateKubeConfig() error {
 	cmd := exec.Command("bash", "-c", "gcloud container clusters get-credentials "+gcp.clusterName+" --zone "+gcp.zone+" --project "+gcp.projectName)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {

@@ -24,8 +24,8 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func ApplyIstioCrds(artifactsPath string) error {
-	for _, v := range buildIstioCrdsYamlPaths(artifactsPath) {
+func (runtime *CelleryRuntime) ApplyIstioCrds() error {
+	for _, v := range buildIstioCrdsYamlPaths(runtime.artifactsPath) {
 		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
@@ -35,8 +35,8 @@ func ApplyIstioCrds(artifactsPath string) error {
 
 }
 
-func InstallIstio(artifactsPath string) error {
-	for _, v := range buildIstioYamlPaths(artifactsPath) {
+func (runtime *CelleryRuntime) InstallIstio() error {
+	for _, v := range buildIstioYamlPaths(runtime.artifactsPath) {
 		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err

@@ -21,16 +21,21 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func newSetupCreateGcpCommand(isComplete *bool) *cobra.Command {
+func newSetupCreateGcpCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gcp",
 		Short: "Create a Cellery runtime in gcp",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			setup.RunSetupCreateGcp(*isComplete)
+			err := setup.RunSetupCreateGcp(cli, *isComplete)
+			if err != nil {
+				util.ExitWithErrorMessage("Cellery setup create gcp command failed", err)
+			}
 		},
 		Example: "  cellery setup create gcp",
 	}

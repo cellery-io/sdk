@@ -24,8 +24,8 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func addIdp(artifactsPath string) error {
-	for _, v := range buildIdpYamlPaths(artifactsPath) {
+func (runtime *CelleryRuntime) AddIdp() error {
+	for _, v := range buildIdpYamlPaths(runtime.artifactsPath) {
 		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
@@ -44,7 +44,7 @@ func deleteIdp(artifactsPath string) error {
 	return nil
 }
 
-func CreateIdpConfigMaps(artifactsPath string) error {
+func createIdpConfigMaps(artifactsPath string) error {
 	for _, confMap := range buildIdpConfigMaps(artifactsPath) {
 		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {

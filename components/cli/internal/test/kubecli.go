@@ -296,3 +296,11 @@ func (kubeCli *MockKubeCli) UseContext(context string) error {
 	}
 	return fmt.Errorf("failed to use context")
 }
+
+func (kubeCli *MockKubeCli) GetMasterNodeName() (string, error) {
+	return "", nil
+}
+
+func (kubeCli *MockKubeCli) ApplyLabel(itemType, itemName, labelName string, overWrite bool) error {
+	return nil
+}

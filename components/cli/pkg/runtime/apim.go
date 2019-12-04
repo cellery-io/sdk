@@ -26,8 +26,8 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func addApim(artifactsPath string, isPersistentVolume bool) error {
-	for _, v := range buildApimYamlPaths(artifactsPath, isPersistentVolume) {
+func (runtime *CelleryRuntime) AddApim(isPersistentVolume bool) error {
+	for _, v := range buildApimYamlPaths(runtime.artifactsPath, isPersistentVolume) {
 		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
@@ -60,7 +60,7 @@ func IsApimEnabled() (bool, error) {
 	return enabled, nil
 }
 
-func CreateGlobalGatewayConfigMaps(artifactsPath string) error {
+func createGlobalGatewayConfigMaps(artifactsPath string) error {
 	for _, confMap := range buildGlobalGatewayConfigMaps(artifactsPath) {
 		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {

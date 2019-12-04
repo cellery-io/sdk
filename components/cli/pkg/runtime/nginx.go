@@ -19,13 +19,17 @@
 package runtime
 
 import (
+	"encoding/json"
+	"fmt"
 	"path/filepath"
+
+	"github.com/mattbaird/jsonpatch"
 
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func installNginx(artifactsPath string, isLoadBalancerIngressMode bool) error {
-	for _, file := range buildNginxYamlPaths(artifactsPath, isLoadBalancerIngressMode) {
+func (runtime *CelleryRuntime) InstallIngressNginx(isLoadBalancerIngressMode bool) error {
+	for _, file := range buildNginxYamlPaths(runtime.artifactsPath, isLoadBalancerIngressMode) {
 		err := kubernetes.ApplyFile(file)
 		if err != nil {
 			return err
@@ -43,4 +47,38 @@ func buildNginxYamlPaths(artifactsPath string, isLoadBalancerIngressMode bool) [
 		yamls = append(yamls, filepath.Join(base, "service-nodeport.yaml"))
 	}
 	return yamls
+}
+
+func (runtime *CelleryRuntime) UpdateNodePortIpAddress(nodePortIpAddress string) error {
+	originalIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
+	if err != nil {
+		return fmt.Errorf("error getting original ingress-nginx: %v", err)
+	}
+	updatedIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
+	if err != nil {
+		return fmt.Errorf("error getting updated ingress-nginx: %v", err)
+	}
+	updatedIngressNginx.Spec.ExternalIPs = append(updatedIngressNginx.Spec.ExternalIPs, nodePortIpAddress)
+
+	originalData, err := json.Marshal(originalIngressNginx)
+	if err != nil {
+		return fmt.Errorf("error marshalling original data: %v", err)
+	}
+	desiredData, err := json.Marshal(updatedIngressNginx)
+	if err != nil {
+		return fmt.Errorf("error marshalling desired data: %v", err)
+	}
+	patch, err := jsonpatch.CreatePatch(originalData, desiredData)
+	if err != nil {
+		return fmt.Errorf("error creating json patch: %v", err)
+	}
+	if len(patch) == 0 {
+		return fmt.Errorf("no changes in ingress-nginx to apply")
+	}
+	patchBytes, err := json.Marshal(patch)
+	if err != nil {
+		return fmt.Errorf("error marshalling json patch: %v", err)
+	}
+	kubernetes.JsonPatchWithNameSpace("svc", "ingress-nginx", string(patchBytes), "ingress-nginx")
+	return nil
 }

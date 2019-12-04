@@ -50,7 +50,7 @@ func manageExistingCluster(cli cli.Cli) error {
 	switch value {
 	case cleanup:
 		{
-			cleanupExistingCluster()
+			cleanupExistingCluster(cli)
 		}
 	default:
 		{
@@ -60,7 +60,7 @@ func manageExistingCluster(cli cli.Cli) error {
 	return nil
 }
 
-func cleanupExistingCluster() error {
+func cleanupExistingCluster(cli cli.Cli) error {
 	confirmCleanup, _, err := util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
 		"delete all your cells and data)", false)
 	if err != nil {
@@ -80,7 +80,7 @@ func cleanupExistingCluster() error {
 			util.ExitWithErrorMessage("failed to select option", err)
 		}
 		removeHpa := false
-		hpaEnabled, err := runtime.IsHpaEnabled()
+		hpaEnabled, err := cli.Runtime().IsHpaEnabled()
 		if hpaEnabled {
 			removeHpa, _, err = util.GetYesOrNoFromUser("Remove hpa", false)
 			if err != nil {

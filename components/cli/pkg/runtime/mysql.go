@@ -25,21 +25,21 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func AddMysql(artifactsPath string, isPersistentVolume bool) error {
-	base := buildArtifactsPath(Mysql, artifactsPath)
-	for _, confMap := range buildMysqlConfigMaps(artifactsPath) {
+func (runtime *CelleryRuntime) InstallMysql(isPersistentVolume bool) error {
+	base := buildArtifactsPath(Mysql, runtime.artifactsPath)
+	for _, confMap := range buildMysqlConfigMaps(runtime.artifactsPath) {
 		if err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system"); err != nil {
 			return err
 		}
 	}
 	if isPersistentVolume {
-		for _, persistentVolumeYaml := range buildPersistentVolumePaths(artifactsPath) {
+		for _, persistentVolumeYaml := range buildPersistentVolumePaths(runtime.artifactsPath) {
 			if err := kubernetes.ApplyFileWithNamespace(persistentVolumeYaml, "cellery-system"); err != nil {
 				return err
 			}
 		}
 	}
-	if err := kubernetes.ApplyFileWithNamespace(buildMysqlDeploymentPath(artifactsPath, isPersistentVolume), "cellery-system"); err != nil {
+	if err := kubernetes.ApplyFileWithNamespace(buildMysqlDeploymentPath(runtime.artifactsPath, isPersistentVolume), "cellery-system"); err != nil {
 		return err
 	}
 	if err := kubernetes.WaitForDeployment("available", 900,
@@ -52,8 +52,8 @@ func AddMysql(artifactsPath string, isPersistentVolume bool) error {
 	return nil
 }
 
-func updateMysqlCredentials(dbUserName, dbPassword, dbHost, artifactsPath string) error {
-	for _, file := range buildMysqlConfigFilesPath(artifactsPath) {
+func (runtime *CelleryRuntime) UpdateMysqlCredentials(dbUserName, dbPassword, dbHost string) error {
+	for _, file := range buildMysqlConfigFilesPath(runtime.artifactsPath) {
 		if err := util.ReplaceInFile(file, "DATABASE_USERNAME", dbUserName, -1); err != nil {
 			return err
 		}
@@ -67,11 +67,11 @@ func updateMysqlCredentials(dbUserName, dbPassword, dbHost, artifactsPath string
 	return nil
 }
 
-func updateInitSql(dbUserName, dbPassword, artifactsPath string) error {
-	if err := util.ReplaceInFile(buildInitSqlPath(artifactsPath), "DATABASE_USERNAME", dbUserName, -1); err != nil {
+func (runtime *CelleryRuntime) UpdateInitSql(dbUserName, dbPassword string) error {
+	if err := util.ReplaceInFile(buildInitSqlPath(runtime.artifactsPath), "DATABASE_USERNAME", dbUserName, -1); err != nil {
 		return err
 	}
-	if err := util.ReplaceInFile(buildInitSqlPath(artifactsPath), "DATABASE_PASSWORD", dbPassword, -1); err != nil {
+	if err := util.ReplaceInFile(buildInitSqlPath(runtime.artifactsPath), "DATABASE_PASSWORD", dbPassword, -1); err != nil {
 		return err
 	}
 	return nil

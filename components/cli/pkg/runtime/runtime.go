@@ -19,15 +19,12 @@
 package runtime
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/mattbaird/jsonpatch"
 
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
@@ -49,15 +46,30 @@ func SetCompleteSetup(completeSetup bool) {
 }
 
 type Runtime interface {
-	Create() error
-	IsComponentEnabled(component SystemComponent) (bool, error)
 	SetArtifactsPath(artifactsPath string)
-	SetPersistentVolume(isPersistentVolume bool)
-	SetHasNfsStorage(hasNfsStorage bool)
-	SetLoadBalancerIngressMode(isLoadBalancerIngressMode bool)
-	SetNodePortIpAddress(nodePortIpAddress string)
-	SetDb(db MysqlDb)
-	SetNfs(nfs Nfs)
+	UpdateNfsServerDetails(ipAddress, fileShare string) error
+	UpdateMysqlCredentials(dbUserName, dbPassword, dbHost string) error
+	CreatePersistentVolumeDirs() error
+	UpdateInitSql(dbUserName, dbPassword string) error
+	IsGcpRuntime() bool
+	CreateCelleryNameSpace() error
+	ApplyIstioCrds() error
+	InstallIngressNginx(isLoadBalancerIngressMode bool) error
+	InstallIstio() error
+	ApplyKnativeCrds() error
+	InstallController() error
+	InstallMysql(isPersistentVolume bool) error
+	CreateConfigMaps() error
+	AddApim(isPersistentVolume bool) error
+	AddObservability() error
+	AddIdp() error
+	UpdateNodePortIpAddress(nodePortIpAddress string) error
+	InstallKnativeServing() error
+	CreatePersistentVolume(hasNfs bool) error
+	IsHpaEnabled() (bool, error)
+	IsComponentEnabled(component SystemComponent) (bool, error)
+	Update(apiManagement, observability, knative, hpa Selection) error
+	WaitFor(checkKnative, hpaEnabled bool) error
 }
 
 type CelleryRuntime struct {
@@ -67,7 +79,6 @@ type CelleryRuntime struct {
 	isLoadBalancerIngressMode bool
 	nfs                       Nfs
 	db                        MysqlDb
-	nodePortIpAddress         string
 }
 
 // NewCelleryRuntime returns a CelleryRuntime instance.
@@ -83,184 +94,27 @@ func (runtime *CelleryRuntime) SetArtifactsPath(artifactsPath string) {
 	runtime.artifactsPath = artifactsPath
 }
 
-func (runtime *CelleryRuntime) SetPersistentVolume(isPersistentVolume bool) {
-	runtime.isPersistentVolume = isPersistentVolume
+func (runtime *CelleryRuntime) CreatePersistentVolumeDirs() error {
+	if err := createFoldersRequiredForMysqlPvc(); err != nil {
+		return err
+	}
+	return createFoldersRequiredForApimPvc()
 }
 
-func (runtime *CelleryRuntime) SetHasNfsStorage(hasNfsStorage bool) {
-	runtime.hasNfsStorage = hasNfsStorage
-}
-
-func (runtime *CelleryRuntime) SetLoadBalancerIngressMode(isLoadBalancerIngressMode bool) {
-	runtime.isLoadBalancerIngressMode = isLoadBalancerIngressMode
-}
-
-func (runtime *CelleryRuntime) SetNodePortIpAddress(nodePortIpAddress string) {
-	runtime.nodePortIpAddress = nodePortIpAddress
-}
-
-func (runtime *CelleryRuntime) SetDb(db MysqlDb) {
-	runtime.db = db
-}
-
-func (runtime *CelleryRuntime) SetNfs(nfs Nfs) {
-	runtime.nfs = nfs
-}
-
-func (runtime *CelleryRuntime) Create() error {
-	spinner := util.StartNewSpinner("Creating cellery runtime")
-	if runtime.isPersistentVolume && !runtime.hasNfsStorage {
-		createFoldersRequiredForMysqlPvc()
-		createFoldersRequiredForApimPvc()
-	}
-	dbHostName := constants.MysqlHostNameForExistingCluster
-	dbUserName := constants.CellerySqlUserName
-	dbPassword := constants.CellerySqlPassword
-	if runtime.hasNfsStorage {
-		dbHostName = runtime.db.DbHostName
-		dbUserName = runtime.db.DbUserName
-		dbPassword = runtime.db.DbPassword
-		updateNfsServerDetails(runtime.nfs.NfsServerIp, runtime.nfs.FileShare, runtime.artifactsPath)
-	}
-	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, runtime.artifactsPath); err != nil {
-		spinner.Stop(false)
-		return fmt.Errorf("error updating mysql credentials: %v", err)
-	}
-	if err := updateInitSql(dbUserName, dbPassword, runtime.artifactsPath); err != nil {
-		spinner.Stop(false)
-		return fmt.Errorf("error updating mysql init script: %v", err)
-	}
-
-	if runtime.isPersistentVolume && !IsGcpRuntime() {
-		nodeName, err := kubernetes.GetMasterNodeName()
-		if err != nil {
-			return fmt.Errorf("error getting master node name: %v", err)
-		}
-		if err := kubernetes.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
-			return fmt.Errorf("error applying master node lable: %v", err)
-		}
-	}
-	// Setup Cellery namespace
-	spinner.SetNewAction("Setting up cellery namespace")
-	if err := CreateCelleryNameSpace(); err != nil {
-		return fmt.Errorf("error creating cellery namespace: %v", err)
-	}
-
-	// Apply Istio CRDs
-	spinner.SetNewAction("Applying istio crds")
-	if err := ApplyIstioCrds(runtime.artifactsPath); err != nil {
-		return fmt.Errorf("error creating istio crds: %v", err)
-	}
-	// Apply nginx resources
-	spinner.SetNewAction("Creating ingress-nginx")
-	if err := installNginx(runtime.artifactsPath, runtime.isLoadBalancerIngressMode); err != nil {
-		return fmt.Errorf("error installing ingress-nginx: %v", err)
-	}
-	// sleep for few seconds - this is to make sure that the CRDs are properly applied
-	time.Sleep(20 * time.Second)
-
-	// Enabling Istio injection
-	spinner.SetNewAction("Enabling istio injection")
-	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
-		true); err != nil {
-		return fmt.Errorf("error enabling istio injection: %v", err)
-	}
-
-	// Install istio
-	spinner.SetNewAction("Installing istio")
-	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return fmt.Errorf("error installing istio: %v", err)
-	}
-
-	// Apply only knative serving CRD's
-	if err := ApplyKnativeCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return fmt.Errorf("error installing knative serving: %v", err)
-	}
-
-	// Apply controller CRDs
-	spinner.SetNewAction("Creating controller")
-	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return fmt.Errorf("error creating cellery controller: %v", err)
-	}
-
-	spinner.SetNewAction("Configuring mysql")
-	if err := AddMysql(runtime.artifactsPath, runtime.isPersistentVolume); err != nil {
-		return fmt.Errorf("error configuring mysql: %v", err)
-	}
-
-	spinner.SetNewAction("Creating ConfigMaps")
-	if err := CreateGlobalGatewayConfigMaps(runtime.artifactsPath); err != nil {
+func (runtime *CelleryRuntime) CreateConfigMaps() error {
+	if err := createGlobalGatewayConfigMaps(runtime.artifactsPath); err != nil {
 		return fmt.Errorf("error creating gateway configmaps: %v", err)
 	}
-	if err := CreateObservabilityConfigMaps(runtime.artifactsPath); err != nil {
+	if err := createObservabilityConfigMaps(runtime.artifactsPath); err != nil {
 		return fmt.Errorf("error creating observability configmaps: %v", err)
 	}
-	if err := CreateIdpConfigMaps(runtime.artifactsPath); err != nil {
+	if err := createIdpConfigMaps(runtime.artifactsPath); err != nil {
 		return fmt.Errorf("error creating idp configmaps: %v", err)
 	}
-
-	if runtime.isPersistentVolume {
-		spinner.SetNewAction("Creating Persistent Volume")
-		if err := createPersistentVolume(runtime.artifactsPath, runtime.hasNfsStorage); err != nil {
-			return fmt.Errorf("error creating persistent volume: %v", err)
-		}
-	}
-
-	if isCompleteSetup {
-		spinner.SetNewAction("Adding apim")
-		if err := addApim(runtime.artifactsPath, runtime.isPersistentVolume); err != nil {
-			return fmt.Errorf("error creating apim deployment: %v", err)
-		}
-		spinner.SetNewAction("Adding observability")
-		if err := addObservability(runtime.artifactsPath); err != nil {
-			return fmt.Errorf("error creating observability deployment: %v", err)
-		}
-	} else {
-		spinner.SetNewAction("Adding idp")
-		if err := addIdp(runtime.artifactsPath); err != nil {
-			return fmt.Errorf("error creating idp deployment: %v", err)
-		}
-	}
-	if !runtime.isLoadBalancerIngressMode {
-		if runtime.nodePortIpAddress != "" {
-			spinner.SetNewAction("Adding node port ip address")
-			originalIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
-			if err != nil {
-				return fmt.Errorf("error getting original ingress-nginx: %v", err)
-			}
-			updatedIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
-			if err != nil {
-				return fmt.Errorf("error getting updated ingress-nginx: %v", err)
-			}
-			updatedIngressNginx.Spec.ExternalIPs = append(updatedIngressNginx.Spec.ExternalIPs, runtime.nodePortIpAddress)
-
-			originalData, err := json.Marshal(originalIngressNginx)
-			if err != nil {
-				return fmt.Errorf("error marshalling original data: %v", err)
-			}
-			desiredData, err := json.Marshal(updatedIngressNginx)
-			if err != nil {
-				return fmt.Errorf("error marshalling desired data: %v", err)
-			}
-			patch, err := jsonpatch.CreatePatch(originalData, desiredData)
-			if err != nil {
-				return fmt.Errorf("error creating json patch: %v", err)
-			}
-			if len(patch) == 0 {
-				return fmt.Errorf("no changes in ingress-nginx to apply")
-			}
-			patchBytes, err := json.Marshal(patch)
-			if err != nil {
-				return fmt.Errorf("error marshalling json patch: %v", err)
-			}
-			kubernetes.JsonPatchWithNameSpace("svc", "ingress-nginx", string(patchBytes), "ingress-nginx")
-		}
-	}
-	spinner.Stop(true)
 	return nil
 }
 
-func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
+func (runtime *CelleryRuntime) Update(apiManagement, observability, knative, hpa Selection) error {
 	spinner := util.StartNewSpinner("Updating cellery runtime")
 	var err error
 	observabilityEnabled, err := IsObservabilityEnabled()
@@ -283,7 +137,7 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 				spinner.Stop(false)
 				return err
 			}
-			err = AddComponent(ApiManager)
+			err = runtime.AddComponent(ApiManager)
 			if err != nil {
 				spinner.Stop(false)
 				return err
@@ -294,7 +148,7 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 				spinner.Stop(false)
 				return err
 			}
-			err = AddComponent(IdentityProvider)
+			err = runtime.AddComponent(IdentityProvider)
 			if err != nil {
 				spinner.Stop(false)
 				return err
@@ -302,7 +156,7 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 		}
 		// Add observability if there was a change to apim and there was already observability running before that
 		if observabilityEnabled {
-			err = AddComponent(Observability)
+			err = runtime.AddComponent(Observability)
 			if err != nil {
 				spinner.Stop(false)
 				return err
@@ -311,7 +165,7 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 	}
 	if observability != NoChange {
 		if observability == Enable {
-			err = AddComponent(Observability)
+			err = runtime.AddComponent(Observability)
 			if err != nil {
 				spinner.Stop(false)
 				return err
@@ -326,7 +180,7 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 	}
 	if knative != NoChange {
 		if knative == Enable {
-			err = AddComponent(ScaleToZero)
+			err = runtime.AddComponent(ScaleToZero)
 			if err != nil {
 				spinner.Stop(false)
 				return err
@@ -341,7 +195,7 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 	}
 	if hpa != NoChange {
 		if hpa == Enable {
-			err = AddComponent(HPA)
+			err = runtime.AddComponent(HPA)
 			if err != nil {
 				spinner.Stop(false)
 				return err
@@ -358,16 +212,16 @@ func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 	return nil
 }
 
-func AddComponent(component SystemComponent) error {
+func (runtime *CelleryRuntime) AddComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return addApim(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts), false)
+		return runtime.AddApim(false)
 	case IdentityProvider:
-		return addIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return runtime.AddIdp()
 	case Observability:
-		return addObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return runtime.AddObservability()
 	case ScaleToZero:
-		return InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return runtime.InstallKnativeServing()
 	case HPA:
 		return InstallHPA(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
 	default:
@@ -401,28 +255,46 @@ func (runtime *CelleryRuntime) IsComponentEnabled(component SystemComponent) (bo
 	case ScaleToZero:
 		return IsKnativeEnabled()
 	case HPA:
-		return IsHpaEnabled()
+		return runtime.IsHpaEnabled()
 	default:
 		return false, fmt.Errorf("unknown system componenet %q", component)
 	}
 }
 
-func createFoldersRequiredForMysqlPvc() {
+func createFoldersRequiredForMysqlPvc() error {
 	// Backup folders
-	util.RenameFile(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql),
-		filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql)+"-old")
+	if err := util.RemoveDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.MySql) + "-old"); err != nil {
+		return err
+	}
+	if err := util.RenameFile(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql),
+		filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql)+"-old"); err != nil {
+		return err
+	}
 	// Create folders required by the mysql PVC
-	util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql))
+	if err := util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql)); err != nil {
+		return err
+	}
+	return nil
 }
 
-func createFoldersRequiredForApimPvc() {
+func createFoldersRequiredForApimPvc() error {
 	// Backup folders
-	util.RenameFile(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
+	if err := util.RemoveDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP,
+		constants.CELLERY, constants.ApimRepositoryDeploymentServer) + "-old"); err != nil {
+		return err
+	}
+	if err := util.RenameFile(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
 		constants.ApimRepositoryDeploymentServer), filepath.Join(constants.RootDir, constants.VAR, constants.TMP,
-		constants.CELLERY, constants.ApimRepositoryDeploymentServer)+"-old")
+		constants.CELLERY, constants.ApimRepositoryDeploymentServer)+"-old"); err != nil {
+		return err
+	}
 	// Create folders required by the APIM PVC
-	util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
-		constants.ApimRepositoryDeploymentServer))
+	if err := util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.ApimRepositoryDeploymentServer)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func buildArtifactsPath(component SystemComponent, artifactsPath string) string {
@@ -446,7 +318,7 @@ func buildArtifactsPath(component SystemComponent, artifactsPath string) string 
 	}
 }
 
-func IsGcpRuntime() bool {
+func (runtime *CelleryRuntime) IsGcpRuntime() bool {
 	nodes, err := kubernetes.GetNodes()
 	if err != nil {
 		util.ExitWithErrorMessage("failed to check if runtime is gcp", err)
@@ -460,7 +332,7 @@ func IsGcpRuntime() bool {
 	return false
 }
 
-func WaitFor(checkKnative, hpaEnabled bool) {
+func (runtime *CelleryRuntime) WaitFor(checkKnative, hpaEnabled bool) error {
 	spinner := util.StartNewSpinner("Checking cluster status...")
 	wtCluster, err := waitingTimeCluster()
 	if err != nil {
@@ -519,6 +391,7 @@ func WaitFor(checkKnative, hpaEnabled bool) {
 	}
 	spinner.SetNewAction("Runtime status (Cellery)...OK")
 	spinner.Stop(true)
+	return nil
 }
 
 func waitingTimeCluster() (time.Duration, error) {

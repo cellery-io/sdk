@@ -25,7 +25,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
-func ApplyLable(itemType, itemName, labelName string, overWrite bool) error {
+func (kubeCli *CelleryKubeCli) ApplyLabel(itemType, itemName, labelName string, overWrite bool) error {
 	var cmd *exec.Cmd
 	if overWrite {
 		cmd = exec.Command(

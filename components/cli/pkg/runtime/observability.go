@@ -26,8 +26,8 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func addObservability(artifactsPath string) error {
-	for _, v := range buildObservabilityYamlPaths(artifactsPath) {
+func (runtime *CelleryRuntime) AddObservability() error {
+	for _, v := range buildObservabilityYamlPaths(runtime.artifactsPath) {
 		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err
@@ -59,7 +59,7 @@ func IsObservabilityEnabled() (bool, error) {
 	return enabled, nil
 }
 
-func CreateObservabilityConfigMaps(artifactsPath string) error {
+func createObservabilityConfigMaps(artifactsPath string) error {
 	for _, confMap := range buildObservabilityConfigMaps(artifactsPath) {
 		err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system")
 		if err != nil {

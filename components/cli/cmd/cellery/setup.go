@@ -38,7 +38,7 @@ func newSetupCommand(cli cli.Cli) *cobra.Command {
 	cmd.AddCommand(
 		newSetupCreateCommand(cli),
 		newSetupCleanupCommand(),
-		newSetupModifyCommand(),
+		newSetupModifyCommand(cli),
 		newSetupListCommand(cli),
 		newSetupSwitchCommand(cli),
 		newSetupStatusCommand(cli),

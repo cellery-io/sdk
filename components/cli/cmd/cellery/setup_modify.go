@@ -24,6 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
@@ -38,7 +39,7 @@ var observabilityChange = runtime.NoChange
 var scaleToZeroChange = runtime.NoChange
 var hpaChange = runtime.NoChange
 
-func newSetupModifyCommand() *cobra.Command {
+func newSetupModifyCommand(cli cli.Cli) *cobra.Command {
 	var apimgt = ""
 	var observability = ""
 	var scaleToZero = ""
@@ -48,7 +49,7 @@ func newSetupModifyCommand() *cobra.Command {
 		Short: "Modify Cellery runtime",
 		Args:  cobra.NoArgs,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if runtime.IsGcpRuntime() {
+			if cli.Runtime().IsGcpRuntime() {
 				if strings.TrimSpace(hpa) != "" {
 					fmt.Printf("HPA cannot be changed in gcp runtime")
 					hpa = ""
@@ -76,8 +77,12 @@ func newSetupModifyCommand() *cobra.Command {
 			scaleToZeroChange = convertToSelection(scaleToZero)
 			hpaChange = convertToSelection(hpa)
 			// Check the user inputs against the current runtime
-			validateRuntime()
-			setup.RunSetupModify(apimgtChange, observabilityChange, scaleToZeroChange, hpaChange)
+			if err := validateRuntime(cli); err != nil {
+				util.ExitWithErrorMessage("Cellery setup modify command failed due to runtime validation failure", err)
+			}
+			if err := setup.RunSetupModify(cli, apimgtChange, observabilityChange, scaleToZeroChange, hpaChange); err != nil {
+				util.ExitWithErrorMessage("Cellery setup modify command failed", err)
+			}
 		},
 		Example: "  cellery setup modify --apim=enable --observability=disable",
 	}
@@ -97,13 +102,13 @@ func convertToSelection(change string) runtime.Selection {
 	return runtime.NoChange
 }
 
-func validateRuntime() {
+func validateRuntime(cli cli.Cli) error {
 	var err error
 	// If user's desired apim change already exists in the runtime do not change apim behavior
 	if apimgtChange != runtime.NoChange {
 		apimEnabled, err = runtime.IsApimEnabled()
 		if err != nil {
-			util.ExitWithErrorMessage("Failed to set flag for apim", err)
+			return fmt.Errorf("failed to set flag for apim, %v", err)
 		}
 		if (apimEnabled && apimgtChange == runtime.Enable) || (!apimEnabled && apimgtChange == runtime.Disable) {
 			apimgtChange = runtime.NoChange
@@ -113,7 +118,7 @@ func validateRuntime() {
 	if observabilityChange != runtime.NoChange {
 		observabilityEnabled, err = runtime.IsObservabilityEnabled()
 		if err != nil {
-			util.ExitWithErrorMessage("Failed to set flag for observability", err)
+			return fmt.Errorf("failed to set flag for observability, %v", err)
 		}
 		if (observabilityEnabled && observabilityChange == runtime.Enable) || (!observabilityEnabled &&
 			observabilityChange == runtime.Disable) {
@@ -124,7 +129,7 @@ func validateRuntime() {
 	if scaleToZeroChange != runtime.NoChange {
 		scaleToZeroEnabled, err = runtime.IsKnativeEnabled()
 		if err != nil {
-			util.ExitWithErrorMessage("Failed to set flag for scale to zero", err)
+			return fmt.Errorf("failed to set flag for scale to zero, %v", err)
 		}
 		if (scaleToZeroEnabled && scaleToZeroChange == runtime.Enable) || (!scaleToZeroEnabled &&
 			scaleToZeroChange == runtime.Disable) {
@@ -133,15 +138,16 @@ func validateRuntime() {
 	}
 	// If user's desired hpa change already exists in the runtime do not change hpa behavior
 	if hpaChange != runtime.NoChange {
-		hpaEnabled, err = runtime.IsHpaEnabled()
+		hpaEnabled, err = cli.Runtime().IsHpaEnabled()
 		if err != nil {
-			util.ExitWithErrorMessage("Failed to set flag for hpa", err)
+			return fmt.Errorf("failed to set flag for hpa, %v", err)
 		}
 		if (hpaEnabled && hpaChange == runtime.Enable) || (!hpaEnabled &&
 			hpaChange == runtime.Disable) {
 			hpaChange = runtime.NoChange
 		}
 	}
+	return nil
 }
 
 func isValidInput(change string) bool {

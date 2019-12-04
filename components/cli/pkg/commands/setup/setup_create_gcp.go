@@ -20,42 +20,25 @@ package setup
 
 import (
 	"fmt"
-	"path/filepath"
-	"time"
 
 	"github.com/manifoldco/promptui"
 
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
 	gcpPlatform "cellery.io/cellery/components/cli/pkg/gcp"
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/runtime"
-	"cellery.io/cellery/components/cli/pkg/runtime/gcp"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-var accountName string
+//var accountName string
 
-func RunSetupCreateGcp(isCompleteSetup bool) error {
-	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
-	gcpSpinner := util.StartNewSpinner("Creating Cellery runtime on celleryGcp")
+func RunSetupCreateGcp(cli cli.Cli, isCompleteSetup bool) error {
 	platform, err := gcpPlatform.NewGcp()
 	if err != nil {
 		return fmt.Errorf("failed to initialize celleryGcp platform, %v", err)
 	}
-	err = platform.Create()
-	if err != nil {
-		gcpSpinner.Stop(false)
-	}
-	gcpSpinner.SetNewAction("Installing cellery runtime")
-
-	if isCompleteSetup {
-		createCompleteGcpRuntime()
-	} else {
-		createMinimalGcpRuntime()
-	}
-	runtime.WaitFor(true, false)
-	return nil
+	return RunSetupCreate(cli, platform, isCompleteSetup, true, true,
+		true, runtime.Nfs{}, runtime.MysqlDb{}, "")
 }
 
 func createGcp(cli cli.Cli) error {
@@ -83,119 +66,6 @@ func createGcp(cli cli.Cli) error {
 	if value == constants.COMPLETE {
 		isCompleteSelected = true
 	}
-	RunSetupCreateGcp(isCompleteSelected)
+	RunSetupCreateGcp(cli, isCompleteSelected)
 	return nil
-}
-
-func createMinimalGcpRuntime() {
-	// Deploy cellery runtime
-	deployMinimalCelleryRuntime()
-	util.RemoveDir(filepath.Join(util.UserHomeCelleryDir(), constants.K8sArtifacts))
-}
-
-func createCompleteGcpRuntime() error {
-	// Deploy cellery runtime
-	deployCompleteCelleryRuntime()
-	util.RemoveDir(filepath.Join(util.UserHomeCelleryDir(), constants.K8sArtifacts))
-	return nil
-}
-
-func createController() error {
-	// Give permission to the user
-	if err := kubernetes.CreateClusterRoleBinding("cluster-admin", accountName); err != nil {
-		return fmt.Errorf("error creating cluster role binding, %v", err)
-	}
-	// Setup Cellery namespace
-	if err := runtime.CreateCelleryNameSpace(); err != nil {
-		return fmt.Errorf("error creating cellery namespace, %v", err)
-	}
-	// Apply Istio CRDs
-	if err := runtime.ApplyIstioCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return fmt.Errorf("error applying istio crds, %v", err)
-	}
-	// sleep for few seconds - this is to make sure that the CRDs are properly applied
-	time.Sleep(20 * time.Second)
-	// Enabling Istio injection
-	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
-		false); err != nil {
-		return err
-	}
-	// Install istio
-	if err := runtime.InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return err
-	}
-	// Install knative serving
-	if err := runtime.InstallKnativeServing(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return err
-	}
-	// Apply controller CRDs
-	if err := runtime.InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func deployMinimalCelleryRuntime() error {
-	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
-
-	createController()
-	createAllDeploymentArtifacts()
-	createIdpGcp(errorDeployingCelleryRuntime)
-	createNGinx(errorDeployingCelleryRuntime)
-
-	return nil
-}
-
-func deployCompleteCelleryRuntime() {
-	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
-
-	createController()
-	createAllDeploymentArtifacts()
-
-	//Create gateway deployment and the service
-	if err := gcp.AddApim(); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
-	}
-
-	// Create observability
-	if err := gcp.AddObservability(); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
-	}
-	//Create NGinx
-	createNGinx(errorDeployingCelleryRuntime)
-}
-
-func createIdpGcp(errorDeployingCelleryRuntime string) {
-	// Create IDP deployment and the service
-	if err := gcp.CreateIdp(); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
-	}
-}
-
-func createNGinx(errorMessage string) {
-	// Install nginx-ingress for control plane ingress
-	if err := gcp.InstallNginx(); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
-	}
-}
-
-func createAllDeploymentArtifacts() {
-	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
-
-	// Create apim NFS volumes and volume claims
-	if err := gcp.CreatePersistentVolume(); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
-	}
-	// Create the gw config maps
-	if err := gcp.CreateGlobalGatewayConfigMaps(); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
-	}
-	// Create Observability configmaps
-	if err := gcp.CreateObservabilityConfigMaps(); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
-	}
-	// Create the IDP config maps
-	if err := gcp.CreateIdpConfigMaps(); err != nil {
-		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
-	}
 }

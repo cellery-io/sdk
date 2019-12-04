@@ -75,7 +75,7 @@ func RunSetup(cli cli.Cli) {
 				util.ExitWithErrorMessage("Failed check if knative is enabled", err)
 			}
 			enableKnative = !knativeEnabled
-			hpaEnabled, err = runtime.IsHpaEnabled()
+			hpaEnabled, err = cli.Runtime().IsHpaEnabled()
 			if err != nil {
 				util.ExitWithErrorMessage("Failed check if hpa is enabled", err)
 			}

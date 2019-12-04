@@ -66,7 +66,7 @@ func newSetupCreateOnExistingClusterCommand(cli cli.Cli, isComplete *bool) *cobr
 				dbPassword)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := setup.RunSetupCreateOnExistingCluster(cli, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode,
+			if err := setup.RunSetupCreate(cli, nil, false, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode,
 				nfs, db, nodePortIpAddress); err != nil {
 				util.ExitWithErrorMessage("Cellery setup create existing command failed", err)
 			}

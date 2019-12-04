@@ -25,8 +25,8 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func createPersistentVolume(artifactsPath string, hasNfs bool) error {
-	for _, v := range buildPersistentVolumeYamlPaths(artifactsPath, hasNfs) {
+func (runtime *CelleryRuntime) CreatePersistentVolume(hasNfs bool) error {
+	for _, v := range buildPersistentVolumeYamlPaths(runtime.artifactsPath, hasNfs) {
 		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 		if err != nil {
 			return err
@@ -35,8 +35,8 @@ func createPersistentVolume(artifactsPath string, hasNfs bool) error {
 	return nil
 }
 
-func updateNfsServerDetails(ipAddress, fileShare, artifactsPath string) error {
-	for _, v := range buildPersistentVolumeYamlPaths(artifactsPath, true) {
+func (runtime *CelleryRuntime) UpdateNfsServerDetails(ipAddress, fileShare string) error {
+	for _, v := range buildPersistentVolumeYamlPaths(runtime.artifactsPath, true) {
 		if err := util.ReplaceInFile(v, "NFS_SERVER_IP", ipAddress, -1); err != nil {
 			util.ExitWithErrorMessage("Error updating file", err)
 		}

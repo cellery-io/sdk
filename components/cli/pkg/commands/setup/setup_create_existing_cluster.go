@@ -20,8 +20,6 @@ package setup
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"regexp"
 
 	"github.com/fatih/color"
@@ -97,31 +95,13 @@ func createOnExistingCluster(cli cli.Cli) error {
 				"nodeport ip address, received %s", nodePortIpAddress))
 		}
 	}
-
 	if err != nil {
 		return fmt.Errorf("failed to get user input: %v", err)
 	}
-	return RunSetupCreateOnExistingCluster(cli, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db, nodePortIpAddress)
-}
-
-func RunSetupCreateOnExistingCluster(cli cli.Cli, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
-	nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) error {
-	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
-	os.RemoveAll(artifactsPath)
-	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
-
-	cli.Runtime().SetArtifactsPath(artifactsPath)
-	cli.Runtime().SetPersistentVolume(isPersistentVolume)
-	cli.Runtime().SetHasNfsStorage(hasNfsStorage)
-	cli.Runtime().SetLoadBalancerIngressMode(isLoadBalancerIngressMode)
-	cli.Runtime().SetNfs(nfs)
-	cli.Runtime().SetDb(db)
-	cli.Runtime().SetNodePortIpAddress(nodePortIpAddress)
-
-	if err := cli.Runtime().Create(); err != nil {
-		return fmt.Errorf("failed to deploy cellery runtime, %v", err)
+	err = RunSetupCreate(cli, nil, isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db, nodePortIpAddress)
+	if err != nil {
+		util.ExitWithErrorMessage("Cellery setup create existing command failed, %v", err)
 	}
-	runtime.WaitFor(false, false)
 	return nil
 }
 

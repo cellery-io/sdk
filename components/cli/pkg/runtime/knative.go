@@ -27,8 +27,8 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func InstallKnativeServing(artifactsPath string) error {
-	for _, v := range buildKnativeYamlPaths(artifactsPath) {
+func (runtime *CelleryRuntime) InstallKnativeServing() error {
+	for _, v := range buildKnativeYamlPaths(runtime.artifactsPath) {
 		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			time.Sleep(10 * time.Second)
@@ -41,8 +41,8 @@ func InstallKnativeServing(artifactsPath string) error {
 	return nil
 }
 
-func ApplyKnativeCrds(artifactsPath string) error {
-	for _, v := range buildKnativeCrdsYamlPaths(artifactsPath) {
+func (runtime *CelleryRuntime) ApplyKnativeCrds() error {
+	for _, v := range buildKnativeCrdsYamlPaths(runtime.artifactsPath) {
 		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err

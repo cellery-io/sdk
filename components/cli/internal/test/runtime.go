@@ -49,32 +49,16 @@ func (runtime *MockRuntime) Create() error {
 	return nil
 }
 
+func (runtime *MockRuntime) Update(apiManagement, observability, knative, hpa runtime.Selection) error {
+	return nil
+}
+
+func (runtime *MockRuntime) WaitFor(checkKnative, hpaEnabled bool) error {
+	return nil
+}
+
 func (runtime *MockRuntime) SetArtifactsPath(artifactsPath string) {
 	runtime.artifactsPath = artifactsPath
-}
-
-func (runtime *MockRuntime) SetPersistentVolume(isPersistentVolume bool) {
-	runtime.isPersistentVolume = isPersistentVolume
-}
-
-func (runtime *MockRuntime) SetHasNfsStorage(hasNfsStorage bool) {
-	runtime.hasNfsStorage = hasNfsStorage
-}
-
-func (runtime *MockRuntime) SetLoadBalancerIngressMode(isLoadBalancerIngressMode bool) {
-	runtime.isLoadBalancerIngressMode = isLoadBalancerIngressMode
-}
-
-func (runtime *MockRuntime) SetNodePortIpAddress(nodePortIpAddress string) {
-	runtime.nodePortIpAddress = nodePortIpAddress
-}
-
-func (runtime *MockRuntime) SetDb(db runtime.MysqlDb) {
-	runtime.db = db
-}
-
-func (runtime *MockRuntime) SetNfs(nfs runtime.Nfs) {
-	runtime.nfs = nfs
 }
 
 func SetSysComponentStatus(status map[runtime.SystemComponent]bool) func(*MockRuntime) {
@@ -88,4 +72,85 @@ func (runtime *MockRuntime) IsComponentEnabled(component runtime.SystemComponent
 		return runtime.sysComponentStatus[component], nil
 	}
 	return false, fmt.Errorf("failed to check status of runtime")
+}
+
+func (runtime *MockRuntime) AddApim(isPersistentVolume bool) error {
+	return nil
+}
+
+func (runtime *MockRuntime) InstallController() error {
+	return nil
+}
+
+func (runtime *MockRuntime) IsHpaEnabled() (bool, error) {
+	return false, nil
+}
+
+func (runtime *MockRuntime) AddIdp() error {
+	return nil
+}
+
+func (runtime *MockRuntime) ApplyIstioCrds() error {
+	return nil
+
+}
+
+func (runtime *MockRuntime) InstallIstio() error {
+	return nil
+}
+
+func (runtime *MockRuntime) InstallKnativeServing() error {
+	return nil
+}
+
+func (runtime *MockRuntime) ApplyKnativeCrds() error {
+	return nil
+}
+
+func (runtime *MockRuntime) InstallMysql(isPersistentVolume bool) error {
+	return nil
+}
+
+func (runtime *MockRuntime) UpdateMysqlCredentials(dbUserName, dbPassword, dbHost string) error {
+	return nil
+}
+
+func (runtime *MockRuntime) UpdateInitSql(dbUserName, dbPassword string) error {
+	return nil
+}
+
+func (runtime *MockRuntime) CreateCelleryNameSpace() error {
+	return nil
+}
+
+func (runtime *MockRuntime) InstallIngressNginx(isLoadBalancerIngressMode bool) error {
+	return nil
+}
+
+func (runtime *MockRuntime) UpdateNodePortIpAddress(nodePortIpAddress string) error {
+	return nil
+}
+
+func (runtime *MockRuntime) AddObservability() error {
+	return nil
+}
+
+func (runtime *MockRuntime) CreatePersistentVolume(hasNfs bool) error {
+	return nil
+}
+
+func (runtime *MockRuntime) UpdateNfsServerDetails(ipAddress, fileShare string) error {
+	return nil
+}
+
+func (runtime *MockRuntime) CreatePersistentVolumeDirs() error {
+	return nil
+}
+
+func (runtime *MockRuntime) CreateConfigMaps() error {
+	return nil
+}
+
+func (runtime *MockRuntime) IsGcpRuntime() bool {
+	return false
 }

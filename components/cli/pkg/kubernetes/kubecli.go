@@ -53,6 +53,8 @@ type KubeCli interface {
 	GetContext() (string, error)
 	GetContexts() ([]byte, error)
 	UseContext(context string) error
+	GetMasterNodeName() (string, error)
+	ApplyLabel(itemType, itemName, labelName string, overWrite bool) error
 }
 
 type CelleryKubeCli struct {

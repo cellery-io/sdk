@@ -23,8 +23,8 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func InstallController(artifactsPath string) error {
-	for _, v := range buildControllerYamlPaths(artifactsPath) {
+func (runtime *CelleryRuntime) InstallController() error {
+	for _, v := range buildControllerYamlPaths(runtime.artifactsPath) {
 		err := kubernetes.ApplyFile(v)
 		if err != nil {
 			return err

@@ -46,7 +46,7 @@ func GetDeploymentNames(namespace string) ([]string, error) {
 	return strings.Split(string(out), " "), nil
 }
 
-func GetMasterNodeName() (string, error) {
+func (kubeCli *CelleryKubeCli) GetMasterNodeName() (string, error) {
 	cmd := exec.Command(constants.KubeCtl,
 		"get",
 		"node",
