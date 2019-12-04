@@ -44,8 +44,8 @@ func TestRunInit(t *testing.T) {
 	expectedContent, err := ioutil.ReadFile(filepath.Join("testdata", "expected", "foo.bal"))
 
 	tests := []struct {
-		name    string
-		project string
+		name      string
+		project   string
 		isProject bool
 	}{
 		{

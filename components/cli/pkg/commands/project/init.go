@@ -30,7 +30,6 @@ import (
 	"github.com/oxequa/interact"
 
 	"cellery.io/cellery/components/cli/cli"
-
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 

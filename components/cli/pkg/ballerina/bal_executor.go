@@ -39,7 +39,7 @@ type BalExecutor interface {
 	Build(fileName string, args []string) error
 	Run(fileName string, args []string, envVars []*EnvironmentVariable) error
 	Test(fileName string, args []string, envVars []*EnvironmentVariable) error
-	Init(workingDir string, projectName string, moduleName string) error
+	Init(workingDir, projectName, moduleName string) error
 	Version() (string, error)
 	ExecutablePath() (string, error)
 }
@@ -137,7 +137,7 @@ func (balExecutor *LocalBalExecutor) Run(fileName string, args []string,
 }
 
 // Init initializes a ballerina project in the current working directory
-func (balExecutor *LocalBalExecutor) Init(workingDir string, balProjectName string, balModuleName string) error {
+func (balExecutor *LocalBalExecutor) Init(workingDir, balProjectName, balModuleName string) error {
 	cmd := exec.Command(ballerina, "new", balProjectName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

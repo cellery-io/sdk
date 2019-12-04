@@ -275,7 +275,7 @@ func (balExecutor *DockerBalExecutor) ExecutablePath() (string, error) {
 	return "", nil
 }
 
-func (balExecutor *DockerBalExecutor) Init(workingDir string, projectName string, moduleName string) error {
+func (balExecutor *DockerBalExecutor) Init(workingDir, projectName, moduleName string) error {
 	cliUser, err := user.Current()
 	if err != nil {
 		return fmt.Errorf("error while retrieving the current user, %v", err)
