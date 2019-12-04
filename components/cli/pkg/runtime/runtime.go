@@ -39,12 +39,6 @@ const (
 	Disable
 )
 
-var isCompleteSetup = false
-
-func SetCompleteSetup(completeSetup bool) {
-	isCompleteSetup = completeSetup
-}
-
 type Runtime interface {
 	SetArtifactsPath(artifactsPath string)
 	UpdateNfsServerDetails(ipAddress, fileShare string) error
@@ -95,10 +89,16 @@ func (runtime *CelleryRuntime) SetArtifactsPath(artifactsPath string) {
 }
 
 func (runtime *CelleryRuntime) CreatePersistentVolumeDirs() error {
-	if err := createFoldersRequiredForMysqlPvc(); err != nil {
+	// Create folders required by the mysql PVC
+	if err := util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql)); err != nil {
 		return err
 	}
-	return createFoldersRequiredForApimPvc()
+	// Create folders required by the APIM PVC
+	if err := util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
+		constants.ApimRepositoryDeploymentServer)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (runtime *CelleryRuntime) CreateConfigMaps() error {
@@ -259,42 +259,6 @@ func (runtime *CelleryRuntime) IsComponentEnabled(component SystemComponent) (bo
 	default:
 		return false, fmt.Errorf("unknown system componenet %q", component)
 	}
-}
-
-func createFoldersRequiredForMysqlPvc() error {
-	// Backup folders
-	if err := util.RemoveDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
-		constants.MySql) + "-old"); err != nil {
-		return err
-	}
-	if err := util.RenameFile(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql),
-		filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql)+"-old"); err != nil {
-		return err
-	}
-	// Create folders required by the mysql PVC
-	if err := util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY, constants.MySql)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func createFoldersRequiredForApimPvc() error {
-	// Backup folders
-	if err := util.RemoveDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP,
-		constants.CELLERY, constants.ApimRepositoryDeploymentServer) + "-old"); err != nil {
-		return err
-	}
-	if err := util.RenameFile(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
-		constants.ApimRepositoryDeploymentServer), filepath.Join(constants.RootDir, constants.VAR, constants.TMP,
-		constants.CELLERY, constants.ApimRepositoryDeploymentServer)+"-old"); err != nil {
-		return err
-	}
-	// Create folders required by the APIM PVC
-	if err := util.CreateDir(filepath.Join(constants.RootDir, constants.VAR, constants.TMP, constants.CELLERY,
-		constants.ApimRepositoryDeploymentServer)); err != nil {
-		return err
-	}
-	return nil
 }
 
 func buildArtifactsPath(component SystemComponent, artifactsPath string) string {

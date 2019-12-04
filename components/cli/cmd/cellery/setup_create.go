@@ -32,7 +32,7 @@ func newSetupCreateCommand(cli cli.Cli) *cobra.Command {
 	}
 	cmd.AddCommand(
 		newSetupCreateGcpCommand(cli, &isComplete),
-		newSetupCreateOnExistingClusterCommand(cli, &isComplete),
+		newSetupCreateOnExistingClusterCommand(cli, isComplete),
 	)
 	cmd.PersistentFlags().BoolVar(&isComplete, "complete", false, "Install complete setup")
 	return cmd

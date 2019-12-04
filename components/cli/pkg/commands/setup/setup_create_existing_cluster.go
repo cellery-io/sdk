@@ -76,7 +76,6 @@ func createOnExistingCluster(cli cli.Cli) error {
 		}
 	}
 	isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
-	runtime.SetCompleteSetup(isCompleteSetup)
 	if isBackSelected {
 		createOnExistingCluster(cli)
 		return nil
