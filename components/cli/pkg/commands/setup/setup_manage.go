@@ -48,16 +48,15 @@ func manageEnvironment(cli cli.Cli) error {
 	switch value {
 	case celleryGcp:
 		{
-			manageGcp(cli)
+			return manageGcp(cli)
 		}
 	case existingCluster:
 		{
-			manageExistingCluster(cli)
+			return manageExistingCluster(cli)
 		}
 	default:
 		{
-			RunSetup(cli)
+			return RunSetup(cli)
 		}
 	}
-	return nil
 }

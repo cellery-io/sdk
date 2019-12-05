@@ -16,27 +16,40 @@
  * under the License.
  */
 
-package main
+package test
 
-import (
-	"github.com/spf13/cobra"
-
-	"cellery.io/cellery/components/cli/cli"
-	"cellery.io/cellery/components/cli/pkg/commands/setup"
-	"cellery.io/cellery/components/cli/pkg/util"
-)
-
-func newSetupListClustersCommand(cli cli.Cli) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "clusters",
-		Short: "List k8s clusters",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := setup.RunSetupListClusters(cli); err != nil {
-				util.ExitWithErrorMessage("Cellery setup list cluster command failed", err)
-			}
-		},
-		Example: "  cellery setup list cluster",
+// NewMockPlatform returns a mock platform.
+func NewMockPlatform(opts ...func(*MockPlatform)) *MockPlatform {
+	platform := &MockPlatform{}
+	for _, opt := range opts {
+		opt(platform)
 	}
-	return cmd
+	return platform
+}
+
+type MockPlatform struct {
+}
+
+func (platform *MockPlatform) CreateK8sCluster() error {
+	return nil
+}
+
+func (platform *MockPlatform) ConfigureSqlInstance() error {
+	return nil
+}
+
+func (platform *MockPlatform) CreateStorage() error {
+	return nil
+}
+
+func (platform *MockPlatform) CreateNfs() error {
+	return nil
+}
+
+func (platform *MockPlatform) TearDown() error {
+	return nil
+}
+
+func (platform *MockPlatform) UpdateKubeConfig() error {
+	return nil
 }

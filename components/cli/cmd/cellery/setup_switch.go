@@ -23,6 +23,7 @@ import (
 
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func newSetupSwitchCommand(cli cli.Cli) *cobra.Command {
@@ -37,7 +38,9 @@ func newSetupSwitchCommand(cli cli.Cli) *cobra.Command {
 			return setup.ValidateCluster(cli, args[0])
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			setup.RunSetupSwitch(cli, args[0])
+			if err := setup.RunSetupSwitch(cli, args[0]); err != nil {
+				util.ExitWithErrorMessage("Cellery setup switch command failed", err)
+			}
 		},
 		Example: "  cellery setup switch cellery-admin@cellery",
 	}

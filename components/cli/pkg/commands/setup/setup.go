@@ -30,7 +30,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func RunSetup(cli cli.Cli) {
+func RunSetup(cli cli.Cli) error {
 	selectTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -45,7 +45,7 @@ func RunSetup(cli cli.Cli) {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to select an option: %v", err)
+		return fmt.Errorf("failed to select an option, %v", err)
 	}
 
 	switch value {
@@ -62,22 +62,22 @@ func RunSetup(cli cli.Cli) {
 			var err error
 			apimEnabled, err = runtime.IsApimEnabled()
 			if err != nil {
-				util.ExitWithErrorMessage("Failed check if apim is enabled", err)
+				return fmt.Errorf("failed check if apim is enabled, %v", err)
 			}
 			enableApim = !apimEnabled
 			observabilityEnabled, err = runtime.IsObservabilityEnabled()
 			if err != nil {
-				util.ExitWithErrorMessage("Failed check if observability is enabled", err)
+				return fmt.Errorf("failed check if observability is enabled, %v", err)
 			}
 			enableObservability = !observabilityEnabled
 			knativeEnabled, err = runtime.IsKnativeEnabled()
 			if err != nil {
-				util.ExitWithErrorMessage("Failed check if knative is enabled", err)
+				return fmt.Errorf("failed check if knative is enabled, %v", err)
 			}
 			enableKnative = !knativeEnabled
 			hpaEnabled, err = cli.Runtime().IsHpaEnabled()
 			if err != nil {
-				util.ExitWithErrorMessage("Failed check if hpa is enabled", err)
+				return fmt.Errorf("failed check if hpa is enabled, %v", err)
 			}
 			enableHpa = !hpaEnabled
 			modifyRuntime(cli)
@@ -91,6 +91,7 @@ func RunSetup(cli cli.Cli) {
 			os.Exit(1)
 		}
 	}
+	return nil
 }
 
 func selectEnvironment(cli cli.Cli) error {
@@ -119,7 +120,7 @@ func selectEnvironment(cli cli.Cli) error {
 	}
 
 	if value == setupBack {
-		RunSetup(cli)
+		return RunSetup(cli)
 	}
 
 	RunSetupSwitch(cli, value)

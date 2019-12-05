@@ -21,6 +21,8 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"cellery.io/cellery/components/cli/pkg/util"
+
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
 )
@@ -31,7 +33,9 @@ func newSetupCommand(cli cli.Cli) *cobra.Command {
 		Short: "Setup cellery runtime",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			setup.RunSetup(cli)
+			if err := setup.RunSetup(cli); err != nil {
+				util.ExitWithErrorMessage("Cellery setup command failed", err)
+			}
 		},
 		Example: "  cellery setup",
 	}

@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/constants"
@@ -124,7 +123,7 @@ func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersist
 		return fmt.Errorf("error installing ingress-nginx: %v", err)
 	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
-	time.Sleep(20 * time.Second)
+	cli.Sleep(20)
 
 	// Enabling Istio injection
 	if err := cli.ExecuteTask("Enabling istio injection", "Failed to enabling istio injection",
@@ -214,6 +213,5 @@ func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersist
 			}
 		}
 	}
-	cli.Runtime().WaitFor(false, false)
-	return nil
+	return cli.Runtime().WaitFor(false, false)
 }

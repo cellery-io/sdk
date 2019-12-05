@@ -26,6 +26,7 @@ import (
 
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
 	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func newSetupCleanupGcpCommand() *cobra.Command {
@@ -51,7 +52,9 @@ func newSetupCleanupGcpCommand() *cobra.Command {
 			if len(strings.Split(args[0], constants.GcpClusterName)) > 1 {
 				uniqueNumber = strings.Split(args[0], constants.GcpClusterName)[1]
 			}
-			setup.RunCleanupGcp(constants.GcpClusterName + uniqueNumber)
+			if err := setup.RunCleanupGcp(constants.GcpClusterName + uniqueNumber); err != nil {
+				util.ExitWithErrorMessage("Cellery setup cleanup gcp command failed", err)
+			}
 		},
 		Example: "  cellery setup cleanup gcp <cluster_name>",
 	}

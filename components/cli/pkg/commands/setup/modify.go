@@ -208,8 +208,7 @@ func modifyRuntime(cli cli.Cli) error {
 		}
 	default:
 		{
-			RunSetup(cli)
-			return nil
+			return RunSetup(cli)
 		}
 	}
 	return modifyRuntime(cli)

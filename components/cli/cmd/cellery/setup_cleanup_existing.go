@@ -23,6 +23,7 @@ import (
 
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func newSetupCleanupExistingCommand(cli cli.Cli) *cobra.Command {
@@ -36,7 +37,9 @@ func newSetupCleanupExistingCommand(cli cli.Cli) *cobra.Command {
 		Short: "Cleanup existing cluster setup",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			setup.RunCleanupExisting(cli, knative, istio, ingress, hpa, confirmed)
+			if err := setup.RunCleanupExisting(cli, knative, istio, ingress, hpa, confirmed); err != nil {
+				util.ExitWithErrorMessage("Cellery setup cleanup existing command failed", err)
+			}
 		},
 		Example: "  cellery setup cleanup existing",
 	}

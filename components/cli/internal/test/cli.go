@@ -21,6 +21,7 @@ package test
 import (
 	"bytes"
 	"io"
+	"time"
 
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/ballerina"
@@ -167,4 +168,7 @@ func SetRuntime(runtime runtime.Runtime) func(*MockCli) {
 	return func(cli *MockCli) {
 		cli.runtime = runtime
 	}
+}
+
+func (cli *MockCli) Sleep(seconds time.Duration) {
 }

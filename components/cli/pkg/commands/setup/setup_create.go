@@ -58,8 +58,7 @@ func createEnvironment(cli cli.Cli) error {
 		}
 	default:
 		{
-			RunSetup(cli)
-			return nil
+			return RunSetup(cli)
 		}
 	}
 

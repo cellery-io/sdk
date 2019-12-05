@@ -50,14 +50,13 @@ func manageGcp(cli cli.Cli) error {
 	switch value {
 	case cleanup:
 		{
-			cleanupGcp(cli)
+			return cleanupGcp(cli)
 		}
 	default:
 		{
-			manageEnvironment(cli)
+			return manageEnvironment(cli)
 		}
 	}
-	return nil
 }
 
 func cleanupGcp(cli cli.Cli) error {
@@ -91,11 +90,9 @@ func cleanupGcp(cli cli.Cli) error {
 		util.ExitWithErrorMessage("Failed to select an option: %v", err)
 	}
 	if value == setupBack {
-		manageGcp(cli)
-		return nil
+		return manageGcp(cli)
 	}
-	RunCleanupGcp(value)
-	return nil
+	return RunCleanupGcp(value)
 }
 
 func ValidateGcpCluster(cluster string) (bool, error) {

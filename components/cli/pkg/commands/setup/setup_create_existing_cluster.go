@@ -57,8 +57,7 @@ func createOnExistingCluster(cli cli.Cli) error {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
 	if value == setupBack {
-		createEnvironment(cli)
-		return nil
+		return createEnvironment(cli)
 	}
 	if value == constants.PersistentVolume {
 		isPersistentVolume = true
@@ -71,19 +70,16 @@ func createOnExistingCluster(cli cli.Cli) error {
 			nfs, db, err = getPersistentVolumeDataWithNfs()
 		}
 		if isBackSelected {
-			createOnExistingCluster(cli)
-			return nil
+			return createOnExistingCluster(cli)
 		}
 	}
 	isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
 	if isBackSelected {
-		createOnExistingCluster(cli)
-		return nil
+		return createOnExistingCluster(cli)
 	}
 	isLoadBalancerIngressMode, isBackSelected = util.IsLoadBalancerIngressTypeSelected()
 	if isBackSelected {
-		createOnExistingCluster(cli)
-		return nil
+		return createOnExistingCluster(cli)
 	}
 	if !isLoadBalancerIngressMode {
 		nodePortIpAddress = getNodePortIpAddress()

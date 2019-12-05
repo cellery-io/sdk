@@ -43,17 +43,18 @@ type Runtime interface {
 	SetArtifactsPath(artifactsPath string)
 	AddComponent(component SystemComponent) error
 	DeleteComponent(component SystemComponent) error
-	CreateCelleryNameSpace() error
 	IsComponentEnabled(component SystemComponent) (bool, error)
+	CreateCelleryNameSpace() error
+	IsGcpRuntime() bool
+	CreatePersistentVolumeDirs() error
 	UpdateNfsServerDetails(ipAddress, fileShare string) error
 	UpdateMysqlCredentials(dbUserName, dbPassword, dbHost string) error
-	CreatePersistentVolumeDirs() error
 	UpdateInitSql(dbUserName, dbPassword string) error
-	IsGcpRuntime() bool
 	ApplyIstioCrds() error
-	InstallIngressNginx(isLoadBalancerIngressMode bool) error
 	InstallIstio() error
+	InstallIngressNginx(isLoadBalancerIngressMode bool) error
 	ApplyKnativeCrds() error
+	InstallKnativeServing() error
 	InstallController() error
 	InstallMysql(isPersistentVolume bool) error
 	CreateConfigMaps() error
@@ -61,19 +62,15 @@ type Runtime interface {
 	AddObservability() error
 	AddIdp() error
 	UpdateNodePortIpAddress(nodePortIpAddress string) error
-	InstallKnativeServing() error
 	CreatePersistentVolume(hasNfs bool) error
 	IsHpaEnabled() (bool, error)
 	WaitFor(checkKnative, hpaEnabled bool) error
 }
 
 type CelleryRuntime struct {
-	artifactsPath             string
-	isPersistentVolume        bool
-	hasNfsStorage             bool
-	isLoadBalancerIngressMode bool
-	nfs                       Nfs
-	db                        MysqlDb
+	artifactsPath string
+	nfs           Nfs
+	db            MysqlDb
 }
 
 // NewCelleryRuntime returns a CelleryRuntime instance.

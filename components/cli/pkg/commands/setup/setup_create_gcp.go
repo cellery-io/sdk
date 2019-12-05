@@ -58,12 +58,10 @@ func createGcp(cli cli.Cli) error {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
 	if value == setupBack {
-		createEnvironment(cli)
-		return nil
+		return createEnvironment(cli)
 	}
 	if value == constants.COMPLETE {
 		isCompleteSelected = true
 	}
-	RunSetupCreateGcp(cli, isCompleteSelected)
-	return nil
+	return RunSetupCreateGcp(cli, isCompleteSelected)
 }

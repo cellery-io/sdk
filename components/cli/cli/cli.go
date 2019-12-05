@@ -27,6 +27,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"cellery.io/cellery/components/cli/pkg/ballerina"
 	"cellery.io/cellery/components/cli/pkg/docker"
@@ -50,6 +51,7 @@ type Cli interface {
 	CredManager() credentials.CredManager
 	CredReader() credentials.CredReader
 	Runtime() cliRuntime.Runtime
+	Sleep(seconds time.Duration)
 }
 
 // CelleryCli is an instance of the cellery command line client.
@@ -210,4 +212,8 @@ func SetRuntime(runtime cliRuntime.Runtime) func(*CelleryCli) {
 	return func(cli *CelleryCli) {
 		cli.runtime = runtime
 	}
+}
+
+func (cli *CelleryCli) Sleep(seconds time.Duration) {
+	time.Sleep(seconds * time.Second)
 }
