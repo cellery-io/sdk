@@ -88,13 +88,13 @@ func cleanupExistingCluster(cli cli.Cli) error {
 			}
 		}
 		spinner := util.StartNewSpinner("Cleaning up cluster")
-		cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
+		cleanupCluster(cli, removeKnative, removeIstio, removeIngress, removeHpa)
 		spinner.Stop(true)
 	}
 	return nil
 }
 
-func RunCleanupExisting(removeKnative, removeIstio, removeIngress, removeHpa, confirmed bool) error {
+func RunCleanupExisting(cli cli.Cli, removeKnative, removeIstio, removeIngress, removeHpa, confirmed bool) error {
 	var err error
 	var confirmCleanup = confirmed
 	if !confirmed {
@@ -109,13 +109,13 @@ func RunCleanupExisting(removeKnative, removeIstio, removeIngress, removeHpa, co
 		if removeKnative {
 			kubernetes.DeleteNameSpace("knative-serving")
 		}
-		cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
+		cleanupCluster(cli, removeKnative, removeIstio, removeIngress, removeHpa)
 		spinner.Stop(true)
 	}
 	return nil
 }
 
-func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
+func cleanupCluster(cli cli.Cli, removeKnative, removeIstio, removeIngress, removeHpa bool) {
 	kubernetes.DeleteNameSpace("cellery-system")
 	if removeKnative {
 		out, err := kubernetes.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
@@ -131,7 +131,7 @@ func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
 		kubernetes.DeleteNameSpace("ingress-nginx")
 	}
 	if removeHpa {
-		runtime.DeleteComponent(runtime.HPA)
+		cli.Runtime().DeleteComponent(runtime.HPA)
 	}
 	kubernetes.DeleteAllCells()
 	kubernetes.DeletePersistedVolume("wso2apim-local-pv")

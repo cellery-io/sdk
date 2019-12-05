@@ -49,10 +49,6 @@ func (runtime *MockRuntime) Create() error {
 	return nil
 }
 
-func (runtime *MockRuntime) Update(apiManagement, observability, knative, hpa runtime.Selection) error {
-	return nil
-}
-
 func (runtime *MockRuntime) WaitFor(checkKnative, hpaEnabled bool) error {
 	return nil
 }
@@ -153,4 +149,12 @@ func (runtime *MockRuntime) CreateConfigMaps() error {
 
 func (runtime *MockRuntime) IsGcpRuntime() bool {
 	return false
+}
+
+func (runtime *MockRuntime) AddComponent(component runtime.SystemComponent) error {
+	return nil
+}
+
+func (runtime *MockRuntime) DeleteComponent(component runtime.SystemComponent) error {
+	return nil
 }

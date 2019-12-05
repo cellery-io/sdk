@@ -30,8 +30,6 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-//var accountName string
-
 func RunSetupCreateGcp(cli cli.Cli, isCompleteSetup bool) error {
 	platform, err := gcpPlatform.NewGcp()
 	if err != nil {

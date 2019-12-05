@@ -20,16 +20,18 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+
+	"cellery.io/cellery/components/cli/cli"
 )
 
-func newSetupCleanupCommand() *cobra.Command {
+func newSetupCleanupCommand(cli cli.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cleanup <command>",
 		Short: "Cleanup Cellery runtime",
 	}
 	cmd.AddCommand(
 		newSetupCleanupGcpCommand(),
-		newSetupCleanupExistingCommand(),
+		newSetupCleanupExistingCommand(cli),
 	)
 	return cmd
 }

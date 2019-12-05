@@ -41,12 +41,15 @@ const (
 
 type Runtime interface {
 	SetArtifactsPath(artifactsPath string)
+	AddComponent(component SystemComponent) error
+	DeleteComponent(component SystemComponent) error
+	CreateCelleryNameSpace() error
+	IsComponentEnabled(component SystemComponent) (bool, error)
 	UpdateNfsServerDetails(ipAddress, fileShare string) error
 	UpdateMysqlCredentials(dbUserName, dbPassword, dbHost string) error
 	CreatePersistentVolumeDirs() error
 	UpdateInitSql(dbUserName, dbPassword string) error
 	IsGcpRuntime() bool
-	CreateCelleryNameSpace() error
 	ApplyIstioCrds() error
 	InstallIngressNginx(isLoadBalancerIngressMode bool) error
 	InstallIstio() error
@@ -61,8 +64,6 @@ type Runtime interface {
 	InstallKnativeServing() error
 	CreatePersistentVolume(hasNfs bool) error
 	IsHpaEnabled() (bool, error)
-	IsComponentEnabled(component SystemComponent) (bool, error)
-	Update(apiManagement, observability, knative, hpa Selection) error
 	WaitFor(checkKnative, hpaEnabled bool) error
 }
 
@@ -114,104 +115,6 @@ func (runtime *CelleryRuntime) CreateConfigMaps() error {
 	return nil
 }
 
-func (runtime *CelleryRuntime) Update(apiManagement, observability, knative, hpa Selection) error {
-	spinner := util.StartNewSpinner("Updating cellery runtime")
-	var err error
-	observabilityEnabled, err := IsObservabilityEnabled()
-	if err != nil {
-		spinner.Stop(false)
-		return err
-	}
-	if apiManagement != NoChange {
-		// Remove observability if there was a change to apim
-		if observabilityEnabled {
-			err = DeleteComponent(Observability)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		}
-		if apiManagement == Enable {
-			err = DeleteComponent(IdentityProvider)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-			err = runtime.AddComponent(ApiManager)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		} else {
-			err = DeleteComponent(ApiManager)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-			err = runtime.AddComponent(IdentityProvider)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		}
-		// Add observability if there was a change to apim and there was already observability running before that
-		if observabilityEnabled {
-			err = runtime.AddComponent(Observability)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		}
-	}
-	if observability != NoChange {
-		if observability == Enable {
-			err = runtime.AddComponent(Observability)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		} else {
-			err = DeleteComponent(Observability)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		}
-	}
-	if knative != NoChange {
-		if knative == Enable {
-			err = runtime.AddComponent(ScaleToZero)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		} else {
-			err = DeleteComponent(ScaleToZero)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		}
-	}
-	if hpa != NoChange {
-		if hpa == Enable {
-			err = runtime.AddComponent(HPA)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		} else {
-			err = DeleteComponent(HPA)
-			if err != nil {
-				spinner.Stop(false)
-				return err
-			}
-		}
-	}
-	spinner.Stop(true)
-	return nil
-}
-
 func (runtime *CelleryRuntime) AddComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
@@ -229,7 +132,7 @@ func (runtime *CelleryRuntime) AddComponent(component SystemComponent) error {
 	}
 }
 
-func DeleteComponent(component SystemComponent) error {
+func (runtime *CelleryRuntime) DeleteComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
 		return deleteApim(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))

@@ -21,11 +21,13 @@ package setup
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/manifoldco/promptui"
 
 	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
@@ -53,18 +55,94 @@ var enableObservability = false
 var enableKnative = false
 var enableHpa = false
 
-func RunSetupModify(cli cli.Cli, addApimGlobalGateway, addObservability, knative, hpa runtime.Selection) error {
-	err := cli.Runtime().Update(addApimGlobalGateway, addObservability, knative, hpa)
+func RunSetupModify(cli cli.Cli, apiManagement, observability, knative, hpa runtime.Selection) error {
+	var err error
+	cli.Runtime().SetArtifactsPath(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts))
+	observabilityEnabled, err := cli.Runtime().IsComponentEnabled(runtime.Observability)
 	if err != nil {
-		util.ExitWithErrorMessage("Fail to modify the cluster", err)
+		return err
 	}
-	knativeEnabled, err = runtime.IsKnativeEnabled()
-	if err != nil {
-		util.ExitWithErrorMessage("Error while checking knative status", err)
+	if apiManagement != runtime.NoChange {
+		// Remove observability if there was a change to apim
+		if observabilityEnabled {
+			err = cli.Runtime().DeleteComponent(runtime.Observability)
+			if err != nil {
+				return err
+			}
+		}
+		if apiManagement == runtime.Enable {
+			err = cli.Runtime().DeleteComponent(runtime.IdentityProvider)
+			if err != nil {
+				return err
+			}
+			err = cli.Runtime().AddComponent(runtime.ApiManager)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = cli.Runtime().DeleteComponent(runtime.ApiManager)
+			if err != nil {
+				return err
+			}
+			err = cli.Runtime().AddComponent(runtime.IdentityProvider)
+			if err != nil {
+				return err
+			}
+		}
+		// Add observability if there was a change to apim and there was already observability running before that
+		if observabilityEnabled {
+			err = cli.Runtime().AddComponent(runtime.Observability)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	hpaEnabled, err = cli.Runtime().IsHpaEnabled()
+	if observability != runtime.NoChange {
+		if observability == runtime.Enable {
+			err = cli.Runtime().AddComponent(runtime.Observability)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = cli.Runtime().DeleteComponent(runtime.Observability)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if knative != runtime.NoChange {
+		if knative == runtime.Enable {
+			err = cli.Runtime().AddComponent(runtime.ScaleToZero)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = cli.Runtime().DeleteComponent(runtime.ScaleToZero)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if hpa != runtime.NoChange {
+		if hpa == runtime.Enable {
+			err = cli.Runtime().AddComponent(runtime.HPA)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = cli.Runtime().DeleteComponent(runtime.HPA)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	knativeEnabled, err = cli.Runtime().IsComponentEnabled(runtime.ScaleToZero)
 	if err != nil {
-		util.ExitWithErrorMessage("Error while checking hpa status", err)
+		return fmt.Errorf("error while checking knative status, %v", err)
+	}
+	hpaEnabled, err = cli.Runtime().IsComponentEnabled(runtime.HPA)
+	if err != nil {
+		return fmt.Errorf("error while checking hpa status, %v", err)
 	}
 	isGcpRuntime := cli.Runtime().IsGcpRuntime()
 	if isGcpRuntime {
@@ -73,36 +151,51 @@ func RunSetupModify(cli cli.Cli, addApimGlobalGateway, addObservability, knative
 	return cli.Runtime().WaitFor(knativeEnabled, hpaEnabled)
 }
 
-func modifyRuntime(cli cli.Cli) {
+func modifyRuntime(cli cli.Cli) error {
 	const done = "Apply changes"
 	const back = "BACK"
-	value := getPromptValue([]string{apim, autoscaling, observability, done, back}, "Modify system components "+
+	value, err := getPromptValue([]string{apim, autoscaling, observability, done, back}, "Modify system components "+
 		"and select Apply changes to apply the changes")
+	if err != nil {
+		return err
+	}
 	switch value {
 	case apim:
 		{
-			change := getComponentChange(&enableApim, apim)
+			change, err := getComponentChange(&enableApim, apim)
+			if err != nil {
+				return err
+			}
 			if change != runtime.NoChange {
 				apimChange = change
-				if confirmModification() {
-					applyChanges(cli)
-				} else {
-					modifyRuntime(cli)
+				modificationConfirmed, err := confirmModification()
+				if err != nil {
+					return err
 				}
-				return
+				if modificationConfirmed {
+					return applyChanges(cli)
+				} else {
+					return modifyRuntime(cli)
+				}
 			}
 		}
 	case observability:
 		{
-			change := getComponentChange(&enableObservability, observability)
+			change, err := getComponentChange(&enableObservability, observability)
+			if err != nil {
+				return err
+			}
 			if change != runtime.NoChange {
 				observabilityChange = change
-				if confirmModification() {
-					applyChanges(cli)
-				} else {
-					modifyRuntime(cli)
+				modificationConfirmed, err := confirmModification()
+				if err != nil {
+					return err
 				}
-				return
+				if modificationConfirmed {
+					return applyChanges(cli)
+				} else {
+					return modifyRuntime(cli)
+				}
 			}
 		}
 	case autoscaling:
@@ -111,65 +204,83 @@ func modifyRuntime(cli cli.Cli) {
 		}
 	case done:
 		{
-			applyChanges(cli)
-			return
+			return applyChanges(cli)
 		}
 	default:
 		{
 			RunSetup(cli)
-			return
+			return nil
 		}
 	}
-	modifyRuntime(cli)
+	return modifyRuntime(cli)
 }
 
-func modifyAutoScalingPolicy(cli cli.Cli) {
+func modifyAutoScalingPolicy(cli cli.Cli) error {
 	var label = "Select system components to modify"
 	var value = ""
+	var err error
 	const back = "BACK"
 	if cli.Runtime().IsGcpRuntime() {
-		value = getPromptValue([]string{knative, back}, label)
+		value, err = getPromptValue([]string{knative, back}, label)
+		if err != nil {
+			return err
+		}
 	} else {
-		value = getPromptValue([]string{knative, hpa, back}, label)
+		value, err = getPromptValue([]string{knative, hpa, back}, label)
+		if err != nil {
+			return err
+		}
 	}
 	switch value {
 	case knative:
 		{
-			change := getComponentChange(&enableKnative, knative)
+			change, err := getComponentChange(&enableKnative, knative)
+			if err != nil {
+				return err
+			}
 			if change != runtime.NoChange {
 				knativeChange = change
-				if confirmModification() {
-					applyChanges(cli)
-				} else {
-					modifyRuntime(cli)
+				modificationConfirmed, err := confirmModification()
+				if err != nil {
+					return err
 				}
-				return
+				if modificationConfirmed {
+					return applyChanges(cli)
+				} else {
+					return modifyRuntime(cli)
+				}
 			}
 		}
 	case hpa:
 		{
-			change := getComponentChange(&enableHpa, hpa)
+			change, err := getComponentChange(&enableHpa, hpa)
+			if err != nil {
+				return err
+			}
 			if change != runtime.NoChange {
 				hpaChange = change
-				if confirmModification() {
-					applyChanges(cli)
-				} else {
-					modifyRuntime(cli)
+				modificationConfirmed, err := confirmModification()
+				if err != nil {
+					return err
 				}
-				return
+				if modificationConfirmed {
+					return applyChanges(cli)
+				} else {
+					return modifyRuntime(cli)
+				}
 			}
 		}
 	default:
 		{
 			// If user selects back he will get prompted back to modify runtime section
-			return
+			return nil
 		}
 	}
 	// Until back button is selected modifyAutoScalingPolicy function will get recursively called
-	modifyAutoScalingPolicy(cli)
+	return modifyAutoScalingPolicy(cli)
 }
 
-func getComponentChange(enableComponent *bool, label string) runtime.Selection {
+func getComponentChange(enableComponent *bool, label string) (runtime.Selection, error) {
 	const enable = "Enable"
 	const disable = "Disable"
 	const back = "BACK"
@@ -190,18 +301,18 @@ func getComponentChange(enableComponent *bool, label string) runtime.Selection {
 	}
 	_, value, err := prompt.Run()
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to select an option", err)
+		return runtime.NoChange, fmt.Errorf("failed to select an option, %v", err)
 	}
 	switch value {
 	case enable:
 		*enableComponent = false
-		return runtime.Enable
+		return runtime.Enable, nil
 	case disable:
 		*enableComponent = true
-		return runtime.Disable
+		return runtime.Disable, nil
 	default:
 		{
-			return runtime.NoChange
+			return runtime.NoChange, nil
 		}
 	}
 }
@@ -220,7 +331,7 @@ func getModifiedComponents(changes []changedComponent) ([]string, []string) {
 	return enabled, disabled
 }
 
-func getPromptValue(items []string, label string) string {
+func getPromptValue(items []string, label string) (string, error) {
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -235,12 +346,12 @@ func getPromptValue(items []string, label string) string {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to select an option", err)
+		return "", fmt.Errorf("failed to select an option, %v", err)
 	}
-	return value
+	return value, nil
 }
 
-func confirmModification() bool {
+func confirmModification() (bool, error) {
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
@@ -255,17 +366,17 @@ func confirmModification() bool {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to select an option", err)
+		return false, fmt.Errorf("failed to select an option, %v", err)
 	}
 	switch value {
 	case "Yes":
-		return false
+		return false, nil
 	default:
-		return true
+		return true, nil
 	}
 }
 
-func applyChanges(cli cli.Cli) {
+func applyChanges(cli cli.Cli) error {
 	changes := []changedComponent{{apim, apimChange}, {observability,
 		observabilityChange}, {knative, knativeChange}, {hpa, hpaChange}}
 	enabledComponents, disabledComponents := getModifiedComponents(changes)
@@ -288,17 +399,18 @@ func applyChanges(cli cli.Cli) {
 	}
 	confirmModify, _, err := util.GetYesOrNoFromUser("Do you wish to continue", false)
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to select confirmation", err)
+		return fmt.Errorf("failed to select confirmation, %v", err)
 	}
 	if confirmModify {
 		if runtimeUpdated {
 			err := RunSetupModify(cli, apimChange, observabilityChange, knativeChange, hpaChange)
 			if err != nil {
-				util.ExitWithErrorMessage("Failed to update cellery runtime", err)
+				return fmt.Errorf("failed to update cellery runtime, %v", err)
 			}
 		}
 		os.Exit(0)
 	} else {
 		modifyRuntime(cli)
 	}
+	return nil
 }
