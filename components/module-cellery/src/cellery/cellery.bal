@@ -988,7 +988,7 @@ function getInstanceListFromConfig() returns  @tainted (InstanceState[] | error)
 # + image - The cell image definition
 # + imageName - The cell image org, name & version
 # + return - error
-public function createCellImage(CellImage | Composite image, ImageName imageName) returns error? = @java:Method {
+function createCellImage(CellImage | Composite image, ImageName imageName) returns error? = @java:Method {
     class: "io.cellery.impl.CreateCellImage"
 } external;
 
@@ -1013,7 +1013,7 @@ boolean startDependencies, boolean shareDependencies) returns (InstanceState[] |
 # + startDependencies - Whether to start dependencies
 # + shareDependencies - Whether to share dependencies
 # + return - error optional
-public function createInstanceExternal(CellImage | Composite image, ImageName iName, map<ImageName> instances,
+function createInstanceExternal(CellImage | Composite image, ImageName iName, map<ImageName> instances,
 boolean startDependencies, boolean shareDependencies) returns (InstanceState[] | error?) = @java:Method {
     class: "io.cellery.impl.CreateInstance"
 } external;
@@ -1030,7 +1030,7 @@ public function readSwaggerFile(string swaggerFilePath) returns (ApiDefinition |
 #
 # + swaggerFilePath - The swaggerFilePath
 # + return - Array of ApiDefinitions
-public function readSwaggerFileExternal(string swaggerFilePath) returns (ApiDefinition) = @java:Method {
+function readSwaggerFileExternal(string swaggerFilePath) returns (ApiDefinition) = @java:Method {
     class: "io.cellery.impl.ReadSwaggerFile"
 } external;
 
@@ -1047,7 +1047,7 @@ public function readReference(ImageName iName) returns (Reference | error?) {
 #
 # + iName - Dependency Image Name
 # + return - Reference record
-public function readReferenceExternal(ImageName iName) returns (Reference) = @java:Method {
+function readReferenceExternal(ImageName iName) returns (Reference) = @java:Method {
     class: "io.cellery.impl.ReadReference"
 } external;
 
@@ -1122,7 +1122,7 @@ public function stopInstances() returns @tainted (error?) {
 #
 # + instances -  The cell instance dependencies
 # + return - error optional
-public function stopInstancesExternal(InstanceState[] instances) returns (error?) = @java:Method {
+function stopInstancesExternal(InstanceState[] instances) returns (error?) = @java:Method {
     class: "io.cellery.impl.StopInstances"
 } external;
 
