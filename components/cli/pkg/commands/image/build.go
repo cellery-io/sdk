@@ -28,11 +28,10 @@ import (
 	"strings"
 	"time"
 
-	"cellery.io/cellery/components/cli/pkg/constants"
-
 	"github.com/ghodss/yaml"
 
 	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/image"
 	"cellery.io/cellery/components/cli/pkg/util"
 	"cellery.io/cellery/components/cli/pkg/version"
