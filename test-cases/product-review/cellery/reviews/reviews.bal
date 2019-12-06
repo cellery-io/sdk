@@ -86,19 +86,19 @@ public function build(cellery:ImageName iName) returns error? {
     };
 
     cellery:Reference customerProductRef = cellery:getReference(reviewsComponent, "customerProduct");
-    ComponentApi customerComp = parseApiUrl(<string>customerProductRef["customers_customerapi_api_url"]);
+    ComponentApi customerComp = parseApiUrl(<string>customerProductRef.get("customers_customerAPI_api_url"));
     reviewsComponent["envVars"]["CUSTOMERS_HOST"].value = customerComp.url;
     reviewsComponent["envVars"]["CUSTOMERS_PORT"].value = customerComp.port;
     reviewsComponent["envVars"]["CUSTOMERS_CONTEXT"].value = <string>customerComp["path"];
 
-    ComponentApi productComp = parseApiUrl(<string>customerProductRef["products_productsapi_api_url"]);
+    ComponentApi productComp = parseApiUrl(<string>customerProductRef.get("products_productsAPI_api_url"));
     reviewsComponent["envVars"]["PRODUCTS_HOST"].value = productComp.url;
     reviewsComponent["envVars"]["PRODUCTS_PORT"].value = productComp.port;
     reviewsComponent["envVars"]["PRODUCTS_CONTEXT"].value = <string>productComp["path"];
 
     cellery:Reference databaseRef = cellery:getReference(reviewsComponent, "database");
-    reviewsComponent["envVars"]["DATABASE_PORT"].value = <string>databaseRef["mysql_mysqlIngress_tcp_port"];
-    reviewsComponent["envVars"]["DATABASE_HOST"].value = <string>databaseRef["gateway_host"];
+    reviewsComponent["envVars"]["DATABASE_PORT"].value = <string>databaseRef.get("mysql_mysqlIngress_tcp_port");
+    reviewsComponent["envVars"]["DATABASE_HOST"].value = <string>databaseRef.get("gateway_host");
 
     cellery:CellImage reviewCell = {
         components: {
