@@ -41,7 +41,9 @@ func TestRunRun(t *testing.T) {
 	mockFileSystem := test.NewMockFileSystem(test.SetCurrentDir(currentDir), test.SetRepository(filepath.Join(
 		"testdata", "repo")))
 	mockBalExecutor := test.NewMockBalExecutor(test.SetBalCurrentDir(currentDir))
-	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem), test.SetBalExecutor(mockBalExecutor))
+	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem),
+		test.SetBalExecutor(mockBalExecutor),
+		test.SetRuntime(test.NewMockRuntime()))
 
 	tests := []struct {
 		name              string

@@ -44,6 +44,9 @@ const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
 func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string) error {
 	var err error
+	if err = cli.Runtime().Validate(); err != nil {
+		return fmt.Errorf("runtime validation failed. %v", err)
+	}
 	var parsedCellImage *image.CellImage
 	if parsedCellImage, err = image.ParseImageTag(cellImageTag); err != nil {
 		return fmt.Errorf("error occurred while parsing cell image, %v", err)

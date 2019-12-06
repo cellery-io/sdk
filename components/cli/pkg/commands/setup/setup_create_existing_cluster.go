@@ -95,7 +95,7 @@ func createOnExistingCluster(cli cli.Cli) error {
 	}
 	err = RunSetupCreate(cli, nil, isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db, nodePortIpAddress)
 	if err != nil {
-		util.ExitWithErrorMessage("Cellery setup create existing command failed, %v", err)
+		util.ExitWithErrorMessage("Cellery setup create existing command failed", err)
 	}
 	return nil
 }

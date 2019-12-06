@@ -87,7 +87,7 @@ func cleanupGcp(cli cli.Cli) error {
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		util.ExitWithErrorMessage("Failed to select an option: %v", err)
+		util.ExitWithErrorMessage("Failed to select an option: ", err)
 	}
 	if value == setupBack {
 		return manageGcp(cli)

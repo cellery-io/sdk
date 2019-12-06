@@ -19,17 +19,25 @@
 package runtime
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-version"
+
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/osexec"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
+
+const kubernetesVersionMax = "v1.16.0"
+const kubernetesVersionMin = "v1.13"
 
 type Selection int
 
@@ -65,6 +73,7 @@ type Runtime interface {
 	CreatePersistentVolume(hasNfs bool) error
 	IsHpaEnabled() (bool, error)
 	WaitFor(checkKnative, hpaEnabled bool) error
+	Validate() error
 }
 
 type CelleryRuntime struct {
@@ -282,4 +291,49 @@ func waitingTimeCellerySystem() (time.Duration, error) {
 		waitingTime = time.Duration(time.Minute * time.Duration(wt))
 	}
 	return waitingTime, nil
+}
+
+func (runtime *CelleryRuntime) Validate() error {
+	errorMessage := ""
+	cmd := exec.Command(
+		constants.KubeCtl,
+		"version",
+		"-o",
+		"json",
+	)
+	jsonOutput := kubernetes.K8sVersion{}
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	if err != nil {
+		return fmt.Errorf("failed to get kubectl versions, %v", err)
+	}
+	err = json.Unmarshal(out, &jsonOutput)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshall kubectl versions, %v", err)
+	}
+	kubectlServerVersion := jsonOutput.ServerVersion.GitVersion
+	actualKubectlServerVersion, err := version.NewVersion(kubectlServerVersion)
+	expectedKubernetesServerVersionMax, err := version.NewVersion(kubernetesVersionMax)
+
+	if actualKubectlServerVersion.GreaterThanOrEqual(expectedKubernetesServerVersionMax) {
+		errorMessage = errorMessage + "\n" + fmt.Sprintf("kubectl server version (%s) is newer than the maximum version expected (%s)", actualKubectlServerVersion, expectedKubernetesServerVersionMax)
+	}
+	expectedKubernetesServerVersionMin, err := version.NewVersion(kubernetesVersionMin)
+	if actualKubectlServerVersion.LessThan(expectedKubernetesServerVersionMin) {
+		errorMessage = errorMessage + "\n" + fmt.Sprintf("kubectl server version (%s) is older than the minimum version required (%s)", actualKubectlServerVersion, expectedKubernetesServerVersionMin)
+	}
+	kubectlClientVersion := jsonOutput.ClientVersion.GitVersion
+	actualKubectlClientVersion, err := version.NewVersion(kubectlClientVersion)
+	expectedKubernetesClientVersionMax, err := version.NewVersion(kubernetesVersionMax)
+
+	if actualKubectlClientVersion.GreaterThanOrEqual(expectedKubernetesClientVersionMax) {
+		errorMessage = errorMessage + "\n" + fmt.Sprintf("kubectl client version (%s) is newer than the maximum version expected (%s)", actualKubectlClientVersion, expectedKubernetesClientVersionMax)
+	}
+	expectedKubernetesClientVersionMin, err := version.NewVersion(kubernetesVersionMin)
+	if actualKubectlClientVersion.LessThan(expectedKubernetesClientVersionMin) {
+		errorMessage = errorMessage + "\n" + fmt.Sprintf("kubectl client version (%s) is older than the minimum version required (%s)", actualKubectlClientVersion, expectedKubernetesClientVersionMin)
+	}
+	if errorMessage != "" {
+		return fmt.Errorf(errorMessage)
+	}
+	return nil
 }

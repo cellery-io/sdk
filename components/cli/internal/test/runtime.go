@@ -158,3 +158,7 @@ func (runtime *MockRuntime) AddComponent(component runtime.SystemComponent) erro
 func (runtime *MockRuntime) DeleteComponent(component runtime.SystemComponent) error {
 	return nil
 }
+
+func (runtime *MockRuntime) Validate() error {
+	return nil
+}

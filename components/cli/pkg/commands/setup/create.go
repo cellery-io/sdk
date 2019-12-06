@@ -31,6 +31,9 @@ import (
 
 func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
 	nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) error {
+	if err := cli.Runtime().Validate(); err != nil {
+		return fmt.Errorf("runtime validation failed. %v", err)
+	}
 	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
