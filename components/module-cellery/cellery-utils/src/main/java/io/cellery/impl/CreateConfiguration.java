@@ -41,7 +41,7 @@ import static io.cellery.CelleryUtils.writeToFile;
  */
 public class CreateConfiguration {
 
-    public static void createConfiguration(MapValue configurationMap) throws BallerinaCelleryException {
+    public static void createConfiguration(MapValue<?, ?> configurationMap) throws BallerinaCelleryException {
         ConfigMap configMap = getConfigMap(configurationMap);
         final String targetDirectory = System.getProperty("user.dir") + File.separator + CelleryConstants.TARGET;
         final String targetFile = targetDirectory + File.separator + CelleryConstants.VOLUMES +

@@ -27,8 +27,8 @@ import java.util.ArrayList;
  */
 @Data
 public class Tree {
-    private ArrayList<Node> tree;
-    private Node root;
+    private ArrayList<Node<Meta>> tree;
+    private Node<Meta> root;
 
     public Tree() {
         this.tree = new ArrayList<>();
@@ -39,7 +39,7 @@ public class Tree {
      *
      * @param node node to be added
      */
-    public void addNode(Node node) {
+    public void addNode(Node<Meta> node) {
         this.tree.add(node);
     }
 }

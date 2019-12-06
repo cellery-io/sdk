@@ -131,7 +131,8 @@ public class CreateCellImage {
 
     private static Image image = new Image();
 
-    public static void createCellImage(MapValue cellImage, MapValue imageName) throws BallerinaCelleryException {
+    public static void createCellImage(MapValue<?, ?> cellImage, MapValue<?, ?> imageName)
+            throws BallerinaCelleryException {
         image.setOrgName((imageName.getStringValue(ORG)));
         image.setCellName((imageName.getStringValue(NAME)));
         image.setCellVersion((imageName.getStringValue(VERSION)));
@@ -154,7 +155,7 @@ public class CreateCellImage {
         }
     }
 
-    private static void processGlobalAPIPublisher(MapValue apiPublisherMap) {
+    private static void processGlobalAPIPublisher(MapValue<?, ?> apiPublisherMap) {
         GlobalApiPublisher globalApiPublisher = new GlobalApiPublisher();
         if (apiPublisherMap.containsKey("apiVersion")) {
             globalApiPublisher.setVersion(apiPublisherMap.getStringValue("apiVersion"));
@@ -168,7 +169,7 @@ public class CreateCellImage {
     private static void processComponents(MapValue<?, ?> components) {
         components.forEach((componentKey, componentValue) -> {
             ImageComponent component = new ImageComponent();
-            MapValue attributeMap = ((MapValue) componentValue);
+            MapValue<?, ?> attributeMap = ((MapValue<?, ?>) componentValue);
             // Set mandatory fields.
             component.setName(attributeMap.getStringValue("name"));
             component.setReplicas(Math.toIntExact(attributeMap.getIntValue("replicas")));
@@ -177,10 +178,10 @@ public class CreateCellImage {
             processSource(component, attributeMap);
             //Process Optional fields
             if (attributeMap.containsKey(INGRESSES)) {
-                processIngress(((MapValue<?, ?>) attributeMap.getMapValue(INGRESSES)), component);
+                processIngress(attributeMap.getMapValue(INGRESSES), component);
             }
             if (attributeMap.containsKey(LABELS)) {
-                ((MapValue<?, ?>) attributeMap.getMapValue(LABELS)).forEach((labelKey, labelValue) ->
+                attributeMap.getMapValue(LABELS).forEach((labelKey, labelValue) ->
                         component.addLabel(labelKey.toString(), labelValue.toString()));
             }
             if (attributeMap.containsKey(SCALING_POLICY)) {
@@ -202,13 +203,13 @@ public class CreateCellImage {
         });
     }
 
-    private static void processSource(ImageComponent component, MapValue attributeMap) {
+    private static void processSource(ImageComponent component, MapValue<?, ?> attributeMap) {
         if ("ImageSource".equals(attributeMap.getMapValue(IMAGE_SOURCE).getType().getName())) {
             //Image Source
             component.setSource(attributeMap.getMapValue(IMAGE_SOURCE).getStringValue("image"));
         } else {
             // Docker Source
-            MapValue dockerSourceMap = attributeMap.getMapValue(IMAGE_SOURCE);
+            MapValue<?, ?> dockerSourceMap = attributeMap.getMapValue(IMAGE_SOURCE);
             String tag = dockerSourceMap.getStringValue("tag");
             if (!tag.matches("[^/]+")) {
                 // <IMAGE_NAME>:1.0.0
@@ -230,7 +231,7 @@ public class CreateCellImage {
      */
     private static void processIngress(MapValue<?, ?> ingressMap, ImageComponent component) {
         ingressMap.forEach((key, ingressValues) -> {
-            MapValue ingressValueMap = ((MapValue) ingressValues);
+            MapValue<?, ?> ingressValueMap = ((MapValue<?, ?>) ingressValues);
             String ingressName = key.toString();
             switch (ingressValueMap.getType().getName()) {
                 case "HttpApiIngress":
@@ -254,7 +255,7 @@ public class CreateCellImage {
         });
     }
 
-    private static void processGRPCIngress(ImageComponent component, MapValue attributeMap, String ingressName) {
+    private static void processGRPCIngress(ImageComponent component, MapValue<?, ?> attributeMap, String ingressName) {
         GRPC grpc = new GRPC();
         grpc.setName(ingressName);
         Destination destination = new Destination();
@@ -280,7 +281,7 @@ public class CreateCellImage {
         component.addGRPC(grpc);
     }
 
-    private static void processTCPIngress(ImageComponent component, MapValue attributeMap, String ingressName) {
+    private static void processTCPIngress(ImageComponent component, MapValue<?, ?> attributeMap, String ingressName) {
         TCP tcp = new TCP();
         tcp.setName(ingressName);
         Destination destination = new Destination();
@@ -301,7 +302,7 @@ public class CreateCellImage {
         component.addTCP(tcp);
     }
 
-    private static void processHttpIngress(ImageComponent component, MapValue attributeMap, String ingressName) {
+    private static void processHttpIngress(ImageComponent component, MapValue<?, ?> attributeMap, String ingressName) {
         API httpAPI = getApi(component, attributeMap);
         httpAPI.setName(ingressName);
         httpAPI.setPort(Math.toIntExact(attributeMap.getIntValue("port")));
@@ -331,7 +332,7 @@ public class CreateCellImage {
                 ArrayValue resourceDefs = attributeMap.getMapValue("definition").getArrayValue("resources");
                 IntStream.range(0, resourceDefs.size()).forEach(resourceIndex -> {
                     APIDefinition apiDefinition = new APIDefinition();
-                    MapValue definitions = (MapValue) resourceDefs.get(resourceIndex);
+                    MapValue<?, ?> definitions = (MapValue<?, ?>) resourceDefs.get(resourceIndex);
                     apiDefinition.setPath(definitions.getStringValue("path"));
                     apiDefinition.setMethod(definitions.getStringValue("method"));
                     apiDefinitions.add(apiDefinition);
@@ -352,7 +353,7 @@ public class CreateCellImage {
      * @param attributeMap Ingress attributes
      * @param httpAPI      API definition
      */
-    public static void extractPorts(ImageComponent component, MapValue attributeMap, API httpAPI) {
+    public static void extractPorts(ImageComponent component, MapValue<?, ?> attributeMap, API httpAPI) {
         final int containerPort = Math.toIntExact(attributeMap.getIntValue("port"));
         Destination destination = new Destination();
         destination.setHost(component.getName());
@@ -385,7 +386,7 @@ public class CreateCellImage {
             hpa.setMaxReplicas(bScalePolicy.getIntValue(CelleryConstants.MAX_REPLICAS));
             hpa.setMinReplicas(bScalePolicy.getIntValue("minReplicas"));
             bOverridable = (bScalePolicy.getBooleanValue("overridable"));
-            MapValue metricsMap = (bScalePolicy.getMapValue("metrics"));
+            MapValue<?, ?> metricsMap = (bScalePolicy.getMapValue("metrics"));
             if (metricsMap.containsKey(CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU)) {
                 hpa.addMetric(extractMetrics(metricsMap, CelleryConstants.AUTO_SCALING_METRIC_RESOURCE_CPU));
             }
@@ -410,12 +411,12 @@ public class CreateCellImage {
         component.setScalingPolicy(scalingPolicy);
     }
 
-    private static AutoScalingResourceMetric extractMetrics(MapValue metricsMap, String resourceName) {
+    private static AutoScalingResourceMetric extractMetrics(MapValue<?, ?> metricsMap, String resourceName) {
         AutoScalingResourceMetric scalingResourceMetric = new AutoScalingResourceMetric();
         scalingResourceMetric.setType(CelleryConstants.AUTO_SCALING_METRIC_RESOURCE);
         Resource resource = new Resource();
         resource.setName(resourceName);
-        final MapValue resourceMap = metricsMap.getMapValue(resourceName);
+        final MapValue<?, ?> resourceMap = metricsMap.getMapValue(resourceName);
         final String threshold = resourceMap.get("threshold").toString();
         if ("Value".equals(resourceMap.getType().getName())) {
             resource.setTargetAverageValue(threshold);
@@ -444,9 +445,7 @@ public class CreateCellImage {
                         new Gson().toJson(image.getDependencies()))
                 .build();
         Composite composite = new Composite(objectMeta, compositeSpec);
-        String targetPath =
-                OUTPUT_DIRECTORY + File.separator + CelleryConstants.CELLERY + File.separator
-                        + image.getCellName() + CelleryConstants.YAML;
+        String targetPath = getTargetPath(image);
         try {
             writeToFile(toYaml(composite), targetPath);
         } catch (IOException e) {
@@ -581,9 +580,7 @@ public class CreateCellImage {
                         new Gson().toJson(image.getDependencies()))
                 .build();
         Cell cell = new Cell(objectMeta, cellSpec);
-        String targetPath =
-                OUTPUT_DIRECTORY + File.separator + CelleryConstants.CELLERY + File.separator
-                        + image.getCellName() + CelleryConstants.YAML;
+        String targetPath = getTargetPath(image);
         try {
             writeToFile(toYaml(cell), targetPath);
         } catch (IOException e) {
@@ -591,6 +588,11 @@ public class CreateCellImage {
             log.error(errMsg, e);
             throw new BallerinaException(errMsg);
         }
+    }
+
+    private static String getTargetPath(Image image) {
+        return OUTPUT_DIRECTORY + File.separator + CelleryConstants.CELLERY + File.separator
+                + image.getCellName() + CelleryConstants.YAML;
     }
 
     private static Container getContainer(ImageComponent component, List<EnvVar> envVarList) {
@@ -602,10 +604,8 @@ public class CreateCellImage {
                 .withReadinessProbe(component.getReadinessProbe())
                 .withLivenessProbe(component.getLivenessProbe());
         List<ContainerPort> containerPorts = new ArrayList<>();
-        component.getPorts().forEach(port -> {
-            containerPorts.add(new ContainerPortBuilder()
-                    .withContainerPort(port.getTargetPort()).build());
-        });
+        component.getPorts().forEach(port -> containerPorts.add(new ContainerPortBuilder()
+                .withContainerPort(port.getTargetPort()).build()));
         containerBuilder.withPorts(containerPorts);
         return containerBuilder.build();
     }
@@ -648,7 +648,7 @@ public class CreateCellImage {
                                 CelleryConstants.INSTANCE_NAME_PLACEHOLDER +
                                 CelleryConstants.GATEWAY_SERVICE + ":"
                                 + api.getPort() + "/" + context;
-                        json.put(recordName + "_" + getValidRecordName(api.getName()) + "_api_url",
+                        json.put(recordName + "_" + api.getName() + "_api_url",
                                 url.replaceAll("(?<!http:)//", "/"));
                     }
                 });
@@ -686,13 +686,13 @@ public class CreateCellImage {
 
         JSONObject componentsJsonObject = new JSONObject();
         components.forEach((key, componentValue) -> {
-            MapValue attributeMap = ((MapValue) componentValue);
+            MapValue<?, ?> attributeMap = ((MapValue<?, ?>) componentValue);
             String componentName = attributeMap.getStringValue("name");
             JSONObject componentJson = new JSONObject();
 
             JSONObject labelsJsonObject = new JSONObject();
             if (attributeMap.containsKey(LABELS)) {
-                ((MapValue<?, ?>) attributeMap.getMapValue(LABELS)).forEach((labelKey, labelValue) ->
+                attributeMap.getMapValue(LABELS).forEach((labelKey, labelValue) ->
                         labelsJsonObject.put(labelKey.toString(), labelValue.toString()));
             }
             componentJson.put("labels", labelsJsonObject);
@@ -713,7 +713,7 @@ public class CreateCellImage {
                 if (dependencies.containsKey(COMPONENTS)) {
                     ArrayValue componentsArray = dependencies.getArrayValue(COMPONENTS);
                     IntStream.range(0, componentsArray.size()).forEach(componentIndex -> {
-                        MapValue component = ((MapValue) componentsArray.get(componentIndex));
+                        MapValue<?, ?> component = ((MapValue<?, ?>) componentsArray.get(componentIndex));
                         componentDependenciesJsonArray.put(component.getStringValue("name"));
                     });
                 }
@@ -767,7 +767,7 @@ public class CreateCellImage {
                             "as the dependency, received " + dependency);
                 }
             } else {
-                MapValue dependency = (MapValue) dependencyValue;
+                MapValue<?, ?> dependency = (MapValue<?, ?>) dependencyValue;
                 org = dependency.getStringValue(ORG);
                 name = dependency.getStringValue(NAME);
                 version = dependency.getStringValue(VERSION);

@@ -50,7 +50,7 @@ import static io.cellery.CelleryConstants.VERSION;
  */
 public class ReadReference {
 
-    public static MapValue readReferenceExternal(MapValue nameStruct) {
+    public static MapValue<?, ?> readReferenceExternal(MapValue<?, ?> nameStruct) {
         String orgName = nameStruct.getStringValue(ORG);
         String cellName = nameStruct.getStringValue(NAME);
         String cellVersion = nameStruct.getStringValue(VERSION);

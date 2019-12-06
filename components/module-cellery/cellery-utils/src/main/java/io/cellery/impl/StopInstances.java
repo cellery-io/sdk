@@ -35,10 +35,10 @@ public class StopInstances {
 
     public static void stopInstancesExternal(ArrayValue instanceList) throws BallerinaCelleryException {
         IntStream.range(0, instanceList.size()).forEach(index -> {
-            MapValue instance = (MapValue) instanceList.get(index);
+            MapValue<?, ?> instance = (MapValue<?, ?>) instanceList.get(index);
             boolean wasRunning = instance.getBooleanValue("isRunning");
             if (!wasRunning) {
-                MapValue nameStruct = instance.getMapValue("iName");
+                MapValue<?, ?> nameStruct = instance.getMapValue("iName");
                 String instanceName = nameStruct.getStringValue(INSTANCE_NAME);
                 printInfo("Deleting " + instanceName + " instance...");
                 CelleryUtils.executeShellCommand("kubectl delete cells.mesh.cellery.io " + instanceName, null,

@@ -64,26 +64,26 @@ public class RunTestSuite {
     private static final String OUTPUT_DIRECTORY = System.getProperty("user.dir");
     private static final Logger log = LoggerFactory.getLogger(RunTestSuite.class);
 
-    public static void runTestSuite(MapValue iName, MapValue testSuite) throws BallerinaCelleryException {
+    public static void runTestSuite(MapValue<?, ?> iName, MapValue<?, ?> testSuite) throws BallerinaCelleryException {
         ArrayValue tests = testSuite.getArrayValue("tests");
         executeTests(tests, iName);
     }
 
-    private static void executeTests(ArrayValue tests, MapValue iName) throws BallerinaCelleryException {
+    private static void executeTests(ArrayValue tests, MapValue<?, ?> iName) throws BallerinaCelleryException {
         int bound = tests.size();
         for (int index = 0; index < bound; index++) {
-            final MapValue testInfo = (MapValue) tests.get(index);
+            final MapValue<?, ?> testInfo = (MapValue<?, ?>) tests.get(index);
             String testName = testInfo.getStringValue(CelleryConstants.NAME);
             Test test = new Test();
             test.setName(testName);
-            MapValue sourceMap = testInfo.getMapValue(IMAGE_SOURCE);
+            MapValue<?, ?> sourceMap = testInfo.getMapValue(IMAGE_SOURCE);
             if ("FileSource".equals(sourceMap.getType().getName())) {
                 test.setSource(sourceMap.getStringValue("filepath"));
                 runInlineTests();
             } else {
                 try {
                     test.setSource(sourceMap.getStringValue("image"));
-                    MapValue envMap = testInfo.getMapValue("envVars");
+                    MapValue<?, ?> envMap = testInfo.getMapValue("envVars");
                     CelleryUtils.processEnvVars(envMap, test);
                     Cell testCell = generateTestCell(test, iName);
                     runImageBasedTest(testCell, test.getName());
@@ -197,7 +197,7 @@ public class RunTestSuite {
         KubernetesClient.delete(instanceName, "cells.mesh.cellery.io");
     }
 
-    private static void runInlineTests() throws BallerinaCelleryException {
+    private static void runInlineTests() {
         Path workingDir = Paths.get(System.getProperty("user.dir"));
         String testModule = System.getenv(TEST_MODULE_ENV_VAR);
         CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printWarning, System
@@ -205,7 +205,7 @@ public class RunTestSuite {
 
     }
 
-    private static Cell generateTestCell(Test test, MapValue iName) {
+    private static Cell generateTestCell(Test test, MapValue<?, ?> iName) {
         Image cellImage = new Image();
         cellImage.setCellName(test.getName());
         cellImage.setTest(test);

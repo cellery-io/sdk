@@ -41,7 +41,7 @@ import static io.cellery.CelleryUtils.writeToFile;
  */
 public class CreatePersistenceClaim {
 
-    public static void createPersistenceClaim(MapValue volumeClaimMap) throws BallerinaCelleryException {
+    public static void createPersistenceClaim(MapValue<?, ?> volumeClaimMap) throws BallerinaCelleryException {
         PersistentVolumeClaim volumeClaim = getVolumeClaim(volumeClaimMap);
         final String targetDirectory = System.getProperty("user.dir") + File.separator + CelleryConstants.TARGET;
         final String targetFile = targetDirectory + File.separator + CelleryConstants.VOLUMES +
