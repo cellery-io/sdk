@@ -25,6 +25,8 @@ import (
 	"github.com/manifoldco/promptui"
 
 	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/gcp"
+	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -50,7 +52,16 @@ func createEnvironment(cli cli.Cli) error {
 	switch value {
 	case celleryGcp:
 		{
-			createGcp(cli)
+			isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
+			if isBackSelected {
+				return RunSetup(cli)
+			}
+			platform, err := gcp.NewGcp()
+			if err != nil {
+				return fmt.Errorf("failed to initialize celleryGcp platform, %v", err)
+			}
+			return RunSetupCreate(cli, platform, isCompleteSetup, true, true,
+				true, runtime.Nfs{}, runtime.MysqlDb{}, "")
 		}
 	case existingCluster:
 		{

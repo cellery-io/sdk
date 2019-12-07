@@ -18,11 +18,13 @@
 
 package cli
 
+import "cellery.io/cellery/components/cli/pkg/runtime"
+
 type Platform interface {
 	CreateK8sCluster() error
-	ConfigureSqlInstance() error
+	ConfigureSqlInstance() (runtime.MysqlDb, error)
 	CreateStorage() error
-	CreateNfs() error
+	CreateNfs() (runtime.Nfs, error)
 	TearDown() error
 	UpdateKubeConfig() error
 }

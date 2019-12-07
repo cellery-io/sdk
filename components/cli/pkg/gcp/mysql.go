@@ -21,24 +21,17 @@ package gcp
 import (
 	"path/filepath"
 
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
-	"cellery.io/cellery/components/cli/pkg/runtime"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func InstallNginx() error {
-	for _, file := range buildNginxYamlPaths() {
-		err := kubernetes.ApplyFile(file)
-		if err != nil {
-			return err
-		}
+func updateInitSql(dbUserName, dbPassword string) error {
+	buildInitSqlPath := filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.K8sArtifacts, "mysql", "dbscripts", "init.sql")
+	if err := util.ReplaceInFile(buildInitSqlPath, "DATABASE_USERNAME", dbUserName, -1); err != nil {
+		return err
+	}
+	if err := util.ReplaceInFile(buildInitSqlPath, "DATABASE_PASSWORD", dbPassword, -1); err != nil {
+		return err
 	}
 	return nil
-}
-
-func buildNginxYamlPaths() []string {
-	base := buildArtifactsPath(runtime.System)
-	return []string{
-		filepath.Join(base, "mandatory.yaml"),
-		filepath.Join(base, "cloud-generic.yaml"),
-	}
 }

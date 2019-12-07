@@ -19,10 +19,14 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/gcp"
+	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -32,7 +36,13 @@ func newSetupCreateGcpCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 		Short: "Create a Cellery runtime in gcp",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := setup.RunSetupCreateGcp(cli, *isComplete)
+			platform, err := gcp.NewGcp()
+			if err != nil {
+				util.ExitWithErrorMessage("Cellery setup create gcp command failed", fmt.Errorf("failed to initialize celleryGcp platform, %v", err))
+			}
+			err = setup.RunSetupCreate(cli, platform, *isComplete, true, true,
+				true, runtime.Nfs{}, runtime.MysqlDb{}, "")
+
 			if err != nil {
 				util.ExitWithErrorMessage("Cellery setup create gcp command failed", err)
 			}

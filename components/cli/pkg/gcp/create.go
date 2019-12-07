@@ -35,7 +35,7 @@ import (
 
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
-	gcp2 "cellery.io/cellery/components/cli/pkg/runtime/gcp"
+	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -89,21 +89,16 @@ func (gcp *Gcp) getCreatedByLabel() map[string]string {
 	return labels
 }
 
-func (gcp *Gcp) ConfigureSqlInstance() error {
+func (gcp *Gcp) ConfigureSqlInstance() (runtime.MysqlDb, error) {
 	//Create sql instance
 	_, err := gcp.createSqlInstance(gcp.sqlService, gcp.projectName, gcp.region, gcp.region, dbInstanceNamePrefix+uuid)
 	if err != nil {
-		return fmt.Errorf("error creating sql instance: %v", err)
+		return runtime.MysqlDb{}, fmt.Errorf("error creating sql instance: %v", err)
 	}
 	sqlIpAddress, serviceAccountEmailAddress := gcp.getSqlServiceAccount(gcp.ctx, gcp.sqlService, gcp.projectName,
 		dbInstanceNamePrefix+uuid)
-
-	if err := gcp2.UpdateMysqlCredentials(sqlUserName, sqlPassword+uuid,
-		sqlIpAddress); err != nil {
-		return fmt.Errorf("error updating mysql credentials: %v", err)
-	}
 	gcp.sqlAccount = serviceAccountEmailAddress
-	return nil
+	return runtime.MysqlDb{DbHostName: sqlIpAddress, DbUserName: sqlUserName, DbPassword: sqlPassword + uuid}, nil
 }
 
 func (gcp *Gcp) createSqlInstance(service *sqladmin.Service, projectId string, region string, zone string,
@@ -184,7 +179,7 @@ func (gcp *Gcp) createGcpStorage() error {
 
 func (gcp *Gcp) uploadSqlFile(client *storage.Client, bucket, object string) error {
 	ctx := context.Background()
-	if err := gcp2.UpdateInitSql(sqlUserName, sqlPassword+uuid); err != nil {
+	if err := updateInitSql(sqlUserName, sqlPassword+uuid); err != nil {
 		return err
 	}
 	f, err := os.Open(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.K8sArtifacts,
@@ -270,19 +265,16 @@ func (gcp *Gcp) updateInstance() error {
 	return nil
 }
 
-func (gcp *Gcp) CreateNfs() error {
+func (gcp *Gcp) CreateNfs() (runtime.Nfs, error) {
 	// Create NFS server
 	if err := gcp.createNfsServer(); err != nil {
-		return fmt.Errorf("error creating NFS server: %v", err)
+		return runtime.Nfs{}, fmt.Errorf("error creating NFS server: %v", err)
 	}
 	nfsIpAddress, errIp := gcp.getNfsServerIp()
 	if errIp != nil {
-		return fmt.Errorf("error getting NFS server IP address: %v", errIp)
+		return runtime.Nfs{}, fmt.Errorf("error getting NFS server IP address: %v", errIp)
 	}
-	if err := gcp2.UpdateNfsServerDetails(nfsIpAddress, "/data"); err != nil {
-		return fmt.Errorf("error replacing in file artifacts-persistent-volume.yaml: %v", err)
-	}
-	return nil
+	return runtime.Nfs{NfsServerIp: nfsIpAddress, FileShare: "/data"}, nil
 }
 
 func (gcp *Gcp) createNfsServer() error {

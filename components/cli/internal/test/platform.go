@@ -18,6 +18,8 @@
 
 package test
 
+import "cellery.io/cellery/components/cli/pkg/runtime"
+
 // NewMockPlatform returns a mock platform.
 func NewMockPlatform(opts ...func(*MockPlatform)) *MockPlatform {
 	platform := &MockPlatform{}
@@ -34,16 +36,16 @@ func (platform *MockPlatform) CreateK8sCluster() error {
 	return nil
 }
 
-func (platform *MockPlatform) ConfigureSqlInstance() error {
-	return nil
+func (platform *MockPlatform) ConfigureSqlInstance() (runtime.MysqlDb, error) {
+	return runtime.MysqlDb{}, nil
 }
 
 func (platform *MockPlatform) CreateStorage() error {
 	return nil
 }
 
-func (platform *MockPlatform) CreateNfs() error {
-	return nil
+func (platform *MockPlatform) CreateNfs() (runtime.Nfs, error) {
+	return runtime.Nfs{}, nil
 }
 
 func (platform *MockPlatform) TearDown() error {

@@ -51,11 +51,11 @@ func RunSetup(cli cli.Cli) error {
 	switch value {
 	case manage:
 		{
-			manageEnvironment(cli)
+			return manageEnvironment(cli)
 		}
 	case create:
 		{
-			createEnvironment(cli)
+			return createEnvironment(cli)
 		}
 	case modify:
 		{

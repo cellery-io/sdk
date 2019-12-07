@@ -31,9 +31,7 @@ import (
 
 func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
 	nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) error {
-	if err := cli.Runtime().Validate(); err != nil {
-		return fmt.Errorf("runtime validation failed. %v", err)
-	}
+	var err error
 	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
@@ -48,7 +46,8 @@ func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersist
 		}
 		if err := cli.ExecuteTask("Creating sql instance", "Failed to create sql instance",
 			"", func() error {
-				return platform.ConfigureSqlInstance()
+				db, err = platform.ConfigureSqlInstance()
+				return err
 			}); err != nil {
 			return err
 		}
@@ -60,7 +59,8 @@ func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersist
 		}
 		if err := cli.ExecuteTask("Creating file system", "Failed to create file system",
 			"", func() error {
-				return platform.CreateNfs()
+				nfs, err = platform.CreateNfs()
+				return err
 			}); err != nil {
 			return err
 		}
@@ -70,6 +70,9 @@ func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersist
 			}); err != nil {
 			return err
 		}
+	}
+	if err := cli.Runtime().Validate(); err != nil {
+		return fmt.Errorf("runtime validation failed. %v", err)
 	}
 	// Install Cellery runtime.
 	if isPersistentVolume && !hasNfsStorage {

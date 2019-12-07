@@ -31,7 +31,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func newSetupCreateOnExistingClusterCommand(cli cli.Cli, isComplete bool) *cobra.Command {
+func newSetupCreateOnExistingClusterCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 	var isPersistentVolume = false
 	var hasNfsStorage = false
 	var isLoadBalancerIngressMode = false
@@ -65,7 +65,7 @@ func newSetupCreateOnExistingClusterCommand(cli cli.Cli, isComplete bool) *cobra
 				dbPassword)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := setup.RunSetupCreate(cli, nil, isComplete, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode,
+			if err := setup.RunSetupCreate(cli, nil, *isComplete, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode,
 				nfs, db, nodePortIpAddress); err != nil {
 				util.ExitWithErrorMessage("Cellery setup create existing command failed", err)
 			}
