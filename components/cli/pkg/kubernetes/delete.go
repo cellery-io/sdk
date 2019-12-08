@@ -78,7 +78,7 @@ func DeleteNameSpace(nameSpace string) error {
 	return cmd.Run()
 }
 
-func DeleteAllCells() error {
+func (kubeCli *CelleryKubeCli) DeleteAllCells() error {
 	cmd := exec.Command(
 		constants.KubeCtl,
 		"delete",
@@ -91,23 +91,25 @@ func DeleteAllCells() error {
 	return cmd.Run()
 }
 
-func DeleteCell(cellInstance string) (string, error) {
-	cmd := exec.Command(
-		constants.KubeCtl,
-		"delete",
-		"cell",
-		cellInstance,
-	)
-	displayVerboseOutput(cmd)
-	return osexec.GetCommandOutput(cmd)
-}
-
-func DeletePersistedVolume(persistedVolume string) error {
+func (kubeCli *CelleryKubeCli) DeletePersistedVolume(persistedVolume string) error {
 	cmd := exec.Command(
 		constants.KubeCtl,
 		"delete",
 		"pv",
 		persistedVolume,
+		"--ignore-not-found",
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func (kubeCli *CelleryKubeCli) DeleteNameSpace(nameSpace string) error {
+	cmd := exec.Command(
+		constants.KubeCtl,
+		"delete",
+		"ns",
+		nameSpace,
 		"--ignore-not-found",
 	)
 	displayVerboseOutput(cmd)

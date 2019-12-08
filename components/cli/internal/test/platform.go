@@ -48,10 +48,26 @@ func (platform *MockPlatform) CreateNfs() (runtime.Nfs, error) {
 	return runtime.Nfs{}, nil
 }
 
-func (platform *MockPlatform) TearDown() error {
+func (platform *MockPlatform) UpdateKubeConfig() error {
 	return nil
 }
 
-func (platform *MockPlatform) UpdateKubeConfig() error {
+func (platform *MockPlatform) RemoveCluster() error {
 	return nil
+}
+
+func (platform *MockPlatform) RemoveSqlInstance() error {
+	return nil
+}
+
+func (platform *MockPlatform) RemoveFileSystem() error {
+	return nil
+}
+
+func (platform *MockPlatform) RemoveStorage() error {
+	return nil
+}
+
+func (platform *MockPlatform) ClusterName() string {
+	return ""
 }

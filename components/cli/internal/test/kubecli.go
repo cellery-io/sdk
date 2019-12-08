@@ -304,3 +304,15 @@ func (kubeCli *MockKubeCli) GetMasterNodeName() (string, error) {
 func (kubeCli *MockKubeCli) ApplyLabel(itemType, itemName, labelName string, overWrite bool) error {
 	return nil
 }
+
+func (kubeCli *MockKubeCli) DeletePersistedVolume(persistedVolume string) error {
+	return nil
+}
+
+func (kubeCli *MockKubeCli) DeleteAllCells() error {
+	return nil
+}
+
+func (kubeCli *MockKubeCli) DeleteNameSpace(nameSpace string) error {
+	return nil
+}

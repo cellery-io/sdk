@@ -37,7 +37,7 @@ func newSetupCleanupExistingCommand(cli cli.Cli) *cobra.Command {
 		Short: "Cleanup existing cluster setup",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := setup.RunCleanupExisting(cli, knative, istio, ingress, hpa, confirmed); err != nil {
+			if err := setup.RunSetupCleanup(cli, nil, knative, istio, ingress, hpa, confirmed); err != nil {
 				util.ExitWithErrorMessage("Cellery setup cleanup existing command failed", err)
 			}
 		},

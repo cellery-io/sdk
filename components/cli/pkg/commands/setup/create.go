@@ -38,12 +38,13 @@ func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersist
 	cli.Runtime().SetArtifactsPath(artifactsPath)
 	if platform != nil {
 		// Create platform resources.
-		if err := cli.ExecuteTask("Creating k8s cluster", "Failed to create k8s cluster",
+		if err := cli.ExecuteTask("Creating kubernetes cluster", "Failed to create kubernetes cluster",
 			"", func() error {
 				return platform.CreateK8sCluster()
 			}); err != nil {
 			return err
 		}
+		fmt.Fprintln(cli.Out(), fmt.Sprintf("Successfully created cluster %s", platform.ClusterName()))
 		if err := cli.ExecuteTask("Creating sql instance", "Failed to create sql instance",
 			"", func() error {
 				db, err = platform.ConfigureSqlInstance()

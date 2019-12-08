@@ -55,6 +55,9 @@ type KubeCli interface {
 	UseContext(context string) error
 	GetMasterNodeName() (string, error)
 	ApplyLabel(itemType, itemName, labelName string, overWrite bool) error
+	DeletePersistedVolume(persistedVolume string) error
+	DeleteAllCells() error
+	DeleteNameSpace(nameSpace string) error
 }
 
 type CelleryKubeCli struct {

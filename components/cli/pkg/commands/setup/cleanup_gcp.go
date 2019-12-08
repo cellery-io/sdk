@@ -92,7 +92,12 @@ func cleanupGcp(cli cli.Cli) error {
 	if value == setupBack {
 		return manageGcp(cli)
 	}
-	return RunCleanupGcp(value)
+	uuid := strings.TrimPrefix(value, "cellery-cluster")
+	platform, err := gcp.NewGcp(gcp.SetUuid(uuid))
+	if err != nil {
+		return fmt.Errorf("failed to initialize celleryGcp platform, %v", err)
+	}
+	return RunSetupCleanup(cli, platform, true, true, true, true, true)
 }
 
 func ValidateGcpCluster(cluster string) (bool, error) {
@@ -113,19 +118,6 @@ func ValidateGcpCluster(cluster string) (bool, error) {
 		}
 	}
 	return valid, nil
-}
-
-func RunCleanupGcp(value string) error {
-	cleanupSpinner := util.StartNewSpinner("Removing GCP cluster")
-	platform, err := gcp.NewGcp(gcp.SetClusterName(value))
-	if err != nil {
-		return fmt.Errorf("failed to initialize celleryGcp platform, %v", err)
-	}
-	err = platform.TearDown()
-	if err != nil {
-		cleanupSpinner.Stop(false)
-	}
-	return nil
 }
 
 func getGcpClustersCreatedByUser(cli cli.Cli, gcpClusters []string) ([]string, error) {

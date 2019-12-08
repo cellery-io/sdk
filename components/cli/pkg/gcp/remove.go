@@ -20,37 +20,58 @@ package gcp
 
 import (
 	"fmt"
-	"strings"
 	"time"
 )
 
-func (gcp *Gcp) TearDown() error {
-	uniqueNumber := strings.TrimPrefix(gcp.clusterName, "cellery-cluster")
-	_, err := gcp.service.Projects.Zones.Clusters.Delete(gcp.projectName, gcp.zone, clusterNamePrefix+uniqueNumber).Do()
+func (gcp *Gcp) RemoveCluster() error {
+	exists, err := gcp.gcpClusterExist()
+	if err != nil {
+		return fmt.Errorf("failed to check if cluster exists, %v", err)
+	}
+	if !exists {
+		return fmt.Errorf("gcp cluster, %s does not exist", clusterNamePrefix+gcp.uuid)
+	}
+	_, err = gcp.service.Projects.Zones.Clusters.Delete(gcp.projectName, gcp.zone, clusterNamePrefix+gcp.uuid).Do()
 	if err != nil {
 		return fmt.Errorf("failed to delete gcp cluster: %v", err)
 
 	}
 	for i := 0; i < 15; i++ {
-		if gcp.gcpClusterExist() {
+		exists, err := gcp.gcpClusterExist()
+		if err != nil {
+			return fmt.Errorf("failed to check if cluster exists, %v", err)
+		}
+		if exists {
 			time.Sleep(60 * time.Second)
 		} else {
 			break
 		}
 	}
-	_, err = gcp.sqlService.Instances.Delete(gcp.projectName, dbInstanceNamePrefix+uniqueNumber).Do()
+	return nil
+}
+
+func (gcp *Gcp) RemoveSqlInstance() error {
+	_, err := gcp.sqlService.Instances.Delete(gcp.projectName, dbInstanceNamePrefix+gcp.uuid).Do()
 	if err != nil {
 		return fmt.Errorf("failed to delete the sql instance: %v", err)
 	}
-	_, err = gcp.nfsService.Projects.Locations.Instances.Delete("projects/" + gcp.projectName + "/locations/" + gcp.zone + "/instances/" + fileStorePrefix + uniqueNumber).Do()
+	return nil
+}
+
+func (gcp *Gcp) RemoveFileSystem() error {
+	_, err := gcp.nfsService.Projects.Locations.Instances.Delete("projects/" + gcp.projectName + "/locations/" + gcp.zone + "/instances/" + fileStorePrefix + gcp.uuid).Do()
 	if err != nil {
 		return fmt.Errorf("failed to delete nfs server %v", err)
 	}
-	object := gcp.storageClient.Bucket(storagePrefix + uniqueNumber).Object(initSql)
+	return nil
+}
+
+func (gcp *Gcp) RemoveStorage() error {
+	object := gcp.storageClient.Bucket(storagePrefix + gcp.uuid).Object(initSql)
 	if err := object.Delete(gcp.ctx); err != nil {
 		return fmt.Errorf("error deleting gcp storage object: %v", err)
 	}
-	if err := gcp.storageClient.Bucket(storagePrefix + uniqueNumber).Delete(gcp.ctx); err != nil {
+	if err := gcp.storageClient.Bucket(storagePrefix + gcp.uuid).Delete(gcp.ctx); err != nil {
 		return err
 	}
 	return nil

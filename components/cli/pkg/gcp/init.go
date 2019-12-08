@@ -40,14 +40,8 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-var uuid string
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-	uuid = strconv.Itoa(rand.Intn(1000))
-}
-
 type Gcp struct {
+	uuid          string
 	ctx           context.Context
 	service       *container.Service
 	accountName   string
@@ -64,7 +58,10 @@ type Gcp struct {
 
 // NewGcp returns a Gcp instance.
 func NewGcp(opts ...func(*Gcp)) (*Gcp, error) {
+	rand.Seed(time.Now().UTC().UnixNano())
+	uuid := strconv.Itoa(rand.Intn(1000))
 	gcp := &Gcp{
+		uuid:        uuid,
 		clusterName: clusterNamePrefix + uuid,
 		bucketName:  storagePrefix + uuid,
 	}
@@ -116,6 +113,12 @@ func NewGcp(opts ...func(*Gcp)) (*Gcp, error) {
 		opt(gcp)
 	}
 	return gcp, nil
+}
+
+func SetUuid(uuid string) func(*Gcp) {
+	return func(gcp *Gcp) {
+		gcp.uuid = uuid
+	}
 }
 
 func SetClusterName(clusterName string) func(*Gcp) {
@@ -176,18 +179,18 @@ func (gcp *Gcp) authenticateCredentials() error {
 	return nil
 }
 
-func (gcp *Gcp) gcpClusterExist() bool {
+func (gcp *Gcp) gcpClusterExist() (bool, error) {
 	clusters, err := gcp.GetClusterList()
 	if err != nil {
-		return false
+		return false, err
 	}
 	if len(clusters) == 0 {
-		return false
+		return false, nil
 	}
-	if util.ContainsInStringArray(clusters, gcp.clusterName) {
-		return true
+	if util.ContainsInStringArray(clusters, clusterNamePrefix+gcp.uuid) {
+		return true, nil
 	}
-	return false
+	return false, nil
 }
 
 func (gcp *Gcp) GetClusterList() ([]string, error) {
@@ -200,4 +203,8 @@ func (gcp *Gcp) GetClusterList() ([]string, error) {
 		clusters = append(clusters, cluster.Name)
 	}
 	return clusters, nil
+}
+
+func (gcp *Gcp) ClusterName() string {
+	return gcp.clusterName
 }

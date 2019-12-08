@@ -25,6 +25,10 @@ type Platform interface {
 	ConfigureSqlInstance() (runtime.MysqlDb, error)
 	CreateStorage() error
 	CreateNfs() (runtime.Nfs, error)
-	TearDown() error
 	UpdateKubeConfig() error
+	RemoveCluster() error
+	RemoveSqlInstance() error
+	RemoveFileSystem() error
+	RemoveStorage() error
+	ClusterName() string
 }

@@ -91,14 +91,14 @@ func (gcp *Gcp) getCreatedByLabel() map[string]string {
 
 func (gcp *Gcp) ConfigureSqlInstance() (runtime.MysqlDb, error) {
 	//Create sql instance
-	_, err := gcp.createSqlInstance(gcp.sqlService, gcp.projectName, gcp.region, gcp.region, dbInstanceNamePrefix+uuid)
+	_, err := gcp.createSqlInstance(gcp.sqlService, gcp.projectName, gcp.region, gcp.region, dbInstanceNamePrefix+gcp.uuid)
 	if err != nil {
 		return runtime.MysqlDb{}, fmt.Errorf("error creating sql instance: %v", err)
 	}
 	sqlIpAddress, serviceAccountEmailAddress := gcp.getSqlServiceAccount(gcp.ctx, gcp.sqlService, gcp.projectName,
-		dbInstanceNamePrefix+uuid)
+		dbInstanceNamePrefix+gcp.uuid)
 	gcp.sqlAccount = serviceAccountEmailAddress
-	return runtime.MysqlDb{DbHostName: sqlIpAddress, DbUserName: sqlUserName, DbPassword: sqlPassword + uuid}, nil
+	return runtime.MysqlDb{DbHostName: sqlIpAddress, DbUserName: sqlUserName, DbPassword: sqlPassword + gcp.uuid}, nil
 }
 
 func (gcp *Gcp) createSqlInstance(service *sqladmin.Service, projectId string, region string, zone string,
@@ -155,7 +155,7 @@ func (gcp *Gcp) CreateStorage() error {
 	}
 	// Import sql script
 	var uri = "gs://" + gcp.bucketName + "/init.sql"
-	if err := gcp.importSqlScript(gcp.sqlService, gcp.projectName, dbInstanceNamePrefix+uuid, uri); err != nil {
+	if err := gcp.importSqlScript(gcp.sqlService, gcp.projectName, dbInstanceNamePrefix+gcp.uuid, uri); err != nil {
 		return fmt.Errorf("error Updating bucketName permission: %v", err)
 	}
 	time.Sleep(30 * time.Second)
@@ -179,7 +179,7 @@ func (gcp *Gcp) createGcpStorage() error {
 
 func (gcp *Gcp) uploadSqlFile(client *storage.Client, bucket, object string) error {
 	ctx := context.Background()
-	if err := updateInitSql(sqlUserName, sqlPassword+uuid); err != nil {
+	if err := updateInitSql(sqlUserName, sqlPassword+gcp.uuid); err != nil {
 		return err
 	}
 	f, err := os.Open(filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.K8sArtifacts,
@@ -258,7 +258,7 @@ func (gcp *Gcp) updateInstance() error {
 		Settings: newSettings,
 	}
 
-	_, err := gcp.sqlService.Instances.Patch(gcp.projectName, dbInstanceNamePrefix+uuid, newDbInstance).Do()
+	_, err := gcp.sqlService.Instances.Patch(gcp.projectName, dbInstanceNamePrefix+gcp.uuid, newDbInstance).Do()
 	if err != nil {
 		return fmt.Errorf("error updating instance :%v", err)
 	}
@@ -299,7 +299,7 @@ func (gcp *Gcp) createNfsServer() error {
 	}
 
 	if _, err := gcp.nfsService.Projects.Locations.Instances.Create("projects/"+gcp.projectName+"/locations/"+gcp.zone,
-		nfsInstance).InstanceId(fileStorePrefix + uuid).Do(); err != nil {
+		nfsInstance).InstanceId(fileStorePrefix + gcp.uuid).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -309,7 +309,7 @@ func (gcp *Gcp) getNfsServerIp() (string, error) {
 	serverIp := ""
 	for true {
 		inst, err := gcp.nfsService.Projects.Locations.Instances.Get("projects/" + gcp.projectName + "/locations/" + gcp.zone +
-			"/instances/" + fileStorePrefix + uuid).Do()
+			"/instances/" + fileStorePrefix + gcp.uuid).Do()
 		if err != nil {
 			return serverIp, err
 		} else {
