@@ -41,7 +41,7 @@ public function build(cellery:ImageName iName) returns error? {
                 port: 8080,
                 context: "employee",
                 expose: "local",
-                definition: <cellery:ApiDefinition>cellery:readSwaggerFile("./resources/employee.swagger.json")
+                definition: <cellery:ApiDefinition>cellery:readSwaggerFile("./src/employee/resources/employee.swagger.json")
             }
         },
         envVars: {

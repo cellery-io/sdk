@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 
 import static io.cellery.components.test.utils.CelleryTestConstants.ARTIFACTS;
-import static io.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
@@ -55,6 +54,7 @@ import static io.cellery.components.test.utils.CelleryTestConstants.METADATA;
 import static io.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static io.cellery.components.test.utils.CelleryTestConstants.YAML;
 import static io.cellery.components.test.utils.LangTestUtils.deleteDirectory;
+import static io.cellery.components.test.utils.LangTestUtils.deleteFile;
 
 public class EmployeeTest {
 
@@ -70,7 +70,7 @@ public class EmployeeTest {
 
     @Test(groups = "build")
     public void compileCellBuild() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "employee" + BAL, cellImageInfo),
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "employee", cellImageInfo),
                 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
@@ -132,7 +132,7 @@ public class EmployeeTest {
     public void compileCellRun() throws IOException, InterruptedException {
         String tmpDir = LangTestUtils.createTempImageDir(SOURCE_DIR_PATH, cellImageInfo.getName());
         Path tempPath = Paths.get(tmpDir);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "employee" + BAL, cellImageInfo,
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "employee", cellImageInfo,
                 dependencyCells, tmpDir), 0);
         File newYaml = tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
         runtimeCell = CelleryUtils.readCellYaml(newYaml.getAbsolutePath());
@@ -251,5 +251,6 @@ public class EmployeeTest {
     @AfterClass
     public void cleanUp() throws IOException {
         deleteDirectory(TARGET_PATH);
+        deleteFile(SOURCE_DIR_PATH.resolve("src").resolve("employee").resolve("main.bal"));
     }
 }

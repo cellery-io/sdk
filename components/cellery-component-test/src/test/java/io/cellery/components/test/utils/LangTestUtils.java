@@ -88,33 +88,33 @@ public class LangTestUtils {
      * Compile and Executes the Build function of the Cell file with env variables.
      *
      * @param sourceDirectory Ballerina source directory
-     * @param fileName        Ballerina source file name
+     * @param balSource        Ballerina source file name
      * @param cellImageInfo   Information of the cell
      * @param envVar          environment variables required to build the cell
      * @return Exit code
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
+    public static int compileCellBuildFunction(Path sourceDirectory, String balSource, CellImageInfo cellImageInfo,
                                                Map<String, String> envVar) throws InterruptedException, IOException {
 
-        return compileBallerinaFunction(BUILD, sourceDirectory, fileName, cellImageInfo, new HashMap<>(), envVar);
+        return compileBallerinaFunction(BUILD, sourceDirectory, balSource, cellImageInfo, new HashMap<>(), envVar);
     }
 
     /**
      * Compile and Executes the build function of the Cell file.
      *
      * @param sourceDirectory Ballerina source directory
-     * @param fileName        Ballerina source file name
+     * @param balSource       Ballerina source file name
      * @param cellImageInfo   Information of the cell
      * @return Exit code
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellBuildFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo)
+    public static int compileCellBuildFunction(Path sourceDirectory, String balSource, CellImageInfo cellImageInfo)
             throws InterruptedException, IOException {
 
-        return compileCellBuildFunction(sourceDirectory, fileName, cellImageInfo, new HashMap<>());
+        return compileCellBuildFunction(sourceDirectory, balSource, cellImageInfo, new HashMap<>());
     }
 
     /**
@@ -127,6 +127,19 @@ public class LangTestUtils {
         Path pathToBeDeleted = path.toAbsolutePath();
         if (Files.exists(pathToBeDeleted)) {
             Files.walk(pathToBeDeleted).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
+    }
+
+    /**
+     * Delete a given file.
+     *
+     * @param path path to the file
+     * @throws IOException if an error occurs while deleting
+     */
+    public static void deleteFile(Path path) throws IOException {
+        Path pathToBeDeleted = path.toAbsolutePath();
+        if (Files.exists(pathToBeDeleted)) {
+            pathToBeDeleted.toFile().delete();
         }
     }
 
@@ -153,21 +166,21 @@ public class LangTestUtils {
      * Compile and Executes the run function of the Cell file.
      *
      * @param sourceDirectory Ballerina source directory
-     * @param fileName        Ballerina source file name
+     * @param balSource       Ballerina source file name
      * @param cellImageInfo   Information of the cell
      * @return Exit code
      * @throws InterruptedException if an error occurs while compiling
      * @throws IOException          if an error occurs while writing file
      */
-    public static int compileCellRunFunction(Path sourceDirectory, String fileName, CellImageInfo cellImageInfo,
+    public static int compileCellRunFunction(Path sourceDirectory, String balSource, CellImageInfo cellImageInfo,
                                              Map<String, CellImageInfo> instanceData, String tmpDir)
             throws InterruptedException, IOException {
 
-        return compileCellRunFunction(sourceDirectory, fileName, cellImageInfo, new HashMap<>(),
+        return compileCellRunFunction(sourceDirectory, balSource, cellImageInfo, new HashMap<>(),
                 instanceData, tmpDir);
     }
 
-    private static int compileBallerinaFunction(String action, Path sourceDirectory, String fileName,
+    private static int compileBallerinaFunction(String action, Path sourceDirectory, String balSource,
                                                 CellImageInfo cellImageInfo, Map<String, CellImageInfo> cellInstances
             , Map<String, String> envVar) throws IOException, InterruptedException {
 
@@ -184,8 +197,12 @@ public class LangTestUtils {
         Gson dependencyJSON = new GsonBuilder().create();
         String instanceData = dependencyJSON.toJson(cellInstances);
 
-        String balExecutable = createExecutableBalFiles(sourceDirectory, fileName, action);
-
+        String balExecutable;
+        if (balSource.endsWith(BAL)) {
+            balExecutable = createExecutableBalFiles(sourceDirectory, balSource, action);
+        } else {
+            balExecutable = createExecutableBalProject(sourceDirectory, balSource);
+        }
         ProcessBuilder pb;
         if (action.equals(BUILD)) {
             pb = new ProcessBuilder(BALLERINA_COMMAND, RUN,
@@ -194,7 +211,7 @@ public class LangTestUtils {
             pb = new ProcessBuilder(BALLERINA_COMMAND, RUN,
                     balExecutable, action, imgData, instanceData, "false", "false");
         }
-        log.info(COMPILING + sourceDirectory.resolve(fileName).normalize());
+        log.info(COMPILING + sourceDirectory.resolve(balSource).normalize());
         log.debug(EXECUTING_COMMAND + pb.command());
         pb.directory(sourceDirectory.toFile());
         Map<String, String> environment = pb.environment();
@@ -360,5 +377,27 @@ public class LangTestUtils {
                 "}";
         Files.write(executableBalPath, balMain.getBytes(), StandardOpenOption.APPEND);
         return executableBalPath.toAbsolutePath().toString();
+    }
+
+    private static String createExecutableBalProject(Path sourcePath, String moduleName) throws IOException {
+        String executableBalName = "main" + BAL;
+        Path executableBalPath = sourcePath.resolve("src").resolve(moduleName).resolve(executableBalName);
+        if (!executableBalPath.toFile().exists()) {
+            String balMain = "import celleryio/cellery;\n" +
+                    "public function main(string action, cellery:ImageName iName, map<cellery:ImageName> " +
+                    "instances, boolean startDependencies, boolean shareDependencies) returns error? {\n" +
+                    "\tif (action == \"build\") {\n" +
+                    "\t\treturn <@untainted> build(<@untainted>iName);\n" +
+                    "\t} else if (action == \"run\") {\n" +
+                    "\t\tcellery:InstanceState[] | error? result = run(<@untainted>iName, instances, " +
+                    "startDependencies, shareDependencies);\n" +
+                    "\t\tif (result is error?) {\n" +
+                    "\t\t\treturn <@untainted> result;\n" +
+                    "\t\t}\n" +
+                    "\t} \n" +
+                    "}";
+            Files.write(executableBalPath, balMain.getBytes(), StandardOpenOption.CREATE_NEW);
+        }
+        return moduleName;
     }
 }

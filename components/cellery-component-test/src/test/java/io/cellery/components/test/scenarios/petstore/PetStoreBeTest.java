@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 
 import static io.cellery.components.test.utils.CelleryTestConstants.ARTIFACTS;
-import static io.cellery.components.test.utils.CelleryTestConstants.BAL;
 import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY;
 import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_NAME;
 import static io.cellery.components.test.utils.CelleryTestConstants.CELLERY_IMAGE_ORG;
@@ -50,12 +49,12 @@ import static io.cellery.components.test.utils.CelleryTestConstants.PET_CARE_STO
 import static io.cellery.components.test.utils.CelleryTestConstants.TARGET;
 import static io.cellery.components.test.utils.CelleryTestConstants.YAML;
 import static io.cellery.components.test.utils.LangTestUtils.deleteDirectory;
+import static io.cellery.components.test.utils.LangTestUtils.deleteFile;
 
 public class PetStoreBeTest {
 
     private static final Path SAMPLE_DIR = Paths.get(System.getProperty("sample.dir"));
-    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(PET_CARE_STORE + File.separator + "pet" +
-            "-be");
+    private static final Path SOURCE_DIR_PATH = SAMPLE_DIR.resolve(PET_CARE_STORE).resolve("pet-be");
     private static final Path TARGET_PATH = SOURCE_DIR_PATH.resolve(TARGET);
     private static final Path CELLERY_PATH = TARGET_PATH.resolve(CELLERY);
     private Cell cell;
@@ -65,7 +64,7 @@ public class PetStoreBeTest {
 
     @Test(groups = "build")
     public void compileCellBuild() throws IOException, InterruptedException {
-        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet-be" + BAL,
+        Assert.assertEquals(LangTestUtils.compileCellBuildFunction(SOURCE_DIR_PATH, "pet_be",
                 cellImageInfo), 0);
         File artifactYaml = CELLERY_PATH.resolve(cellImageInfo.getName() + YAML).toFile();
         Assert.assertTrue(artifactYaml.exists());
@@ -155,8 +154,7 @@ public class PetStoreBeTest {
     public void compileCellRun() throws IOException, InterruptedException {
         String tmpDir = LangTestUtils.createTempImageDir(SOURCE_DIR_PATH, cellImageInfo.getName());
         Path tempPath = Paths.get(tmpDir);
-        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "pet-be" + BAL,
-                cellImageInfo,
+        Assert.assertEquals(LangTestUtils.compileCellRunFunction(SOURCE_DIR_PATH, "pet_be", cellImageInfo,
                 dependencyCells, tmpDir), 0);
         File newYaml =
                 tempPath.resolve(ARTIFACTS).resolve(CELLERY).resolve(cellImageInfo.getName() + YAML).toFile();
@@ -259,5 +257,6 @@ public class PetStoreBeTest {
     @AfterClass
     public void cleanUp() throws IOException {
         deleteDirectory(TARGET_PATH);
+        deleteFile(SOURCE_DIR_PATH.resolve("src").resolve("employee").resolve("main.bal"));
     }
 }

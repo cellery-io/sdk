@@ -76,7 +76,7 @@ public function build(cellery:ImageName iName) returns error? {
                 port: 80,
                 context: "controller",
                 expose: "local",
-                definition: check cellery:readSwaggerFile("./components/controller/resources/pet-store.swagger.json")
+                definition: check cellery:readSwaggerFile("./src/pet_be/components/controller/resources/pet-store.swagger.json")
             }
         },
         envVars: {
