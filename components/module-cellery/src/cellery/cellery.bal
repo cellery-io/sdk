@@ -810,7 +810,6 @@ public function getInstanceEndpoints(string alias = "") returns Reference {
 # + return - Return error if occured
 public function runDockerTest(string imageName, map<Env> envVars) returns (error?) {
     TestConfig testConfig = getTestConfig();
-    io:println(testConfig);
     ImageName iName = testConfig.iName;
     string? instanceNameResult = testConfig.iName?.instanceName;
     string instanceName;

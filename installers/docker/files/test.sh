@@ -36,7 +36,5 @@ if [[ "$OS" == "linux" ]]; then
     fi
 fi
 
-sudo -u $EXEC_USER HOME=/home/cellery ballerina new $BAL_PROJECT
-sudo -u $EXEC_USER HOME=/home/cellery cp -r $TEMP_DIR/* $BAL_PROJECT/
-cd $BAL_PROJECT/
+cd $TEMP_DIR/
 sudo -u $EXEC_USER HOME=/home/cellery ballerina test --all

@@ -214,6 +214,7 @@ func FindRecursiveInDirectory(root, pattern string) ([]string, error) {
 	return matches, nil
 }
 
+// Return a list of files having its name matching the given pattern
 func FindInDirectory(directory, suffix string) []string {
 	files, err := ioutil.ReadDir(directory)
 	if err != nil {

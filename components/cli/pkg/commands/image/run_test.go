@@ -152,8 +152,13 @@ func TestStartCellInstance(t *testing.T) {
 	}
 	var instanceEnvVars []*environmentVariable
 	rootNodeDependencies := map[string]*dependencyInfo{}
-	err = startCellInstance(mockCli, imageDir, "hello", mainNode, instanceEnvVars, false,
-		rootNodeDependencies, false)
+	var extractedImage = &ExtractedImage{
+		MainNode:             mainNode,
+		InstanceEnvVars:      instanceEnvVars,
+		RootNodeDependencies: rootNodeDependencies,
+		ImageDir:             imageDir,
+	}
+	err = startCellInstance(mockCli, extractedImage, "hello", false, false)
 	if err != nil {
 		t.Errorf("startCellInstance failed: %v", err)
 	}

@@ -71,7 +71,6 @@ const BallerinaExecutablePath = "/bin/"
 const BallerinaConf = "ballerina.conf"
 const BallerinaToml = "Ballerina.toml"
 const TargetDirName = "target"
-const TempTestModule = "tmp"
 const BalTestExecFIle = "test.sh"
 const BalInitTestExecFIle = "init-project.sh"
 

@@ -75,6 +75,12 @@ public class RunTestSuite {
             final MapValue<?, ?> testInfo = (MapValue<?, ?>) tests.get(index);
             String testName = testInfo.getStringValue(CelleryConstants.NAME);
             Test test = new Test();
+            /* If the name of the test cell is too long,
+               set a shorter name to avoid failing due to number of characters exceeding 63 */
+            if (testName.length() > 30) {
+                String prefix = testName.substring(0, testName.lastIndexOf("-"));
+                testName = "test-" + testName.substring(prefix.length() - 4);
+            }
             test.setName(testName);
             MapValue<?, ?> sourceMap = testInfo.getMapValue(IMAGE_SOURCE);
             if ("FileSource".equals(sourceMap.getType().getName())) {
@@ -134,9 +140,10 @@ public class RunTestSuite {
      * @throws InterruptedException thrown if error occurs in Thread.sleep
      */
     private static void waitForJobCompletion(String jobName, String podName, String instanceName) throws
-            InterruptedException {
+            InterruptedException, BallerinaCelleryException {
         printInfo("Waiting for test job to complete...");
         String jobStatus = "";
+        boolean isPass = false;
         int min = 1;
         for (int i = 0; i < 12 * min; i++) {
             jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
@@ -147,6 +154,8 @@ public class RunTestSuite {
                 jobStatus = CelleryUtils.executeShellCommand("kubectl get jobs " + jobName + " " +
                                 "-o jsonpath='{.status.conditions[?(@.type==\"Failed\")].status}'\n", null,
                         CelleryUtils::printDebug, CelleryUtils::printWarning);
+            } else {
+                isPass = true;
             }
             if ("True".equalsIgnoreCase(jobStatus)) {
                 break;
@@ -160,7 +169,7 @@ public class RunTestSuite {
                 printWarning("Pod status turned to CrashLoopBackOff.");
             } else {
                 printWarning("Error getting status of job " + jobName + ". Skipping collection of logs.");
-                return;
+                throw new BallerinaCelleryException("Error getting status of job " + jobName);
             }
         }
         printInfo("Test execution completed. Collecting logs to logs/" +
@@ -168,6 +177,9 @@ public class RunTestSuite {
         CelleryUtils.executeShellCommand(
                 "kubectl logs " + podName + " " + instanceName + " > logs/" + instanceName + ".log", null,
                 CelleryUtils::printDebug, CelleryUtils::printWarning);
+        if (!isPass) {
+            throw new BallerinaCelleryException("Test failed.");
+        }
     }
 
     private static String getPodName(String podInfo, String instanceName) throws InterruptedException {
@@ -267,18 +279,20 @@ public class RunTestSuite {
                             testName + "-job",
                     null, CelleryUtils::printDebug, CelleryUtils::printWarning);
             String podName = getPodName(podInfo, testName);
-            if (podName == null) {
-                printWarning("Error while getting name of the test pod. Skipping execution of test " + testName);
-                return;
+            if (podName == null || podName.isEmpty()) {
+                String err = String.format("Pod %s not found. Test execution failed.", podName);
+                printWarning(err);
+                throw new BallerinaCelleryException(err);
             }
 
             printDebug("podName is: " + podName);
             printDebug("Waiting for pod " + podName + " status to be 'Running'...");
 
             if (!waitForPodRunning(podName, podInfo, testName)) {
-                printWarning("Error getting status of pod " + podName + ". Skipping execution of test " + testName);
+                String err = "Error getting status of pod " + podName + ". Skipping execution of test " + testName;
+                printWarning(err);
                 deleteTestCell(testName);
-                return;
+                throw new BallerinaCelleryException(err);
             }
 
             CelleryUtils.executeShellCommand("kubectl logs " + podName + " " + testName + " -f", null,

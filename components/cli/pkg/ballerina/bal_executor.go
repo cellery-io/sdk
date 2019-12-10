@@ -38,7 +38,7 @@ const celleryImageDirEnvVar = "CELLERY_IMAGE_DIR"
 type BalExecutor interface {
 	Build(fileName string, args []string, cmdDir string) error
 	Run(fileName string, args []string, envVars []*EnvironmentVariable, cmdDir string) error
-	Test(fileName string, args []string, envVars []*EnvironmentVariable) error
+	Test(args []string, envVars []*EnvironmentVariable, cmdDir string) error
 	Init(workingDir, projectName, moduleName string) error
 	Version() (string, error)
 	ExecutablePath() (string, error)
@@ -220,7 +220,7 @@ func ballerinaInstallationPath() (string, error) {
 // Test executes the ballerina test command on a Ballerina project
 // If the --disable-telepresence flag is passed to the CLI, the args will be an empty array meaning the
 // tests should be run without starting Telepresence
-func (balExecutor *LocalBalExecutor) Test(fileName string, args []string, envVars []*EnvironmentVariable) error {
+func (balExecutor *LocalBalExecutor) Test(args []string, envVars []*EnvironmentVariable, cmdDir string) error {
 	telepresenceExecPath := filepath.Join(util.CelleryInstallationDir(), constants.TelepresenceExecPath, "/telepresence")
 	cmd := &exec.Cmd{}
 	exePath, err := balExecutor.ExecutablePath()
@@ -262,6 +262,7 @@ func (balExecutor *LocalBalExecutor) Test(fileName string, args []string, envVar
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
+	cmd.Dir = cmdDir
 	err = cmd.Start()
 	if err != nil {
 		return err

@@ -24,9 +24,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -34,213 +32,53 @@ import (
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/ballerina"
 	"cellery.io/cellery/components/cli/pkg/constants"
-	"cellery.io/cellery/components/cli/pkg/image"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 const CelleryTestVerboseMode = "CELLERY_DEBUG_MODE"
+const Logs = "logs"
 
 // RunTest starts Cell instance (along with dependency instances if specified by the user)\
 func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, disableTelepresence bool, incell bool, projLocation string) error {
-	var err error
-	var imageDir string
-	var parsedCellImage *image.CellImage
-	if parsedCellImage, err = image.ParseImageTag(cellImageTag); err != nil {
-		return err
+	extractedImage, err := extractImage(cli, cellImageTag, instanceName, dependencyLinks, envVars)
+	err = startTestCellInstance(cli, extractedImage, instanceName, startDependencies,
+		shareDependencies, verbose, debug, disableTelepresence, incell, assumeYes, projLocation)
+	//Cleanup telepresence deployment started for tests
+	if !disableTelepresence {
+		DeleteTelepresenceResouces(extractedImage.ImageDir)
 	}
-	if err = cli.ExecuteTask("Extracting cell image", "Failed to extract cell image",
-		"", func() error {
-			imageDir, err = ExtractImage(cli, parsedCellImage, true)
-			return err
-		}); err != nil {
-		return err
-	}
-	defer func() error {
-		err = os.RemoveAll(imageDir)
-		if err != nil {
-			return err
-		}
-		return nil
-	}()
-
-	// Reading Cell Image metadata
-	var metadataFileContent []byte
-	if metadataFileContent, err = ioutil.ReadFile(filepath.Join(imageDir, artifacts, "cellery",
-		"metadata.json")); err != nil {
-		return err
-	}
-	cellImageMetadata := &image.MetaData{}
-	if err = json.Unmarshal(metadataFileContent, cellImageMetadata); err != nil {
-		return err
-	}
-
-	var parsedDependencyLinks []*dependencyAliasLink
-	if len(dependencyLinks) > 0 {
-		// Parsing the dependency links list
-		for _, link := range dependencyLinks {
-			var dependencyLink *dependencyAliasLink
-			linkSplit := strings.Split(link, ":")
-			if strings.Contains(linkSplit[0], ".") {
-				instanceSplit := strings.Split(linkSplit[0], ".")
-				dependencyLink = &dependencyAliasLink{
-					Instance:           instanceSplit[0],
-					DependencyAlias:    instanceSplit[1],
-					DependencyInstance: linkSplit[1],
-				}
-			} else {
-				dependencyLink = &dependencyAliasLink{
-					DependencyAlias:    linkSplit[0],
-					DependencyInstance: linkSplit[1],
-				}
-			}
-			cellInstance, err := kubernetes.GetCell(dependencyLink.DependencyInstance)
-			if err != nil && !strings.Contains(err.Error(), "not found") {
-				return fmt.Errorf("error occurred while validating dependency links, %v", err)
-			} else {
-				dependencyLink.IsRunning = err == nil && cellInstance.CellStatus.Status == "Ready"
-				parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
-				continue
-			}
-			compositeInstance, err := kubernetes.GetComposite(dependencyLink.DependencyInstance)
-			if err != nil && !strings.Contains(err.Error(), "not found") {
-				return fmt.Errorf("error occurred while validating dependency links, %v", err)
-			} else {
-				dependencyLink.IsRunning = err == nil && compositeInstance.CompositeStatus.Status == "Ready"
-				parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
-			}
-		}
-	}
-
-	instanceEnvVars := []*environmentVariable{}
-	if len(envVars) > 0 {
-		// Parsing environment variables
-		for _, envVar := range envVars {
-			var targetInstance string
-			var envVarKey string
-			var envVarValue string
-
-			// Parsing the environment variable
-			r := regexp.MustCompile(fmt.Sprintf("^%s$", constants.CliArgEnvVarPattern))
-			matches := r.FindStringSubmatch(envVar)
-			if matches != nil {
-				for i, name := range r.SubexpNames() {
-					if i != 0 && name != "" && matches[i] != "" { // Ignore the whole regexp match and unnamed groups
-						switch name {
-						case "instance":
-							targetInstance = matches[i]
-						case "key":
-							envVarKey = matches[i]
-						case "value":
-							envVarValue = matches[i]
-						}
-					}
-				}
-			}
-			if targetInstance == "" {
-				targetInstance = instanceName
-			}
-			parsedEnvVar := &environmentVariable{
-				InstanceName: targetInstance,
-				Key:          envVarKey,
-				Value:        envVarValue,
-			}
-			instanceEnvVars = append(instanceEnvVars, parsedEnvVar)
-		}
-	}
-
-	var mainNode *dependencyTreeNode
-	mainNode = &dependencyTreeNode{
-		Instance:  instanceName,
-		MetaData:  cellImageMetadata,
-		IsRunning: false,
-		IsShared:  false,
-	}
-
-	dependencyEnv := []string{}
-	rootNodeDependencies := map[string]*dependencyInfo{}
-	for _, link := range parsedDependencyLinks {
-		rootNodeDependencies[link.DependencyAlias] = &dependencyInfo{
-			InstanceName: link.DependencyInstance,
-		}
-		dependencyEnv = append(dependencyEnv, link.DependencyAlias+"="+link.DependencyInstance)
-	}
-
-	err = startTestCellInstance(cli, imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
-		shareDependencies, rootNodeDependencies, verbose, debug, disableTelepresence, incell, assumeYes, projLocation)
 	if err != nil {
 		return fmt.Errorf("failed to test Cell instance "+instanceName+", %v", err)
 	}
 
-	//Cleanup telepresence deployment started for tests
-	err = kubernetes.DeleteFile(filepath.Join(imageDir, "telepresence.yaml"))
-	if err != nil {
-		return err
-	}
-	util.PrintSuccessMessage(fmt.Sprintf("Completed running tests for instance %s", util.Bold(instanceName)))
+	util.PrintSuccessMessage(fmt.Sprintf("Successfully tested image %s", util.Bold(cellImageTag)))
 	return nil
 }
 
-func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, runningNode *dependencyTreeNode,
-	envVars []*environmentVariable, startDependencies bool, shareDependencies bool, dependencyLinks map[string]*dependencyInfo,
-	verbose bool, debug bool, onlyDocker bool, incell bool, assumeYes bool, projLocation string) error {
+func startTestCellInstance(cli cli.Cli, extractedImage *ExtractedImage, instanceName string, startDependencies bool, shareDependencies bool,
+	verbose bool, debug bool, disableTelepresence bool, incell bool, assumeYes bool, projLocation string) error {
+	currentDir := cli.FileSystem().CurrentDir()
+	imageDir := extractedImage.ImageDir
+	runningNode := extractedImage.MainNode
+	envVars := extractedImage.InstanceEnvVars
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
 		runningNode.MetaData.Version)
-	balFileName, err := util.GetSourceName(filepath.Join(imageDir, constants.ZipBallerinaSource))
-	if err != nil {
-		return err
-	}
-	cellBalFilePath := filepath.Join(imageDir, constants.ZipBallerinaSource, balFileName)
-
-	currentDir := cli.FileSystem().CurrentDir()
-	if err != nil {
-		return err
-	}
-
-	// Preparing the dependency instance map
-	dependencyLinksJson, err := json.Marshal(dependencyLinks)
-	if err != nil {
-		return err
-	}
-
-	var imageNameStruct = &dependencyInfo{
-		Organization: runningNode.MetaData.Organization,
-		Name:         runningNode.MetaData.Name,
-		Version:      runningNode.MetaData.Version,
-		InstanceName: instanceName,
-		IsRoot:       true,
-	}
-	iName, err := json.Marshal(imageNameStruct)
-	if err != nil {
-		return err
-	}
-
-	// Get Ballerina Installation if exists
-	exePath, err := cli.BalExecutor().ExecutablePath()
-	if err != nil {
-		return err
-	}
 	verboseMode := strconv.FormatBool(verbose)
-	if debug && exePath == "" {
-		return fmt.Errorf("Ballerina should be installed to debug tests.")
-	}
-	balProjectName := constants.TargetDirName
-
-	balTomlPath := filepath.Join(imageDir, constants.ZipBallerinaSource, constants.BallerinaToml)
-	testsPath := filepath.Join(imageDir, constants.ZipTests)
-	testsRoot := filepath.Join(currentDir, balProjectName)
+	var projectDir, balModulePath string
 
 	var balEnvVars []*ballerina.EnvironmentVariable
 	// Set celleryImageDirEnvVar environment variable.
-
 	balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
 		Key:   celleryImageDirEnvVar,
 		Value: imageDir})
+	// Set verbose
+	// mode to print debug logs
 	balEnvVars = append(balEnvVars, &ballerina.EnvironmentVariable{
 		Key:   CelleryTestVerboseMode,
 		Value: verboseMode})
-
+	// Setting user defined environment variables.
 	for _, envVar := range envVars {
 		// Export environment variables defined by user for root instance
 		if envVar.InstanceName == "" || envVar.InstanceName == instanceName {
@@ -258,16 +96,24 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 		}
 	}
 
+	// Get Ballerina Installation if exists
+	exePath, err := cli.BalExecutor().ExecutablePath()
+	if err != nil {
+		return err
+	}
+	if debug && exePath == "" {
+		return fmt.Errorf("Ballerina should be installed to debug tests.")
+	}
+
 	// If --debug flag is passed, start a Telepresence shell
 	// Else create a ballerina project, copy files from image and execute ballerina test command via Telepresence
 	if debug {
-		balProjectName = filepath.Base(projLocation)
-		testsRoot, err = filepath.Abs(projLocation)
+		projectDir, err = filepath.Abs(projLocation)
 		if err != nil {
 			return err
 		}
 		if !assumeYes {
-			isConfirmed, err := PromtConfirmation(testsRoot, debug)
+			isConfirmed, err := PromtConfirmation(projectDir, debug)
 			if err != nil {
 				return err
 			}
@@ -280,69 +126,46 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 			Value: "true",
 		})
 	} else {
-		var isBallerinaProject bool
-		var balModulePath string
+		balSourceName, err := util.GetSourceName(filepath.Join(imageDir, src))
+		if err != nil {
+			return fmt.Errorf("failed to find source file in Image %s due to %v", imageTag, err)
+		}
+		projectDir = filepath.Join(imageDir, src, balSourceName)
+		var modules []os.FileInfo
+		if modules, err = ioutil.ReadDir(filepath.Join(projectDir, src)); err != nil {
+			return err
+		}
+		balModulePath = filepath.Join(projectDir, src, modules[0].Name())
+
+		// Check if @test:BeforeSuite and @test:AfterSuite functions are defined in any bal file
+		// Print a warning if at least one of the functions are missing and prompt for confirmation to continue
 		var isTestsContainBeforeSuite bool
 		var isTestsContainAfterSuite bool
-
-		//Check if tests exist in the cell image
-		// Return an error if tests not found
-		isTestDirExists, err := util.FileExists(testsPath)
+		balFilesList, err := util.FindRecursiveInDirectory(balModulePath, "*.bal")
 		if err != nil {
 			return err
 		}
-		isSourceBalContainsTests, err := util.FindPatternInFile("@test:Config.*", cellBalFilePath)
-		if err != nil {
-			return err
-		}
-		if !isTestDirExists && !isSourceBalContainsTests {
-			return fmt.Errorf("no tests found in the cell image %v", imageTag)
-		}
-
-		// Check if @test:BeforeSuite and @test:AfterSuite functions are defined in cell bal file or test bal files
-		// Print a warning if at least one of the functions are missing and prompt for confirmation to continue
-		if isSourceBalContainsTests {
-			isTestsContainBeforeSuite, err = util.FindPatternInFile("@test:BeforeSuite", cellBalFilePath)
+		for _, balFile := range balFilesList {
+			isTestsContainBeforeSuite, err = util.FindPatternInFile("@test:BeforeSuite", balFile)
 			if err != nil {
 				return err
 			}
-			isTestsContainAfterSuite, err = util.FindPatternInFile("@test:AfterSuite", cellBalFilePath)
+			if isTestsContainBeforeSuite {
+				break
+			}
+		}
+		for _, balFile := range balFilesList {
+			isTestsContainAfterSuite, err = util.FindPatternInFile("@test:AfterSuite", balFile)
 			if err != nil {
 				return err
 			}
-		}
-
-		testFiles, err := ioutil.ReadDir(testsPath)
-		if err != nil {
-			return err
-		}
-		if !isTestsContainBeforeSuite {
-			for _, f := range testFiles {
-				isTestsContainBeforeSuite, err = util.FindPatternInFile(
-					"@test:BeforeSuite", filepath.Join(testsPath, f.Name()))
-				if err != nil {
-					return err
-				}
-				if isTestsContainBeforeSuite {
-					break
-				}
-			}
-		}
-		if !isTestsContainAfterSuite {
-			for _, f := range testFiles {
-				isTestsContainAfterSuite, err = util.FindPatternInFile(
-					"@test:AfterSuite", filepath.Join(testsPath, f.Name()))
-				if err != nil {
-					return err
-				}
-				if isTestsContainAfterSuite {
-					break
-				}
+			if isTestsContainAfterSuite {
+				break
 			}
 		}
 
 		// Print a warning message if atleast one of the functions are missing
-		// Prompt for confirmation to continue
+		// Prompt for confirmation to continue if -y flag is not passed
 		if !isTestsContainBeforeSuite || !isTestsContainAfterSuite {
 			var missingFunctions []string
 			if !isTestsContainBeforeSuite {
@@ -358,8 +181,7 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 				util.CyanBold(strings.Join(missingFunctions, ", "))))
 
 			if !assumeYes {
-				// passing an empty string for bal project path
-				// since it is used only to print the message for the debug mode
+				// passing an empty string for bal project path since it is used only for the message for debugging
 				isConfirmed, err := PromtConfirmation("", debug)
 				if err != nil {
 					return err
@@ -368,94 +190,46 @@ func startTestCellInstance(cli cli.Cli, imageDir string, instanceName string, ru
 					return fmt.Errorf("cell testing aborted")
 				}
 			}
-			err = util.RemoveDir(testsRoot)
 			if err != nil {
 				return err
 			}
 		}
 
-		// Create a Ballerina project named target
-		isBallerinaProject, err = util.FileExists(balTomlPath)
-		if err != nil {
-			return err
-		}
-		err = util.RemoveDir(testsRoot)
-		if err != nil {
-			return err
-		}
-		if exePath != "" {
-			cmd := exec.Command(exePath, "new", balProjectName)
-			if verbose {
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-			}
-			err = cmd.Run()
-			if err != nil {
-				return err
-			}
-		}
-
-		// Copy Ballerina.toml from image if exists for running tests
-		if isBallerinaProject {
-			fileCopyError := util.CopyFile(balTomlPath, filepath.Join(testsRoot, constants.BallerinaToml))
-			if fileCopyError != nil {
-				return fileCopyError
-			}
-		}
-
-		// Set ballerina module name and copy source file and tests
-		if instanceName != "" && instanceName != "test" {
-			balModulePath = filepath.Join(testsRoot, constants.ZipBallerinaSource, instanceName)
-		} else {
-			balModulePath = filepath.Join(testsRoot, constants.ZipBallerinaSource, constants.TempTestModule)
-		}
-		err = util.CreateDir(balModulePath)
-		if err != nil {
-			return err
-		}
-
-		fileCopyError := util.CopyFile(cellBalFilePath, filepath.Join(balModulePath, filepath.Base(cellBalFilePath)))
-		if fileCopyError != nil {
-			return fileCopyError
-		}
-
-		fileCopyError = util.CopyDir(testsPath, filepath.Join(balModulePath, constants.ZipTests))
-		if fileCopyError != nil {
-			return fileCopyError
-		}
-
-		// Change working dir to Bal project to execute tests
-		err = os.Chdir(testsRoot)
-		if err != nil {
-			return fmt.Errorf("error occurred while changing working directory, %v", err)
-		}
 	}
 
-	//Create ballerina.conf to pass CLI flags to the Ballerina process
-	err = CreateBallerinaConf(string(iName), string(dependencyLinksJson), startDependencies, shareDependencies,
-		verboseMode, imageDir, envVars, testsRoot)
+	//Create ballerina.conf to pass info given in CLI flags to the Ballerina process
+	err = CreateBallerinaConf(instanceName, extractedImage, startDependencies, shareDependencies, verboseMode, projectDir)
 	if err != nil {
 		return err
 	}
 
 	//Create logs directory for test execution logs
-	err = util.CleanAndCreateDir(filepath.Join(testsRoot, "logs"))
+	err = util.CleanAndCreateDir(filepath.Join(projectDir, "logs"))
 	if err != nil {
+		return err
+	}
+	target := filepath.Join(currentDir, constants.TargetDirName)
+	if err = util.CleanOrCreateDir(target); err != nil {
 		return err
 	}
 
 	var testCmdArgs []string
 	// if --disable-telepresence flag is passed, pass an empty array to Bal executor since telepresence is not required
-	if !onlyDocker {
+	if !disableTelepresence {
 		if testCmdArgs, err = testCommandArgs(cli, incell, imageDir, instanceName); err != nil {
 			return err
 		}
 	}
-	if err = cli.BalExecutor().Test(filepath.Join(testsRoot, constants.BallerinaConf), testCmdArgs, balEnvVars); err != nil {
-		DeleteTelepresenceResouces(imageDir)
+
+	if err = cli.BalExecutor().Test(testCmdArgs, balEnvVars, projectDir); err != nil {
+		if err = util.CopyDir(filepath.Join(projectDir, Logs), filepath.Join(target, Logs)); err != nil {
+			return err
+		}
 		return err
 	}
-	DeleteTelepresenceResouces(imageDir)
+	if err = util.CopyDir(filepath.Join(projectDir, Logs), filepath.Join(target, Logs)); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -481,8 +255,29 @@ func PromtConfirmation(balProj string, debug bool) (bool, error) {
 	return true, nil
 }
 
-func CreateBallerinaConf(iName string, dependencyLinks string, startDependencies bool, shareDependencies bool,
-	verboseMode string, imageDir string, envVars []*environmentVariable, balProj string) error {
+func CreateBallerinaConf(instanceName string, extractedImage *ExtractedImage, startDependencies bool, shareDependencies bool,
+	verboseMode string, balProj string) error {
+	imageDir := extractedImage.ImageDir
+	envVars := extractedImage.InstanceEnvVars
+	var imageNameStruct = &dependencyInfo{
+		Organization: extractedImage.MainNode.MetaData.Organization,
+		Name:         extractedImage.MainNode.MetaData.Name,
+		Version:      extractedImage.MainNode.MetaData.Version,
+		InstanceName: instanceName,
+		IsRoot:       true,
+	}
+	iName, err := json.Marshal(imageNameStruct)
+	if err != nil {
+		return err
+	}
+	iNameStr := string(iName)
+
+	dependencyLinks := extractedImage.RootNodeDependencies
+	dependencyLinksJson, err := json.Marshal(dependencyLinks)
+	if err != nil {
+		return err
+	}
+	dependencyLinksStr := string(dependencyLinksJson)
 
 	content := []string{fmt.Sprintf(CelleryTestVerboseMode+"=\"%s\"\n", verboseMode)}
 	content = append(content, fmt.Sprintf(constants.CelleryImageDirEnvVar+"=\"%s\"\n", imageDir))
@@ -490,9 +285,9 @@ func CreateBallerinaConf(iName string, dependencyLinks string, startDependencies
 		content = append(content, fmt.Sprintf(envVar.Key+"=\"%s\"\n", envVar.Value))
 	}
 	content = append(content, "[test.config]\n")
-	content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(iName, "\"", "\\\"", -1)))
+	content = append(content, fmt.Sprintf("IMAGE_NAME=\"%s\"\n", strings.Replace(iNameStr, "\"", "\\\"", -1)))
 	content = append(content, fmt.Sprintf("DEPENDENCY_LINKS=\"%s\"\n",
-		strings.Replace(dependencyLinks, "\"", "\\\"", -1)))
+		strings.Replace(dependencyLinksStr, "\"", "\\\"", -1)))
 	content = append(content, fmt.Sprintf("START_DEPENDENCIES=%s\n", strconv.FormatBool(startDependencies)))
 	content = append(content, fmt.Sprintf("SHARE_DEPENDENCIES=%s\n", strconv.FormatBool(shareDependencies)))
 

@@ -47,104 +47,12 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 	if err = cli.Runtime().Validate(); err != nil {
 		return fmt.Errorf("runtime validation failed. %v", err)
 	}
-	var parsedCellImage *image.CellImage
-	if parsedCellImage, err = image.ParseImageTag(cellImageTag); err != nil {
-		return fmt.Errorf("error occurred while parsing cell image, %v", err)
-	}
-	var imageDir string
-	if err = cli.ExecuteTask("Extracting cell image", "Failed to extract cell image",
-		"", func() error {
-			imageDir, err = ExtractImage(cli, parsedCellImage, true)
-			return err
-		}); err != nil {
-		return err
-	}
-	// Reading Cell Image metadata
-	var metadataFileContent []byte
-	if metadataFileContent, err = ioutil.ReadFile(filepath.Join(imageDir, artifacts, "cellery",
-		"metadata.json")); err != nil {
-		return fmt.Errorf("error occurred while reading Image metadata, %v", err)
-	}
-	cellImageMetadata := &image.MetaData{}
-	if err = json.Unmarshal(metadataFileContent, cellImageMetadata); err != nil {
-		return fmt.Errorf("error occurred while reading Image metadata, %v", err)
-	}
-	var parsedDependencyLinks []*dependencyAliasLink
-	if len(dependencyLinks) > 0 {
-		// Parsing the dependency links list
-		for _, link := range dependencyLinks {
-			var dependencyLink *dependencyAliasLink
-			linkSplit := strings.Split(link, ":")
-			if strings.Contains(linkSplit[0], ".") {
-				instanceSplit := strings.Split(linkSplit[0], ".")
-				dependencyLink = &dependencyAliasLink{
-					Instance:           instanceSplit[0],
-					DependencyAlias:    instanceSplit[1],
-					DependencyInstance: linkSplit[1],
-				}
-			} else {
-				dependencyLink = &dependencyAliasLink{
-					DependencyAlias:    linkSplit[0],
-					DependencyInstance: linkSplit[1],
-				}
-			}
-			parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
-		}
-	}
-	var instanceEnvVars []*environmentVariable
-	if len(envVars) > 0 {
-		// Parsing environment variables
-		for _, envVar := range envVars {
-			var targetInstance string
-			var envVarKey string
-			var envVarValue string
+	extractedImage, err := extractImage(cli, cellImageTag, instanceName, dependencyLinks, envVars)
 
-			// Parsing the environment variable
-			r := regexp.MustCompile(fmt.Sprintf("^%s$", celleryArgEnvVarPattern))
-			matches := r.FindStringSubmatch(envVar)
-			if matches != nil {
-				for i, name := range r.SubexpNames() {
-					if i != 0 && name != "" && matches[i] != "" { // Ignore the whole regexp match and unnamed groups
-						switch name {
-						case "instance":
-							targetInstance = matches[i]
-						case "key":
-							envVarKey = matches[i]
-						case "value":
-							envVarValue = matches[i]
-						}
-					}
-				}
-			}
-			if targetInstance == "" {
-				targetInstance = instanceName
-			}
-			parsedEnvVar := &environmentVariable{
-				InstanceName: targetInstance,
-				Key:          envVarKey,
-				Value:        envVarValue,
-			}
-			instanceEnvVars = append(instanceEnvVars, parsedEnvVar)
-		}
-	}
-	var mainNode *dependencyTreeNode
-	mainNode = &dependencyTreeNode{
-		Instance:  instanceName,
-		MetaData:  cellImageMetadata,
-		IsRunning: false,
-		IsShared:  false,
-	}
-	rootNodeDependencies := map[string]*dependencyInfo{}
-	for _, link := range parsedDependencyLinks {
-		rootNodeDependencies[link.DependencyAlias] = &dependencyInfo{
-			InstanceName: link.DependencyInstance,
-		}
-	}
 	if err = cli.ExecuteTask(fmt.Sprintf("Starting main instance %v", util.Bold(instanceName)),
 		fmt.Sprintf("Failed to start main instance %v", util.Bold(instanceName)),
 		"", func() error {
-			err = startCellInstance(cli, imageDir, instanceName, mainNode, instanceEnvVars, startDependencies,
-				rootNodeDependencies, shareDependencies)
+			err = startCellInstance(cli, extractedImage, instanceName, startDependencies, shareDependencies)
 			return err
 		}); err != nil {
 		return err
@@ -154,13 +62,14 @@ func RunRun(cli cli.Cli, cellImageTag string, instanceName string, startDependen
 	return nil
 }
 
-func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runningNode *dependencyTreeNode,
-	envVars []*environmentVariable, startDependencies bool, dependencyLinks map[string]*dependencyInfo,
-	shareDependencies bool) error {
+func startCellInstance(cli cli.Cli, extractedImage *ExtractedImage, instanceName string, startDependencies bool, shareDependencies bool) error {
 	var tmpProjectDir string
 	var tempRunBalSource string
+	imageDir := extractedImage.ImageDir
+	runningNode := extractedImage.MainNode
+	dependencyLinks := extractedImage.RootNodeDependencies
+	envVars := extractedImage.InstanceEnvVars
 
-	//defer os.Remove(imageDir)
 	imageTag := fmt.Sprintf("%s/%s:%s", runningNode.MetaData.Organization, runningNode.MetaData.Name,
 		runningNode.MetaData.Version)
 	balSourceName, err := util.GetSourceName(filepath.Join(imageDir, src))
@@ -175,8 +84,10 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 
 	// If the cell project is a Ballerina project, create a main.bal file in a temp project location
 	if cellProjectInfo.IsDir() {
-		// Validate that the project has only one module
-		modules, _ := ioutil.ReadDir(filepath.Join(balSource, "src"))
+		var modules []os.FileInfo
+		if modules, err = ioutil.ReadDir(filepath.Join(balSource, src)); err != nil {
+			return err
+		}
 		// Create a main.bal with a main function within the ballerina module in temp project directory
 		if err = cli.ExecuteTask("Creating temporary executable main bal file", "Failed to create temporary main bal file",
 			"", func() error {
@@ -193,8 +104,6 @@ func startCellInstance(cli cli.Cli, imageDir string, instanceName string, runnin
 			return fmt.Errorf("error creating temporarily executable bal file, %v", err)
 		}
 	}
-
-	//balSource := filepath.Join(imageDir, src, balSource)
 
 	var balEnvVars []*ballerina.EnvironmentVariable
 	// Set celleryImageDirEnvVar environment variable.
@@ -299,6 +208,111 @@ func runCmdArgs(instanceName string, dependencyLinks map[string]*dependencyInfo,
 	return cmdArgs, nil
 }
 
+func extractImage(cli cli.Cli, cellImageTag, instanceName string, dependencyLinks []string,
+	envVars []string) (*ExtractedImage, error) {
+	var err error
+	var parsedCellImage *image.CellImage
+	if parsedCellImage, err = image.ParseImageTag(cellImageTag); err != nil {
+		return nil, fmt.Errorf("error occurred while parsing cell image, %v", err)
+	}
+	var imageDir string
+	if err = cli.ExecuteTask("Extracting cell image", "Failed to extract cell image",
+		"", func() error {
+			imageDir, err = ExtractImage(cli, parsedCellImage, true)
+			return err
+		}); err != nil {
+		return nil, err
+	}
+	// Reading Cell Image metadata
+	var metadataFileContent []byte
+	if metadataFileContent, err = ioutil.ReadFile(filepath.Join(imageDir, artifacts, "cellery",
+		"metadata.json")); err != nil {
+		return nil, fmt.Errorf("error occurred while reading Image metadata, %v", err)
+	}
+	cellImageMetadata := &image.MetaData{}
+	if err = json.Unmarshal(metadataFileContent, cellImageMetadata); err != nil {
+		return nil, fmt.Errorf("error occurred while reading Image metadata, %v", err)
+	}
+	var parsedDependencyLinks []*dependencyAliasLink
+	if len(dependencyLinks) > 0 {
+		// Parsing the dependency links list
+		for _, link := range dependencyLinks {
+			var dependencyLink *dependencyAliasLink
+			linkSplit := strings.Split(link, ":")
+			if strings.Contains(linkSplit[0], ".") {
+				instanceSplit := strings.Split(linkSplit[0], ".")
+				dependencyLink = &dependencyAliasLink{
+					Instance:           instanceSplit[0],
+					DependencyAlias:    instanceSplit[1],
+					DependencyInstance: linkSplit[1],
+				}
+			} else {
+				dependencyLink = &dependencyAliasLink{
+					DependencyAlias:    linkSplit[0],
+					DependencyInstance: linkSplit[1],
+				}
+			}
+			parsedDependencyLinks = append(parsedDependencyLinks, dependencyLink)
+		}
+	}
+	var instanceEnvVars []*environmentVariable
+	if len(envVars) > 0 {
+		// Parsing environment variables
+		for _, envVar := range envVars {
+			var targetInstance string
+			var envVarKey string
+			var envVarValue string
+
+			// Parsing the environment variable
+			r := regexp.MustCompile(fmt.Sprintf("^%s$", celleryArgEnvVarPattern))
+			matches := r.FindStringSubmatch(envVar)
+			if matches != nil {
+				for i, name := range r.SubexpNames() {
+					if i != 0 && name != "" && matches[i] != "" { // Ignore the whole regexp match and unnamed groups
+						switch name {
+						case "instance":
+							targetInstance = matches[i]
+						case "key":
+							envVarKey = matches[i]
+						case "value":
+							envVarValue = matches[i]
+						}
+					}
+				}
+			}
+			if targetInstance == "" {
+				targetInstance = instanceName
+			}
+			parsedEnvVar := &environmentVariable{
+				InstanceName: targetInstance,
+				Key:          envVarKey,
+				Value:        envVarValue,
+			}
+			instanceEnvVars = append(instanceEnvVars, parsedEnvVar)
+		}
+	}
+	var mainNode *dependencyTreeNode
+	mainNode = &dependencyTreeNode{
+		Instance:  instanceName,
+		MetaData:  cellImageMetadata,
+		IsRunning: false,
+		IsShared:  false,
+	}
+	rootNodeDependencies := map[string]*dependencyInfo{}
+	for _, link := range parsedDependencyLinks {
+		rootNodeDependencies[link.DependencyAlias] = &dependencyInfo{
+			InstanceName: link.DependencyInstance,
+		}
+	}
+	extractedImage := &ExtractedImage{
+		ImageDir:             imageDir,
+		MainNode:             mainNode,
+		RootNodeDependencies: rootNodeDependencies,
+		InstanceEnvVars:      instanceEnvVars,
+	}
+	return extractedImage, nil
+}
+
 // dependencyAliasLink is used to store the link information provided by the user
 type dependencyAliasLink struct {
 	Instance           string
@@ -331,4 +345,12 @@ type dependencyInfo struct {
 	Version      string `json:"ver"`
 	InstanceName string `json:"instanceName"`
 	IsRoot       bool   `json:"isRoot"`
+}
+
+// extractedImage is used to start the instance
+type ExtractedImage struct {
+	ImageDir             string
+	MainNode             *dependencyTreeNode
+	RootNodeDependencies map[string]*dependencyInfo
+	InstanceEnvVars      []*environmentVariable
 }

@@ -296,18 +296,15 @@ func (balExecutor *DockerBalExecutor) Init(workingDir, projectName, moduleName s
 // Test executes the ballerina test command on a Ballerina project
 // If the --disable-telepresence flag is passed to the CLI, the args will be an empty array meaning the
 // tests should be run without starting Telepresence
-func (balExecutor *DockerBalExecutor) Test(fileName string, args []string, envVars []*EnvironmentVariable) error {
+func (balExecutor *DockerBalExecutor) Test(args []string, envVars []*EnvironmentVariable, cmdDir string) error {
+	balConfPath := filepath.Join(cmdDir, constants.BallerinaConf)
 	//Replace imagedir
-	read, err := ioutil.ReadFile(fileName)
+	read, err := ioutil.ReadFile(balConfPath)
 	if err != nil {
 		return err
 	}
 	newContents := strings.Replace(string(read), util.UserHomeDir(), "/home/cellery", 1)
-	err = ioutil.WriteFile(fileName, []byte(newContents), 0)
-	if err != nil {
-		return err
-	}
-	currentDir, err := os.Getwd()
+	err = ioutil.WriteFile(balConfPath, []byte(newContents), 0)
 	if err != nil {
 		return err
 	}
@@ -332,7 +329,7 @@ func (balExecutor *DockerBalExecutor) Test(fileName string, args []string, envVa
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".ballerina,target=/home/cellery/.ballerina",
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".cellery,target=/home/cellery/.cellery",
 		"--mount", "type=bind,source=" + util.UserHomeDir() + string(os.PathSeparator) + ".kube,target=/home/cellery/.kube",
-		"--mount", "type=bind,source=" + currentDir + ",target=/home/cellery/tmp",
+		"--mount", "type=bind,source=" + cmdDir + ",target=/home/cellery/tmp",
 		"-w", "/home/cellery/",
 	}...)
 	dockerCmdArgs = append(dockerCmdArgs, "wso2cellery/ballerina-runtime:"+version.BuildVersion())
@@ -359,6 +356,7 @@ func (balExecutor *DockerBalExecutor) Test(fileName string, args []string, envVa
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
+	cmd.Dir = cmdDir
 	err = cmd.Start()
 	if err != nil {
 		return err
