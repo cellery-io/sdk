@@ -94,7 +94,7 @@ public class TCPTest {
     @Test(groups = "build")
     public void validateBuildTimeServiceTemplates() {
 
-        Assert.assertEquals(cell.getSpec().getComponents().get(0).getMetadata().getName(), "TcpInternal");
+        Assert.assertEquals(cell.getSpec().getComponents().get(0).getMetadata().getName(), "tcp-internal");
         final ComponentSpec tcpSpec = cell.getSpec().getComponents().get(0).getSpec();
         final Container tcpContainer = tcpSpec.getTemplate().getContainers().get(0);
         Assert.assertEquals(tcpContainer.getImage(), "wso2/samples-tcp");

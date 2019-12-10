@@ -33,7 +33,7 @@ public function build(cellery:ImageName iName) returns error? {
     };
 
     cellery:Component tcpComponent = {
-        name: "TcpInternal",
+        name: "tcp-internal",
         src: {
             image: "wso2/samples-tcp"
         },

@@ -18,6 +18,7 @@ import ballerina/io;
 import ballerina/log;
 import ballerina/stringutils;
 import ballerinax/java;
+import samjs/jregex;
 
 
 # Cell/Composite image identifier details.
@@ -583,6 +584,17 @@ public function createImage(CellImage | Composite image, ImageName iName) return
 # + image - Image descriptor
 function validateCell(CellImage | Composite image) {
     image.components.forEach(function (Component component) {
+        // Check component name is valid.
+        jregex:Pattern p = jregex:compile(regex = "[a-z0-9]([-a-z0-9]*[a-z0-9])?");
+        jregex:Matcher m = p.matcher(input = component.name);
+        boolean validName = m.matches();
+        if(!validName){
+            string errMsg = "Invalid component name " + component.name + ". Component name must consist of lower case "
+            + "alphanumeric characters or '-', and must start and end with an alphanumeric character "
+            + "(e.g. 'my-name',  or '123-abc', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?')";
+            error e = error(errMsg);
+            panic e;
+        }
         if (!(component["ingresses"] is ())) {
             map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress> ingresses =
             <map<TCPIngress | HttpApiIngress | GRPCIngress | WebIngress | HttpPortIngress | HttpsPortIngress>>
@@ -650,7 +662,7 @@ public function constructImage(ImageName iName) returns @tainted (CellImage | Co
         log:printError("Error occurred while constructing the image from json: " + iName.name, err = image);
         panic image;
     }
-    return <CellImage|Composite>image;
+    return <CellImage | Composite>image;
 }
 
 # Returns a Reference record with url information.
@@ -709,12 +721,12 @@ public function getReference(Component component, string dependencyAlias) return
 #
 # + return - TestConfig record
 public function getTestConfig() returns @tainted TestConfig {
-    map<any> configMap  = config:getAsMap("test.config");
+    map<any> configMap = config:getAsMap("test.config");
     string iNameStr = <string>configMap["IMAGE_NAME"];
     string dependencyLinksStr = <string>configMap["DEPENDENCY_LINKS"];
     boolean startDependencies = <boolean>configMap["START_DEPENDENCIES"];
     boolean shareDependencies = <boolean>configMap["SHARE_DEPENDENCIES"];
-    
+
     // Construct iName from string
     io:StringReader reader = new (iNameStr);
     json | error result = reader.readJson();
@@ -742,9 +754,11 @@ public function getTestConfig() returns @tainted TestConfig {
     }
 
     TestConfig testConfig = {
-        iName: <ImageName>iName, dependencyLinks: <map<ImageName>>iNameMap,
-        startDependencies: startDependencies,shareDependencies: shareDependencies
-        };
+        iName: <ImageName>iName,
+        dependencyLinks: <map<ImageName>>iNameMap,
+        startDependencies: startDependencies,
+        shareDependencies: shareDependencies
+    };
     return testConfig;
 }
 
@@ -753,24 +767,24 @@ public function getTestConfig() returns @tainted TestConfig {
 # + alias - (optional) dependency alias of instance
 # + return - reference record
 public function getInstanceEndpoints(string alias = "") returns Reference {
-    ImageName iName =  {org: "", name: "", ver: ""};
-    InstanceState[]|error resultList = getInstanceListFromConfig();
+    ImageName iName = {org: "", name: "", ver: ""};
+    InstanceState[] | error resultList = getInstanceListFromConfig();
     if (resultList is error) {
         log:printError("Error occurred while getting instance list ", err = resultList);
         panic resultList;
     }
     InstanceState[] instanceList = <InstanceState[]>resultList;
     foreach var inst in instanceList {
-            if (inst.alias == alias) {
-                iName = <@untainted>inst.iName;
-                break;
-            }
-    }   
+        if (inst.alias == alias) {
+            iName = <@untainted>inst.iName;
+            break;
+        }
+    }
     CellImage | Composite | error imageResult = constructImage(iName);
     if (imageResult is error) {
         panic imageResult;
     }
-    if(imageResult is CellImage|Composite){
+    if (imageResult is CellImage | Composite) {
         map<Component> components = imageResult.components;
         foreach var [k, comp] in components.entries() {
             if (comp["dependencies"] is ()) {
@@ -966,7 +980,7 @@ function replaceInRef(Reference ref, string alias = "", string name = "") return
 # Retrieves the instance list related to cell being tested.
 #
 # + return - array of InstanceState record
-function getInstanceListFromConfig() returns  @tainted (InstanceState[] | error) {
+function getInstanceListFromConfig() returns @tainted (InstanceState[] | error) {
     string instanceListStr = config:getAsString("INSTANCE_LIST");
     // Construct instance list from string
     io:StringReader reader = new (instanceListStr);
@@ -1056,21 +1070,21 @@ function readReferenceExternal(ImageName iName) returns (Reference) = @java:Meth
 # + testConfig - configurations related to cell integration tests
 public function runInstances(TestConfig testConfig) {
     InstanceState[] instanceList = [];
-    CellImage | Composite | error result = constructImage(<@untainted> testConfig.iName);
+    CellImage | Composite | error result = constructImage(<@untainted>testConfig.iName);
     if (result is error) {
         panic result;
     }
-    CellImage | Composite instance = <CellImage|Composite>result;
-    InstanceState[] | error? resultList = createInstance(<@untainted>instance, testConfig.iName, 
-        testConfig.dependencyLinks, testConfig.startDependencies, testConfig.shareDependencies);
+    CellImage | Composite instance = <CellImage | Composite>result;
+    InstanceState[] | error? resultList = createInstance(<@untainted>instance, testConfig.iName,
+    testConfig.dependencyLinks, testConfig.startDependencies, testConfig.shareDependencies);
     if (resultList is error) {
         if (resultList.detail().toString().endsWith("is already available in the runtime")) {
             log:printInfo(resultList.detail().toString());
             InstanceState iNameState = {
-                iName : testConfig.iName, 
+                iName: testConfig.iName,
                 isRunning: true
             };
-            instanceList[instanceList.length()] = <@untainted> iNameState;
+            instanceList[instanceList.length()] = <@untainted>iNameState;
         } else {
             panic resultList;
         }
@@ -1079,7 +1093,7 @@ public function runInstances(TestConfig testConfig) {
     }
     foreach var inst in <InstanceState[]>instanceList {
         if (inst.alias == "") {
-            json|error iNameJson = json.constructFrom(inst.iName);
+            json | error iNameJson = json.constructFrom(inst.iName);
             if (iNameJson is error) {
                 panic iNameJson;
             } else {
@@ -1089,7 +1103,7 @@ public function runInstances(TestConfig testConfig) {
             break;
         }
     }
-    json|error instanceListJson = json.constructFrom(<InstanceState[]>instanceList);
+    json | error instanceListJson = json.constructFrom(<InstanceState[]>instanceList);
     if (instanceListJson is error) {
         panic instanceListJson;
     } else {
@@ -1110,7 +1124,7 @@ public function runTestSuite(ImageName iName, TestSuite testSuite) returns (erro
 #
 # + return - error optional
 public function stopInstances() returns @tainted (error?) {
-    InstanceState[]|error instanceList = getInstanceListFromConfig();
+    InstanceState[] | error instanceList = getInstanceListFromConfig();
     if (instanceList is error) {
         log:printError("Error occurred while terminating instances ", err = instanceList);
         return instanceList;
