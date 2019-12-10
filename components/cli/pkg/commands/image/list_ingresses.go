@@ -292,19 +292,25 @@ func displayCellImageApisTable(cli cli.Cli, cellImageContent string) error {
 	for _, componentDetail := range cell.Component {
 		for ingress, ingressInfo := range componentDetail.Ingress {
 			var ingressData []string
-			if ingressInfo.Expose == "global" {
-				ingressInfo.Expose = "true"
-			} else {
+			if !(ingressInfo.Expose == "global" || ingressInfo.Expose == "local") {
 				ingressInfo.Expose = "false"
 			}
 			if ingressInfo.IngressType == constants.HttpApiIngress && ingressInfo.Context != "" {
-				for _, resourcesValue := range ingressInfo.Definition {
-					for _, resource := range resourcesValue {
-						ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType,
-							ingressInfo.Context, ingressInfo.ApiVersion, strconv.Itoa(int(ingressInfo.Port)),
-							resource.Path, resource.Method, ingressInfo.Expose, constants.NA,
-							fmt.Sprintf("%s_%s_%s", componentDetail.ComponentName, ingress, "api_url")}
-						tableData = append(tableData, ingressData)
+				if len(ingressInfo.Definition) == 0 {
+					ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType,
+						ingressInfo.Context, ingressInfo.ApiVersion, strconv.Itoa(int(ingressInfo.Port)),
+						constants.NA, constants.NA, ingressInfo.Expose, constants.NA,
+						fmt.Sprintf("%s_%s_%s", componentDetail.ComponentName, ingress, "api_url")}
+					tableData = append(tableData, ingressData)
+				} else {
+					for _, resourcesValue := range ingressInfo.Definition {
+						for _, resource := range resourcesValue {
+							ingressData = []string{componentDetail.ComponentName, ingressInfo.IngressType,
+								ingressInfo.Context, ingressInfo.ApiVersion, strconv.Itoa(int(ingressInfo.Port)),
+								resource.Path, resource.Method, ingressInfo.Expose, constants.NA,
+								fmt.Sprintf("%s_%s_%s", componentDetail.ComponentName, ingress, "api_url")}
+							tableData = append(tableData, ingressData)
+						}
 					}
 				}
 			} else if ingressInfo.IngressType == constants.WebIngress {
@@ -340,7 +346,7 @@ func displayCellImageApisTable(cli cli.Cli, cellImageContent string) error {
 	}
 	if len(tableData) > 0 {
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS CONTEXT", "INGRESS_VERSION", "INGRESS PORT", "RESOURCE", "METHOD", "GLOBALLY EXPOSED", "VHOST", "INGRESS_KEY"})
+		table.SetHeader([]string{"COMPONENT", "INGRESS TYPE", "INGRESS CONTEXT", "INGRESS_VERSION", "INGRESS PORT", "RESOURCE", "METHOD", "EXPOSED", "VHOST", "INGRESS_KEY"})
 		table.SetBorders(tablewriter.Border{Left: false, Top: false, Right: false, Bottom: false})
 		table.SetAlignment(3)
 		table.SetRowSeparator("-")
