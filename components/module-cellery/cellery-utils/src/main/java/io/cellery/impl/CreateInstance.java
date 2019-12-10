@@ -262,7 +262,7 @@ public class CreateInstance {
             writeToFile(toYaml(composite), cellYAMLPath);
             // Apply yaml file of the instance
             KubernetesClient.apply(cellYAMLPath);
-            KubernetesClient.waitFor("Ready", 30 * 60, instanceArg, "default");
+            KubernetesClient.waitFor("Ready", 30 * 60, instanceArg);
             return bValueArray;
         } catch (IOException e) {
             String error = "Unable to persist updated composite yaml " + destinationPath;

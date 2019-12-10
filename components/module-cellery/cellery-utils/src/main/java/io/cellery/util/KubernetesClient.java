@@ -55,13 +55,11 @@ public class KubernetesClient {
      * @param condition the condition that is being checked
      * @param timeoutSeconds waiting time for the condition
      * @param resourceName name of the resource
-     * @param namespace namespace
      */
-    public static void waitFor(String condition, int timeoutSeconds, String resourceName, String namespace) {
+    public static void waitFor(String condition, int timeoutSeconds, String resourceName) {
         CelleryUtils.executeShellCommand("kubectl wait --for=condition=" + condition +
                         " --timeout=" + timeoutSeconds + "s " +
-                        resourceName +
-                        " -n " + namespace,
+                        resourceName,
                 null,
                 CelleryUtils::printDebug,
                 CelleryUtils::printWarning);
