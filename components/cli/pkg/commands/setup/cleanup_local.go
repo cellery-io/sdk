@@ -28,50 +28,37 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func manageEnvironment(cli cli.Cli) error {
+func manageLocal(cli cli.Cli) error {
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U000027A4 {{ .| bold }}",
 		Inactive: "  {{ . | faint }}",
 		Help:     util.Faint("[Use arrow keys]"),
 	}
-	var items []string
-	minikubeExists, err := minikube.ClusterExists(CelleryLocalSetup)
-	if err != nil {
-		return fmt.Errorf("failed to check if minikube is running, %v", err)
-	}
-	if minikubeExists {
-		items = []string{celleryLocal, celleryGcp, existingCluster, setupBack}
-	} else {
-		items = []string{celleryGcp, existingCluster, setupBack}
-	}
 
 	cellPrompt := promptui.Select{
-		Label:     util.YellowBold("?") + " Select a runtime",
-		Items:     items,
+		Label:     util.YellowBold("?") + " Select `cleanup` to remove local setup",
+		Items:     []string{cleanup, setupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
-		return fmt.Errorf("failed to select environment option to manage: %v", err)
+		return fmt.Errorf("failed to select an option: %v", err)
 	}
 
 	switch value {
-	case celleryLocal:
+	case cleanup:
 		{
-			return manageLocal(cli)
-		}
-	case celleryGcp:
-		{
-			return manageGcp(cli)
-		}
-	case existingCluster:
-		{
-			return manageExistingCluster(cli)
+			platform, err := minikube.NewMinikube(
+				minikube.SetProfile(CelleryLocalSetup))
+			if err != nil {
+				return fmt.Errorf("failed to initialize minikube platform, %v", err)
+			}
+			return RunSetupCleanup(cli, platform, false, false, false, false, false)
 		}
 	default:
 		{
-			return RunSetup(cli)
+			return manageEnvironment(cli)
 		}
 	}
 }

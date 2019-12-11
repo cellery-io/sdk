@@ -21,7 +21,7 @@ package cli
 import "cellery.io/cellery/components/cli/pkg/runtime"
 
 type Platform interface {
-	CreateK8sCluster() error
+	CreateK8sCluster() (string, error)
 	ConfigureSqlInstance() (runtime.MysqlDb, error)
 	CreateStorage() error
 	CreateNfs() (runtime.Nfs, error)

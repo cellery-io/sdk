@@ -39,7 +39,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func (gcp *Gcp) CreateK8sCluster() error {
+func (gcp *Gcp) CreateK8sCluster() (string, error) {
 	gcpGKENode := &container.NodeConfig{
 		ImageType:   clusterImageType,
 		MachineType: clusterMachineType,
@@ -69,16 +69,16 @@ func (gcp *Gcp) CreateK8sCluster() error {
 			time.Sleep(30 * time.Second)
 		} else {
 			if resp.Status == "RUNNING" {
-				return nil
+				return "", nil
 			}
 			time.Sleep(15 * time.Second)
 		}
 	}
 	// Give permission to the user
 	if err := kubernetes.CreateClusterRoleBinding("cluster-admin", gcp.accountName); err != nil {
-		return fmt.Errorf("error creating cluster role binding, %v", err)
+		return "", fmt.Errorf("error creating cluster role binding, %v", err)
 	}
-	return fmt.Errorf("failed to create clusters: %v", err)
+	return "", fmt.Errorf("failed to create clusters: %v", err)
 }
 
 func (gcp *Gcp) getCreatedByLabel() map[string]string {

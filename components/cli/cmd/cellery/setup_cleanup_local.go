@@ -22,19 +22,23 @@ import (
 	"github.com/spf13/cobra"
 
 	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func newSetupCreateCommand(cli cli.Cli) *cobra.Command {
-	var isComplete = false
+func newSetupCleanupLocalCommand(cli cli.Cli) *cobra.Command {
+	var confirmed = false
 	cmd := &cobra.Command{
-		Use:   "create <command>",
-		Short: "Create a Cellery runtime",
+		Use:   "local",
+		Short: "Cleanup local cluster setup",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := setup.RunSetupCleanup(cli, nil, true, true, true, true, confirmed); err != nil {
+				util.ExitWithErrorMessage("Cellery setup cleanup local command failed", err)
+			}
+		},
+		Example: "  cellery setup cleanup local",
 	}
-	cmd.AddCommand(
-		newSetupCreateLocalCommand(cli, &isComplete),
-		newSetupCreateGcpCommand(cli, &isComplete),
-		newSetupCreateOnExistingClusterCommand(cli, &isComplete),
-	)
-	cmd.PersistentFlags().BoolVar(&isComplete, "complete", false, "Install complete setup")
+	cmd.Flags().BoolVarP(&confirmed, "assume-yes", "y", false, "Confirm setup removal")
 	return cmd
 }

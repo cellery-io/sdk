@@ -26,7 +26,6 @@ import (
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
 	"cellery.io/cellery/components/cli/pkg/gcp"
-	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -38,13 +37,17 @@ func newSetupCreateGcpCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			platform, err := gcp.NewGcp()
 			if err != nil {
-				util.ExitWithErrorMessage("Cellery setup create gcp command failed", fmt.Errorf("failed to initialize celleryGcp platform, %v", err))
+				util.ExitWithErrorMessage("Cellery setup create gcp command failed",
+					fmt.Errorf("failed to initialize gcp platform, %v", err))
 			}
-			err = setup.RunSetupCreate(cli, platform, *isComplete, true, true,
-				true, runtime.Nfs{}, runtime.MysqlDb{}, "")
-
+			_, mysql, nfs, err := setup.RunSetupCreateCelleryPlatform(cli, platform)
 			if err != nil {
-				util.ExitWithErrorMessage("Cellery setup create gcp command failed", err)
+				util.ExitWithErrorMessage("Cellery setup create gcp command failed",
+					fmt.Errorf("failed to create gcp platform, %v", err))
+			}
+			if err := setup.RunSetupCreateCelleryRuntime(cli, *isComplete, true, true, true, nfs, mysql, ""); err != nil {
+				util.ExitWithErrorMessage("Cellery setup create gcp command failed",
+					fmt.Errorf("failed to create cellery runtime on gcp cluster, %v", err))
 			}
 		},
 		Example: "  cellery setup create gcp",

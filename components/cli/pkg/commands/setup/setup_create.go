@@ -26,7 +26,7 @@ import (
 
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/gcp"
-	"cellery.io/cellery/components/cli/pkg/runtime"
+	"cellery.io/cellery/components/cli/pkg/minikube"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -38,10 +38,19 @@ func createEnvironment(cli cli.Cli) error {
 		Inactive: "  {{ . | faint }}",
 		Help:     util.Faint("[Use arrow keys]"),
 	}
-
+	var items []string
+	minikubeExists, err := minikube.ClusterExists(CelleryLocalSetup)
+	if err != nil {
+		return fmt.Errorf("failed to check if minikube is running, %v", err)
+	}
+	if minikubeExists {
+		items = []string{celleryGcp, existingCluster, setupBack}
+	} else {
+		items = []string{celleryLocal, celleryGcp, existingCluster, setupBack}
+	}
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select an environment to be installed",
-		Items:     []string{celleryGcp, existingCluster, setupBack},
+		Items:     items,
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -58,14 +67,41 @@ func createEnvironment(cli cli.Cli) error {
 			}
 			platform, err := gcp.NewGcp()
 			if err != nil {
-				return fmt.Errorf("failed to initialize celleryGcp platform, %v", err)
+				return fmt.Errorf("failed to initialize gcp platform, %v", err)
 			}
-			return RunSetupCreate(cli, platform, isCompleteSetup, true, true,
-				true, runtime.Nfs{}, runtime.MysqlDb{}, "")
+			_, mysql, nfs, err := RunSetupCreateCelleryPlatform(cli, platform)
+			if err != nil {
+				return fmt.Errorf("failed to create gcp platform, %v", err)
+			}
+			if err := RunSetupCreateCelleryRuntime(cli, isCompleteSetup, true, true, true, nfs, mysql, ""); err != nil {
+				return fmt.Errorf("failed to create cellery runtime on gcp cluster, %v", err)
+			}
+		}
+	case celleryLocal:
+		{
+			isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
+			if isBackSelected {
+				return RunSetup(cli)
+			}
+			platform, err := minikube.NewMinikube(
+				minikube.SetProfile(CelleryLocalSetup),
+				minikube.SetCpus(MinikubeCpus),
+				minikube.SetMemory(MinikubeMemory),
+				minikube.SetkubeVersion(MinikubeKubernetesVersion))
+			if err != nil {
+				return fmt.Errorf("failed to initialize minikube platform, %v", err)
+			}
+			nodeportIp, mysql, nfs, err := RunSetupCreateCelleryPlatform(cli, platform)
+			if err != nil {
+				return fmt.Errorf("failed to create minikube platform, %v", err)
+			}
+			if err := RunSetupCreateCelleryRuntime(cli, isCompleteSetup, false, false, false, nfs, mysql, nodeportIp); err != nil {
+				return fmt.Errorf("failed to create cellery runtime on minikube cluster, %v", err)
+			}
 		}
 	case existingCluster:
 		{
-			createOnExistingCluster(cli)
+			return createOnExistingCluster(cli)
 		}
 	default:
 		{

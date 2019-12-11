@@ -29,49 +29,54 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func RunSetupCreate(cli cli.Cli, platform cli.Platform, complete bool, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode bool,
-	nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) error {
+func RunSetupCreateCelleryPlatform(cli cli.Cli, platform cli.Platform) (string, runtime.MysqlDb, runtime.Nfs, error) {
 	var err error
+	var db runtime.MysqlDb
+	var nfs runtime.Nfs
+	nodePortIpAddress := ""
+	if err := cli.ExecuteTask("Creating kubernetes cluster", "Failed to create kubernetes cluster",
+		"", func() error {
+			nodePortIpAddress, err = platform.CreateK8sCluster()
+			return err
+		}); err != nil {
+		return nodePortIpAddress, db, nfs, fmt.Errorf("failed to create kubernetes cluster, %v", err)
+	}
+	fmt.Fprintln(cli.Out(), fmt.Sprintf("Successfully created cluster %s", platform.ClusterName()))
+	if err := cli.ExecuteTask("Creating sql instance", "Failed to create sql instance",
+		"", func() error {
+			db, err = platform.ConfigureSqlInstance()
+			return err
+		}); err != nil {
+		return nodePortIpAddress, db, nfs, fmt.Errorf("failed to create sql instance, %v", err)
+	}
+	if err := cli.ExecuteTask("Creating storage", "Failed to create storage",
+		"", func() error {
+			return platform.CreateStorage()
+		}); err != nil {
+		return nodePortIpAddress, db, nfs, fmt.Errorf("failed to create file storage, %v", err)
+	}
+	if err := cli.ExecuteTask("Creating file system", "Failed to create file system",
+		"", func() error {
+			nfs, err = platform.CreateNfs()
+			return err
+		}); err != nil {
+		return nodePortIpAddress, db, nfs, fmt.Errorf("failed to create file system, %v", err)
+	}
+	if err := cli.ExecuteTask("Updating kube config", "Failed to update kube config",
+		"", func() error {
+			return platform.UpdateKubeConfig()
+		}); err != nil {
+		return nodePortIpAddress, db, nfs, fmt.Errorf("failed to update kube config, %v", err)
+	}
+	return nodePortIpAddress, db, nfs, nil
+}
+
+func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume, hasNfsStorage,
+	isLoadBalancerIngressMode bool, nfs runtime.Nfs, db runtime.MysqlDb, nodePortIpAddress string) error {
 	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
 	cli.Runtime().SetArtifactsPath(artifactsPath)
-	if platform != nil {
-		// Create platform resources.
-		if err := cli.ExecuteTask("Creating kubernetes cluster", "Failed to create kubernetes cluster",
-			"", func() error {
-				return platform.CreateK8sCluster()
-			}); err != nil {
-			return err
-		}
-		fmt.Fprintln(cli.Out(), fmt.Sprintf("Successfully created cluster %s", platform.ClusterName()))
-		if err := cli.ExecuteTask("Creating sql instance", "Failed to create sql instance",
-			"", func() error {
-				db, err = platform.ConfigureSqlInstance()
-				return err
-			}); err != nil {
-			return err
-		}
-		if err := cli.ExecuteTask("Creating storage", "Failed to create storage",
-			"", func() error {
-				return platform.CreateStorage()
-			}); err != nil {
-			return err
-		}
-		if err := cli.ExecuteTask("Creating file system", "Failed to create file system",
-			"", func() error {
-				nfs, err = platform.CreateNfs()
-				return err
-			}); err != nil {
-			return err
-		}
-		if err := cli.ExecuteTask("Updating kube config", "Failed to update kube config",
-			"", func() error {
-				return platform.UpdateKubeConfig()
-			}); err != nil {
-			return err
-		}
-	}
 	if err := cli.Runtime().Validate(); err != nil {
 		return fmt.Errorf("runtime validation failed. %v", err)
 	}

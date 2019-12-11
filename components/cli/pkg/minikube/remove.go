@@ -16,25 +16,30 @@
  * under the License.
  */
 
-package main
+package minikube
 
 import (
-	"github.com/spf13/cobra"
-
-	"cellery.io/cellery/components/cli/cli"
+	"fmt"
+	"os/exec"
 )
 
-func newSetupCreateCommand(cli cli.Cli) *cobra.Command {
-	var isComplete = false
-	cmd := &cobra.Command{
-		Use:   "create <command>",
-		Short: "Create a Cellery runtime",
-	}
-	cmd.AddCommand(
-		newSetupCreateLocalCommand(cli, &isComplete),
-		newSetupCreateGcpCommand(cli, &isComplete),
-		newSetupCreateOnExistingClusterCommand(cli, &isComplete),
+func (minikube *Minikube) RemoveCluster() error {
+	cmd := exec.Command(
+		"minikube",
+		"delete",
+		"--profile", celleryLocalSetup,
 	)
-	cmd.PersistentFlags().BoolVar(&isComplete, "complete", false, "Install complete setup")
-	return cmd
+	if _, err := cmd.Output(); err != nil {
+		return fmt.Errorf("failed to delete minikube cluster with profile %s, %v", celleryLocalSetup, err)
+	}
+	return nil
+}
+func (minikube *Minikube) RemoveSqlInstance() error {
+	return nil
+}
+func (minikube *Minikube) RemoveFileSystem() error {
+	return nil
+}
+func (minikube *Minikube) RemoveStorage() error {
+	return nil
 }

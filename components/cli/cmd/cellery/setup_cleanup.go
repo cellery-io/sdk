@@ -30,6 +30,7 @@ func newSetupCleanupCommand(cli cli.Cli) *cobra.Command {
 		Short: "Cleanup Cellery runtime",
 	}
 	cmd.AddCommand(
+		newSetupCleanupLocalCommand(cli),
 		newSetupCleanupGcpCommand(cli),
 		newSetupCleanupExistingCommand(cli),
 	)

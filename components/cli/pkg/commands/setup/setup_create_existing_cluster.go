@@ -93,7 +93,7 @@ func createOnExistingCluster(cli cli.Cli) error {
 	if err != nil {
 		return fmt.Errorf("failed to get user input: %v", err)
 	}
-	err = RunSetupCreate(cli, nil, isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db, nodePortIpAddress)
+	err = RunSetupCreateCelleryRuntime(cli, isCompleteSetup, isPersistentVolume, hasNfsStorage, isLoadBalancerIngressMode, nfs, db, nodePortIpAddress)
 	if err != nil {
 		util.ExitWithErrorMessage("Cellery setup create existing command failed", err)
 	}

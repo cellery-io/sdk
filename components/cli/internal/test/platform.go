@@ -32,8 +32,8 @@ func NewMockPlatform(opts ...func(*MockPlatform)) *MockPlatform {
 type MockPlatform struct {
 }
 
-func (platform *MockPlatform) CreateK8sCluster() error {
-	return nil
+func (platform *MockPlatform) CreateK8sCluster() (string, error) {
+	return "", nil
 }
 
 func (platform *MockPlatform) ConfigureSqlInstance() (runtime.MysqlDb, error) {

@@ -47,6 +47,6 @@ func newSetupCleanupExistingCommand(cli cli.Cli) *cobra.Command {
 	cmd.Flags().BoolVar(&knative, "knative", false, "Remove knative-serving")
 	cmd.Flags().BoolVar(&ingress, "ingress", false, "Remove ingress")
 	cmd.Flags().BoolVar(&hpa, "hpa", false, "Remove hpa")
-	cmd.Flags().BoolVarP(&confirmed, "assume-yes", "y", false, "Confirm setup creation")
+	cmd.Flags().BoolVarP(&confirmed, "assume-yes", "y", false, "Confirm setup removal")
 	return cmd
 }

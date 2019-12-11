@@ -37,6 +37,7 @@ import (
 )
 
 const kubernetesVersionMax = "v1.16.0"
+const kubernetesVersionMaxExpected = "v1.15.x"
 const kubernetesVersionMin = "v1.13"
 
 type Selection int
@@ -315,7 +316,7 @@ func (runtime *CelleryRuntime) Validate() error {
 	expectedKubernetesServerVersionMax, err := version.NewVersion(kubernetesVersionMax)
 
 	if actualKubectlServerVersion.GreaterThanOrEqual(expectedKubernetesServerVersionMax) {
-		errorMessage = errorMessage + "\n" + fmt.Sprintf("kubectl server version (%s) is newer than the maximum version expected (%s)", actualKubectlServerVersion, expectedKubernetesServerVersionMax)
+		errorMessage = errorMessage + "\n" + fmt.Sprintf("kubectl server version (%s) is newer than the maximum version expected (%s)", actualKubectlServerVersion, kubernetesVersionMaxExpected)
 	}
 	expectedKubernetesServerVersionMin, err := version.NewVersion(kubernetesVersionMin)
 	if actualKubectlServerVersion.LessThan(expectedKubernetesServerVersionMin) {
@@ -326,7 +327,7 @@ func (runtime *CelleryRuntime) Validate() error {
 	expectedKubernetesClientVersionMax, err := version.NewVersion(kubernetesVersionMax)
 
 	if actualKubectlClientVersion.GreaterThanOrEqual(expectedKubernetesClientVersionMax) {
-		errorMessage = errorMessage + "\n" + fmt.Sprintf("kubectl client version (%s) is newer than the maximum version expected (%s)", actualKubectlClientVersion, expectedKubernetesClientVersionMax)
+		errorMessage = errorMessage + "\n" + fmt.Sprintf("kubectl client version (%s) is newer than the maximum version expected (%s)", actualKubectlClientVersion, kubernetesVersionMaxExpected)
 	}
 	expectedKubernetesClientVersionMin, err := version.NewVersion(kubernetesVersionMin)
 	if actualKubectlClientVersion.LessThan(expectedKubernetesClientVersionMin) {

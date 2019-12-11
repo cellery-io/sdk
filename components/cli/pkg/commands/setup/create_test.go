@@ -27,13 +27,12 @@ import (
 	"cellery.io/cellery/components/cli/pkg/runtime"
 )
 
-func TestRunSetupCreate(t *testing.T) {
+func TestRunSetupCreateOnExistingCluster(t *testing.T) {
 	tests := []struct {
 		name                      string
 		expectedToPass            bool
 		expectedErrorMsg          string
 		mockCli                   *test.MockCli
-		mockPlatform              *test.MockPlatform
 		complete                  bool
 		persistVolume             bool
 		hasNfs                    bool
@@ -47,7 +46,6 @@ func TestRunSetupCreate(t *testing.T) {
 				test.SetFileSystem(test.NewMockFileSystem()),
 				test.SetRuntime(test.NewMockRuntime()),
 				test.SetKubeCli(test.NewMockKubeCli())),
-			mockPlatform:   test.NewMockPlatform(),
 			complete:       false,
 			persistVolume:  false,
 			nfs:            runtime.Nfs{},
@@ -59,7 +57,6 @@ func TestRunSetupCreate(t *testing.T) {
 				test.SetFileSystem(test.NewMockFileSystem()),
 				test.SetRuntime(test.NewMockRuntime()),
 				test.SetKubeCli(test.NewMockKubeCli())),
-			mockPlatform:   test.NewMockPlatform(),
 			complete:       true,
 			persistVolume:  false,
 			nfs:            runtime.Nfs{},
@@ -71,7 +68,6 @@ func TestRunSetupCreate(t *testing.T) {
 				test.SetFileSystem(test.NewMockFileSystem()),
 				test.SetRuntime(test.NewMockRuntime()),
 				test.SetKubeCli(test.NewMockKubeCli())),
-			mockPlatform:   test.NewMockPlatform(),
 			complete:       false,
 			persistVolume:  true,
 			nfs:            runtime.Nfs{},
@@ -83,7 +79,6 @@ func TestRunSetupCreate(t *testing.T) {
 				test.SetFileSystem(test.NewMockFileSystem()),
 				test.SetRuntime(test.NewMockRuntime()),
 				test.SetKubeCli(test.NewMockKubeCli())),
-			mockPlatform:   test.NewMockPlatform(),
 			complete:       true,
 			persistVolume:  true,
 			nfs:            runtime.Nfs{},
@@ -95,7 +90,6 @@ func TestRunSetupCreate(t *testing.T) {
 				test.SetFileSystem(test.NewMockFileSystem()),
 				test.SetRuntime(test.NewMockRuntime()),
 				test.SetKubeCli(test.NewMockKubeCli())),
-			mockPlatform:   test.NewMockPlatform(),
 			complete:       true,
 			persistVolume:  true,
 			hasNfs:         true,
@@ -108,7 +102,6 @@ func TestRunSetupCreate(t *testing.T) {
 				test.SetFileSystem(test.NewMockFileSystem()),
 				test.SetRuntime(test.NewMockRuntime()),
 				test.SetKubeCli(test.NewMockKubeCli())),
-			mockPlatform:   test.NewMockPlatform(),
 			complete:       true,
 			expectedToPass: true,
 		},
@@ -118,7 +111,6 @@ func TestRunSetupCreate(t *testing.T) {
 				test.SetFileSystem(test.NewMockFileSystem()),
 				test.SetRuntime(test.NewMockRuntime()),
 				test.SetKubeCli(test.NewMockKubeCli())),
-			mockPlatform:      test.NewMockPlatform(),
 			complete:          true,
 			nodeportIpAddress: "111.111.111.111",
 			expectedToPass:    true,
@@ -126,10 +118,64 @@ func TestRunSetupCreate(t *testing.T) {
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunSetupCreate(tst.mockCli, tst.mockPlatform, tst.complete, tst.persistVolume, tst.hasNfs, tst.isLoadBalancerIngressMode, tst.nfs, runtime.MysqlDb{}, tst.nodeportIpAddress)
+			err := RunSetupCreateCelleryRuntime(tst.mockCli, tst.complete, tst.persistVolume, tst.hasNfs,
+				tst.isLoadBalancerIngressMode, tst.nfs, runtime.MysqlDb{}, tst.nodeportIpAddress)
 			if tst.expectedToPass {
 				if err != nil {
-					t.Errorf("error in RunSetupCreate, %v", err)
+					t.Errorf("error in RunSetupCreateCelleryRuntime, %v", err)
+				}
+			} else {
+				if diff := cmp.Diff(tst.expectedErrorMsg, err.Error()); diff != "" {
+					t.Errorf("invalid error message (-want, +got)\n%v", diff)
+				}
+			}
+		})
+	}
+}
+
+func TestRunSetupCreateWithPlatform(t *testing.T) {
+	tests := []struct {
+		name                      string
+		expectedToPass            bool
+		expectedErrorMsg          string
+		mockCli                   *test.MockCli
+		mockPlatform              *test.MockPlatform
+		complete                  bool
+		persistVolume             bool
+		hasNfs                    bool
+		isLoadBalancerIngressMode bool
+	}{
+		{
+			name: "create basic cellery runtime on a platform",
+			mockCli: test.NewMockCli(
+				test.SetFileSystem(test.NewMockFileSystem()),
+				test.SetRuntime(test.NewMockRuntime()),
+				test.SetKubeCli(test.NewMockKubeCli())),
+			mockPlatform:              test.NewMockPlatform(),
+			complete:                  false,
+			persistVolume:             false,
+			expectedToPass:            true,
+			hasNfs:                    true,
+			isLoadBalancerIngressMode: true,
+		},
+	}
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			nodeportIp, db, nfs, err := RunSetupCreateCelleryPlatform(tst.mockCli, tst.mockPlatform)
+			if tst.expectedToPass {
+				if err != nil {
+					t.Errorf("error in RunSetupCreateCelleryPlatform, %v", err)
+				}
+			} else {
+				if diff := cmp.Diff(tst.expectedErrorMsg, err.Error()); diff != "" {
+					t.Errorf("invalid error message (-want, +got)\n%v", diff)
+				}
+			}
+			err = RunSetupCreateCelleryRuntime(tst.mockCli, tst.complete, tst.persistVolume, tst.hasNfs,
+				tst.isLoadBalancerIngressMode, nfs, db, nodeportIp)
+			if tst.expectedToPass {
+				if err != nil {
+					t.Errorf("error in RunSetupCreateCelleryRuntime, %v", err)
 				}
 			} else {
 				if diff := cmp.Diff(tst.expectedErrorMsg, err.Error()); diff != "" {

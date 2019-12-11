@@ -73,7 +73,7 @@ func (runtime *CelleryRuntime) UpdateNodePortIpAddress(nodePortIpAddress string)
 		return fmt.Errorf("error creating json patch: %v", err)
 	}
 	if len(patch) == 0 {
-		return fmt.Errorf("no changes in ingress-nginx to apply")
+		return nil
 	}
 	patchBytes, err := json.Marshal(patch)
 	if err != nil {
