@@ -66,19 +66,22 @@ func RunExtractResources(cli cli.Cli, cellImage string, outputPath string) error
 	}
 
 	// Copying the image resources to the provided output directory
-	resourcesDir, err := filepath.Abs(filepath.Join(tempPath, artifacts, "resources"))
+	resourcesList, err := util.FindRecursiveInDirectory(filepath.Join(tempPath, src), "resources")
+
+	//resourcesDir, err := filepath.Abs(filepath.Join(tempPath, artifacts, "resources"))
 	if err != nil {
 		return fmt.Errorf("error occurred while extracting the image resources, %v", err)
 	}
-
-	resourcesExists, _ := util.FileExists(resourcesDir)
-	if resourcesExists {
+	if resourcesList != nil {
 		if outputPath == "" {
 			outputPath = cli.FileSystem().CurrentDir()
 		}
-		if err = util.CopyDir(resourcesDir, outputPath); err != nil {
-			return fmt.Errorf("error occurred while extracting the image resources, %v", err)
+		for _, resourceFile := range resourcesList {
+			if err = util.CopyDir(resourceFile, outputPath); err != nil {
+				return fmt.Errorf("error occurred while extracting the image resources, %v", err)
+			}
 		}
+
 		absOutputPath, _ := filepath.Abs(outputPath)
 		fmt.Fprintf(cli.Out(), fmt.Sprintf("\nExtracted Resources: %s", util.Bold(absOutputPath)))
 		util.PrintSuccessMessage(fmt.Sprintf("Successfully extracted cell image resources: %s", util.Bold(cellImage)))

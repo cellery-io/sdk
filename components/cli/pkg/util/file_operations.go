@@ -194,6 +194,26 @@ func Unzip(zipFolderName string, destinationFolderName string) error {
 	return nil
 }
 
+// Return a list of files having its name matching the given pattern
+func FindRecursiveInDirectory(root, pattern string) ([]string, error) {
+	var matches []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if matched, err := filepath.Match(pattern, filepath.Base(path)); err != nil {
+			return err
+		} else if matched {
+			matches = append(matches, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
 func FindInDirectory(directory, suffix string) []string {
 	files, err := ioutil.ReadDir(directory)
 	if err != nil {
