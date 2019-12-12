@@ -97,7 +97,7 @@ func cleanupGcp(cli cli.Cli) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize celleryGcp platform, %v", err)
 	}
-	return RunSetupCleanup(cli, platform, true, true, true, true, true)
+	return RunSetupCleanupPlatform(cli, platform, true)
 }
 
 func ValidateGcpCluster(cluster string) (bool, error) {

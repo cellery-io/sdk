@@ -20,17 +20,24 @@ package setup
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 
 	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/gcp"
 	"cellery.io/cellery/components/cli/pkg/minikube"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func createEnvironment(cli cli.Cli) error {
+	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
+	os.RemoveAll(artifactsPath)
+	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
+	cli.Runtime().SetArtifactsPath(artifactsPath)
 	bold := color.New(color.Bold).SprintFunc()
 	cellTemplate := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
@@ -74,7 +81,13 @@ func createEnvironment(cli cli.Cli) error {
 				return fmt.Errorf("failed to create gcp platform, %v", err)
 			}
 			if err := RunSetupCreateCelleryRuntime(cli, isCompleteSetup, true, true, true, nfs, mysql, ""); err != nil {
-				return fmt.Errorf("failed to create cellery runtime on gcp cluster, %v", err)
+				cleanupErr := RunSetupCleanupPlatform(cli, platform, true)
+				if cleanupErr != nil {
+					return fmt.Errorf("failed to create cellery runtime on gcp cluster, %v. Failed to remove "+
+						"partially created gcp platform, %v", err, cleanupErr)
+				} else {
+					return fmt.Errorf("failed to create cellery runtime on gcp cluster, %v", err)
+				}
 			}
 		}
 	case celleryLocal:
@@ -96,7 +109,13 @@ func createEnvironment(cli cli.Cli) error {
 				return fmt.Errorf("failed to create minikube platform, %v", err)
 			}
 			if err := RunSetupCreateCelleryRuntime(cli, isCompleteSetup, false, false, false, nfs, mysql, nodeportIp); err != nil {
-				return fmt.Errorf("failed to create cellery runtime on minikube cluster, %v", err)
+				cleanupErr := RunSetupCleanupPlatform(cli, platform, true)
+				if cleanupErr != nil {
+					return fmt.Errorf("failed to create cellery runtime on minikube cluster, %v. Failed to remove "+
+						"partially created minikube platform, %v", err, cleanupErr)
+				} else {
+					return fmt.Errorf("failed to create cellery runtime on minikube cluster, %v", err)
+				}
 			}
 		}
 	case existingCluster:

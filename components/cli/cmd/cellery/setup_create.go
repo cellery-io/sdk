@@ -19,12 +19,21 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/spf13/cobra"
 
 	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/constants"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func newSetupCreateCommand(cli cli.Cli) *cobra.Command {
+	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
+	os.RemoveAll(artifactsPath)
+	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
+	cli.Runtime().SetArtifactsPath(artifactsPath)
 	var isComplete = false
 	cmd := &cobra.Command{
 		Use:   "create <command>",

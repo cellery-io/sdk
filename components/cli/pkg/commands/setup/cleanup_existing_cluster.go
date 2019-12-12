@@ -84,7 +84,7 @@ func cleanupExistingCluster(cli cli.Cli) error {
 				return fmt.Errorf("failed to select option, %v", err)
 			}
 		}
-		return RunSetupCleanup(cli, nil, removeKnative, removeIstio, removeIngress, removeHpa, true)
+		return RunSetupCleanupCelleryRuntime(cli, removeKnative, removeIstio, removeIngress, removeHpa, true)
 	}
 	return nil
 }

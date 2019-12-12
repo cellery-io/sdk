@@ -21,10 +21,9 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"cellery.io/cellery/components/cli/pkg/util"
-
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/commands/setup"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func newSetupCommand(cli cli.Cli) *cobra.Command {

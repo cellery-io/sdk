@@ -33,7 +33,7 @@ func newSetupCleanupLocalCommand(cli cli.Cli) *cobra.Command {
 		Short: "Cleanup local cluster setup",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := setup.RunSetupCleanup(cli, nil, true, true, true, true, confirmed); err != nil {
+			if err := setup.RunSetupCleanupPlatform(cli, nil, confirmed); err != nil {
 				util.ExitWithErrorMessage("Cellery setup cleanup local command failed", err)
 			}
 		},

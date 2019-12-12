@@ -32,6 +32,7 @@ import (
 )
 
 func newSetupCleanupGcpCommand(cli cli.Cli) *cobra.Command {
+	var confirmed = false
 	var uniqueNumber string
 	cmd := &cobra.Command{
 		Use:   "gcp",
@@ -59,12 +60,12 @@ func newSetupCleanupGcpCommand(cli cli.Cli) *cobra.Command {
 				util.ExitWithErrorMessage("Cellery setup cleanup gcp command failed", fmt.Errorf(
 					"failed to initialize celleryGcp platform, %v", err))
 			}
-			if err := setup.RunSetupCleanup(cli, platform, true, true, true,
-				true, true); err != nil {
+			if err := setup.RunSetupCleanupPlatform(cli, platform, confirmed); err != nil {
 				util.ExitWithErrorMessage("Cellery setup cleanup gcp command failed", err)
 			}
 		},
 		Example: "  cellery setup cleanup gcp <cluster_name>",
 	}
+	cmd.Flags().BoolVarP(&confirmed, "assume-yes", "y", false, "Confirm setup removal")
 	return cmd
 }

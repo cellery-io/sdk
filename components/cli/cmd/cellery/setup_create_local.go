@@ -57,8 +57,15 @@ func newSetupCreateLocalCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 					fmt.Errorf("failed to create minikube platform, %v", err))
 			}
 			if err := setup.RunSetupCreateCelleryRuntime(cli, *isComplete, false, false, false, nfs, mysql, nodeportIp); err != nil {
-				util.ExitWithErrorMessage("Cellery setup create local command failed",
-					fmt.Errorf("failed to create cellery runtime on minikube cluster, %v", err))
+				cleanupErr := setup.RunSetupCleanupPlatform(cli, platform, true)
+				if cleanupErr != nil {
+					util.ExitWithErrorMessage("Cellery setup create local command failed",
+						fmt.Errorf("failed to create cellery runtime on minikube cluster, %v. Failed to remove "+
+							"partially created minikube platform, %v", err, cleanupErr))
+				} else {
+					util.ExitWithErrorMessage("Cellery setup create local command failed",
+						fmt.Errorf("failed to create cellery runtime on minikube cluster, %v", err))
+				}
 			}
 		},
 		Example: "  cellery setup create local",

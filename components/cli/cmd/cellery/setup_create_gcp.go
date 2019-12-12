@@ -42,8 +42,15 @@ func newSetupCreateGcpCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 			}
 			_, mysql, nfs, err := setup.RunSetupCreateCelleryPlatform(cli, platform)
 			if err != nil {
-				util.ExitWithErrorMessage("Cellery setup create gcp command failed",
-					fmt.Errorf("failed to create gcp platform, %v", err))
+				cleanupErr := setup.RunSetupCleanupPlatform(cli, platform, true)
+				if cleanupErr != nil {
+					util.ExitWithErrorMessage("Cellery setup create gcp command failed",
+						fmt.Errorf("failed to create gcp platform, %v. Failed to remove partially created gcp "+
+							"platform, %v", err, cleanupErr))
+				} else {
+					util.ExitWithErrorMessage("Cellery setup create gcp command failed",
+						fmt.Errorf("failed to create gcp platform, %v", err))
+				}
 			}
 			if err := setup.RunSetupCreateCelleryRuntime(cli, *isComplete, true, true, true, nfs, mysql, ""); err != nil {
 				util.ExitWithErrorMessage("Cellery setup create gcp command failed",

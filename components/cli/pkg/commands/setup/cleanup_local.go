@@ -54,7 +54,7 @@ func manageLocal(cli cli.Cli) error {
 			if err != nil {
 				return fmt.Errorf("failed to initialize minikube platform, %v", err)
 			}
-			return RunSetupCleanup(cli, platform, false, false, false, false, false)
+			return RunSetupCleanupPlatform(cli, platform, false)
 		}
 	default:
 		{

@@ -66,11 +66,10 @@ func TestRunSetupCleanup(t *testing.T) {
 		t.Run(tst.name, func(t *testing.T) {
 			var err error
 			if tst.existingCluster {
-				err = RunSetupCleanup(tst.mockCli, nil, tst.removeKnative, tst.removeIstio, tst.removeIngress,
+				err = RunSetupCleanupCelleryRuntime(tst.mockCli, tst.removeKnative, tst.removeIstio, tst.removeIngress,
 					tst.removeHpa, true)
 			} else {
-				err = RunSetupCleanup(tst.mockCli, tst.mockPlatform, tst.removeKnative, tst.removeIstio, tst.removeIngress,
-					tst.removeHpa, true)
+				err = RunSetupCleanupPlatform(tst.mockCli, tst.mockPlatform, true)
 			}
 			if tst.expectedToPass {
 				if err != nil {

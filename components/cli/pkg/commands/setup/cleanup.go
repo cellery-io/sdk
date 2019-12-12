@@ -26,12 +26,12 @@ import (
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func RunSetupCleanup(cli cli.Cli, platform cli.Platform, removeKnative, removeIstio, removeIngress, removeHpa, confirmed bool) error {
+func RunSetupCleanupPlatform(cli cli.Cli, platform cli.Platform, confirmed bool) error {
 	var err error
 	var confirmCleanup = confirmed
 	if !confirmed {
-		confirmCleanup, _, err = util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
-			"delete all your cells and data)", false)
+		confirmCleanup, _, err = util.GetYesOrNoFromUser("Do you want to delete the cellery platform (This will "+
+			"delete all the created resources)", false)
 		if err != nil {
 			return fmt.Errorf("failed to select option, %v", err)
 		}
@@ -64,6 +64,21 @@ func RunSetupCleanup(cli cli.Cli, platform cli.Platform, removeKnative, removeIs
 			}
 			return nil
 		}
+	}
+	return nil
+}
+
+func RunSetupCleanupCelleryRuntime(cli cli.Cli, removeKnative, removeIstio, removeIngress, removeHpa, confirmed bool) error {
+	var err error
+	var confirmCleanup = confirmed
+	if !confirmed {
+		confirmCleanup, _, err = util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
+			"delete all your cells and data)", false)
+		if err != nil {
+			return fmt.Errorf("failed to select option, %v", err)
+		}
+	}
+	if confirmCleanup {
 		if err := cli.ExecuteTask("Removing cellery system", "Failed to remove cellery system",
 			"", func() error {
 				return cli.KubeCli().DeleteNameSpace("cellery-system")

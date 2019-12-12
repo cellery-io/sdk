@@ -37,6 +37,9 @@ type changedComponent struct {
 	change    runtime.Selection
 }
 
+const confirmApplyChanges = "Yes, Apply changes"
+const modifyAnotherComponent = "No, Modify another component"
+
 var apim = "API Manager"
 var autoscaling = "Autoscaler"
 var knative = "Scale-to-Zero"
@@ -359,8 +362,8 @@ func confirmModification() (bool, error) {
 	}
 
 	cellPrompt := promptui.Select{
-		Label:     util.YellowBold("?") + " " + "Do you want to modify another component",
-		Items:     []string{"Yes", "No, Apply change"},
+		Label:     util.YellowBold("?") + " " + "Have you finished modifying the runtime",
+		Items:     []string{confirmApplyChanges, modifyAnotherComponent},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -368,10 +371,10 @@ func confirmModification() (bool, error) {
 		return false, fmt.Errorf("failed to select an option, %v", err)
 	}
 	switch value {
-	case "Yes":
-		return false, nil
-	default:
+	case confirmApplyChanges:
 		return true, nil
+	default:
+		return false, nil
 	}
 }
 
