@@ -168,6 +168,22 @@
   version = "v2.0.3"
 
 [[projects]]
+  digest = "1:b117faf01abdbdadd7b8ceeae74cd1369c1b073fef41aee8b674c9d704a54c16"
+  name = "github.com/gorilla/handlers"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "8a3748addc242fc560bd6d4ff28b0374c010b1b4"
+  version = "v1.4.2"
+
+[[projects]]
+  digest = "1:cbec35fe4d5a4fba369a656a8cd65e244ea2c743007d8f6c1ccb132acf9d1296"
+  name = "github.com/gorilla/mux"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "00bdffe0f3c77e27d2cf6f5c70232a2d3e4d9c15"
+  version = "v1.7.3"
+
+[[projects]]
   branch = "master"
   digest = "1:36f5bd9b89fcd728488eee3a0cf8787448579ac381fded60edd6e3ac01fe1a38"
   name = "github.com/gsterjov/go-libsecret"
@@ -565,6 +581,8 @@
     "github.com/fatih/color",
     "github.com/ghodss/yaml",
     "github.com/google/go-cmp/cmp",
+    "github.com/gorilla/handlers",
+    "github.com/gorilla/mux",
     "github.com/hashicorp/go-version",
     "github.com/manifoldco/promptui",
     "github.com/mattbaird/jsonpatch",

@@ -76,6 +76,7 @@ func newCliCommand(cli cli.Cli) *cobra.Command {
 		newPatchComponentsCommand(cli),
 		newRouteTrafficCommand(cli),
 		newSetCommand(cli),
+		newDesignerCommand(cli),
 	)
 	cmd.PersistentFlags().BoolVarP(&verboseMode, "verbose", "v", false, "Run on verbose mode")
 	cmd.PersistentFlags().BoolVarP(&insecureMode, "insecure", "k", false,
