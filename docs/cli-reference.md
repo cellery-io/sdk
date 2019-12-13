@@ -3,6 +3,7 @@
 * [setup](#cellery-setup) - create/manage cellery runtime installations.
 * [init](#cellery-init) - initialize a cellery project.
 * [build](#cellery-build) - build a cell image.
+* [set namespace](#cellery-set-namespace) - set the targeted namespace.
 * [run](#cellery-run) - create cell instance(s). 
 * [test](#cellery-test) - test cell instance(s). 
 * [view](#cellery-view) - view cell and component dependencies.
@@ -65,6 +66,22 @@ Ex:
 
  ```
     cellery build my-project.bal wso2/my-cell:1.0.0
+ ```
+
+[Back to Command List](#cellery-cli-commands)
+
+#### Cellery Set Namespace
+
+Set the targeted namespace of the Cellery runtime. Thereafter, all CLI operations will be done upon that particular namespace.
+
+###### Parameters: 
+
+* _Namespace : targeted namespace_
+
+Ex: 
+
+ ```
+    cellery set namespace test
  ```
 
 [Back to Command List](#cellery-cli-commands)
