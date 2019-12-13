@@ -78,6 +78,7 @@ func buildObservabilityYamlPaths(artifactsPath string) []string {
 		filepath.Join(base, "grafana", "k8s-metrics-grafana.yaml"),
 		filepath.Join(base, "observability-agent", "telemetry-agent.yaml"),
 		filepath.Join(base, "observability-agent", "tracing-agent.yaml"),
+		filepath.Join(base, "observability-agent", "kube-agent.yaml"),
 	}
 }
 
