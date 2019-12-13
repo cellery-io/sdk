@@ -21,13 +21,11 @@ package kubernetes
 import (
 	"os"
 	"os/exec"
-
-	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func ApplyFileWithNamespace(file, namespace string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"apply",
 		"-f",
 		file,
@@ -40,7 +38,7 @@ func ApplyFileWithNamespace(file, namespace string) error {
 
 func ApplyFile(file string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"apply",
 		"-f",
 		file,
@@ -52,7 +50,7 @@ func ApplyFile(file string) error {
 
 func (kubeCli *CelleryKubeCli) ApplyFile(file string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"apply",
 		"-f",
 		file,

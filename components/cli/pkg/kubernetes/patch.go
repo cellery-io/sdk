@@ -21,13 +21,11 @@ package kubernetes
 import (
 	"os"
 	"os/exec"
-
-	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func (kubeCli *CelleryKubeCli) JsonPatch(kind, instance, jsonPatch string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"patch",
 		"--type=json",
 		kind,
@@ -42,7 +40,7 @@ func (kubeCli *CelleryKubeCli) JsonPatch(kind, instance, jsonPatch string) error
 
 func JsonPatchWithNameSpace(kind, instance, jsonPatch, nameSpace string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"patch",
 		"--type=json",
 		kind,

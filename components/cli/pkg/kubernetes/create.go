@@ -21,13 +21,11 @@ package kubernetes
 import (
 	"os"
 	"os/exec"
-
-	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func CreateFile(file string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"create",
 		"-f",
 		file,
@@ -39,7 +37,7 @@ func CreateFile(file string) error {
 
 func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"create",
 		"configmap",
 		name,
@@ -54,7 +52,7 @@ func CreateConfigMapWithNamespace(name, confFile, namespace string) error {
 
 func CreateClusterRoleBinding(clusterRole, user string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"create",
 		"clusterrolebinding",
 		"cluster-admin-binding",

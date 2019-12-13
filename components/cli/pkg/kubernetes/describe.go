@@ -22,13 +22,12 @@ import (
 	"fmt"
 	"os/exec"
 
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/osexec"
 )
 
 func (kubeCli *CelleryKubeCli) DescribeCell(cellName string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"describe",
 		"cells",
 		cellName,

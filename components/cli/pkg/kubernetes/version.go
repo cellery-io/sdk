@@ -22,13 +22,12 @@ import (
 	"encoding/json"
 	"os/exec"
 
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/osexec"
 )
 
 func (kubeCli *CelleryKubeCli) Version() (string, string, error) {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"version",
 		"-o",
 		"json",

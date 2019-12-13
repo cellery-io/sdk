@@ -27,7 +27,7 @@ import (
 )
 
 func (kubeCli *CelleryKubeCli) StreamCellLogsUserComponents(instanceName string, follow bool) error {
-	cmd := exec.Command(constants.KubeCtl,
+	cmd := exec.Command(kubectl,
 		"logs",
 		"-l",
 		constants.GroupName+"/cell="+instanceName+","+constants.GroupName+"/component",
@@ -45,7 +45,7 @@ func (kubeCli *CelleryKubeCli) StreamCellLogsUserComponents(instanceName string,
 }
 
 func (kubeCli *CelleryKubeCli) StreamCellLogsAllComponents(instanceName string, follow bool) error {
-	cmd := exec.Command(constants.KubeCtl,
+	cmd := exec.Command(kubectl,
 		"logs",
 		"-l",
 		constants.GroupName+"/cell="+instanceName,
@@ -63,7 +63,7 @@ func (kubeCli *CelleryKubeCli) StreamCellLogsAllComponents(instanceName string, 
 }
 
 func (kubeCli *CelleryKubeCli) StreamComponentLogs(instanceName string, componentName string, follow bool) error {
-	cmd := exec.Command(constants.KubeCtl,
+	cmd := exec.Command(kubectl,
 		"logs",
 		"-l",
 		constants.GroupName+"/cell="+instanceName+","+constants.GroupName+"/component="+instanceName+"--"+componentName,

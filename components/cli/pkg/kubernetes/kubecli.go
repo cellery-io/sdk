@@ -21,9 +21,10 @@ package kubernetes
 import (
 	"os/exec"
 
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/osexec"
 )
+
+const kubectl = "kubectl"
 
 // KubeCli represents kubernetes client.
 type KubeCli interface {
@@ -76,7 +77,7 @@ func (kubeCli *CelleryKubeCli) SetVerboseMode(enable bool) {
 
 func (kubeCli *CelleryKubeCli) DeleteResource(kind, instance string) (string, error) {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"delete",
 		kind,
 		instance,
@@ -106,7 +107,7 @@ func (kubeCli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
 }
 
 func (kubeCli *CelleryKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
-	cmd := exec.Command(constants.KubeCtl,
+	cmd := exec.Command(kubectl,
 		"get",
 		instanceKind,
 		InstanceName,

@@ -342,62 +342,6 @@ func OpenBrowser(url string) error {
 	}
 }
 
-func IsCompleteSetupSelected() (bool, bool) {
-	var isCompleteSelected = false
-	var isBackSelected = false
-	cellTemplate := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "\U000027A4 {{ .| bold }}",
-		Inactive: "  {{ . | faint }}",
-		Help:     Faint("[Use arrow keys]"),
-	}
-
-	cellPrompt := promptui.Select{
-		Label:     YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.BASIC, constants.COMPLETE, constants.CellerySetupBack},
-		Templates: cellTemplate,
-	}
-	_, value, err := cellPrompt.Run()
-	if err != nil {
-		ExitWithErrorMessage("Failed to select an option: %v", err)
-	}
-	if value == constants.CellerySetupBack {
-		isBackSelected = true
-	}
-	if value == constants.COMPLETE {
-		isCompleteSelected = true
-	}
-	return isCompleteSelected, isBackSelected
-}
-
-func IsLoadBalancerIngressTypeSelected() (bool, bool) {
-	var isLoadBalancerSelected = false
-	var isBackSelected = false
-	cellTemplate := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "\U000027A4 {{ .| bold }}",
-		Inactive: "  {{ . | faint }}",
-		Help:     Faint("[Use arrow keys]"),
-	}
-
-	cellPrompt := promptui.Select{
-		Label:     YellowBold("?") + " Select ingress mode",
-		Items:     []string{constants.IngressModeNodePort, constants.IngressModeLoadBalancer, constants.CellerySetupBack},
-		Templates: cellTemplate,
-	}
-	_, value, err := cellPrompt.Run()
-	if err != nil {
-		ExitWithErrorMessage("Failed to select an option: %v", err)
-	}
-	if value == constants.CellerySetupBack {
-		isBackSelected = true
-	}
-	if value == constants.IngressModeLoadBalancer {
-		isLoadBalancerSelected = true
-	}
-	return isLoadBalancerSelected, isBackSelected
-}
-
 func CreateTempExecutableBalFile(file string, action string, tmpProjectDir string) (string, error) {
 	originalFilePath, _ := filepath.Abs(file)
 	input, err := ioutil.ReadFile(originalFilePath)

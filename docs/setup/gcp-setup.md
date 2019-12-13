@@ -62,37 +62,54 @@ downloaded JSON file into directory `$HOME/.cellery/gcp folder`.
 
 vi. Now we are ready install cellery into GCP, either using interactive or non-interactive. 
 
-### Interactive Method
-
-    ```
-    cellery setup
-    $ ✔ Create
-    [Use arrow keys]
-    ? Select an environment to be installed
-        Local
-      ➤ GCP
-        BACK
-    ```
-    OR 
-    ```
+### Inline Method
+```
     cellery setup create gcp [--complete]
-    ```
+```
 
-    This will start the process of creating a Cellery runtime in GCP.
-    ```
-    ✔ Creating GKE client
-    ✔ Creating GCP cluster
-    ⠸ Updating kube config clusterFetching cluster endpoint and auth data.
-    ⠼ Updating kube config clusterkubeconfig entry generated for cellery-cluster520.
-    ✔ Updating kube config cluster
+### Interactive Method
+```
+    cellery setup
+        $ ✔ Create
+        [Use arrow keys]
+        ? Select an environment to be installed
+            Local
+          ➤ GCP
+            BACK
+```
+This will start the process of creating a Cellery runtime in GCP
+
+```
+    ✔ Create
+    ✔ GCP
+    ✔ Complete (Includes Api manager, Observability)
+    ✔ Yes
+    ✔ Creating kubernetes cluster
+    Successfully created cluster cellery-cluster633
     ✔ Creating sql instance
-    ✔ Creating gcp bucket
-    ✔ Uploading init.sql file to GCP bucket
-    ✔ Updating bucket permission
-    ✔ Importing sql script
-    ✔ Updating sql instance
-    ✔ Creating NFS server
-    ✔ Deploying Cellery runtime
+    ✔ Creating storage
+    ✔ Creating file system
+    ⠙ Updating kube configFetching cluster endpoint and auth data.
+    ⠇ Updating kube configkubeconfig entry generated for cellery-cluster633.
+    ✔ Updating kube config
+    ✔ Creating Cellery namespace
+    ✔ Creating Istio CRDS
+    ✔ Installing ingress-nginx
+    ✔ Enabling istio injection
+    ✔ Installing istio
+    ✔ Installing knative
+    ✔ Applying knative CRDs
+    ✔ Installing controller
+    ✔ Creating config maps
+    ✔ Creating persistent volume
+    ✔ Creating apim deployment
+    ✔ Creating observability deployment
+    ✔ Checking cluster status...
+    ✔ Cluster status...OK
+    ✔ Checking runtime status (Istio)...
+    ✔ Runtime status (Istio)...OK
+    ✔ Checking runtime status (Cellery)...
+    ✔ Runtime status (Cellery)...OK
     
     ✔ Successfully installed Cellery runtime.
     
@@ -100,7 +117,7 @@ vi. Now we are ready install cellery into GCP, either using interactive or non-i
     ======================
     To create your first project, execute the command:
       $ cellery init
-    ```
+```
     
 When the process is completed Cellery will point to the newly created GCP cluster and user can start working on a Cellery project. 
 

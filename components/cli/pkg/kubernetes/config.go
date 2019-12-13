@@ -25,7 +25,6 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/osexec"
 
 	"github.com/ghodss/yaml"
@@ -128,7 +127,7 @@ func mergeContexts(old []*ContextInfo, new []*ContextInfo) []*ContextInfo {
 
 func (kubeCli *CelleryKubeCli) UseContext(context string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"config",
 		"use-context",
 		context,
@@ -141,7 +140,7 @@ func (kubeCli *CelleryKubeCli) UseContext(context string) error {
 
 func (kubeCli *CelleryKubeCli) GetContexts() ([]byte, error) {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"config",
 		"view",
 		"-o",
@@ -153,7 +152,7 @@ func (kubeCli *CelleryKubeCli) GetContexts() ([]byte, error) {
 
 func (kubeCli *CelleryKubeCli) GetContext() (string, error) {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"config",
 		"current-context",
 	)

@@ -23,8 +23,6 @@ import (
 	"os/exec"
 	"syscall"
 	"time"
-
-	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func WaitForDeployment(condition string, timeoutSeconds int, resourceName string, namespace string) error {
@@ -37,7 +35,7 @@ func WaitForCell(condition string, timeoutSeconds int, resourceName string, name
 
 func WaitForCondition(condition string, timeoutSeconds int, resourceName string, namespace string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"wait",
 		fmt.Sprintf("--for=condition=%s", condition),
 		fmt.Sprintf("--timeout=%ds", timeoutSeconds),
@@ -51,7 +49,7 @@ func WaitForCondition(condition string, timeoutSeconds int, resourceName string,
 func WaitForCluster(timeout time.Duration) error {
 	exitCode := 0
 	for start := time.Now(); time.Since(start) < timeout; {
-		cmd := exec.Command(constants.KubeCtl,
+		cmd := exec.Command(kubectl,
 			"get",
 			"nodes",
 			"--request-timeout=10s",

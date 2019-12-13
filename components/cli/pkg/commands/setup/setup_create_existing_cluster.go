@@ -49,7 +49,7 @@ func createOnExistingCluster(cli cli.Cli) error {
 
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select the type of runtime",
-		Items:     []string{constants.PersistentVolume, constants.NonPersistentVolume, setupBack},
+		Items:     []string{persistentVolume, nonPersistentVolume, setupBack},
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
@@ -59,7 +59,7 @@ func createOnExistingCluster(cli cli.Cli) error {
 	if value == setupBack {
 		return createEnvironment(cli)
 	}
-	if value == constants.PersistentVolume {
+	if value == persistentVolume {
 		isPersistentVolume = true
 		hasNfsStorage, isBackSelected, err = util.GetYesOrNoFromUser(fmt.Sprintf("Use NFS server"),
 			true)
@@ -73,11 +73,17 @@ func createOnExistingCluster(cli cli.Cli) error {
 			return createOnExistingCluster(cli)
 		}
 	}
-	isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
+	isCompleteSetup, isBackSelected, err := isCompleteSetupSelected()
+	if err != nil {
+		return fmt.Errorf("failed to select basic or complete, %v", err)
+	}
 	if isBackSelected {
 		return createOnExistingCluster(cli)
 	}
-	isLoadBalancerIngressMode, isBackSelected = util.IsLoadBalancerIngressTypeSelected()
+	isLoadBalancerIngressMode, isBackSelected, err = isLoadBalancerIngressTypeSelected()
+	if err != nil {
+		return fmt.Errorf("failed to select ingress type, %v", err)
+	}
 	if isBackSelected {
 		return createOnExistingCluster(cli)
 	}
@@ -194,4 +200,32 @@ func getNodePortIpAddress() string {
 		util.ExitWithErrorMessage("Error occurred while getting nodePort id address from user", err)
 	}
 	return nodePortIpAddress
+}
+
+func isLoadBalancerIngressTypeSelected() (bool, bool, error) {
+	var isLoadBalancerSelected = false
+	var isBackSelected = false
+	cellTemplate := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   "\U000027A4 {{ .| bold }}",
+		Inactive: "  {{ . | faint }}",
+		Help:     util.Faint("[Use arrow keys]"),
+	}
+
+	cellPrompt := promptui.Select{
+		Label:     util.YellowBold("?") + " Select ingress mode",
+		Items:     []string{ingressModeNodePort, ingressModeLoadBalancer, setupBack},
+		Templates: cellTemplate,
+	}
+	_, value, err := cellPrompt.Run()
+	if err != nil {
+		return false, false, fmt.Errorf("failed to select an option, %v", err)
+	}
+	if value == setupBack {
+		isBackSelected = true
+	}
+	if value == ingressModeLoadBalancer {
+		isLoadBalancerSelected = true
+	}
+	return isLoadBalancerSelected, isBackSelected, nil
 }

@@ -22,13 +22,12 @@ import (
 	"os"
 	"os/exec"
 
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/osexec"
 )
 
 func DeleteFileWithNamespace(file, namespace string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"delete",
 		"-f",
 		file,
@@ -42,7 +41,7 @@ func DeleteFileWithNamespace(file, namespace string) error {
 
 func DeleteFile(file string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"delete",
 		"-f",
 		file,
@@ -55,7 +54,7 @@ func DeleteFile(file string) error {
 
 func DeleteResource(kind, instance string) (string, error) {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"delete",
 		kind,
 		instance,
@@ -67,7 +66,7 @@ func DeleteResource(kind, instance string) (string, error) {
 
 func DeleteNameSpace(nameSpace string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"delete",
 		"ns",
 		nameSpace,
@@ -80,7 +79,7 @@ func DeleteNameSpace(nameSpace string) error {
 
 func (kubeCli *CelleryKubeCli) DeleteAllCells() error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"delete",
 		"cells",
 		"--all",
@@ -93,7 +92,7 @@ func (kubeCli *CelleryKubeCli) DeleteAllCells() error {
 
 func (kubeCli *CelleryKubeCli) DeletePersistedVolume(persistedVolume string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"delete",
 		"pv",
 		persistedVolume,
@@ -106,7 +105,7 @@ func (kubeCli *CelleryKubeCli) DeletePersistedVolume(persistedVolume string) err
 
 func (kubeCli *CelleryKubeCli) DeleteNameSpace(nameSpace string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"delete",
 		"ns",
 		nameSpace,

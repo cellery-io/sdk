@@ -68,9 +68,19 @@ func createEnvironment(cli cli.Cli) error {
 	switch value {
 	case celleryGcp:
 		{
-			isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
+			isCompleteSetup, isBackSelected, err := isCompleteSetupSelected()
+			if err != nil {
+				return fmt.Errorf("failed to select gcp basic or complete, %v", err)
+			}
 			if isBackSelected {
 				return RunSetup(cli)
+			}
+			confirmed, _, err := util.GetYesOrNoFromUser("This will create a Cellery runtime on a gcp cluster. Do you want to continue", false)
+			if err != nil {
+				return fmt.Errorf("failed to get confirmation to create, %v", err)
+			}
+			if !confirmed {
+				os.Exit(0)
 			}
 			platform, err := gcp.NewGcp()
 			if err != nil {
@@ -92,9 +102,16 @@ func createEnvironment(cli cli.Cli) error {
 		}
 	case celleryLocal:
 		{
-			isCompleteSetup, isBackSelected := util.IsCompleteSetupSelected()
+			isCompleteSetup, isBackSelected, err := isCompleteSetupSelected()
 			if isBackSelected {
 				return RunSetup(cli)
+			}
+			confirmed, _, err := util.GetYesOrNoFromUser("This will create a Cellery runtime on a minikube cluster. Do you want to continue", false)
+			if err != nil {
+				return fmt.Errorf("failed to get confirmation to create, %v", err)
+			}
+			if !confirmed {
+				os.Exit(0)
 			}
 			platform, err := minikube.NewMinikube(
 				minikube.SetProfile(CelleryLocalSetup),
@@ -135,4 +152,32 @@ func createEnvironment(cli cli.Cli) error {
 	fmt.Println("To create your first project, execute the command: ")
 	fmt.Println("  $ cellery init ")
 	return nil
+}
+
+func isCompleteSetupSelected() (bool, bool, error) {
+	var isCompleteSelected = false
+	var isBackSelected = false
+	cellTemplate := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   "\U000027A4 {{ .| bold }}",
+		Inactive: "  {{ . | faint }}",
+		Help:     util.Faint("[Use arrow keys]"),
+	}
+
+	cellPrompt := promptui.Select{
+		Label:     util.YellowBold("?") + " Select the type of runtime",
+		Items:     []string{setupBasic, setupComplete, setupBack},
+		Templates: cellTemplate,
+	}
+	_, value, err := cellPrompt.Run()
+	if err != nil {
+		return false, false, fmt.Errorf("failed to select an option: %v", err)
+	}
+	if value == setupBack {
+		isBackSelected = true
+	}
+	if value == setupComplete {
+		isCompleteSelected = true
+	}
+	return isCompleteSelected, isBackSelected, nil
 }

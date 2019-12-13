@@ -43,9 +43,7 @@ const CellerySetupBack = "BACK"
 const GcpClusterName = "cellery-cluster"
 const MysqlHostNameForExistingCluster = "wso2apim-with-analytics-rdbms-service"
 
-const ZipBallerinaSource = "src"
 const ZipArtifacts = "artifacts"
-const ZipTests = "tests"
 const ZipMetaSuffix = "_meta"
 
 const CelleryHome = ".cellery"
@@ -57,8 +55,6 @@ const SP = "sp"
 const TELEPRESENCE = "telepresence"
 
 const KubeCtl = "kubectl"
-const BASIC = "Basic"
-const COMPLETE = "Complete"
 
 const CelleryInstallationPathMac = "/Library/Cellery"
 const CelleryInstallationPathUbuntu = "/usr/share/cellery"
@@ -85,14 +81,8 @@ const CELLERY = "cellery"
 const Ref = "ref"
 const ApimRepositoryDeploymentServer = "apim_repository_deployment_server"
 
-const PersistentVolume = "Persistent volume"
-const NonPersistentVolume = "Non persistent volume"
-
 const CellerySqlUserName = "cellery-sql-user"
 const CellerySqlPassword = "cellery-sql-user"
-
-const IngressModeNodePort = "Node port [kubeadm, minikube]"
-const IngressModeLoadBalancer = "Load balancer [gcp, docker for desktop]"
 
 const TelepresenceExecPath = "telepresence-0.101/bin/"
 

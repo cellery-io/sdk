@@ -2,7 +2,7 @@ Local setup
 ---
 ## Prerequisites
 ### Mandatory
-- [VirtualBox](https://www.virtualbox.org/wiki/Downloads) 
+- [Minikube](https://github.com/kubernetes/minikube/releases) 
 - [Kubectl version 1.13/1.14/1.15](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Cellery](../../README.md#download-cellery)
 
@@ -40,21 +40,22 @@ This will setup the local environment, by creating a virtual machine with pre-in
     
    iii. For the local setup, select the preferred installation type; `Basic` or `Complete`: 
    ```
-    $ ✔ Create
-      ✔ Local
+    ✔ Create
+    ✔ Local
     [Use arrow keys]
     ? Select the type of runtime
-      ➤ Basic (size: 2.17 GB)
-        Complete (size: 3.74 GB)
+      ➤ Basic
+        Complete (Includes Api manager, Observability)
+        BACK
    ```
 
    iv. Next, the CLI will prompt for confirmation to download and install the local setup:
    ```
     ✔ Create
     ✔ Local
-    ✔ Basic (size: 2.17 GB)
-    Use the arrow keys to navigate: ↓ ↑ → ← 
-    ? Downloading cellery-runtime-basic-0.2.0.tar.gz will take 2.17 GB from your machine. Do you want to continue: 
+    ✔ Complete (Includes Api manager, Observability)
+    Use the arrow keys to navigate: ↓ ↑ → ←
+    ? This will create a Cellery runtime on a minikube cluster. Do you want to continue:
       ▸ Yes
         No
    ```
@@ -74,9 +75,13 @@ With the non-interactive method, creating the local setup with CLI commands with
 
 ## Configure host entries
 
+Execute the following command and get the minikube ip address of cellery-local-setup
+```
+  minikube ip --profile cellery-local-setup
+```
 Add below to /etc/host entries to access cellery hosts.
 ```
-  192.168.56.10 wso2-apim cellery-dashboard wso2sp-observability-api wso2-apim-gateway cellery-k8s-metrics idp.cellery-system pet-store.com hello-world.com my-hello-world.com
+  <MINIKUBE_IP> wso2-apim cellery-dashboard wso2sp-observability-api wso2-apim-gateway cellery-k8s-metrics idp.cellery-system pet-store.com hello-world.com my-hello-world.com
 ```
 
 ## Trying Out

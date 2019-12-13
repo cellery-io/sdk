@@ -21,15 +21,13 @@ package kubernetes
 import (
 	"os"
 	"os/exec"
-
-	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 func (kubeCli *CelleryKubeCli) ApplyLabel(itemType, itemName, labelName string, overWrite bool) error {
 	var cmd *exec.Cmd
 	if overWrite {
 		cmd = exec.Command(
-			constants.KubeCtl,
+			kubectl,
 			"label",
 			itemType,
 			itemName,
@@ -38,7 +36,7 @@ func (kubeCli *CelleryKubeCli) ApplyLabel(itemType, itemName, labelName string, 
 		)
 	} else {
 		cmd = exec.Command(
-			constants.KubeCtl,
+			kubectl,
 			"label",
 			itemType,
 			itemName,

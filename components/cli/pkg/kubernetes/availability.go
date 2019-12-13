@@ -23,7 +23,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/osexec"
 
 	errorpkg "cellery.io/cellery/components/cli/pkg/error"
@@ -57,7 +56,7 @@ func (kubeCli *CelleryKubeCli) IsInstanceAvailable(instanceName string) error {
 }
 
 func (kubeCli *CelleryKubeCli) IsComponentAvailable(instanceName, componentName string) error {
-	cmd := exec.Command(constants.KubeCtl,
+	cmd := exec.Command(kubectl,
 		"get",
 		"component",
 		instanceName+"--"+componentName,

@@ -27,21 +27,21 @@ Cellery allows you to enable/disable different system components so that you can
         EXIT
     ```
 #### Enable/Disable APIM
-If you want to enable/disable API Management with Global gateway, go into `API Manager` option and select `enable` or `disable`. Select `Back` after the selection. 
+If you want to enable/disable API Management with Global gateway, go into `API Manager` option and select `enable` or `disable`. Select `Yes, Apply changes` to apply the change. 
 See [inline commands](#inline-method) to perform this with one step. 
-    ```text
+```text
     cellery setup
     ✔ Modify
-    ...
     ✔ API Manager
+    ✔ Disable
     [Use arrow keys]
-    ? API Manager
-      ➤ Enable
-        BACK
-    ```
+    ? Have you finished modifying the runtime
+      ➤ Yes, Apply changes
+        No, Modify another component
+```
 
 #### Enable/Disable Observability
-If you want to enable/disable Observability, go into `Observability` option and select `enable` or `disable`. Select `Back` after the selection. 
+If you want to enable/disable Observability, go into `Observability` option and select `enable` or `disable`. Select `Yes, Apply changes` to apply the change.
 See [inline commands](#inline-method) to perform this with one step.
 ```text
  cellery setup
@@ -57,7 +57,7 @@ See [inline commands](#inline-method) to perform this with one step.
 #### Enable/Disable Autoscaler
 If you want to enable/disable Autoscaler, go into `Zero-Scaling` and/or `Horizontal Pod Autoscaler` options and select `enable`
 or `disable`. Select `Back` after the selection. You can select either `Zero-Scaling` or `Horizontal Pod Autoscaler` or enable both at the same time. 
-Once this is enabled, based on the configurations provided in the components, the scaling policies will be applied. Select `Back` after the selections 
+Once this is enabled, based on the configurations provided in the components, the scaling policies will be applied. Select `Yes, Apply changes` to apply the change.
 and come to modify command main menu options. See [inline commands](#inline-method) to perform this with one step. 
 ```text
  cellery setup
@@ -72,26 +72,34 @@ and come to modify command main menu options. See [inline commands](#inline-meth
 ```
     
 #### Complete modify setup
-1. Once you have performed all changes, you have to select `Done` option to complete the modify operations you have made. 
+1. Once you select a change you will be asked whether to apply the change or whether to modify another component. Select `Yes, Apply changes` to apply the changes.
 ```text
  cellery setup
  ✔ Modify
- ...
- ✔ BACK
+ ✔ API Manager
+ ✔ Disable
  [Use arrow keys]
- ? Select a runtime component
-     API Manager
-     Autoscaler
-     Observability
-   ➤ DONE
-  BACK
+ ? Have you finished modifying the runtime
+   ➤ Yes, Apply changes
+     No, Modify another component
  ```
     
 2. The prompt will be appearing with components that is being enabled and disabled, and asking a confirmation to continue. 
 Validate your changes by reviewing the list, and select `yes` to continue. 
 ```text
+ ✔ Modify
+ ✔ API Manager
+ ✔ Disable
+ ✔ No, Modify another component
+ ✔ Observability
+ ✔ Disable
+ ✔ No, Modify another component
+ ✔ Autoscaler
+ ✔ Scale-to-Zero
+ ✔ Disable
+ ✔ Yes, Apply changes
  Following modifications to the runtime will be applied
- Enabling : Scale-to-Zero, Horizontal Pod Autoscaler
+ Disabling : API Manager, Observability, Scale-to-Zero
  Use the arrow keys to navigate: ↓ ↑ → ←
  ? Do you wish to continue:
    ▸ Yes
