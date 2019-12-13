@@ -18,8 +18,19 @@
 
 package runtime
 
-import "cellery.io/cellery/components/cli/cli"
+import (
+	"fmt"
+
+	"cellery.io/cellery/components/cli/cli"
+)
 
 func RunSetNamespace(cli cli.Cli, namespace string) error {
-	return cli.KubeCli().SetNamespace(namespace)
+	if err := cli.ExecuteTask(fmt.Sprintf("Changing the namespace to %s", namespace),
+		fmt.Sprintf("Failed to changed the namespace to %s", namespace),
+		"", func() error {
+			return cli.KubeCli().SetNamespace(namespace)
+		}); err != nil {
+		return fmt.Errorf("failed to change the namespace, %v", err)
+	}
+	return nil
 }

@@ -161,3 +161,17 @@ func (kubeCli *CelleryKubeCli) GetContext() (string, error) {
 	out, err := osexec.GetCommandOutput(cmd)
 	return out, err
 }
+
+func (kubeCli *CelleryKubeCli) SetNamespace(namespace string) error {
+	cmd := exec.Command(
+		constants.KubeCtl,
+		"config",
+		"set-context",
+		"--current",
+		"--namespace",
+		namespace,
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
