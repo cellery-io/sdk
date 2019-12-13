@@ -316,3 +316,7 @@ func (kubeCli *MockKubeCli) DeleteAllCells() error {
 func (kubeCli *MockKubeCli) DeleteNameSpace(nameSpace string) error {
 	return nil
 }
+
+func (kubeCli *MockKubeCli) SetNamespace(namespace string) error {
+	return nil
+}

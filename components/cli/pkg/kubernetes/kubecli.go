@@ -57,6 +57,7 @@ type KubeCli interface {
 	ApplyLabel(itemType, itemName, labelName string, overWrite bool) error
 	DeletePersistedVolume(persistedVolume string) error
 	DeleteAllCells() error
+	SetNamespace(namespace string) error
 	DeleteNameSpace(nameSpace string) error
 }
 
