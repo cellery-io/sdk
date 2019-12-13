@@ -24,6 +24,16 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
+
+	"cellery.io/cellery/components/cli/pkg/util"
+)
+
+type Status int
+
+const (
+	Removed Status = iota
+	Running
+	Stopped
 )
 
 const celleryLocalSetup = "cellery-local-setup"
@@ -67,7 +77,10 @@ func SetProfile(profile string) func(*Minikube) {
 	}
 }
 
-func ClusterExists(profile string) (bool, error) {
+func ClusterStatus(profile string) (Status, error) {
+	if !util.IsCommandAvailable("minikube") {
+		return Removed, nil
+	}
 	cmd := exec.Command(
 		"minikube",
 		"status",
@@ -94,17 +107,89 @@ func ClusterExists(profile string) (bool, error) {
 	err = cmd.Start()
 	if err != nil {
 		errStr := string(stderr.Bytes())
-		return false, fmt.Errorf("error occurred while starting to check minikube status, %v", errStr)
+		return Removed, fmt.Errorf("error occurred while starting to check minikube status, %v", errStr)
 	}
 	err = cmd.Wait()
 	if err != nil {
 		if output == "''" {
-			return false, nil
+			return Removed, nil
 		} else if output == "'Stopped'" {
-			return true, nil
+			return Stopped, nil
 		} else {
-			return false, fmt.Errorf("failed to check status of minikube profile %s, %v", profile, err)
+			return Removed, fmt.Errorf("failed to check status of minikube profile %s, %v", profile, err)
 		}
 	}
-	return true, nil
+	return Running, nil
+}
+
+func Start(profile string) error {
+	cmd := exec.Command(
+		"minikube",
+		"start",
+		"--profile", profile,
+	)
+	var stderr bytes.Buffer
+	var err error
+	output := ""
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			output += stdoutScanner.Text()
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Fprintf(&stderr, stderrScanner.Text())
+		}
+	}()
+	err = cmd.Start()
+	if err != nil {
+		errStr := string(stderr.Bytes())
+		return fmt.Errorf("error occurred while waiting to start minikube, %v", errStr)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		errStr := string(stderr.Bytes())
+		return fmt.Errorf("error occurred while starting minikube, %v", errStr)
+	}
+	return nil
+}
+
+func Stop(profile string) error {
+	cmd := exec.Command(
+		"minikube",
+		"stop",
+		"--profile", profile,
+	)
+	var stderr bytes.Buffer
+	var err error
+	output := ""
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			output += stdoutScanner.Text()
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Fprintf(&stderr, stderrScanner.Text())
+		}
+	}()
+	err = cmd.Start()
+	if err != nil {
+		errStr := string(stderr.Bytes())
+		return fmt.Errorf("error occurred while waiting to stop minikube, %v", errStr)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		errStr := string(stderr.Bytes())
+		return fmt.Errorf("error occurred while stopping minikube, %v", errStr)
+	}
+	return nil
 }

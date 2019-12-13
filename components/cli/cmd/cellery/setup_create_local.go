@@ -35,10 +35,10 @@ func newSetupCreateLocalCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 		Short: "Create a local Cellery runtime in minikube",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			if minikubeExists, err := minikube.ClusterExists(setup.CelleryLocalSetup); err != nil {
+			if minikubeStatus, err := minikube.ClusterStatus(setup.CelleryLocalSetup); err != nil {
 				util.ExitWithErrorMessage("Cellery setup create local command failed",
 					fmt.Errorf("failed to check if minikube is running, %v", err))
-			} else if minikubeExists {
+			} else if !(minikubeStatus == minikube.Removed) {
 				util.ExitWithErrorMessage("Cellery setup create local command failed",
 					fmt.Errorf("minikube cluster with the profile name %s already exists", setup.CelleryLocalSetup))
 			}

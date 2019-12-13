@@ -35,25 +35,54 @@ func manageLocal(cli cli.Cli) error {
 		Inactive: "  {{ . | faint }}",
 		Help:     util.Faint("[Use arrow keys]"),
 	}
-
+	var items []string
+	minikubeStatus, err := minikube.ClusterStatus(CelleryLocalSetup)
+	if err != nil {
+		return fmt.Errorf("failed to check minikube status, %v", err)
+	}
+	if minikubeStatus == minikube.Running {
+		items = []string{stop, cleanup, setupBack}
+	} else {
+		items = []string{start, cleanup, setupBack}
+	}
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select `cleanup` to remove local setup",
-		Items:     []string{cleanup, setupBack},
+		Items:     items,
 		Templates: cellTemplate,
 	}
 	_, value, err := cellPrompt.Run()
 	if err != nil {
 		return fmt.Errorf("failed to select an option: %v", err)
 	}
+	platform, err := minikube.NewMinikube(
+		minikube.SetProfile(CelleryLocalSetup))
+	if err != nil {
+		return fmt.Errorf("failed to initialize minikube platform, %v", err)
+	}
 
 	switch value {
+	case start:
+		{
+			if err = cli.ExecuteTask("Starting local setup", "Failed to start local setup",
+				"", func() error {
+					return minikube.Start(CelleryLocalSetup)
+				}); err != nil {
+				return fmt.Errorf("error starting local setup: %v", err)
+			}
+			return nil
+		}
+	case stop:
+		{
+			if err = cli.ExecuteTask("Stopping local setup", "Failed to stop local setup",
+				"", func() error {
+					return minikube.Stop(CelleryLocalSetup)
+				}); err != nil {
+				return fmt.Errorf("error stopping local setup: %v", err)
+			}
+			return nil
+		}
 	case cleanup:
 		{
-			platform, err := minikube.NewMinikube(
-				minikube.SetProfile(CelleryLocalSetup))
-			if err != nil {
-				return fmt.Errorf("failed to initialize minikube platform, %v", err)
-			}
 			return RunSetupCleanupPlatform(cli, platform, false)
 		}
 	default:

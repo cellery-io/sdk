@@ -33,3 +33,5 @@ const CelleryLocalSetup = "cellery-local-setup"
 const MinikubeCpus = 6
 const MinikubeMemory = 8192
 const MinikubeKubernetesVersion = "v1.14.0"
+const start = "start"
+const stop = "stop"

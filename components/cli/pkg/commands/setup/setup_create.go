@@ -46,14 +46,14 @@ func createEnvironment(cli cli.Cli) error {
 		Help:     util.Faint("[Use arrow keys]"),
 	}
 	var items []string
-	minikubeExists, err := minikube.ClusterExists(CelleryLocalSetup)
+	minikubeStatus, err := minikube.ClusterStatus(CelleryLocalSetup)
 	if err != nil {
 		return fmt.Errorf("failed to check if minikube is running, %v", err)
 	}
-	if minikubeExists {
-		items = []string{celleryGcp, existingCluster, setupBack}
-	} else {
+	if minikubeStatus == minikube.Removed {
 		items = []string{celleryLocal, celleryGcp, existingCluster, setupBack}
+	} else {
+		items = []string{celleryGcp, existingCluster, setupBack}
 	}
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select an environment to be installed",
