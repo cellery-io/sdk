@@ -31,12 +31,13 @@ import (
 type Status int
 
 const (
-	Removed Status = iota
+	NonExisting Status = iota
 	Running
 	Stopped
 )
 
 const celleryLocalSetup = "cellery-local-setup"
+const minikubeCmd = "minikube"
 
 type Minikube struct {
 	cpus        string
@@ -78,11 +79,11 @@ func SetProfile(profile string) func(*Minikube) {
 }
 
 func ClusterStatus(profile string) (Status, error) {
-	if !util.IsCommandAvailable("minikube") {
-		return Removed, nil
+	if !util.IsCommandAvailable(minikubeCmd) {
+		return NonExisting, nil
 	}
 	cmd := exec.Command(
-		"minikube",
+		minikubeCmd,
 		"status",
 		"--profile", profile,
 		"--format='{{.Host}}'",
@@ -107,16 +108,16 @@ func ClusterStatus(profile string) (Status, error) {
 	err = cmd.Start()
 	if err != nil {
 		errStr := string(stderr.Bytes())
-		return Removed, fmt.Errorf("error occurred while starting to check minikube status, %v", errStr)
+		return NonExisting, fmt.Errorf("error occurred while starting to check minikube status, %v", errStr)
 	}
 	err = cmd.Wait()
 	if err != nil {
 		if output == "''" {
-			return Removed, nil
+			return NonExisting, nil
 		} else if output == "'Stopped'" {
 			return Stopped, nil
 		} else {
-			return Removed, fmt.Errorf("failed to check status of minikube profile %s, %v", profile, err)
+			return NonExisting, fmt.Errorf("failed to check status of minikube profile %s, %v", profile, err)
 		}
 	}
 	return Running, nil
@@ -124,7 +125,7 @@ func ClusterStatus(profile string) (Status, error) {
 
 func Start(profile string) error {
 	cmd := exec.Command(
-		"minikube",
+		minikubeCmd,
 		"start",
 		"--profile", profile,
 	)
@@ -160,7 +161,7 @@ func Start(profile string) error {
 
 func Stop(profile string) error {
 	cmd := exec.Command(
-		"minikube",
+		minikubeCmd,
 		"stop",
 		"--profile", profile,
 	)

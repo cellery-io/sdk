@@ -25,7 +25,7 @@ import (
 
 func (minikube *Minikube) RemoveCluster() error {
 	cmd := exec.Command(
-		"minikube",
+		minikubeCmd,
 		"delete",
 		"--profile", celleryLocalSetup,
 	)

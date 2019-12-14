@@ -38,7 +38,7 @@ func newSetupCreateLocalCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 			if minikubeStatus, err := minikube.ClusterStatus(setup.CelleryLocalSetup); err != nil {
 				util.ExitWithErrorMessage("Cellery setup create local command failed",
 					fmt.Errorf("failed to check if minikube is running, %v", err))
-			} else if !(minikubeStatus == minikube.Removed) {
+			} else if !(minikubeStatus == minikube.NonExisting) {
 				util.ExitWithErrorMessage("Cellery setup create local command failed",
 					fmt.Errorf("minikube cluster with the profile name %s already exists", setup.CelleryLocalSetup))
 			}

@@ -32,7 +32,7 @@ const ciliumNetworkPlugin = "https://raw.githubusercontent.com/cilium/cilium/1.5
 
 func (minikube *Minikube) CreateK8sCluster() (string, error) {
 	cmd := exec.Command(
-		"minikube",
+		minikubeCmd,
 		"start",
 		"--cpus", minikube.cpus,
 		"--memory", minikube.memory,
@@ -46,7 +46,7 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 		return "", fmt.Errorf("failed to start minikube, %v", err)
 	}
 	cmd = exec.Command(
-		"minikube",
+		minikubeCmd,
 		"ip",
 		"--profile", celleryLocalSetup,
 	)
