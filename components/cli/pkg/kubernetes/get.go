@@ -178,90 +178,6 @@ func (kubeCli *CelleryKubeCli) GetComposite(compositeName string) (Composite, er
 	return jsonOutput, err
 }
 
-func GetCells() (Cells, error) {
-	cmd := exec.Command(
-		kubectl,
-		"get",
-		"cells",
-		"-o",
-		"json",
-	)
-	displayVerboseOutput(cmd)
-	jsonOutput := Cells{}
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	if err != nil {
-		return jsonOutput, err
-	}
-	err = json.Unmarshal(out, &jsonOutput)
-	return jsonOutput, err
-}
-
-func GetComposites() (Composites, error) {
-	cmd := exec.Command(
-		kubectl,
-		"get",
-		"composites",
-		"-o",
-		"json",
-	)
-	displayVerboseOutput(cmd)
-	jsonOutput := Composites{}
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	if err != nil {
-		return jsonOutput, err
-	}
-	err = json.Unmarshal(out, &jsonOutput)
-	return jsonOutput, err
-}
-
-func GetCell(cellName string) (Cell, error) {
-	cmd := exec.Command(kubectl,
-		"get",
-		"cells",
-		cellName,
-		"-o",
-		"json",
-	)
-	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	jsonOutput := Cell{}
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return jsonOutput, fmt.Errorf("cell instance %s not found", cellName)
-		}
-		return jsonOutput, fmt.Errorf("unknown error: %v", err)
-	}
-	err = json.Unmarshal(out, &jsonOutput)
-	if err != nil {
-		return jsonOutput, err
-	}
-	return jsonOutput, err
-}
-
-func GetComposite(compositeName string) (Composite, error) {
-	cmd := exec.Command(kubectl,
-		"get",
-		"composite",
-		compositeName,
-		"-o",
-		"json",
-	)
-	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	jsonOutput := Composite{}
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return jsonOutput, fmt.Errorf("composite instance %s not found", compositeName)
-		}
-		return jsonOutput, fmt.Errorf("unknown error: %v", err)
-	}
-	err = json.Unmarshal(out, &jsonOutput)
-	if err != nil {
-		return jsonOutput, err
-	}
-	return jsonOutput, err
-}
-
 func (kubeCli *CelleryKubeCli) GetPodsForCell(cellName string) (Pods, error) {
 	cmd := exec.Command(kubectl,
 		"get",
@@ -446,4 +362,36 @@ func getContainerCount(cellName string, considerSystemPods bool) (int, error) {
 		return 0, err
 	}
 	return len(strings.Split(string(out), " ")), nil
+}
+
+func (kubeCli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
+	var instances []string
+	runningCellInstances, err := kubeCli.GetCells()
+	if err != nil {
+		return nil, err
+	}
+	runningCompositeInstances, err := kubeCli.GetComposites()
+	if err != nil {
+		return nil, err
+	}
+	for _, runningInstance := range runningCellInstances {
+		instances = append(instances, runningInstance.CellMetaData.Name)
+	}
+	for _, runningInstance := range runningCompositeInstances {
+		instances = append(instances, runningInstance.CompositeMetaData.Name)
+	}
+	return instances, nil
+}
+
+func (kubeCli *CelleryKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
+	cmd := exec.Command(kubectl,
+		"get",
+		instanceKind,
+		InstanceName,
+		"-o",
+		"json",
+	)
+	displayVerboseOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	return []byte(out), err
 }

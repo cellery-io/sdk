@@ -115,3 +115,15 @@ func (kubeCli *CelleryKubeCli) DeleteNameSpace(nameSpace string) error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+func (kubeCli *CelleryKubeCli) DeleteResource(kind, instance string) (string, error) {
+	cmd := exec.Command(
+		kubectl,
+		"delete",
+		kind,
+		instance,
+		"--ignore-not-found",
+	)
+	displayVerboseOutput(cmd)
+	return osexec.GetCommandOutput(cmd)
+}

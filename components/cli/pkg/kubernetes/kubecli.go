@@ -18,12 +18,6 @@
 
 package kubernetes
 
-import (
-	"os/exec"
-
-	"cellery.io/cellery/components/cli/pkg/osexec"
-)
-
 const kubectl = "kubectl"
 
 // KubeCli represents kubernetes client.
@@ -73,48 +67,4 @@ func NewCelleryKubeCli() *CelleryKubeCli {
 
 func (kubeCli *CelleryKubeCli) SetVerboseMode(enable bool) {
 	verboseMode = enable
-}
-
-func (kubeCli *CelleryKubeCli) DeleteResource(kind, instance string) (string, error) {
-	cmd := exec.Command(
-		kubectl,
-		"delete",
-		kind,
-		instance,
-		"--ignore-not-found",
-	)
-	displayVerboseOutput(cmd)
-	return osexec.GetCommandOutput(cmd)
-}
-
-func (kubeCli *CelleryKubeCli) GetInstancesNames() ([]string, error) {
-	var instances []string
-	runningCellInstances, err := kubeCli.GetCells()
-	if err != nil {
-		return nil, err
-	}
-	runningCompositeInstances, err := kubeCli.GetComposites()
-	if err != nil {
-		return nil, err
-	}
-	for _, runningInstance := range runningCellInstances {
-		instances = append(instances, runningInstance.CellMetaData.Name)
-	}
-	for _, runningInstance := range runningCompositeInstances {
-		instances = append(instances, runningInstance.CompositeMetaData.Name)
-	}
-	return instances, nil
-}
-
-func (kubeCli *CelleryKubeCli) GetInstanceBytes(instanceKind, InstanceName string) ([]byte, error) {
-	cmd := exec.Command(kubectl,
-		"get",
-		instanceKind,
-		InstanceName,
-		"-o",
-		"json",
-	)
-	displayVerboseOutput(cmd)
-	out, err := osexec.GetCommandOutputFromTextFile(cmd)
-	return []byte(out), err
 }

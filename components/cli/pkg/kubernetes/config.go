@@ -19,111 +19,11 @@
 package kubernetes
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"os/user"
-	"path/filepath"
 
 	"cellery.io/cellery/components/cli/pkg/osexec"
-
-	"github.com/ghodss/yaml"
 )
-
-func DefaultConfigDir() (string, error) {
-	u, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(u.HomeDir, ".kube"), nil
-}
-
-func DefaultConfigFile() (string, error) {
-	dir, err := DefaultConfigDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(dir, "config"), nil
-}
-
-func ReadConfig(file string) (*Config, error) {
-	b, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
-	conf := &Config{}
-	err = yaml.Unmarshal(b, conf)
-	if err != nil {
-		return nil, err
-	}
-	return conf, err
-}
-
-func WriteConfig(file string, conf *Config) error {
-	b, err := yaml.Marshal(conf)
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(file, b, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func MergeConfig(old, new *Config) *Config {
-	merged := *old
-	merged.Clusters = mergeClusters(merged.Clusters, new.Clusters)
-	merged.AuthInfos = mergeUsers(merged.AuthInfos, new.AuthInfos)
-	merged.Contexts = mergeContexts(merged.Contexts, new.Contexts)
-	merged.CurrentContext = new.CurrentContext
-	return &merged
-}
-
-func mergeClusters(old []*ClusterInfo, new []*ClusterInfo) []*ClusterInfo {
-	existing := make(map[string]*ClusterInfo)
-	for _, ov := range old {
-		existing[ov.Name] = ov
-	}
-	for _, nv := range new {
-		if val, ok := existing[nv.Name]; ok {
-			val.Cluster = nv.Cluster
-		} else {
-			old = append(old, nv)
-		}
-	}
-	return old
-}
-
-func mergeUsers(old []*UserInfo, new []*UserInfo) []*UserInfo {
-	existing := make(map[string]*UserInfo)
-	for _, ov := range old {
-		existing[ov.Name] = ov
-	}
-	for _, nv := range new {
-		if val, ok := existing[nv.Name]; ok {
-			val.User = nv.User
-		} else {
-			old = append(old, nv)
-		}
-	}
-	return old
-}
-
-func mergeContexts(old []*ContextInfo, new []*ContextInfo) []*ContextInfo {
-	existing := make(map[string]*ContextInfo)
-	for _, ov := range old {
-		existing[ov.Name] = ov
-	}
-	for _, nv := range new {
-		if val, ok := existing[nv.Name]; ok {
-			val.Context = nv.Context
-		} else {
-			old = append(old, nv)
-		}
-	}
-	return old
-}
 
 func (kubeCli *CelleryKubeCli) UseContext(context string) error {
 	cmd := exec.Command(
@@ -163,7 +63,7 @@ func (kubeCli *CelleryKubeCli) GetContext() (string, error) {
 
 func (kubeCli *CelleryKubeCli) SetNamespace(namespace string) error {
 	cmd := exec.Command(
-		constants.KubeCtl,
+		kubectl,
 		"config",
 		"set-context",
 		"--current",
