@@ -20,81 +20,96 @@ package setup
 
 import (
 	"fmt"
+
 	"os"
 
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 
-	"cellery.io/cellery/components/cli/cli"
+	cliPkg "cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
-func RunSetup(cli cli.Cli) error {
-	selectTemplate := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "\U000027A4 {{ .| bold }}",
-		Inactive: "  {{ . | faint }}",
-		Help:     util.Faint("[Use arrow keys]"),
-	}
-
-	cellPrompt := promptui.Select{
-		Label:     util.YellowBold("?") + " Setup Cellery runtime",
-		Items:     []string{create, manage, modify, setupSwitch, exit},
-		Templates: selectTemplate,
-	}
-	_, value, err := cellPrompt.Run()
+func RunSetup(cli cliPkg.Cli) error {
+	err := cli.ExecuteUserSelection("Setup Cellery runtime", []cliPkg.Selection{
+		{
+			Number: 1,
+			Label:  create,
+			Function: func() error {
+				if err := createEnvironment(cli); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			Number: 2,
+			Label:  manage,
+			Function: func() error {
+				if err := manageEnvironment(cli); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			Number: 3,
+			Label:  modify,
+			Function: func() error {
+				var err error
+				apimEnabled, err = runtime.IsApimEnabled()
+				if err != nil {
+					return fmt.Errorf("failed check if apim is enabled, %v", err)
+				}
+				enableApim = !apimEnabled
+				observabilityEnabled, err = runtime.IsObservabilityEnabled()
+				if err != nil {
+					return fmt.Errorf("failed check if observability is enabled, %v", err)
+				}
+				enableObservability = !observabilityEnabled
+				knativeEnabled, err = runtime.IsKnativeEnabled()
+				if err != nil {
+					return fmt.Errorf("failed check if knative is enabled, %v", err)
+				}
+				enableKnative = !knativeEnabled
+				hpaEnabled, err = cli.Runtime().IsHpaEnabled()
+				if err != nil {
+					return fmt.Errorf("failed check if hpa is enabled, %v", err)
+				}
+				enableHpa = !hpaEnabled
+				if err := modifyRuntime(cli); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			Number: 4,
+			Label:  setupSwitch,
+			Function: func() error {
+				if err := selectEnvironment(cli); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			Number: 5,
+			Label:  exit,
+			Function: func() error {
+				os.Exit(1)
+				return nil
+			},
+		},
+	})
 	if err != nil {
-		return fmt.Errorf("failed to select an option, %v", err)
-	}
-
-	switch value {
-	case manage:
-		{
-			return manageEnvironment(cli)
-		}
-	case create:
-		{
-			return createEnvironment(cli)
-		}
-	case modify:
-		{
-			var err error
-			apimEnabled, err = runtime.IsApimEnabled()
-			if err != nil {
-				return fmt.Errorf("failed check if apim is enabled, %v", err)
-			}
-			enableApim = !apimEnabled
-			observabilityEnabled, err = runtime.IsObservabilityEnabled()
-			if err != nil {
-				return fmt.Errorf("failed check if observability is enabled, %v", err)
-			}
-			enableObservability = !observabilityEnabled
-			knativeEnabled, err = runtime.IsKnativeEnabled()
-			if err != nil {
-				return fmt.Errorf("failed check if knative is enabled, %v", err)
-			}
-			enableKnative = !knativeEnabled
-			hpaEnabled, err = cli.Runtime().IsHpaEnabled()
-			if err != nil {
-				return fmt.Errorf("failed check if hpa is enabled, %v", err)
-			}
-			enableHpa = !hpaEnabled
-			modifyRuntime(cli)
-		}
-	case setupSwitch:
-		{
-			selectEnvironment(cli)
-		}
-	default:
-		{
-			os.Exit(1)
-		}
+		return fmt.Errorf("failed to get user input, %v", err)
 	}
 	return nil
 }
 
-func selectEnvironment(cli cli.Cli) error {
+func selectEnvironment(cli cliPkg.Cli) error {
 	contexts, err := getContexts(cli)
 	if err != nil {
 		return fmt.Errorf("failed to get contexts, %v", err)

@@ -29,6 +29,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/manifoldco/promptui"
+
 	"cellery.io/cellery/components/cli/pkg/ballerina"
 	"cellery.io/cellery/components/cli/pkg/docker"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
@@ -52,6 +54,7 @@ type Cli interface {
 	CredReader() credentials.CredReader
 	Runtime() cliRuntime.Runtime
 	Sleep(seconds time.Duration)
+	ExecuteUserSelection(prompt string, options []Selection) error
 }
 
 // CelleryCli is an instance of the cellery command line client.
@@ -216,4 +219,36 @@ func SetRuntime(runtime cliRuntime.Runtime) func(*CelleryCli) {
 
 func (cli *CelleryCli) Sleep(seconds time.Duration) {
 	time.Sleep(seconds * time.Second)
+}
+
+func (cli *CelleryCli) ExecuteUserSelection(prompt string, options []Selection) error {
+	var items []string
+	for _, option := range options {
+		items = append(items, option.Label)
+	}
+	selectTemplate := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   "\U000027A4 {{ .| bold }}",
+		Inactive: "  {{ . | faint }}",
+		Help:     util.Faint("[Use arrow keys]"),
+	}
+
+	cellPrompt := promptui.Select{
+		Label:     util.YellowBold("?") + " " + prompt,
+		Items:     items,
+		Templates: selectTemplate,
+	}
+	_, value, err := cellPrompt.Run()
+	if err != nil {
+		return fmt.Errorf("failed to select an option, %v", err)
+	}
+	for _, option := range options {
+		if option.Label == value {
+			err := option.Function()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

@@ -43,6 +43,8 @@ type MockCli struct {
 	credManager       credentials.CredManager
 	credReader        credentials.CredReader
 	runtime           runtime.Runtime
+	actionItem        int
+	selection         cli.Selection
 }
 
 // NewMockCli returns a mock cli for the cli.Cli interface.
@@ -97,6 +99,12 @@ func SetCredManager(manager credentials.CredManager) func(*MockCli) {
 func SetCredReader(reader credentials.CredReader) func(*MockCli) {
 	return func(cli *MockCli) {
 		cli.credReader = reader
+	}
+}
+
+func SetActionItem(actionItem int) func(*MockCli) {
+	return func(cli *MockCli) {
+		cli.actionItem = actionItem
 	}
 }
 
@@ -171,4 +179,17 @@ func SetRuntime(runtime runtime.Runtime) func(*MockCli) {
 }
 
 func (cli *MockCli) Sleep(seconds time.Duration) {
+}
+
+func (cli *MockCli) ExecuteUserSelection(prompt string, options []cli.Selection) error {
+	for _, opt := range options {
+		if cli.actionItem == opt.Number {
+			cli.selection = opt
+		}
+	}
+	return nil
+}
+
+func (cli *MockCli) Selection() cli.Selection {
+	return cli.selection
 }
