@@ -62,14 +62,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static io.cellery.CelleryConstants.BALLERINA_TOML;
 import static io.cellery.CelleryConstants.CELLERY;
 import static io.cellery.CelleryConstants.CELLERY_PKG_NAME;
 import static io.cellery.CelleryConstants.CELLERY_PKG_ORG;
@@ -637,17 +638,11 @@ public class CreateInstance {
      * @throws IOException if cell start fails
      */
     private static void startInstance(String org, String name, String version, String cellInstanceName, String
-            dependentCells, boolean shareDependencies, Map<String, String> environmentVariables) throws IOException {
-        Path imageDir = Paths.get(System.getProperty("user.home"), ".cellery", "repo", org, name, version,
-                name + ".zip");
-        if (!fileExists(imageDir.toString())) {
-            pullImage(org, name, version);
-        }
-        Path tempDir = Paths.get(System.getProperty("user.home"), ".cellery", "tmp");
-        Path tempBalFileDir = Files.createTempDirectory(Paths.get(tempDir.toString()), "cellery-cell-image");
-        unzip(imageDir.toString(), tempBalFileDir.toString());
-        String tempBalFile = getFilesByExtension(tempBalFileDir + File.separator + "src", "bal").
-                get(0).toString();
+            dependentCells, boolean shareDependencies, Map<String, String> environmentVariables) throws IOException,
+            BallerinaCelleryException {
+        Path workingDir;
+        String tempBalSource = null;
+        String tempBalSourceName = null;
         String ballerinaMain = "public function main(string action, cellery:ImageName iName, map<cellery:ImageName> " +
                 "instances, boolean startDependencies, boolean shareDependencies) returns error? {\n" +
                 "\tif(action == \"build\") {\n" +
@@ -660,7 +655,50 @@ public class CreateInstance {
                 "\t\t}\n" +
                 "\t}\n" +
                 "}";
-        appendToFile(ballerinaMain, tempBalFile);
+
+        Path imageDir = Paths.get(System.getProperty("user.home"), ".cellery", "repo", org, name, version,
+                name + ".zip");
+        if (!fileExists(imageDir.toString())) {
+            pullImage(org, name, version);
+        }
+        Path tempDir = Paths.get(System.getProperty("user.home"), ".cellery", "tmp");
+        Path tempBalFileDir = Files.createTempDirectory(Paths.get(tempDir.toString()), "cellery-cell-image");
+        // Extract image zip to a temp location
+        unzip(imageDir.toString(), tempBalFileDir.toString());
+
+        // If the cell is a bal project, set module name as bal source . Else, set filename.
+        List<File> files = getFilesByExtension(tempBalFileDir.resolve("src").toString(), "toml");
+        if (files.size() > 0 && files.get(0).toString().contains(BALLERINA_TOML)) {
+            String balTomlFile = files.get(0).toString();
+            Path projectDir;
+            File balTomlPath = new File(balTomlFile);
+            if (balTomlPath.exists()) {
+                Paths.get(balTomlFile).getParent();
+                projectDir = Paths.get(balTomlPath.getParent());
+            } else {
+                throw new BallerinaCelleryException("Could not resolve path: " + balTomlPath);
+            }
+            workingDir = projectDir;
+            File[] modules = projectDir.resolve("src").toFile().listFiles();
+            if (modules != null) {
+                tempBalSource = modules[0].getAbsolutePath();
+                tempBalSourceName = modules[0].getName();
+                ballerinaMain = "import celleryio/cellery;\n" + ballerinaMain;
+                Path mainBalPath = Paths.get(tempBalSource, "main.bal");
+                Files.createFile(mainBalPath);
+                appendToFile(ballerinaMain, mainBalPath.toString());
+            }
+        } else {
+            tempBalSource = getFilesByExtension(tempBalFileDir.resolve("src").toString(), "bal").
+                    get(0).toString();
+            tempBalSourceName = new File(tempBalSource).getName();
+            workingDir = Paths.get(tempBalSource).getParent();
+            appendToFile(ballerinaMain, tempBalSource);
+        }
+        if (tempBalSource == null) {
+            throw new BallerinaCelleryException("Error while getting project ballerina source in " + tempBalFileDir);
+        }
+
         // Create a cell image json object
         JSONObject image = new JSONObject();
         image.put("org", org);
@@ -676,25 +714,10 @@ public class CreateInstance {
         for (Map.Entry<String, String> environmentVariable : environmentVariables.entrySet()) {
             environment.put(environmentVariable.getKey(), environmentVariable.getValue());
         }
-        Path workingDir = Paths.get(System.getProperty("user.dir"));
         String exePath = getBallerinaExecutablePath();
-        if (Files.exists(workingDir.resolve(CelleryConstants.BALLERINA_TOML))) {
-            createTempDirForDependency(tempBalFile, System.getProperty("user.dir"), cellInstanceName);
-            CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                    environment, exePath + "ballerina", "run", cellInstanceName, "run", image.toString(),
-                    dependentCells, "false", shareDependenciesFlag);
-        } else {
-            CelleryUtils.executeShellCommand(null, CelleryUtils::printInfo, CelleryUtils::printInfo,
-                    environment, exePath + "ballerina", "run", tempBalFile, "run", image.toString(),
-                    dependentCells, "false", shareDependenciesFlag);
-        }
-    }
-
-    private static void createTempDirForDependency(String tempBalFile, String workingDir, String instanceName)
-            throws IOException {
-        Path sourceFilePath = Paths.get(tempBalFile);
-        Path module = Files.createDirectory(Paths.get(workingDir).resolve(instanceName));
-        Files.copy(sourceFilePath, module.resolve(sourceFilePath.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+        CelleryUtils.executeShellCommand(workingDir, CelleryUtils::printInfo, CelleryUtils::printInfo,
+                environment, exePath + "ballerina", "run", tempBalSourceName, "run", image.toString(),
+                dependentCells, "false", shareDependenciesFlag);
     }
 
     /**
@@ -703,7 +726,7 @@ public class CreateInstance {
      * @param node node which will be used to initiate the starting of the dependency tree
      * @throws IOException if dependency tree start fails
      */
-    private static void startDependencyTree(Node<Meta> node) throws IOException {
+    private static void startDependencyTree(Node<Meta> node) throws IOException, BallerinaCelleryException {
         Meta meta = node.getData();
         for (Node<Meta> childNode : node.getChildren()) {
             startDependencyTree(childNode);

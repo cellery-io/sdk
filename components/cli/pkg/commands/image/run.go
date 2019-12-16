@@ -81,7 +81,7 @@ func startCellInstance(cli cli.Cli, extractedImage *ExtractedImage, instanceName
 	if err != nil {
 		return fmt.Errorf("error occured while getting fileInfo of cell project, %v", err)
 	}
-
+	
 	// If the cell project is a Ballerina project, create a main.bal file in a temp project location
 	if cellProjectInfo.IsDir() {
 		var modules []os.FileInfo

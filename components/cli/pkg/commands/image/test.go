@@ -126,6 +126,13 @@ func startTestCellInstance(cli cli.Cli, extractedImage *ExtractedImage, instance
 			Value: "true",
 		})
 	} else {
+		testDir, err := util.FindRecursiveInDirectory(extractedImage.ImageDir, "tests")
+		if err != nil {
+			return err
+		}
+		if testDir == nil {
+			return fmt.Errorf("no tests found in Image %s", imageTag)
+		}
 		balSourceName, err := util.GetSourceName(filepath.Join(imageDir, src))
 		if err != nil {
 			return fmt.Errorf("failed to find source file in Image %s due to %v", imageTag, err)
@@ -141,7 +148,7 @@ func startTestCellInstance(cli cli.Cli, extractedImage *ExtractedImage, instance
 		// Print a warning if at least one of the functions are missing and prompt for confirmation to continue
 		var isTestsContainBeforeSuite bool
 		var isTestsContainAfterSuite bool
-		balFilesList, err := util.FindRecursiveInDirectory(balModulePath, "*.bal")
+		balFilesList, err := util.FindRecursiveInDirectory(filepath.Join(balModulePath, "tests"), "*.bal")
 		if err != nil {
 			return err
 		}
@@ -357,9 +364,10 @@ func CreateTelepresenceResources(incell bool, imageDir string, instanceName stri
 }
 
 func DeleteTelepresenceResouces(imageDir string) {
-	err := kubernetes.DeleteFile(filepath.Join(imageDir, "telepresence.yaml"))
+	out, err := kubernetes.DeleteResource("cells.mesh.cellery.io", "telepresence")
 	if err != nil {
-		util.PrintWarningMessage(fmt.Sprintf("Failed to delete telepresence resources in the Kubernetes cluster, %v ", err))
+		util.PrintWarningMessage(
+			fmt.Sprintf("Failed to delete telepresence resources in the Kubernetes cluster, %v ", fmt.Errorf(out)))
 	}
 }
 
