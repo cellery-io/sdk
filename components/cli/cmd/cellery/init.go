@@ -42,8 +42,8 @@ func newInitCommand(cli cli.Cli) *cobra.Command {
 			}
 		},
 		Example: "  cellery init [PROJECT_NAME]\n" +
-			"  cellery init test [PROJECT_NAME --project\n" +
-			"  cellery init test [PROJECT_NAME -p",
+			"  cellery init [PROJECT_NAME] --project\n" +
+			"  cellery init [PROJECT_NAME] -p",
 	}
 	cmd.Flags().BoolVarP(&isBallerinaProject, "project", "p", false,
 		"Create a Ballerina project")

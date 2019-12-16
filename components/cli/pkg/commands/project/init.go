@@ -111,17 +111,14 @@ public function cleanUp() {
 `
 
 func RunInit(cli cli.Cli, projectName string, isBallerinaProject bool) error {
-	pathExists, err := util.FileExists(filepath.Join(cli.FileSystem().CurrentDir(), projectName))
-	if err != nil {
-		return fmt.Errorf("error occurred while checking if filepath exists, %v", err)
-	}
-	if pathExists {
-		return fmt.Errorf("project with name %s already exists", util.Faint(projectName))
-	}
+	var err error
 	if !isBallerinaProject {
-		initProject(cli, projectName)
+		err = initProject(cli, projectName)
 	} else {
-		initBallerinaProject(cli, projectName)
+		err = initBallerinaProject(cli, projectName)
+	}
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -130,6 +127,13 @@ func initProject(cli cli.Cli, projectName string) error {
 	err := getProjectName(&projectName)
 	if err != nil {
 		return fmt.Errorf("error occurred while initializing the project, %v", err)
+	}
+	pathExists, err := util.FileExists(filepath.Join(cli.FileSystem().CurrentDir(), projectName))
+	if err != nil {
+		return fmt.Errorf("error occurred while checking if filepath exists, %v", err)
+	}
+	if pathExists {
+		return fmt.Errorf("project with name %s already exists", util.Faint(projectName))
 	}
 	projectDir := filepath.Join(cli.FileSystem().CurrentDir(), projectName)
 	if err := util.CreateDir(projectDir); err != nil {
@@ -163,6 +167,13 @@ func initBallerinaProject(cli cli.Cli, projectName string) error {
 	err = getProjectName(&projectName)
 	if err != nil {
 		return fmt.Errorf("error occurred while initializing the project, %v", err)
+	}
+	pathExists, err := util.FileExists(filepath.Join(cli.FileSystem().CurrentDir(), projectName))
+	if err != nil {
+		return fmt.Errorf("error occurred while checking if filepath exists, %v", err)
+	}
+	if pathExists {
+		return fmt.Errorf("project with name %s already exists", util.Faint(projectName))
 	}
 	moduleName := strings.Replace(projectName, "-", "_", -1)
 	if err := cli.BalExecutor().Init(workingDir, projectName, moduleName); err != nil {
