@@ -88,8 +88,3 @@ type TemplateImage struct {
 	Type       string
 	Components []TemplateComponent
 }
-
-type DesignResponse struct {
-	HttpCode string
-	message  string
-}

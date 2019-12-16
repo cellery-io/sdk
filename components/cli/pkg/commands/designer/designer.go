@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -37,26 +36,30 @@ import (
 	"time"
 )
 
+var tmpSourceDir string
+var tmpZipDir string
+
 // Starts a http server to serve Cellery designer react app and API
 func RunDesigner(cli cli.Cli) error {
 	r := mux.NewRouter()
+	tmpSourceDir = filepath.Join(cli.FileSystem().TempDir(), "designer")
+	tmpZipDir = filepath.Join(cli.FileSystem().TempDir(), "downloads")
 
 	// It's important that this is before your catch-all route ("/")
 	api := r.PathPrefix("/api/").Subrouter()
-	api.HandleFunc("/load", loadCodeHandler).Methods(http.MethodGet)
-	api.HandleFunc("/save", saveCodeHandler).Methods(http.MethodPost)
-	api.HandleFunc("/generate", generateCodeHandler).Methods(http.MethodPost)
+	api.HandleFunc("/generate", generateHandler).Methods(http.MethodPost)
 
 	// Serve static assets directly.
 	designerDir := path.Join(cli.FileSystem().CelleryInstallationDir(), "designer")
 	r.PathPrefix("/static").Handler(http.FileServer(http.Dir(designerDir)))
 
+	r.PathPrefix("/download").HandlerFunc(downloadHandler(filepath.Join(tmpZipDir, "downloads.zip")))
 	// Catch-all: Serve Designer app entry-point (index.html).
 	r.PathPrefix("/").HandlerFunc(indexHandler(path.Join(designerDir, "index.html")))
 
 	srv := &http.Server{
 		Handler:      handlers.LoggingHandler(os.Stdout, r),
-		Addr:         "127.0.0.1:8088",
+		Addr:         "0.0.0.0:8088",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -76,72 +79,47 @@ func indexHandler(entryPoint string) func(w http.ResponseWriter, r *http.Request
 	return fn
 }
 
-func loadCodeHandler(w http.ResponseWriter, r *http.Request) {
-	//Read content from the give path and send as a JSON response
-	var fileContent []byte
-	var nodeData Data
-	metaJsonPath := r.URL.Query().Get("path")
-	fileContent, err := ioutil.ReadFile(metaJsonPath)
-	if err != nil {
-		log.Println("Error while reading json file: "+metaJsonPath, err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+func downloadHandler(entryPoint string) func(w http.ResponseWriter, r *http.Request) {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, entryPoint)
 	}
-	err = json.Unmarshal(fileContent, &nodeData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	designerJSON, err := json.Marshal(&nodeData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(designerJSON)
+	return fn
 }
 
-func saveCodeHandler(w http.ResponseWriter, r *http.Request) {
+func generateHandler(w http.ResponseWriter, r *http.Request) {
 	var nodeData DesignMeta
+
+	if err := util.CleanAndCreateDir(tmpZipDir); err != nil {
+		log.Println("error occurred file create dir "+tmpZipDir, err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := util.CleanAndCreateDir(tmpSourceDir); err != nil {
+		log.Println("error occurred file create dir "+tmpSourceDir, err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Try to decode the request body into the struct. If there is an error,
 	// respond to the client with the error message and a 400 status code.
 	err := json.NewDecoder(r.Body).Decode(&nodeData)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	//Extract the Data from body and save to the given path.
-	nodeDataJson, err := json.Marshal(nodeData.Data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if err := ioutil.WriteFile(nodeData.Path, nodeDataJson, 0644); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-	w.WriteHeader(http.StatusCreated)
-	_, _ = w.Write([]byte(nodeData.Path))
-}
-
-func generateCodeHandler(w http.ResponseWriter, r *http.Request) {
-	var nodeData DesignMeta
-
-	// Try to decode the request body into the struct. If there is an error,
-	// respond to the client with the error message and a 400 status code.
-	err := json.NewDecoder(r.Body).Decode(&nodeData)
-	if err != nil {
+		log.Println("error occurred decoding generate request body ", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := generateCode(nodeData); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	_, _ = w.Write([]byte(nodeData.Path))
+	_, _ = w.Write([]byte("http://127.0.0.1/download"))
 }
 
 func generateCode(designerMeta DesignMeta) error {
+	tpl := template.Must(template.New("cell template").Funcs(template.FuncMap{"separator": separator}).
+		Parse(codeTemplate))
 	for _, node := range designerMeta.Data.Nodes {
 		cell := TemplateImage{
 			Name:       strings.Replace(node.Label, "-", "_", -1),
@@ -163,32 +141,26 @@ func generateCode(designerMeta DesignMeta) error {
 			}
 			cell.Components = append(cell.Components, templateComponent)
 		}
-		tpl := template.Must(template.New("cell template").Funcs(template.FuncMap{"separator": separator}).
-			Parse(codeTemplate))
-
-		dirExist, _ := util.FileExists(designerMeta.Path)
-		if !dirExist {
-			err := os.MkdirAll(designerMeta.Path, os.ModePerm)
-			if err != nil {
-				log.Println("Error while creating the directory: "+designerMeta.Path, err)
-				return err
-			}
-		}
-		f, err := os.Create(filepath.Join(designerMeta.Path, cell.Name+".bal"))
+		outputFile := filepath.Join(tmpSourceDir, cell.Name+constants.BalExt)
+		f, err := os.Create(outputFile)
 		if err != nil {
-			log.Println("Error while creating the file: "+filepath.Join(designerMeta.Path, cell.Name+".bal"), err)
+			log.Println("error occurred while creating the file: "+outputFile, err)
 			return err
 		}
 		err = tpl.Execute(f, cell)
 		if err != nil {
-			log.Println("Error while executing the template: ", err)
+			log.Println("error occurred while executing the template: ", err)
 			return err
 		}
+	}
+	if err := util.RecursiveZip(nil, []string{tmpSourceDir}, filepath.Join(tmpZipDir, "downloads.zip")); err != nil {
+		log.Println("error occurred while creating the zip: ", err)
+		return err
 	}
 	return nil
 }
 
-// Template function to print commas(,)
+// Template helper function to print commas(,)
 func separator(s string) func() string {
 	i := -1
 	return func() string {

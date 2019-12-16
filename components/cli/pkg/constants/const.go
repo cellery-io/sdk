@@ -35,6 +35,7 @@ const GroupName = "mesh.cellery.io"
 
 const CellImageExt = ".zip"
 const JsonExt = ".json"
+const BalExt = ".bal"
 
 const CentralRegistryHost = "registry.hub.cellery.io"
 const CentralRegistryHostRegx = "^.*registry.hub.cellery.(io|net)$"
