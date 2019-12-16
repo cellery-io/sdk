@@ -1,0 +1,42 @@
+{
+  "name": "designer",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@material-ui/core": "^4.5.2",
+    "@material-ui/icons": "^4.5.1",
+    "@material-ui/styles": "^4.5.2",
+    "axios": "^0.19.0",
+    "classnames": "^2.2.6",
+    "css-loader": "^3.2.0",
+    "lint": "^0.7.0",
+    "prop-types": "^15.7.2",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "react-files": "^2.4.8",
+    "react-scripts": "3.2.0",
+    "styled-components": "^4.4.1",
+    "vis-network": "^6.3.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
