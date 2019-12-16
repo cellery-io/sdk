@@ -845,6 +845,7 @@ class DesignerView extends React.Component {
 
         const graphData = {
             data: {
+                path: "",
                 nodes: this.getNodeDataStructure(),
                 edges: this.graph.edges
             }
@@ -904,104 +905,15 @@ class DesignerView extends React.Component {
     };
 
     generateCode = () => {
-        // TODO: remove hardcoded json.
-        // const data = this.buildDataStructure();
-        const data= {
-            "path": "/tmp/cellery",
-            "data": {
-                "nodes": [
-                    {
-                        "label": "pet_be",
-                        "id": "2-node",
-                        "x": 45,
-                        "y": -12,
-                        "shape": "image",
-                        "iterator": 2,
-                        "value": 3,
-                        "type": "cell",
-                        "image": "<image-string>",
-                        "version": "1.0.0",
-                        "components": [
-                            {
-                                "label": "controller",
-                                "id": "1-node",
-                                "x": 12,
-                                "y": 34,
-                                "shape": "image",
-                                "value": 1,
-                                "iterator": 1,
-                                "type": "component",
-                                "image": "<image-string>",
-                                "parent": "pet_be",
-                                "sourceImage": "<>"
-                            }
-                        ],
-                        "gateway": {
-                            "label": "gateway",
-                            "id": "4-node",
-                            "x": 12,
-                            "y": 34,
-                            "shape": "image",
-                            "value": 1,
-                            "iterator": 1,
-                            "type": "gateway",
-                            "parent": "pet_be"
-                        }
-                    },
-                    {
-                        "label": "pet_fe",
-                        "id": "7-node",
-                        "x": 45,
-                        "y": -12,
-                        "shape": "image",
-                        "iterator": 2,
-                        "value": 3,
-                        "type": "cell",
-                        "image": "<image-string>",
-                        "org": "ws2cellery",
-                        "version": "1.0.0",
-                        "components": [
-                            {
-                                "label": "front-end",
-                                "id": "8-node",
-                                "x": 12,
-                                "y": 34,
-                                "shape": "image",
-                                "value": 1,
-                                "iterator": 1,
-                                "type": "component",
-                                "image": "<image-string>",
-                                "parent": "pet_fe",
-                                "sourceImage": "<>",
-                                "dependencies": {
-                                    "petBeAlias": "4-node"
-                                }
-                            }
-                        ],
-                        "gateway": {
-                            "label": "gateway",
-                            "id": "9-node",
-                            "x": 12,
-                            "y": 34,
-                            "shape": "image",
-                            "value": 1,
-                            "iterator": 1,
-                            "type": "gateway",
-                            "parent": "pet_fe"
-                        }
-                    }
-                ],
-                "edges": [
-                    {}
-                ]
-            }
-        };
+
+        const data = this.buildDataStructure();
+
         axios({
             method: 'post',
             url: 'http://127.0.0.1:8088/api/generate',
             data: data
         }).then(function (response) {
-            var element = document.createElement('a');
+            let element = document.createElement('a');
             element.setAttribute('href', 'http://127.0.0.1:8088/download');
             element.setAttribute('download', "generated_code.zip");
             element.style.display = 'none';
