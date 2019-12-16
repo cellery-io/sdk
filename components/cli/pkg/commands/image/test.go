@@ -342,13 +342,13 @@ func CreateTelepresenceResources(incell bool, imageDir string, instanceName stri
 	}
 	kubernetes.ApplyFile(dstYamlFile)
 	time.Sleep(5 * time.Second)
-	err := kubernetes.WaitForDeployment("available", 900, deploymentName, "default")
+	err := kubernetes.WaitForDeployment("available", 900, deploymentName)
 	if err != nil {
 		return nil, err
 	}
 
 	if !incell {
-		err = kubernetes.WaitForCell("Ready", 30*60, "telepresence", "default")
+		err = kubernetes.WaitForCell("Ready", 30*60, "telepresence")
 		if err != nil {
 			return nil, err
 		}

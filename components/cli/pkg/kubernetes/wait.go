@@ -25,23 +25,25 @@ import (
 	"time"
 )
 
-func WaitForDeployment(condition string, timeoutSeconds int, resourceName string, namespace string) error {
-	return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("deployment/%s", resourceName), namespace)
+func WaitForDeployment(condition string, timeoutSeconds int, resourceName string, namespace ...string) error {
+	if len(namespace) > 0 {
+		return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("deployment/%s", resourceName), namespace[0])
+	} else {
+		return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("deployment/%s", resourceName))
+	}
 }
 
-func WaitForCell(condition string, timeoutSeconds int, resourceName string, namespace string) error {
-	return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("cells.mesh.cellery.io/%s", resourceName), namespace)
+func WaitForCell(condition string, timeoutSeconds int, resourceName string) error {
+	return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("cells.mesh.cellery.io/%s", resourceName))
 }
 
-func WaitForCondition(condition string, timeoutSeconds int, resourceName string, namespace string) error {
-	cmd := exec.Command(
-		kubectl,
-		"wait",
-		fmt.Sprintf("--for=condition=%s", condition),
-		fmt.Sprintf("--timeout=%ds", timeoutSeconds),
-		resourceName,
-		"-n", namespace,
-	)
+func WaitForCondition(condition string, timeoutSeconds int, resourceName string, namespace ...string) error {
+	command := []string{"wait", fmt.Sprintf("--for=condition=%s", condition), fmt.Sprintf("--timeout=%ds", timeoutSeconds),
+		resourceName}
+	if len(namespace) > 0 {
+		command = append(command, "-n", namespace[0])
+	}
+	cmd := exec.Command(kubectl, command...)
 	displayVerboseOutput(cmd)
 	return cmd.Run()
 }
