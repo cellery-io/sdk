@@ -44,6 +44,9 @@ import Drawer from "@material-ui/core/Drawer";
 import Grey from "@material-ui/core/colors/grey";
 import DesignerHeader from "./DesignerHeader";
 import * as axios from "axios";
+import Snackbar from '@material-ui/core/Snackbar';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
 
 const drawerWidth = 242;
 
@@ -184,6 +187,8 @@ class DesignerView extends React.Component {
             positionX: 0,
             positionY: 0,
             open: true,
+            openSnackBar: false,
+            errorContent: "",
             properties: [
                 {
                     key: "Organization",
@@ -235,6 +240,17 @@ class DesignerView extends React.Component {
     handleDrawerClose = () => {
         this.setState({open: false});
     };
+
+    handleSnackBarClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        this.setState({
+            openSnackBar: false
+        });
+    };
+
 
     static options = {
         physics: false,
@@ -432,9 +448,9 @@ class DesignerView extends React.Component {
 
             if (nodeType === "component" || nodeType === "gateway") {
                 if (nodeType === "component") {
-                    nodeLabel = "new-" + nodeType;
+                    nodeLabel = "new-" + nodeType + "-" + maxId;
                 } else {
-                    nodeLabel = "gateway"
+                    nodeLabel = "gateway";
                 }
                 nodes.push({
                     label: nodeLabel,
@@ -449,7 +465,7 @@ class DesignerView extends React.Component {
                     parent: ''
                 });
             } else if ((nodeType === "cell" || nodeType === "composite")) {
-                nodeLabel = "new-" + nodeType;
+                nodeLabel = "new-" + nodeType + "-" + maxId;
                 nodes.unshift({
                     label: nodeLabel,
                     id: (maxId + 1) + "-node",
@@ -834,7 +850,12 @@ class DesignerView extends React.Component {
                 }
             });
 
-            node.gateway = gatewayNodes.filter((gateway) => (gateway.parent === node.label))[0];
+            if (node.type === "cell") {
+                const gatewayNode = gatewayNodes.filter((gateway) => (gateway.parent === node.label))[0];
+                node.gateway = gatewayNode ? gatewayNode : "";
+            } else {
+                node.gateway = "";
+            }
         });
 
         return parentNodes;
@@ -864,10 +885,6 @@ class DesignerView extends React.Component {
         document.body.removeChild(element);
     };
 
-    openDiagram = () => {
-
-    };
-
     buildNetworkData = (response) => {
         if (response) {
             this.graph.nodes = this.getNodeData(response.data.nodes);
@@ -883,25 +900,75 @@ class DesignerView extends React.Component {
         this.download("cellery-diagram.json", data);
     };
 
+    getNodeFromId = (id) => {
+        let output = {};
+        this.nodesData.get({
+            filter: function (item) {
+                if (item.id === id) {
+                    output = item;
+                }
+            }
+        });
+        return output;
+    };
+
+    getNodeParentFromId = (id) => {
+        let parent = "";
+        const networkDataStructure = this.buildDataStructure();
+
+        networkDataStructure.data.nodes.forEach((node) => {
+            if (node.id === id) {
+                parent = node.label;
+            } else if (node.gateway.id === id) {
+                parent = node.label;
+            } else {
+                node.components.forEach((comp) => {
+                    if (comp.id === id) {
+                        parent = comp.parent
+                    }
+                });
+            }
+        });
+        return parent;
+    };
+
     validateGraph = () => {
         const errorMsgs = [];
 
         if (this.graph.nodes.length > 0) {
             this.graph.nodes.forEach((node) => {
-                if (node.type === "component" && node.parent === "") {
-                    errorMsgs.push(node.label + " not included in a cell or composite");
+                if ((node.type === "component" && node.parent === "") ||
+                    (node.type === "gateway" && node.parent === "")) {
+                    errorMsgs.push(node.label + " is not placed in a cell or composite");
                 }
             });
+
+            const networkDataStructure = this.buildDataStructure();
+            networkDataStructure.data.nodes.forEach((node) => {
+                if (node.type === "cell" && node.gateway === "") {
+                    errorMsgs.push(node.label + " does not have a gateway node properly placed inside the cell");
+                }
+            });
+
+            networkDataStructure.data.edges.forEach((edge) => {
+                if (((this.getNodeParentFromId(edge.from) !== this.getNodeParentFromId(edge.to)) && edge.label === "")) {
+                    errorMsgs.push("Add Alias for the link from " + this.getNodeFromId(edge.from).label + " to " +
+                        this.getNodeFromId(edge.to).label);
+                }
+            });
+
         } else {
             errorMsgs.push("No cell or composite data to generate code")
         }
-        // TODO: Fix the errors
-        // if (errorMsgs.length === 0) {
+
+        if (errorMsgs.length === 0) {
             this.generateCode();
-        // } else {
-            // TODO add Snackbar messages
-            // console.log("Unable to generate code: " + errorMsgs.join(", "))
-        // }
+        } else {
+            this.setState({
+                errorContent: errorMsgs[0],
+                openSnackBar: true
+            });
+        }
     };
 
     generateCode = () => {
@@ -925,7 +992,7 @@ class DesignerView extends React.Component {
 
     render() {
         const {classes} = this.props;
-        const {isAddClicked, open, isNodeSelected, isEdgeSelected, helpText, nodeType} = this.state;
+        const {isAddClicked, open, isNodeSelected, isEdgeSelected, helpText, nodeType, openSnackBar, errorContent} = this.state;
 
         return (
             <div>
@@ -1188,6 +1255,30 @@ class DesignerView extends React.Component {
                             </form>
                         </Drawer>
                     </React.Fragment>
+                    <Snackbar
+                        anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'left',
+                        }}
+                        open={openSnackBar}
+                        autoHideDuration={6000}
+                        onClose={this.handleSnackBarClose}
+                        ContentProps={{
+                            'aria-describedby': 'error-message',
+                        }}
+                        message={<span id="message-id">{errorContent}</span>}
+                        action={
+                            <IconButton
+                                key="close"
+                                aria-label="close"
+                                color="inherit"
+                                className={classes.close}
+                                onClick={this.handleSnackBarClose}
+                            >
+                                <CloseIcon/>
+                            </IconButton>
+                        }
+                    />
                 </div>
             </div>
         );
