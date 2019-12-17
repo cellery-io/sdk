@@ -20,6 +20,7 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -116,6 +117,21 @@ func main() {
 		cli.SetCredReader(credReader),
 		cli.SetRuntime(runtime),
 	)
+	if err := util.RemoveDir(filepath.Join(celleryCli.FileSystem().UserHome(), ".ballerina", "balo_cache",
+		"celleryio", "cellery")); err != nil {
+		util.ExitWithErrorMessage("Error executing cellery main function",
+			fmt.Errorf("failed to remove balo_cache, %v", err))
+	}
+	if err := util.RemoveDir(filepath.Join(celleryCli.FileSystem().UserHome(), ".ballerina", "bir_cache-"+
+		constants.BallerinaVersion, "celleryio", "cellery")); err != nil {
+		util.ExitWithErrorMessage("Error executing cellery main function",
+			fmt.Errorf("failed to remove bir_cache, %v", err))
+	}
+	if err := util.RemoveDir(filepath.Join(celleryCli.FileSystem().UserHome(), ".ballerina", "jar_cache-"+
+		constants.BallerinaVersion, "celleryio", "cellery")); err != nil {
+		util.ExitWithErrorMessage("Error executing cellery main function",
+			fmt.Errorf("failed to remove jar_cache, %v", err))
+	}
 	util.CreateCelleryDirStructure()
 	logFileDirectory := filepath.Join(util.UserHomeDir(), constants.CelleryHome, "logs")
 	logFilePath := filepath.Join(logFileDirectory, "cli.log")
