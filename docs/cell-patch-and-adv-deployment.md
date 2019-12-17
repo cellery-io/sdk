@@ -31,19 +31,16 @@ cellery patch pet-be controller --container-image mycontainerorg/hello:1.0.1
 ```
 $ kubectl get pods
 NAME                                             READY   STATUS            RESTARTS   AGE
-pet-be--catalog-deployment-54b8cd64-knhnc        0/2     PodInitializing   0          4s
-pet-be--catalog-deployment-67b8565469-fq86w      2/2     Running           0          26m
-pet-be--controller-deployment-6f89fdb47c-rn4mn   2/2     Running           0          24m
-pet-be--controller-deployment-75f5db95f4-2dt96   0/2     PodInitializing   0          4s
-pet-be--customers-deployment-7997974649-22hft    2/2     Running           0          26m
-pet-be--customers-deployment-7d8df7fb84-h48xs    0/2     PodInitializing   0          4s
-pet-be--gateway-deployment-7f787575c6-vmg4p      2/2     Running           0          26m
-pet-be--orders-deployment-7d874dfd98-vnhdw       0/2     PodInitializing   0          4s
-pet-be--orders-deployment-7d9fd8f5ff-4czdx       2/2     Running           0          26m
-pet-be--sts-deployment-7f4f56b5d5-bjhww          3/3     Running           0          26m
-pet-fe--gateway-deployment-67ccf688fb-dnhhw      2/2     Running           0          4h6m
-pet-fe--portal-deployment-69bb57c466-25nqd       2/2     Running           0          4h6m
-pet-fe--sts-deployment-59dbb995c7-g7tc7          3/3     Running           0          4h6m
+pet-be--catalog-deployment-588dcb989-gxr6s       2/2     Running            0          2m
+pet-be--controller-deployment-657cd4d9ff-tpkr2   1/2     ContainerCreating  0          67s
+pet-be--controller-deployment-b7c4f8576-955xz    2/2     Running            0          2m1s
+pet-be--customers-deployment-854cc57ccf-2ghnl    2/2     Running            0          118s
+pet-be--gateway-deployment-657987fcf7-r9h8p      1/1     Running            0          2m1s
+pet-be--orders-deployment-5dbdc9f75f-lk2z4       2/2     Running            0          119s
+pet-be--sts-deployment-5ff86d497b-nk225          3/3     Running            0          119s
+pet-fe--gateway-deployment-c4bbd8697-ptwp6       2/2     Running            0          106s
+pet-fe--portal-deployment-6f559cccd9-8n8vw       2/2     Running            0          106s
+pet-fe--sts-deployment-7d87ddb888-b8sr5          3/3     Running            0          105s
 ```
 Refer to [CLI docs](cli-reference.md#cellery-patch) for a complete guide on performing updates on cell instances.
 
