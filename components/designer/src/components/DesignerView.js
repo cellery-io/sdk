@@ -462,7 +462,8 @@ class DesignerView extends React.Component {
                     iterator: maxId + 1,
                     type: nodeType,
                     image: this.viewGenerator(nodeType),
-                    parent: ''
+                    parent: '',
+                    sourceImage: ''
                 });
             } else if ((nodeType === "cell" || nodeType === "composite")) {
                 nodeLabel = "new-" + nodeType + "-" + maxId;
@@ -676,7 +677,7 @@ class DesignerView extends React.Component {
                         networkNodes.push(childNode);
                     });
                 }
-                if (node.gateway) {
+                if (Object.keys(node.gateway).length > 0) {
                     networkNodes.push(node.gateway);
                 }
             }
@@ -761,12 +762,6 @@ class DesignerView extends React.Component {
         return edgeLabel;
     };
 
-
-    getSelectedNodeImage = () => {
-        const selectedNode = this.network.getSelectedNodes();
-        return selectedNode.label;
-    };
-
     deleteNode = () => {
         let {nodes} = this.graph;
         const selectedNode = this.network.getSelectedNodes();
@@ -828,12 +823,6 @@ class DesignerView extends React.Component {
         const gatewayNodes = nodes.filter((node) => (node.type === "gateway"));
 
         childNodes.forEach((node, index) => {
-            if (node.id === node.label) {
-
-            }
-        });
-
-        childNodes.forEach((node, index) => {
             node.dependencies = {};
             this.graph.edges.forEach((edge, index) => {
                 if (node.id === edge.from) {
@@ -852,9 +841,9 @@ class DesignerView extends React.Component {
 
             if (node.type === "cell") {
                 const gatewayNode = gatewayNodes.filter((gateway) => (gateway.parent === node.label))[0];
-                node.gateway = gatewayNode ? gatewayNode : "";
+                node.gateway = gatewayNode ? gatewayNode : {};
             } else {
-                node.gateway = "";
+                node.gateway = {};
             }
         });
 
@@ -945,13 +934,14 @@ class DesignerView extends React.Component {
 
             const networkDataStructure = this.buildDataStructure();
             networkDataStructure.data.nodes.forEach((node) => {
-                if (node.type === "cell" && node.gateway === "") {
+                if (node.type === "cell" && node.gateway === {}) {
                     errorMsgs.push(node.label + " does not have a gateway node properly placed inside the cell");
                 }
             });
 
             networkDataStructure.data.edges.forEach((edge) => {
-                if (((this.getNodeParentFromId(edge.from) !== this.getNodeParentFromId(edge.to)) && edge.label === "")) {
+                if (((this.getNodeParentFromId(edge.from) !== this.getNodeParentFromId(edge.to)) && edge.label ===
+                        "")) {
                     errorMsgs.push("Add Alias for the link from " + this.getNodeFromId(edge.from).label + " to " +
                         this.getNodeFromId(edge.to).label);
                 }

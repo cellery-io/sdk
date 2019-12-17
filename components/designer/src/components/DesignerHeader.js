@@ -25,7 +25,7 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Tooltip from "@material-ui/core/Tooltip/Tooltip";
 import Typography from "@material-ui/core/Typography";
 import {withStyles} from "@material-ui/core/styles";
-import {SaveOutlined, HelpOutline, LaunchOutlined} from '@material-ui/icons';
+import {SaveOutlined, HelpOutline, OpenInBrowserRounded} from '@material-ui/icons';
 import * as PropTypes from "prop-types";
 import Files from "react-files";
 
@@ -49,18 +49,12 @@ const styles = {
         minHeight: 35
     },
     primaryBtn: {
-        // backgroundColor: "#69b26d",
         color: "#fff",
         fontSize: 10,
         boxShadow: "none"
     },
     openFile: {
         display: "inline"
-    },
-    actions: {
-        '<div>': {
-            display: "inline"
-        }
     }
 };
 
@@ -91,7 +85,7 @@ class DesignerView extends React.Component {
                             >
                             <Tooltip title="Open" placement="bottom">
                             <IconButton color="inherit" className={classes.headerBtn}>
-                                <LaunchOutlined fontSize="small"/>
+                                <OpenInBrowserRounded fontSize="small"/>
                             </IconButton>
                             </Tooltip>
                         </Files>
@@ -99,11 +93,6 @@ class DesignerView extends React.Component {
                         <Tooltip title="Save" placement="bottom">
                             <IconButton color="inherit" fontSize="small" onClick={saveData}>
                                 <SaveOutlined fontSize="small"/>
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Help" placement="bottom">
-                            <IconButton color="inherit" fontSize="small">
-                                <HelpOutline fontSize="small"/>
                             </IconButton>
                         </Tooltip>
                         <Button variant="contained" className={classes.primaryBtn} color="primary" size="small"
