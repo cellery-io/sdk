@@ -21,13 +21,33 @@ package instance
 import (
 	"fmt"
 
+	"github.com/hashicorp/go-version"
+
 	"cellery.io/cellery/components/cli/cli"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
+
+const minimumKubernetesVersionToFollowLogs = "v1.14.0"
 
 func RunLogs(cli cli.Cli, instanceName string, componentName string, sysLog bool, follow bool) error {
 	if err := cli.KubeCli().IsInstanceAvailable(instanceName); err != nil {
 		return fmt.Errorf(fmt.Sprintf("No logs found"), fmt.Errorf("cannot find running "+
 			"instance %s", instanceName))
+	}
+
+	if follow {
+		_, clientVersion, err := cli.KubeCli().Version()
+		if err != nil {
+			return err
+		}
+		kubectlClientVersion, err := version.NewVersion(clientVersion)
+		minimumKubernetesClientVersion, err := version.NewVersion(minimumKubernetesVersionToFollowLogs)
+
+		if kubectlClientVersion.LessThan(minimumKubernetesClientVersion) {
+			util.PrintWarningMessage(fmt.Sprintf("Unable to follow cellery logs for instance %s."+
+				"Please upgrade kubernetes client version to 1.14 or higher", instanceName))
+			return nil
+		}
 	}
 
 	if componentName == "" {

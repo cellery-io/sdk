@@ -59,7 +59,7 @@ func TestRunLogs(t *testing.T) {
 		},
 	}
 
-	mockKubeCli := test.NewMockKubeCli(test.WithCells(cells), test.WithComposites(composites),
+	mockKubeCli := test.NewMockKubeCli(test.SetK8sVersions("v1.14.1", "v1.14.3"), test.WithCells(cells), test.WithComposites(composites),
 		test.WithComponents(components))
 	mockCli := test.NewMockCli(test.SetKubeCli(mockKubeCli))
 
