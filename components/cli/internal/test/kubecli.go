@@ -320,3 +320,7 @@ func (kubeCli *MockKubeCli) DeleteNameSpace(nameSpace string) error {
 func (kubeCli *MockKubeCli) SetNamespace(namespace string) error {
 	return nil
 }
+
+func (kubeCli *MockKubeCli) CreateNamespace(namespace string) error {
+	return nil
+}

@@ -28,7 +28,20 @@ func RunSetNamespace(cli cli.Cli, namespace string) error {
 	if err := cli.ExecuteTask(fmt.Sprintf("Changing the namespace to %s", namespace),
 		fmt.Sprintf("Failed to changed the namespace to %s", namespace),
 		"", func() error {
-			return cli.KubeCli().SetNamespace(namespace)
+			err := cli.KubeCli().CreateNamespace(namespace)
+			if err != nil {
+				return fmt.Errorf("failed to create namespace, %v", err)
+			}
+			err = cli.KubeCli().SetNamespace(namespace)
+			if err != nil {
+				return fmt.Errorf("failed to set namespace, %v", err)
+			}
+			err = cli.KubeCli().ApplyLabel("namespace", namespace, "istio-injection=enabled",
+				true)
+			if err != nil {
+				return fmt.Errorf("failed enable istio injection, %v", err)
+			}
+			return nil
 		}); err != nil {
 		return fmt.Errorf("failed to change the namespace, %v", err)
 	}

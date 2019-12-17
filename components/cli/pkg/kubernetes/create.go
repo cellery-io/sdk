@@ -65,3 +65,15 @@ func CreateClusterRoleBinding(clusterRole, user string) error {
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
+func (kubeCli *CelleryKubeCli) CreateNamespace(namespace string) error {
+	cmd := exec.Command(
+		kubectl,
+		"create",
+		"namespace",
+		namespace,
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
