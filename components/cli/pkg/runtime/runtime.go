@@ -282,7 +282,7 @@ func waitingTimeCluster() (time.Duration, error) {
 }
 
 func waitingTimeCellerySystem() (time.Duration, error) {
-	waitingTime := time.Minute * 15
+	waitingTime := time.Minute * 30
 	envVar := os.Getenv("CELLERY_SYSTEM_WAIT_TIME_MINUTES")
 	if envVar != "" {
 		wt, err := strconv.Atoi(envVar)
