@@ -115,6 +115,7 @@ func createEnvironment(cli cli.Cli) error {
 			}
 			platform, err := minikube.NewMinikube(
 				minikube.SetProfile(CelleryLocalSetup),
+				minikube.SetDriver(Vbox),
 				minikube.SetCpus(MinikubeCpus),
 				minikube.SetMemory(MinikubeMemory),
 				minikube.SetkubeVersion(MinikubeKubernetesVersion))

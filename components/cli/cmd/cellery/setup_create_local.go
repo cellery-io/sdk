@@ -44,6 +44,7 @@ func newSetupCreateLocalCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 			}
 			platform, err := minikube.NewMinikube(
 				minikube.SetProfile(setup.CelleryLocalSetup),
+				minikube.SetDriver(setup.Vbox),
 				minikube.SetCpus(setup.MinikubeCpus),
 				minikube.SetMemory(setup.MinikubeMemory),
 				minikube.SetkubeVersion(setup.MinikubeKubernetesVersion))

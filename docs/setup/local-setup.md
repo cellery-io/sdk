@@ -3,6 +3,7 @@ Local setup
 ## Prerequisites
 ### Mandatory
 - [Minikube](https://github.com/kubernetes/minikube/releases) 
+- [VirtualBox](https://www.virtualbox.org/wiki/Downloads) 
 - [Kubectl version 1.13/1.14/1.15](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Cellery](../../README.md#download-cellery)
 

@@ -40,6 +40,7 @@ const celleryLocalSetup = "cellery-local-setup"
 const minikubeCmd = "minikube"
 
 type Minikube struct {
+	driver      string
 	cpus        string
 	memory      string
 	kubeVersion string
@@ -52,6 +53,12 @@ func NewMinikube(opts ...func(*Minikube)) (*Minikube, error) {
 		opt(minikube)
 	}
 	return minikube, nil
+}
+
+func SetDriver(driver string) func(*Minikube) {
+	return func(minikube *Minikube) {
+		minikube.driver = driver
+	}
 }
 
 func SetCpus(cpus int) func(*Minikube) {

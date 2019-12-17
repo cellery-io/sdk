@@ -34,6 +34,7 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 	cmd := exec.Command(
 		minikubeCmd,
 		"start",
+		"--vm-driver", minikube.driver,
 		"--cpus", minikube.cpus,
 		"--memory", minikube.memory,
 		"--kubernetes-version", minikube.kubeVersion,
