@@ -34,9 +34,8 @@ import {
     ZoomInRounded,
     ZoomOutRounded,
     ZoomOutMapOutlined,
-    UnfoldLess,
-    UnfoldMore,
     ArrowRightAlt,
+    ArrowBackRounded
 } from '@material-ui/icons';
 import * as PropTypes from "prop-types";
 import Divider from "@material-ui/core/Divider";
@@ -54,7 +53,7 @@ const styles = (theme) => ({
     root: {
         display: "flex"
     },
-    root1: {
+    graph: {
         height: "93vh",
         "& .vis-network": {
             outline: "none"
@@ -72,7 +71,8 @@ const styles = (theme) => ({
         color: "#808080"
     },
     instructions: {
-        display: "inline-block"
+        display: "inline-block",
+        fontWeight: 600
     },
     diagramTools: {
         marginLeft: 20
@@ -169,6 +169,10 @@ const styles = (theme) => ({
     noContentMsg: {
         fontSize: 12,
         padding: 20
+    },
+    back: {
+        padding: 0,
+        marginRight: 10
     }
 });
 
@@ -189,16 +193,6 @@ class DesignerView extends React.Component {
             open: true,
             openSnackBar: false,
             errorContent: "",
-            properties: [
-                {
-                    key: "Organization",
-                    value: "wso2cellery"
-                },
-                {
-                    key: "Image Name",
-                    value: ""
-                }
-            ],
             nodeType: 'none',
             jsonFile: {}
         };
@@ -438,10 +432,11 @@ class DesignerView extends React.Component {
             isAddClicked: true,
             isNodeSelected: false,
             isEdgeSelected: false,
-            helpText: "Click on canvas to add cell",
+            helpText: "Click on empty space to place the element",
             nodeType: "none"
         });
 
+        this.network.off('click');
         this.network.on('click', (params) => {
             const maxId = nodes.reduce((max, node) => node.iterator > max ? node.iterator : max, 0);
             let nodeLabel = '';
@@ -477,9 +472,8 @@ class DesignerView extends React.Component {
                     value: 3,
                     type: nodeType,
                     image: this.viewGenerator(nodeType),
-                    name: "",
-                    org: "",
-                    version: ""
+                    org: "org-name",
+                    version: "latest"
                 });
             }
 
@@ -503,7 +497,7 @@ class DesignerView extends React.Component {
 
         this.setState({
             isAddClicked: true,
-            helpText: "Click on canvas to add link",
+            helpText: "Click on a node and drag the link to another node to connect them",
             isNodeSelected: false,
             isEdgeSelected: true,
             nodeType: "none"
@@ -667,7 +661,6 @@ class DesignerView extends React.Component {
                     value: node.value,
                     type: node.type,
                     image: node.image,
-                    name: node.name,
                     org: node.org,
                     version: node.version
                 });
@@ -980,6 +973,14 @@ class DesignerView extends React.Component {
         });
     };
 
+    onBackClick = () => {
+
+        this.setState({
+            isAddClicked: false
+        });
+    };
+
+
     render() {
         const {classes} = this.props;
         const {isAddClicked, open, isNodeSelected, isEdgeSelected, helpText, nodeType, openSnackBar, errorContent} = this.state;
@@ -997,7 +998,14 @@ class DesignerView extends React.Component {
                                         isAddClicked
                                             ? (<div>
                                                 <Typography variant="subtitle2" className={classes.instructions}>
-                                                    {helpText}
+                                                    {
+                                                        helpText ?
+                                                        (<span><IconButton onClick={this.onBackClick}
+                                                            className={classes.back}>
+                                                            <ArrowBackRounded fontSize="small"/>
+                                                        </IconButton>{helpText}</span>)
+                                                        : null
+                                                    }
                                                 </Typography>
                                             </div>)
                                             : null
@@ -1012,12 +1020,16 @@ class DesignerView extends React.Component {
                                         isNodeSelected ?
                                             (<ButtonGroup size="small" aria-label="small outlined button group">
                                                 <Tooltip title="Increase size" placement="bottom">
-                                                    <Button onClick={this.increaseSize}><UnfoldMore
-                                                        fontSize="small"/></Button>
+                                                    <Button onClick={this.increaseSize}>
+                                                        <img alt="increase size" src={require('../icons/increase-size.svg')}
+                                                             height={16}/>
+                                                    </Button>
                                                 </Tooltip>
                                                 <Tooltip title="Decrease size" placement="bottom">
-                                                    <Button onClick={this.decreaseSize}><UnfoldLess
-                                                        fontSize="small"/></Button>
+                                                    <Button onClick={this.decreaseSize}>
+                                                        <img alt="decrease size" src={require('../icons/decrease-size.svg')}
+                                                             height={16}/>
+                                                    </Button>
                                                 </Tooltip>
 
                                                 <Tooltip title="Delete" placement="bottom">
@@ -1118,7 +1130,7 @@ class DesignerView extends React.Component {
                     })}>
                         <div className={classes.graphContainer}>
                             <div className={classes.diagram}>
-                                <div className={classes.root1} ref={this.dependencyGraph}/>
+                                <div className={classes.graph} ref={this.dependencyGraph}/>
                             </div>
                         </div>
                     </div>

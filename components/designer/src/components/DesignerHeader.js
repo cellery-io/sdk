@@ -25,7 +25,7 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Tooltip from "@material-ui/core/Tooltip/Tooltip";
 import Typography from "@material-ui/core/Typography";
 import {withStyles} from "@material-ui/core/styles";
-import {SaveOutlined, HelpOutline, OpenInBrowserRounded} from '@material-ui/icons';
+import {SaveOutlined, OpenInBrowserRounded} from '@material-ui/icons';
 import * as PropTypes from "prop-types";
 import Files from "react-files";
 
