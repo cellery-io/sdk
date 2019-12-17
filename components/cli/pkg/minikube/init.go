@@ -31,7 +31,8 @@ import (
 type Status int
 
 const (
-	NonExisting Status = iota
+	MinikubeCommandNotFound Status = iota
+	NonExisting
 	Running
 	Stopped
 )
@@ -87,7 +88,7 @@ func SetProfile(profile string) func(*Minikube) {
 
 func ClusterStatus(profile string) (Status, error) {
 	if !util.IsCommandAvailable(minikubeCmd) {
-		return NonExisting, nil
+		return MinikubeCommandNotFound, nil
 	}
 	cmd := exec.Command(
 		minikubeCmd,

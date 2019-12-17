@@ -89,6 +89,7 @@ The easiest way to setup Cellery is using the 'local' mode which installs a Virt
 For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
 
 ### Prerequisites 
+- [Minikube](https://github.com/kubernetes/minikube/releases) 
 - [VirtualBox](https://www.virtualbox.org/wiki/Downloads) 
 - [Kubectl version 1.13/1.14/1.15](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
@@ -199,10 +200,13 @@ Now let's look at the steps required to run this cell.
       hello-world            wso2cellery/hello-world-cell:latest   Ready    hello--gateway-service        1          30 minutes 48 seconds
     ```
 
-3.  Add the following line to the `/etc/hosts` file. 
-    
+3.  Execute the following command and get the minikube ip address of cellery-local-setup
     ```
-      192.168.56.10 hello-world.com
+      minikube ip --profile cellery-local-setup
+    ```
+    Add the following line to the `/etc/hosts` file.
+    ```
+      <MINIKUBE_IP> hello-world.com
     ```
     
     **Note:**

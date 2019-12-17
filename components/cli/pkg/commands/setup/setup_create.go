@@ -50,11 +50,10 @@ func createEnvironment(cli cli.Cli) error {
 	if err != nil {
 		return fmt.Errorf("failed to check if minikube is running, %v", err)
 	}
-	if minikubeStatus == minikube.NonExisting || minikubeStatus == minikube.Running ||
-		minikubeStatus == minikube.Stopped {
-		items = []string{celleryGcp, existingCluster, setupBack}
-	} else {
+	if minikubeStatus == minikube.NonExisting {
 		items = []string{celleryLocal, celleryGcp, existingCluster, setupBack}
+	} else {
+		items = []string{celleryGcp, existingCluster, setupBack}
 	}
 	cellPrompt := promptui.Select{
 		Label:     util.YellowBold("?") + " Select an environment to be installed",

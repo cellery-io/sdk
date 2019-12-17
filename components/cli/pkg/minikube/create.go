@@ -39,6 +39,7 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 		"--memory", minikube.memory,
 		"--kubernetes-version", minikube.kubeVersion,
 		"--profile", minikube.profile,
+		"--embed-certs=true",
 		"--network-plugin=cni",
 		"--enable-default-cni",
 	)

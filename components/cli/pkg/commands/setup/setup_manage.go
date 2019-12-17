@@ -40,7 +40,7 @@ func manageEnvironment(cli cli.Cli) error {
 	if err != nil {
 		return fmt.Errorf("failed to check if minikube is running, %v", err)
 	}
-	if minikubeStatus == minikube.NonExisting {
+	if minikubeStatus == minikube.NonExisting || minikubeStatus == minikube.MinikubeCommandNotFound {
 		items = []string{celleryGcp, existingCluster, setupBack}
 	} else {
 		items = []string{celleryLocal, celleryGcp, existingCluster, setupBack}
