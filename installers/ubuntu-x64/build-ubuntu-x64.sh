@@ -130,6 +130,12 @@ buildDocsView() {
     popd >/dev/null 2>&1
 }
 
+buildDesigner() {
+    go_to_dir ../../
+    make build-designer
+    popd >/dev/null 2>&1
+}
+
 getProductSize() {
     CELLERY_SIZE=$(du -s ../../components/build/cellery | awk '{print $1}')
     CELLERY_BALO_SIZE=$(du -s ../../components/module-cellery/target/balo/cellery-*.balo | awk '{print $1}')
@@ -200,6 +206,7 @@ setB7aVersion
 buildBallerinaNatives
 buildCelleryCLI
 buildDocsView
+buildDesigner
 
 getProductSize
 

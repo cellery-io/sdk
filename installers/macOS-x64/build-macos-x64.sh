@@ -137,6 +137,12 @@ buildDocsView() {
     popd >/dev/null 2>&1
 }
 
+buildDesigner() {
+    go_to_dir ../../
+    make build-designer
+    popd >/dev/null 2>&1
+}
+
 copyDarwinDirectory(){
   createInstallationDirectory
   rm -rf ${TARGET_DIRECTORY}/darwin
@@ -256,6 +262,7 @@ setB7aVersion
 buildBallerinaNatives
 buildCelleryCLI
 buildDocsView
+buildDesigner
 
 copyDarwinDirectory
 copyBuildDirectory
