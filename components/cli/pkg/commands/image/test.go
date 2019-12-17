@@ -43,6 +43,9 @@ const Logs = "logs"
 func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDependencies bool, shareDependencies bool,
 	dependencyLinks []string, envVars []string, assumeYes bool, debug bool, verbose bool, disableTelepresence bool, incell bool, projLocation string) error {
 	extractedImage, err := extractImage(cli, cellImageTag, instanceName, dependencyLinks, envVars)
+	if err != nil {
+		return err
+	}
 	err = startTestCellInstance(cli, extractedImage, instanceName, startDependencies,
 		shareDependencies, verbose, debug, disableTelepresence, incell, assumeYes, projLocation)
 	//Cleanup telepresence deployment started for tests
