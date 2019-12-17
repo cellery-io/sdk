@@ -14,86 +14,65 @@ machine. Cellery provides a set of helper functions which eases writing tests.
 
 | Function        | Signature                                                                                                                                                    | Summary                                                                                                            |
 |-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| [```getCellImage```](#functiongetcellimage)   | <code>public function getCellImage() returns (ImageName&#124; error) </code>                                                                                               | Gives information about the instance being tested                                                                  |
-| [```getDependencies```](#functiongetdependencies) | <code>public function getDependencies() returns (map &#124; error)</code>                                                                                                    | Gives a map of dependency instances of the cell being tested                                                       |
-| [```getCellEndpoints```](#functiongetcellendpoints)  | <code>public function getCellEndpoints(InstanceState[] iNameList, string alias = "", string kind = "Cell")  returns (Reference&#124;error)</code>                               | Returns the services(endpoint URLs) exposed from the cell being tested and dependency cells                        |
-| [```run```](#functionrun)           | <code>public function run(cellery:ImageName iName, map instances,  boolean startDependencies, boolean shareDependencies)  returns (cellery:InstanceState[]&#124;error?)</code> | Starts the instances and return an array of instance with their states                                             |
-| [```stopInstances```](#functionstopinstances)   | <code>public function stopInstances(InstanceState[] instances) returns (error?)</code>                                                                                  | Checks for the state of the instances and stops each of them only if the instance was created by the test function |
+| [```getTestConfig```](#functiongettestconfig)   | <code>public function getTestConfig() returns TestConfig </code> | Gives information about the instance being tested |                                                         |
+| [```runInstances```](#functionruninstances)           | <code>public function runInstances(testConfig)</code> | Starts the instances and skips already running ones |
+| [```getInstanceEndpoints```](#functiongetinstanceendpoints)  | <code>public function getInstanceEndpoints(string alias = "")  returns Reference</code> | Returns the services(endpoint URLs) exposed from the cell being tested and dependency cells |
+| [```stopInstances```](#functionstopinstances)   | <code>public function stopInstances() returns (error?)</code>  | Checks for the state of the instances and stops each of them only if the instance was created by the test function |
 | [```runDockerTest```](#functionrundockertest)   | <code>public function runDockerTest(string imageName, map<Env> envVars) returns (error?)</code> | Runs a docker image based test |
 
 
- #### Function```getCellImage```
+ #### Function```getTestConfig```
  
- Returns an ImageName record of the cell which is being tested. This record consists of information about Cell
- /Composite and instance information about the actual instance which is running. Below depicts how this is used to
-  retrieve instance information.
+ Returns a TestConfig record related to the cell which is being tested. This record consists of the image name, 
+ instance name, and condition to start and share dependencies which are passed by the user to the CLI command. Below 
+ depicts how this is used to retrieve configuration relate to the tests. The return value should be passed to 
+ [```runInstances``` helper function](#functionruninstances) to start the instances.
   
   ```ballerina
-cellery:ImageName iName = <cellery:ImageName>cellery:getCellImage();
+cellery:TestConfig testConfig = <@untainted>cellery:getTestConfig();
 ```
 
 [back to helper functions](#helper-functions)
 
-#### Function```getDependencies```
-  
-Returns a map of ImageName records of the dependencies of the cell being tested.
-  
-  ```ballerina
-map<cellery:ImageName> instances = <map<cellery:ImageName>>cellery:getDependencies();
-```
-[back to helper functions](#helper-functions)
-#### Function```getCellEndpoints```
+#### Function```runInstances```
 
-Returns the endpoints which are exposed from the Cell which is being tested and from the dependency Cells.
-
-* If alias is given - Returns the endpoints which are exposed by the dependency cell with given alias name
-* If alias is not given - Returns the endpoints of the cell being tested 
-
-```ballerina
-cellery:Reference petBeEndpoints = <cellery:Reference>cellery:getCellEndpoints(instanceList, alias = "petStoreBackend");
-
-cellery:Reference allEndpoints = <cellery:Reference>cellery:getCellEndpoints(instanceList);
-```
-[back to helper functions](#helper-functions)
-
-#### Function```run```
-
-The `run()` function defined in the cell file can be used to
- create the instances for the purpose of testing. This returns an error if the root instance is already
-  available in the runtime and it has to be handled when writing tests. Please note that ```@test:BeforeSuite``` is
-   used to make sure this runs before the test suite. 
+This starts the required instances and reuses already existing for testing. Please note that ```@test:BeforeSuite``` is used to make sure this runs before the test suite. 
 
 ```ballerina
 # Handle creation of instances for running tests
 @test:BeforeSuite
 function setup() {
-   cellery:ImageName iName = <cellery:ImageName>cellery:getCellImage();
- 
-   cellery:InstanceState[]|error? result = run(iName, {}, true, true);
-   if (result is error) {
-       cellery:InstanceState iNameState = {
-           iName : iName,
-           isRunning: true
-       };
-       instanceList[instanceList.length()] = iNameState;
-   } else {
-       instanceList = <cellery:InstanceState[]>result;
-   }
+   cellery:runInstances(testConfig);
 }
 
 ```
 [back to helper functions](#helper-functions)
 
+#### Function```getInstanceEndpoints```
+
+Returns the endpoints which are exposed from the cell under test or dependency instance  
+Cells.
+
+* If alias is given - Returns the endpoints which are exposed by the dependency cell with given alias name
+* If alias is not given - Returns the endpoints of the cell being tested 
+
+```ballerina
+cellery:Reference petBeEndpoints = <cellery:Reference>cellery:getInstanceEndpoints(alias = "petStoreBackend");
+
+cellery:Reference allEndpoints = <cellery:Reference>cellery:getInstanceEndpoints();
+```
+[back to helper functions](#helper-functions)
+
 #### Function```stopInstances```
 
-Stops and destroys the instances created for the purpose of running tests. Instances that were already available before
- starting tests are kept without stopping.
+Stops and destroys the instances created for the purpose of running tests. Instances that were already available 
+before starting tests are kept without stopping.
 
 ```ballerina
 # Handle deletion of instances for running tests
 @test:AfterSuite
 public function cleanUp() {
-   error? err = cellery:stopInstances(instanceList);
+   error? err = cellery:stopInstances();
 }
 
 ```
@@ -115,8 +94,9 @@ Docker image based tests are also written as ballerina tests using this helper f
  ```ballerina
 @test:Config {}
 function testDocker() {
-    map<cellery:Env> envVars = {TEST_CELL_URL: { value: TEST_CONTROLLER_ENDPOINT }};
-    error? a = cellery:runDockerTest("docker.io/wso2cellery/sample-tests", envVars);
+    map<cellery:Env> envVars = {PET_BE_CELL_URL: { value: PET_BE_CONTROLLER_ENDPOINT }};
+    error? err = cellery:runDockerTest("docker.io/wso2cellery/samples-pet-store-order-tests", envVars);
+    test:assertFalse(err is error, msg = "Docker image test failed.\n Reason: \n" + err.toString() + "\n");
 }
 ```
 
