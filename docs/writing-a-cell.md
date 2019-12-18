@@ -201,7 +201,7 @@ You can terminate the cells that are started during this guide.
     $ cellery term --all
     ```
 ### What's Next?
-- [Developing & running a cell with resources and/or tests](https://github.com/wso2/cellery/blob/master/docs/writing-a-cell-bal-project.md) - Step by step explanation on how you could define cells that has resources and/or tests
+- [Developing & running a cell with resources and/or tests](https://github.com/wso2/cellery/blob/master/docs/writing-a-cell-bal-project.md) - Step by step explanation on how you could define a cell with resources and/or tests
 - [Cell Specification](https://github.com/wso2/cellery-spec/blob/master/README.md) - Key concepts of Cellery.
 - [How to code cells?](cellery-syntax.md) - explains how Cellery cells are written.
 - [CLI commands](cli-reference.md) - reference for CLI commands.
