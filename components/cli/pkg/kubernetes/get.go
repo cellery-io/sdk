@@ -395,3 +395,18 @@ func (kubeCli *CelleryKubeCli) GetInstanceBytes(instanceKind, InstanceName strin
 	out, err := osexec.GetCommandOutputFromTextFile(cmd)
 	return []byte(out), err
 }
+
+func (kubeCli *CelleryKubeCli) GetNamespace(namespace string) ([]byte, error) {
+	cmd := exec.Command(
+		kubectl,
+		"get",
+		"namespace",
+		namespace,
+	)
+	displayVerboseOutput(cmd)
+	out, err := osexec.GetCommandOutputFromTextFile(cmd)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}

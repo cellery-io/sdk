@@ -20,6 +20,7 @@ package runtime
 
 import (
 	"fmt"
+	"strings"
 
 	"cellery.io/cellery/components/cli/cli"
 )
@@ -28,9 +29,16 @@ func RunSetNamespace(cli cli.Cli, namespace string) error {
 	if err := cli.ExecuteTask(fmt.Sprintf("Changing the namespace to %s", namespace),
 		fmt.Sprintf("Failed to changed the namespace to %s", namespace),
 		"", func() error {
-			err := cli.KubeCli().CreateNamespace(namespace)
+			_, err := cli.KubeCli().GetNamespace(namespace)
 			if err != nil {
-				return fmt.Errorf("failed to create namespace, %v", err)
+				if strings.Contains(err.Error(), "not found") {
+					err = cli.KubeCli().CreateNamespace(namespace)
+					if err != nil {
+						return fmt.Errorf("failed to create namespace, %v", err)
+					}
+				} else {
+					return fmt.Errorf("failed to check if namespace %s exists, %v", namespace, err)
+				}
 			}
 			err = cli.KubeCli().SetNamespace(namespace)
 			if err != nil {

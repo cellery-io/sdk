@@ -328,3 +328,7 @@ func (kubeCli *MockKubeCli) CreateNamespace(namespace string) error {
 func (kubeCli *MockKubeCli) DeleteAllComposites() error {
 	return nil
 }
+
+func (kubeCli *MockKubeCli) GetNamespace(namespace string) ([]byte, error) {
+	return nil, nil
+}
