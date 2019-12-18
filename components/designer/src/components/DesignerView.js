@@ -40,7 +40,6 @@ import {
 import * as PropTypes from "prop-types";
 import Divider from "@material-ui/core/Divider";
 import Drawer from "@material-ui/core/Drawer";
-import Grey from "@material-ui/core/colors/grey";
 import DesignerHeader from "./DesignerHeader";
 import * as axios from "axios";
 import Snackbar from '@material-ui/core/Snackbar';
@@ -82,14 +81,13 @@ const styles = (theme) => ({
     },
     drawer: {
         width: drawerWidth,
-        flexShrink: 0
+        flexShrink: 0,
+        position: "sticky"
     },
     drawerPaper: {
-        top: 94,
         width: drawerWidth,
         borderTopWidth: 1,
-        borderTopStyle: "solid",
-        borderTopColor: Grey[200]
+        position: "inherit"
     },
     drawerHeader: {
         display: "flex",
@@ -101,7 +99,6 @@ const styles = (theme) => ({
     },
     content: {
         flexGrow: 1,
-        // padding: theme.spacing.unit * 3,
         transition: theme.transitions.create("margin", {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen
@@ -173,6 +170,15 @@ const styles = (theme) => ({
     back: {
         padding: 0,
         marginRight: 10
+    },
+    actions: {
+        display: "inline-block"
+    },
+    toolGrid: {
+        display: "contents"
+    },
+    toolBtn: {
+        padding: "5.5px 6px"
     }
 });
 
@@ -1054,18 +1060,19 @@ class DesignerView extends React.Component {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <Grid container spacing={1} direction="row" justify="flex-end" alignItems="center">
-                                <Grid item>
+                                <Grid item className={classes.toolGrid}>
                                     {
                                         isNodeSelected && (nodeType === "cell" || nodeType === "composite" ||
                                             nodeType === "gateway" || nodeType === "component")?
-                                            (<ButtonGroup size="small" aria-label="small outlined button group">
+                                            (<ButtonGroup size="small" aria-label="small outlined button group"
+                                                className={classes.actions}>
                                                 <Tooltip title="Increase size" placement="bottom">
-                                                    <Button onClick={this.increaseSize}>
+                                                    <Button onClick={this.increaseSize} className={classes.toolBtn}>
                                                         <img alt="increase size" src={require('../icons/increase-size.svg')}
                                                              height={15}/>
                                                     </Button>
                                                 </Tooltip>
-                                                <Tooltip title="Decrease size" placement="bottom">
+                                                <Tooltip title="Decrease size" placement="bottom" className={classes.toolBtn}>
                                                     <Button onClick={this.decreaseSize}>
                                                         <img alt="decrease size" src={require('../icons/decrease-size.svg')}
                                                              height={15}/>
