@@ -261,7 +261,6 @@ class DesignerView extends React.Component {
         nodes: {
             scaling: {
                 min: 1,
-                // max: 10,
                 label: {
                     enabled: false,
                     min: 1,
@@ -524,25 +523,25 @@ class DesignerView extends React.Component {
 
         this.network.unselectAll();
 
-        this.setState({
-            isAddClicked: true,
-            helpText: "Click on a node and drag the link to another node to connect them",
-            isNodeSelected: false,
-            isEdgeSelected: true,
-            nodeType: "none"
+        this.network.on('select', (params) => {
+            this.network.disableEditMode();
         });
 
         this.network.addEdgeMode();
 
-        this.network.on('release', (params) => {
+        this.setState({
+            isAddClicked: true,
+            helpText: "Click on a node and drag the link to another node to connect them",
+            isNodeSelected: false,
+            nodeType: "none"
+        });
 
+        this.network.on('release', (params) => {
             this.setState({
                 isAddClicked: false,
                 helpText: ""
             });
         });
-
-        this.network.off('click');
     };
 
     getEdges = () => {
@@ -571,7 +570,6 @@ class DesignerView extends React.Component {
 
         nodes.forEach((item) => {
             if (item.id === nodeId) {
-
                 if (attr === "value") {
                     item.value = value;
                 } else if (attr === "label") {
@@ -1045,11 +1043,11 @@ class DesignerView extends React.Component {
                                                 <Typography variant="subtitle2" className={classes.instructions}>
                                                     {
                                                         helpText ?
-                                                        (<span><IconButton onClick={this.onBackClick}
-                                                            className={classes.back}>
-                                                            <ArrowBackRounded fontSize="small"/>
-                                                        </IconButton>{helpText}</span>)
-                                                        : null
+                                                            (<span><IconButton onClick={this.onBackClick}
+                                                                               className={classes.back}>
+                                                                <ArrowBackRounded fontSize="small"/>
+                                                            </IconButton>{helpText}</span>)
+                                                            : null
                                                     }
                                                 </Typography>
                                             </div>)
