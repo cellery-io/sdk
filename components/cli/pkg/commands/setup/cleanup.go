@@ -117,9 +117,15 @@ func RunSetupCleanupCelleryRuntime(cli cli.Cli, removeKnative, removeIstio, remo
 				return err
 			}
 		}
-		if err := cli.ExecuteTask("Removing all cells", "Failed to remove all cells",
+		if err := cli.ExecuteTask("Removing all instances", "Failed to remove all instances",
 			"", func() error {
-				return cli.KubeCli().DeleteAllCells()
+				if err := cli.KubeCli().DeleteAllCells(); err != nil {
+					return fmt.Errorf("failed to remove all cell instances, %v", err)
+				}
+				if err := cli.KubeCli().DeleteAllComposites(); err != nil {
+					return fmt.Errorf("failed to remove all composite instances, %v", err)
+				}
+				return nil
 			}); err != nil {
 			return err
 		}

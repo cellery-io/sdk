@@ -59,7 +59,7 @@ func manageExistingCluster(cli cli.Cli) error {
 
 func cleanupExistingCluster(cli cli.Cli) error {
 	confirmCleanup, _, err := util.GetYesOrNoFromUser("Do you want to delete the cellery runtime (This will "+
-		"delete all your cells and data)", false)
+		"delete all your instances and data)", false)
 	if err != nil {
 		return fmt.Errorf("failed to select option, %v", err)
 	}

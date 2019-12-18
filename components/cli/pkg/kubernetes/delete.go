@@ -90,6 +90,19 @@ func (kubeCli *CelleryKubeCli) DeleteAllCells() error {
 	return cmd.Run()
 }
 
+func (kubeCli *CelleryKubeCli) DeleteAllComposites() error {
+	cmd := exec.Command(
+		kubectl,
+		"delete",
+		"composites",
+		"--all",
+		"--ignore-not-found",
+	)
+	displayVerboseOutput(cmd)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func (kubeCli *CelleryKubeCli) DeletePersistedVolume(persistedVolume string) error {
 	cmd := exec.Command(
 		kubectl,

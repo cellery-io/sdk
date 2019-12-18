@@ -55,6 +55,7 @@ type KubeCli interface {
 	SetNamespace(namespace string) error
 	DeleteNameSpace(nameSpace string) error
 	CreateNamespace(namespace string) error
+	DeleteAllComposites() error
 }
 
 type CelleryKubeCli struct {
