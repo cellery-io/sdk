@@ -247,7 +247,7 @@ func PromtConfirmation(balProj string, debug bool) (bool, error) {
 	if !debug {
 		fmt.Printf("%s "+util.Bold("Do you wish to continue running tests (Y/n)? "), util.YellowBold("?"))
 	} else {
-		debugMsg := "The following will be created/overridden in your project location %s:\n" +
+		debugMsg := "The following will be created/overwritten in your project location %s:\n" +
 			"  1) %s\n" +
 			"  2) %s\n"
 		fmt.Printf(util.CyanBold(fmt.Sprintf(debugMsg, balProj, constants.BallerinaConf, "logs/")))
