@@ -1,7 +1,7 @@
 ## Developing & running your first cell
 
 In this section let's focus on initialize, build, run and push the same hello world cell explained above. 
-Follow the instructions listed below to create your first cell.
+Follow the instructions listed below to create your first cell. To create a cell that requires additional resources, you can create a Ballerina project for the cell. To get started with a Ballerina project, follow instructions given [here]().
 
 1. Execute `cellery init` command from the command prompt, and provide the project name as `hello-world-cell`. 
     ```
@@ -20,11 +20,12 @@ Follow the instructions listed below to create your first cell.
 2. The above step will auto generate a Cellery file in the location: hello-world-cell/hello-world-cell.bal with below content. 
 This file is implemented in [Ballerina](https://ballerina.io/) - A Cloud Native Programming Language. However, Ballerina language is used
 for simple assignments to define your applications in Cellery, and hence you do not need to learn or have extensive knowledge in 
-Ballerina language to use Cellery. Basically, the cell file consists of three methods, `build`, `run` and `test`, where `build` method will be invoked during `cellery build` operation, 
-`run` method will be invoked during `cellery run` operation and `test` method will be invoked during `cellery test` operation. In each of these method, you define
+Ballerina language to use Cellery. Basically, the cell file consists of three methods, `build` and `run`, where `build` 
+method will be invoked during `cellery build` operation, 
+`run` method will be invoked during `cellery run` operation. In each of these method, you define
 what should be occurred for your component/cell/composite.   
 
-3. You define how the your [Cell](cellery-syntax.md#cell) or [Composite](cellery-syntax.md#composite) should be packaged, 
+3. You define how your [Cell](cellery-syntax.md#cell) or [Composite](cellery-syntax.md#composite) should be packaged, 
 and the list of components inside it, during the `build` method. At the end of the method, you will be creating the Cell or Composite image via `cellery:createImage()`
 function. Below shown cell `helloCell` consists of one [component](cellery-syntax.md#component) defined as `helloComponent` and it has one [web ingress](cellery-syntax.md#2-web-ingress) with default vhost `hello-world.com`.
 An environment variable `HELLO_NAME` is expected by `helloComponent` to render the webpage, and it is assigned `Cellery` as default. 
@@ -200,6 +201,7 @@ You can terminate the cells that are started during this guide.
     $ cellery term --all
     ```
 ### What's Next?
+- [Developing & running a cell with resources and/or tests](https://github.com/wso2/cellery/blob/master/docs/writing-a-cell-bal-project.md) - Step by step explanation on how you could define cells that has resources and/or tests
 - [Cell Specification](https://github.com/wso2/cellery-spec/blob/master/README.md) - Key concepts of Cellery.
 - [How to code cells?](cellery-syntax.md) - explains how Cellery cells are written.
 - [CLI commands](cli-reference.md) - reference for CLI commands.

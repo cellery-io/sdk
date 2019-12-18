@@ -231,7 +231,8 @@ Now let's look at the steps required to run this cell.
 * [CLI commands](docs/cli-reference.md) - reference for CLI commands.
 
 Learn about full lifecycle of cells in Cellery from,
-* [Developing and runing a Cell](docs/writing-a-cell.md) - step by step explanation on how you could define your own cells.
+* [Developing and running a Cell](docs/writing-a-cell.md) - step by step explanation on how you could define your own cells.
+* [Developing & running a cell with resources and/or tests](https://github.com/wso2/cellery/blob/master/docs/writing-a-cell-bal-project.md) - Step by step explanation on how you could define cells that has resources and/or tests
 * [Testing a Cell](docs/cell-testing.md) - provides the instructions to run test against cells.
 * [Managing a Cell](docs/cell-management.md) - lists the management aspects of cells in the runtime.
     * [Patch](docs/cell-patch-and-adv-deployment.md) - patch a running cell instance.
