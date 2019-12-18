@@ -319,7 +319,7 @@ class DesignerView extends React.Component {
                 item.x = position[item.id].x;
                 item.y = position[item.id].y;
             });
-            this.nodesData.update(nodes);
+            this.nodesData.update(this.graph.nodes);
         });
 
         this.network.on('selectNode', (params) => {
@@ -749,8 +749,11 @@ class DesignerView extends React.Component {
                 if (xValue > bb.left && xValue < bb.right && yValue > bb.top && yValue < bb.bottom) {
                     nodeData.parent = selectedNode.name;
                     this.updateNode(node, selectedNode.name, "parent");
-                    this.nodesData.update(nodeData);
+                } else {
+                    nodeData.parent = "";
+                    this.updateNode(node, "", "parent");
                 }
+                this.nodesData.update(nodeData);
             });
         });
     };
@@ -958,13 +961,18 @@ class DesignerView extends React.Component {
     };
 
     validateGraph = () => {
-        const errorMsgs = [];
+        let {nodes} = this.graph;
+        let errorMsgs = [];
 
-        if (this.graph.nodes.length > 0) {
-            this.graph.nodes.forEach((node) => {
-                if ((node.type === "component" && node.parent === "") ||
-                    (node.type === "gateway" && node.parent === "")) {
+        this.getParentOfComponent();
+
+        if (nodes.length > 0) {
+            nodes.forEach((node) => {
+                if (node.type === "component" && node.parent === "") {
                     errorMsgs.push(node.name + " is not placed in a cell or composite");
+                }
+                if(node.type === "gateway" && node.parent === ""){
+                    errorMsgs.push(node.name + " is not placed in a cell");
                 }
             });
 
@@ -984,7 +992,7 @@ class DesignerView extends React.Component {
             });
 
         } else {
-            errorMsgs.push("No cell or composite data to generate code")
+            errorMsgs.push("No cell or composite data to generate code");
         }
 
         if (errorMsgs.length === 0) {
