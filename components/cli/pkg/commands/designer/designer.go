@@ -192,8 +192,8 @@ func getDependency(nodeId string, meta DesignMeta) (TemplateDependency, error) {
 		if nodeId == node.Gateway.ID {
 			dependency := TemplateDependency{
 				Org:  node.Org,
-				Name: node.Version,
-				Ver:  node.Name,
+				Name: node.Name,
+				Ver:  node.Version,
 				Type: constants.CELL,
 			}
 			return dependency, nil
@@ -202,8 +202,8 @@ func getDependency(nodeId string, meta DesignMeta) (TemplateDependency, error) {
 			if nodeId == component.ID {
 				dependency := TemplateDependency{
 					Org:  node.Org,
-					Name: node.Version,
-					Ver:  node.Name,
+					Name: node.Name,
+					Ver:  node.Version,
 					Type: constants.COMPOSITE,
 				}
 				return dependency, nil
