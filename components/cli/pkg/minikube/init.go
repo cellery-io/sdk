@@ -125,7 +125,7 @@ func ClusterStatus(profile string) (Status, error) {
 		} else if output == "'Stopped'" {
 			return Stopped, nil
 		} else {
-			return NonExisting, fmt.Errorf("failed to check status of minikube profile %s, %v", profile, err)
+			return NonExisting, fmt.Errorf("failed to check status of minikube profile %s, %v /nPlease execute `minikube delete -p cellery-local-setup` to remove the inconsistent profile", profile, err)
 		}
 	}
 	return Running, nil
