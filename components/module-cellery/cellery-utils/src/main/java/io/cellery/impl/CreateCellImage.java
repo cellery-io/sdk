@@ -368,6 +368,7 @@ public class CreateCellImage {
         port.setName(component.getName() + containerPort);
         if (component.isZeroScaled()) {
             // knative expects the zero scaled http service to be exposed via port 80
+            httpAPI.setPort(80);
             port.setPort(80);
         } else {
             port.setPort(containerPort);
