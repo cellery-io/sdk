@@ -177,15 +177,15 @@ public class CreateCellImage {
             component.setType(attributeMap.getStringValue("type"));
             processSource(component, attributeMap);
             //Process Optional fields
+            if (attributeMap.containsKey(SCALING_POLICY)) {
+                processAutoScalePolicy(attributeMap.getMapValue(SCALING_POLICY), component);
+            }
             if (attributeMap.containsKey(INGRESSES)) {
                 processIngress(attributeMap.getMapValue(INGRESSES), component);
             }
             if (attributeMap.containsKey(LABELS)) {
                 attributeMap.getMapValue(LABELS).forEach((labelKey, labelValue) ->
                         component.addLabel(labelKey.toString(), labelValue.toString()));
-            }
-            if (attributeMap.containsKey(SCALING_POLICY)) {
-                processAutoScalePolicy(attributeMap.getMapValue(SCALING_POLICY), component);
             }
             if (attributeMap.containsKey(ENV_VARS)) {
                 processEnvVars(attributeMap.getMapValue(ENV_VARS), component);
