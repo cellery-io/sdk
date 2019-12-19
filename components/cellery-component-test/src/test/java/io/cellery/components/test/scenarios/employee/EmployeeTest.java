@@ -116,7 +116,7 @@ public class EmployeeTest {
         Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getName(),
                 "SALARY_HOST");
         Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getValue(),
-                "{{instance_name}}--salary-service");
+                "{{instance_name}}--salary-service:8080");
         Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getImage(), "wso2cellery" +
                 "/sampleapp-employee:0.3.0");
         Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getPorts().get(0)
@@ -179,7 +179,7 @@ public class EmployeeTest {
         Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getName(),
                 "SALARY_HOST");
         Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getEnv().get(0).getValue(),
-                "emp-inst--salary-service");
+                "emp-inst--salary-service:8080");
         Assert.assertEquals(components.get(0).getSpec().getTemplate().getContainers().get(0).getImage(),
                 "wso2cellery/sampleapp" +
                         "-employee:0.3.0");

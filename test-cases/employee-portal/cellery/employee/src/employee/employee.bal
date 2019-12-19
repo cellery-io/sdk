@@ -46,7 +46,7 @@ public function build(cellery:ImageName iName) returns error? {
         },
         envVars: {
             SALARY_HOST: {
-                value: cellery:getHost(salaryComponent)
+                value: cellery:getHost(salaryComponent) + ":" + cellery:getPort(salaryComponent).toString()
             }
         },
         labels: {
