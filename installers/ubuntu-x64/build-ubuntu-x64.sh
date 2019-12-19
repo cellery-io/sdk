@@ -170,8 +170,9 @@ copyBuildDirectories() {
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/docs-view
     cp -R ../../components/docs-view/build/* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/docs-view
 
-    mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/designer
-    cp -R ../../components/designer/build/* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/designer
+    mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/designer
+    cp -R ../../components/designer/build/* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/designer
+
 }
 
 createInstaller() {
