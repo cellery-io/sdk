@@ -269,7 +269,12 @@ public class CreateCellImage {
         }
         Port port = new Port();
         port.setName(component.getName() + destination.getPort());
-        port.setPort(destination.getPort());
+        if (component.isZeroScaled()) {
+            // knative expects the zero scaled grpc service to be exposed via port 81
+            port.setPort(81);
+        } else {
+            port.setPort(destination.getPort());
+        }
         port.setProtocol(CelleryConstants.PROTOCOL_GRPC);
         port.setTargetContainer(component.getName());
         port.setTargetPort(destination.getPort());
@@ -361,7 +366,12 @@ public class CreateCellImage {
         httpAPI.setDestination(destination);
         Port port = new Port();
         port.setName(component.getName() + containerPort);
-        port.setPort(containerPort);
+        if (component.isZeroScaled()) {
+            // knative expects the zero scaled http service to be exposed via port 80
+            port.setPort(80);
+        } else {
+            port.setPort(containerPort);
+        }
         port.setProtocol(CelleryConstants.DEFAULT_GATEWAY_PROTOCOL);
         port.setTargetContainer(component.getName());
         port.setTargetPort(containerPort);

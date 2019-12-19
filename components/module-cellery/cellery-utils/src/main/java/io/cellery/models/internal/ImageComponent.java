@@ -104,4 +104,8 @@ public class ImageComponent {
     public void addVolumeInfo(VolumeInfo volumeInfo) {
         this.volumes.add(volumeInfo);
     }
+
+    public boolean isZeroScaled() {
+        return this.getScalingPolicy() != null && this.getScalingPolicy().getKpa() != null;
+    }
 }
