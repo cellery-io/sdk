@@ -765,6 +765,7 @@ class DesignerView extends React.Component {
         childNodes.forEach((node) => {
             const nodeData = this.nodesData.get(node);
             nodeData.parent = "";
+            this.updateNode(node, "", "parent");
         });
         parentNodes.forEach((item) => {
             const bb = this.network.getBoundingBox(item);
@@ -998,6 +999,7 @@ class DesignerView extends React.Component {
                 if (node.type === "component" && node.parent === "") {
                     errorMsgs.push(node.name + " is not placed in a cell or composite");
                 }
+
                 if(node.type === "gateway" && node.parent === ""){
                     errorMsgs.push(node.name + " is not placed in a cell");
                 }
@@ -1013,6 +1015,7 @@ class DesignerView extends React.Component {
             networkDataStructure.data.edges.forEach((edge) => {
                 if (((this.getNodeParentFromId(edge.from) !== this.getNodeParentFromId(edge.to)) && edge.label ===
                         "")) {
+
                     errorMsgs.push("Add Alias for the link from " + this.getNodeFromId(edge.from).label + " to " +
                         this.getNodeFromId(edge.to).label);
                 }
