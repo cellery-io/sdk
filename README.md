@@ -85,12 +85,11 @@ run and manage your composite microservice applications on Kubernetes.
 
 ## Quickstart Guide
 
-The easiest way to setup Cellery is using the 'local' mode which installs a VirtualBox image. 
+The easiest way to setup Cellery is using the 'local' mode which creates Cellery runtime on Minikube. 
 For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
 
 ### Prerequisites 
-- [Minikube](https://github.com/kubernetes/minikube/releases) 
-- [VirtualBox](https://www.virtualbox.org/wiki/Downloads) 
+- [Minikube](https://github.com/kubernetes/minikube/releases)
 - [Kubectl version 1.13/1.14/1.15](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
 ### Download Cellery

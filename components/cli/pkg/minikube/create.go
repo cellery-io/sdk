@@ -25,11 +25,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 )
-
-const ciliumNetworkPlugin = "https://raw.githubusercontent.com/cilium/cilium/1.5.6/examples/kubernetes/1.15/cilium-minikube.yaml"
 
 func (minikube *Minikube) CreateK8sCluster() (string, error) {
 	var cmd *exec.Cmd
@@ -42,8 +39,6 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 			"--kubernetes-version", minikube.kubeVersion,
 			"--profile", minikube.profile,
 			"--embed-certs=true",
-			"--network-plugin=cni",
-			"--enable-default-cni",
 		)
 	} else {
 		cmd = exec.Command(
@@ -55,8 +50,6 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 			"--kubernetes-version", minikube.kubeVersion,
 			"--profile", minikube.profile,
 			"--embed-certs=true",
-			"--network-plugin=cni",
-			"--enable-default-cni",
 		)
 	}
 	var stderr bytes.Buffer
@@ -94,7 +87,6 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get minikube ip, %v", err)
 	}
-	kubernetes.CreateFile(ciliumNetworkPlugin)
 	return strings.TrimSuffix(string(minikubeIp), "\n"), nil
 }
 func (minikube *Minikube) ConfigureSqlInstance() (runtime.MysqlDb, error) {
