@@ -582,7 +582,7 @@ class DesignerView extends React.Component {
             })
         }
         this.graph.edges = connections;
-        this.edgesData.update(edges);
+        this.edgesData.update(this.graph.edges);
     };
 
     fitToScreen = () => {
@@ -875,7 +875,7 @@ class DesignerView extends React.Component {
                 })
             });
 
-            this.edgesData.update(edges);
+            this.edgesData.update(this.graph.edges);
         }
     };
 
