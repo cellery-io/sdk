@@ -85,7 +85,6 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 		errStr := string(stderr.Bytes())
 		return "", fmt.Errorf("error occurred while starting minikube, %v", errStr)
 	}
-	return "", nil
 	cmd = exec.Command(
 		minikubeCmd,
 		"ip",
