@@ -19,8 +19,9 @@
 package minikube
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -31,22 +32,60 @@ import (
 const ciliumNetworkPlugin = "https://raw.githubusercontent.com/cilium/cilium/1.5.6/examples/kubernetes/1.15/cilium-minikube.yaml"
 
 func (minikube *Minikube) CreateK8sCluster() (string, error) {
-	cmd := exec.Command(
-		minikubeCmd,
-		"start",
-		"--vm-driver", minikube.driver,
-		"--cpus", minikube.cpus,
-		"--memory", minikube.memory,
-		"--kubernetes-version", minikube.kubeVersion,
-		"--profile", minikube.profile,
-		"--embed-certs=true",
-		"--network-plugin=cni",
-		"--enable-default-cni",
-	)
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to start minikube, %v", err)
+	var cmd *exec.Cmd
+	if minikube.driver == "" {
+		cmd = exec.Command(
+			minikubeCmd,
+			"start",
+			"--cpus", minikube.cpus,
+			"--memory", minikube.memory,
+			"--kubernetes-version", minikube.kubeVersion,
+			"--profile", minikube.profile,
+			"--embed-certs=true",
+			"--network-plugin=cni",
+			"--enable-default-cni",
+		)
+	} else {
+		cmd = exec.Command(
+			minikubeCmd,
+			"start",
+			"--vm-driver", minikube.driver,
+			"--cpus", minikube.cpus,
+			"--memory", minikube.memory,
+			"--kubernetes-version", minikube.kubeVersion,
+			"--profile", minikube.profile,
+			"--embed-certs=true",
+			"--network-plugin=cni",
+			"--enable-default-cni",
+		)
 	}
+	var stderr bytes.Buffer
+	stdoutReader, _ := cmd.StdoutPipe()
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stdoutScanner.Text())
+		}
+	}()
+	stderrReader, _ := cmd.StderrPipe()
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Printf("\r\x1b[2K\033[36m%s\033[m\n", stderrScanner.Text())
+			fmt.Fprintf(&stderr, stderrScanner.Text())
+		}
+	}()
+	err := cmd.Start()
+	if err != nil {
+		errStr := string(stderr.Bytes())
+		return "", fmt.Errorf("error occurred while starting minikube command, %v", errStr)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		errStr := string(stderr.Bytes())
+		return "", fmt.Errorf("error occurred while starting minikube, %v", errStr)
+	}
+	return "", nil
 	cmd = exec.Command(
 		minikubeCmd,
 		"ip",

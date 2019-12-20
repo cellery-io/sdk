@@ -30,6 +30,7 @@ import (
 )
 
 func newSetupCreateLocalCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
+	var driver = ""
 	cmd := &cobra.Command{
 		Use:   "local",
 		Short: "Create a local Cellery runtime in minikube",
@@ -44,7 +45,7 @@ func newSetupCreateLocalCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 			}
 			platform, err := minikube.NewMinikube(
 				minikube.SetProfile(setup.CelleryLocalSetup),
-				minikube.SetDriver(setup.Vbox),
+				minikube.SetDriver(driver),
 				minikube.SetCpus(setup.MinikubeCpus),
 				minikube.SetMemory(setup.MinikubeMemory),
 				minikube.SetkubeVersion(setup.MinikubeKubernetesVersion))
@@ -71,5 +72,6 @@ func newSetupCreateLocalCommand(cli cli.Cli, isComplete *bool) *cobra.Command {
 		},
 		Example: "  cellery setup create local",
 	}
+	cmd.Flags().StringVar(&driver, "driver", "", "VM driver")
 	return cmd
 }
