@@ -86,6 +86,9 @@ run and manage your composite microservice applications on Kubernetes.
 ## Quickstart Guide
 
 The easiest way to setup Cellery is using the 'local' mode which creates Cellery runtime on Minikube. 
+
+Kindly note that if you freshly installed minikube, you would have to execute ``minikube start``, create a temporary cluster and remove it. This is due to a known issue in minikube (https://github.com/kubernetes/minikube/issues/5716).
+
 For other installation approaches including GCP and Docker for Desktop see [here](docs/installation-options.md)
 
 ### Prerequisites 

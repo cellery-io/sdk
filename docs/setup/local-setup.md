@@ -10,7 +10,9 @@ Local setup
 - [Ballerina 1.0.3](https://ballerina.io/downloads/)
 If Ballerina 1.0.3 is not installed, Cellery will execute ballerina using Docker.
 
-This will setup the local environment, by creating a virtual machine with pre-installed kubeadm and cellery runtime. 
+Kindly note that if you freshly installed minikube, you would have to execute ``minikube start``, create a temporary cluster and remove it. This is due to a known issue in minikube (https://github.com/kubernetes/minikube/issues/5716).
+
+This will setup the local environment, by creating a cellery runtime on a minikube cluster. 
 
 ## Interactive Method
 
