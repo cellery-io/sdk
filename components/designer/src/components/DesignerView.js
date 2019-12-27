@@ -193,7 +193,6 @@ class DesignerView extends React.Component {
             helpText: "",
             offsetX: 0,
             offsetY: 0,
-            scale: 1.3,
             positionX: 0,
             positionY: 0,
             open: true,
@@ -207,6 +206,7 @@ class DesignerView extends React.Component {
             nodes: [],
             edges: []
         };
+        this.scale = 1;
         this.nodesData = {};
         this.edgesData = {};
         this.dependencyGraph = React.createRef();
@@ -544,6 +544,7 @@ class DesignerView extends React.Component {
 
     onClickEdge = () => {
 
+        this.network.off('click');
         this.network.unselectAll();
 
         this.network.on('select', (params) => {
@@ -586,6 +587,7 @@ class DesignerView extends React.Component {
     };
 
     fitToScreen = () => {
+        this.scale = 1;
         this.network.fit();
     };
 
@@ -665,14 +667,12 @@ class DesignerView extends React.Component {
     };
 
     zoomIn = () => {
-        let {scale, positionX, positionY, offsetX, offsetY} = this.state;
-        this.setState({
-            scale: scale + 0.3
-        });
+        let {positionX, positionY, offsetX, offsetY} = this.state;
+        this.scale = this.scale + 0.3
 
         const options = {
             position: {x: positionX, y: positionY},
-            scale: scale,
+            scale: this.scale,
             offset: {x: offsetX, y: offsetY},
             animation: true
         };
@@ -680,17 +680,15 @@ class DesignerView extends React.Component {
     };
 
     zoomOut = () => {
-        let {scale, positionX, positionY, offsetX, offsetY} = this.state;
+        let {positionX, positionY, offsetX, offsetY} = this.state;
 
-        if (scale > 0.3) {
-            this.setState({
-                scale: scale - 0.3
-            });
+        if (this.scale > 0.3) {
+            this.scale = this.scale - 0.3
         }
 
         const options = {
             position: {x: positionX, y: positionY},
-            scale: scale,
+            scale: this.scale,
             offset: {x: offsetX, y: offsetY},
             animation: true
         };
