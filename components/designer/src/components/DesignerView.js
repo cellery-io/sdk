@@ -890,7 +890,7 @@ class DesignerView extends React.Component {
         childNodes.forEach((node, index) => {
             node.dependencies = {};
             this.graph.edges.forEach((edge, index) => {
-                if (node.id === edge.from) {
+                if(node.id === edge.from && edge.label.length > 0){
                     node.dependencies[edge.label] = edge.to;
                 }
             });
