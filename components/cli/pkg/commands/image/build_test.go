@@ -64,6 +64,30 @@ func TestRunBuild(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read reference.json: %v", err)
 	}
+
+	// Test data for building employee
+	employeeBalProject := filepath.Join(currentDir, "employee")
+	err = copyDir(filepath.Join("testdata", "project", "employee"), employeeBalProject)
+	if err != nil {
+		t.Errorf("failed to copy hr.bal to mock location")
+	}
+	empFile, err := os.Open(employeeBalProject)
+	if err != nil {
+		t.Errorf("failed to read " + employeeBalProject)
+	}
+	empYamlContent, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "employee.yaml"))
+	if err != nil {
+		t.Errorf("Failed to read hr.yaml: %v", err)
+	}
+	empMetadataJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "employee_metadata.json"))
+	if err != nil {
+		t.Errorf("Failed to read metadata.json: %v", err)
+	}
+	empReferenceJson, err := ioutil.ReadFile(filepath.Join("testdata", "project", "build_artifacts", "employee_reference.json"))
+	if err != nil {
+		t.Errorf("Failed to read reference.json: %v", err)
+	}
+
 	// Test data for building hr.bal
 	hrBal, err := copyFile(filepath.Join("testdata", "project", "hr.bal"), filepath.Join(currentDir, "hr.bal"))
 	if err != nil {
@@ -107,6 +131,15 @@ func TestRunBuild(t *testing.T) {
 			yaml:          hrYamlContent,
 			metadataJson:  hrMetadataJson,
 			referenceJson: hrReferenceJson,
+		},
+		{
+			name:          "build ballerina project as image",
+			image:         "myorg/employee:1.0.0",
+			file:          empFile,
+			yamlName:      "employee.yaml",
+			yaml:          empYamlContent,
+			metadataJson:  empMetadataJson,
+			referenceJson: empReferenceJson,
 		},
 	}
 	for _, tst := range tests {

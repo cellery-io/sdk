@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 
 	"cellery.io/cellery/components/cli/pkg/ballerina"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 type MockBalExecutor struct {
@@ -32,6 +33,7 @@ type MockBalExecutor struct {
 	version              string
 	executablePath       string
 	yamlName             string
+	mockBalProjectPath   string
 	yamlContent          []byte
 	metadataJsonContent  []byte
 	referenceJsonContent []byte
@@ -83,6 +85,12 @@ func SetReferenceJsonContent(content []byte) func(*MockBalExecutor) {
 	}
 }
 
+func SetMockBalProject(path string) func(*MockBalExecutor) {
+	return func(balExecutor *MockBalExecutor) {
+		balExecutor.mockBalProjectPath = path
+	}
+}
+
 // Build mocks execution of ballerina build on an executable bal file.
 func (balExecutor *MockBalExecutor) Build(fileName string, args []string, cmdDir string) error {
 	var err error
@@ -126,6 +134,10 @@ func (balExecutor *MockBalExecutor) Test(args []string, envVars []*ballerina.Env
 
 // Build mocks execution of ballerina run for cellery init on an executable bal file.
 func (balExecutor *MockBalExecutor) Init(workingDir, projectName, moduleName string) error {
+	err := util.CopyDir(balExecutor.mockBalProjectPath, filepath.Join(workingDir, projectName))
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

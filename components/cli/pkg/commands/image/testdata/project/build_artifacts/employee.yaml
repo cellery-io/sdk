@@ -1,0 +1,93 @@
+---
+apiVersion: "mesh.cellery.io/v1alpha2"
+kind: "Cell"
+metadata:
+  annotations:
+    mesh.cellery.io/cell-image-org: "myorg"
+    mesh.cellery.io/cell-image-name: "employee"
+    mesh.cellery.io/cell-image-version: "1.0.0"
+    mesh.cellery.io/cell-dependencies: "[]"
+  labels: {}
+  name: "employee"
+spec:
+  components:
+  - metadata:
+      annotations: {}
+      labels:
+        team: "HR"
+      name: "employee"
+    spec:
+      type: null
+      template:
+        containers:
+        - env:
+          - name: "SALARY_HOST"
+            value: "{{instance_name}}--salary-service:8080"
+          image: "wso2cellery/sampleapp-employee:0.3.0"
+          name: "employee"
+          ports:
+          - containerPort: 8080
+      ports:
+      - name: "employee8080"
+        port: 8080
+        protocol: "http"
+        targetContainer: "employee"
+        targetPort: 8080
+      configurations: []
+      secrets: []
+      volumeClaims: []
+  - metadata:
+      annotations: {}
+      labels:
+        owner: "Alice"
+        team: "Finance"
+      name: "salary"
+    spec:
+      type: null
+      template:
+        containers:
+        - image: "wso2cellery/sampleapp-salary:0.3.0"
+          name: "salary"
+          ports:
+          - containerPort: 8080
+      ports:
+      - name: "salary8080"
+        port: 8080
+        protocol: "http"
+        targetContainer: "salary"
+        targetPort: 8080
+      configurations: []
+      secrets: []
+      volumeClaims: []
+  gateway:
+    spec:
+      ingress:
+        extensions: {}
+        http:
+        - definitions:
+          - path: "/details"
+            method: "GET"
+          version: "0.1"
+          port: 8080
+          context: "/employee"
+          global: false
+          authenticate: true
+          destination:
+            host: "employee"
+            port: 8080
+        - definitions:
+          - path: "salary"
+            method: "GET"
+          version: "0.1"
+          port: 8080
+          context: "/payroll"
+          global: false
+          authenticate: true
+          destination:
+            host: "salary"
+            port: 8080
+        grpc: []
+        tcp: []
+  sts:
+    spec:
+      unsecuredPaths: []

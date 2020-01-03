@@ -1,0 +1,1 @@
+{"salary_SalaryAPI_api_url":"http://{{instance_name}}--gateway-service:8080/payroll","gateway_host":"{{instance_name}}--gateway-service","employee_employee_api_url":"http://{{instance_name}}--gateway-service:8080/employee"}

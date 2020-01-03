@@ -40,8 +40,8 @@ func TestRunInit(t *testing.T) {
 		}
 	}()
 	mockFileSystem := test.NewMockFileSystem(test.SetCurrentDir(currentDir))
-	mockCli := test.NewMockCli(test.SetFileSystem(mockFileSystem))
 	expectedContent, err := ioutil.ReadFile(filepath.Join("testdata", "expected", "foo.bal"))
+	mockBalProject := filepath.Join("testdata", "build_artifacts", "bar")
 
 	tests := []struct {
 		name      string
@@ -52,14 +52,25 @@ func TestRunInit(t *testing.T) {
 			name:    "init project",
 			project: "foo",
 		},
+		{
+			name:      "init Ballerina project",
+			project:   "bar",
+			isProject: true,
+		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			err := RunInit(mockCli, tst.project, tst.isProject)
+			mockBalExecutor := test.NewMockBalExecutor(test.SetBalCurrentDir(currentDir), test.SetMockBalProject(mockBalProject))
+			err := RunInit(test.NewMockCli(test.SetFileSystem(mockFileSystem), test.SetBalExecutor(mockBalExecutor)), tst.project, tst.isProject)
 			if err != nil {
-				t.Errorf("error in RunInspect, %v", err)
+				t.Errorf("error in RunInit, %v", err)
 			}
-			actualContent, err := ioutil.ReadFile(filepath.Join(currentDir, tst.project, tst.project+".bal"))
+			var actualContent []byte
+			if !tst.isProject {
+				actualContent, err = ioutil.ReadFile(filepath.Join(currentDir, tst.project, tst.project+".bal"))
+			} else {
+				actualContent, err = ioutil.ReadFile(filepath.Join(currentDir, tst.project, "src", tst.project, tst.project+".bal"))
+			}
 			if err != nil {
 				t.Errorf("error reading created bal file, %v", err)
 			}
