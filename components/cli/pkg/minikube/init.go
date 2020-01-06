@@ -25,6 +25,7 @@ import (
 	"os/exec"
 	"strconv"
 
+	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -46,10 +47,16 @@ type Minikube struct {
 	memory      string
 	kubeVersion string
 	profile     string
+	fileSystem  cli.FileSystemManager
 }
 
 func NewMinikube(opts ...func(*Minikube)) (*Minikube, error) {
 	minikube := &Minikube{}
+	fileSystem, err := cli.NewCelleryFileSystem()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize filesystem for minikube, %v", err)
+	}
+	minikube.fileSystem = fileSystem
 	for _, opt := range opts {
 		opt(minikube)
 	}

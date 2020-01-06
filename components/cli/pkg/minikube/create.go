@@ -23,8 +23,11 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
+	"time"
 
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 )
 
@@ -39,6 +42,8 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 			"--kubernetes-version", minikube.kubeVersion,
 			"--profile", minikube.profile,
 			"--embed-certs=true",
+			"--network-plugin=cni",
+			"--enable-default-cni=false",
 		)
 	} else {
 		cmd = exec.Command(
@@ -50,6 +55,8 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 			"--kubernetes-version", minikube.kubeVersion,
 			"--profile", minikube.profile,
 			"--embed-certs=true",
+			"--network-plugin=cni",
+			"--enable-default-cni=false",
 		)
 	}
 	var stderr bytes.Buffer
@@ -87,6 +94,10 @@ func (minikube *Minikube) CreateK8sCluster() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get minikube ip, %v", err)
 	}
+	kubernetes.CreateFile(filepath.Join(minikube.fileSystem.CelleryInstallationDir(), "k8s-artefacts", "minikube", "calico.yaml"))
+	time.Sleep(10 * time.Second)
+	kubernetes.SetEnvironmentVariable("kube-system", "daemonset/calico-node",
+		"FELIX_IGNORELOOSERPF", "true")
 	return strings.TrimSuffix(string(minikubeIp), "\n"), nil
 }
 func (minikube *Minikube) ConfigureSqlInstance() (runtime.MysqlDb, error) {
