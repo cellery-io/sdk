@@ -32,7 +32,6 @@ import (
 	"cellery.io/cellery/components/cli/cli"
 	"cellery.io/cellery/components/cli/pkg/ballerina"
 	"cellery.io/cellery/components/cli/pkg/constants"
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
@@ -50,7 +49,7 @@ func RunTest(cli cli.Cli, cellImageTag string, instanceName string, startDepende
 		shareDependencies, verbose, debug, disableTelepresence, incell, assumeYes, projLocation)
 	//Cleanup telepresence deployment started for tests
 	if !disableTelepresence {
-		DeleteTelepresenceResouces(extractedImage.ImageDir)
+		DeleteTelepresenceResouces(cli)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to test Cell instance "+instanceName+", %v", err)
@@ -329,36 +328,41 @@ func CreateBallerinaConf(instanceName string, extractedImage *ExtractedImage, st
 	return nil
 }
 
-func CreateTelepresenceResources(incell bool, imageDir string, instanceName string) (*string, error) {
+func CreateTelepresenceResources(cli cli.Cli, incell bool, imageDir string, instanceName string) (*string, error) {
 	var srcYamlFile string
 	dstYamlFile := filepath.Join(imageDir, "telepresence.yaml")
 	var deploymentName string
+	var err error
 
 	if incell {
-		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-deployment.yaml")
-		err := util.CopyFile(srcYamlFile, dstYamlFile)
+		srcYamlFile = filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-deployment.yaml")
+		err = util.CopyFile(srcYamlFile, dstYamlFile)
 		if err != nil {
 			return nil, err
 		}
 		util.ReplaceInFile(dstYamlFile, "{{cell}}", instanceName, -1)
 		deploymentName = instanceName + "--telepresence"
 	} else {
-		srcYamlFile = filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-cell.yaml")
-		err := util.CopyFile(srcYamlFile, dstYamlFile)
+		srcYamlFile = filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts, constants.TELEPRESENCE, "telepresence-cell.yaml")
+		err = util.CopyFile(srcYamlFile, dstYamlFile)
 		if err != nil {
 			return nil, err
 		}
 		deploymentName = "telepresence--telepresence-deployment"
 	}
-	kubernetes.ApplyFile(dstYamlFile)
+	err = cli.KubeCli().ApplyFile(dstYamlFile)
+	if err != nil {
+		return nil, err
+	}
+
 	time.Sleep(5 * time.Second)
-	err := kubernetes.WaitForDeployment("available", 900, deploymentName)
+	err = cli.KubeCli().WaitForResource("available", 900, "deployment", deploymentName)
 	if err != nil {
 		return nil, err
 	}
 
 	if !incell {
-		err = kubernetes.WaitForCell("Ready", 30*60, "telepresence")
+		err = cli.KubeCli().WaitForResource("Ready", 30*60, "cells.mesh.cellery.io", "telepresence")
 		if err != nil {
 			return nil, err
 		}
@@ -366,11 +370,15 @@ func CreateTelepresenceResources(incell bool, imageDir string, instanceName stri
 	return &deploymentName, nil
 }
 
-func DeleteTelepresenceResouces(imageDir string) {
-	out, err := kubernetes.DeleteResource("cells.mesh.cellery.io", "telepresence")
-	if err != nil {
+func DeleteTelepresenceResouces(cli cli.Cli) {
+	if err := cli.ExecuteTask("Creating telepresence k8s resources",
+		"Failed to delete telepresence k8s resources",
+		"", func() error {
+			_, err := cli.KubeCli().DeleteResource("cells.mesh.cellery.io", "telepresence")
+			return err
+		}); err != nil {
 		util.PrintWarningMessage(
-			fmt.Sprintf("Failed to delete telepresence resources in the Kubernetes cluster, %v ", fmt.Errorf(out)))
+			fmt.Sprintf("Failed to delete telepresence resources in the Kubernetes cluster, %v ", err))
 	}
 }
 
@@ -380,7 +388,7 @@ func testCommandArgs(cli cli.Cli, incell bool, imageDir string, instanceName str
 	if err = cli.ExecuteTask("Creating telepresence k8s resources",
 		"Failed to create telepresence k8s resources",
 		"", func() error {
-			deploymentName, err = CreateTelepresenceResources(incell, imageDir, instanceName)
+			deploymentName, err = CreateTelepresenceResources(cli, incell, imageDir, instanceName)
 			return err
 		}); err != nil {
 		return nil, err

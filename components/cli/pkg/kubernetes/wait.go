@@ -25,16 +25,16 @@ import (
 	"time"
 )
 
-func WaitForDeployment(condition string, timeoutSeconds int, resourceName string, namespace ...string) error {
-	if len(namespace) > 0 {
-		return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("deployment/%s", resourceName), namespace[0])
-	} else {
-		return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("deployment/%s", resourceName))
-	}
+func WaitForDeployment(condition string, timeoutSeconds int, resourceName string, namespace string) error {
+	return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("deployment/%s", resourceName), namespace)
 }
 
-func WaitForCell(condition string, timeoutSeconds int, resourceName string) error {
-	return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("cells.mesh.cellery.io/%s", resourceName))
+func (kubeCli *CelleryKubeCli) WaitForResource(condition string, timeoutSeconds int, resourceType, resourceName string, namespace ...string) error {
+	if len(namespace) > 0 {
+		return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("%s/%s", resourceType, resourceName), namespace[0])
+	} else {
+		return WaitForCondition(condition, timeoutSeconds, fmt.Sprintf("%s/%s", resourceType, resourceName))
+	}
 }
 
 func WaitForCondition(condition string, timeoutSeconds int, resourceName string, namespace ...string) error {

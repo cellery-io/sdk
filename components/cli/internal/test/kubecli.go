@@ -332,3 +332,7 @@ func (kubeCli *MockKubeCli) DeleteAllComposites() error {
 func (kubeCli *MockKubeCli) GetNamespace(namespace string) ([]byte, error) {
 	return nil, nil
 }
+
+func (kubeCli *MockKubeCli) WaitForResource(condition string, timeoutSeconds int, resourceType, resourceName string, namespace ...string) error {
+	return nil
+}
