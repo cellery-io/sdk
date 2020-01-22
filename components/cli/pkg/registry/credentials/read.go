@@ -61,12 +61,11 @@ func FromBrowser(username string, isAuthorized chan bool, done chan bool) (strin
 		httpPortString = ":" + strconv.Itoa(codeReceiverPort)
 	}
 	redirectUrl := url.QueryEscape(fmt.Sprintf(callBackUrl, codeReceiverPort))
-	var hubAuthUrl = conf.Hub.Url + "/sdk/sign-in?redirectUrl=" + redirectUrl
+	var hubAuthUrl = fmt.Sprintf("%s/sdk/sign-in?redirectUrl=%s", conf.Hub.Url, redirectUrl)
 
 	go func() {
 		mux := http.NewServeMux()
 		server := http.Server{Addr: httpPortString, Handler: mux}
-		//var timer *time.Timer
 		mux.HandleFunc(callBackUrlContext, func(w http.ResponseWriter, r *http.Request) {
 			err := r.ParseForm()
 			if err != nil {
@@ -188,11 +187,17 @@ func getUsernameAndTokenFromJwt(response string) (string, string, error) {
 		return "", "", fmt.Errorf("failed to unmarshal the id_token: %v", err)
 	}
 	idToken, ok := (result["id_token"]).(string)
+	if !ok {
+		return "", "", fmt.Errorf("failed to retrieve the id_token: %v", err)
+	}
 	accessToken, ok := (result["access_token"]).(string)
 	if !ok {
 		return "", "", fmt.Errorf("failed to retrieve the access token: %v", err)
 	}
-	jwtToken, _ := jwt.Parse(idToken, nil)
+	jwtToken, err := jwt.Parse(idToken, nil)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to parse the id_token: %v", err)
+	}
 	claims := jwtToken.Claims.(jwt.MapClaims)
 	sub, ok := claims["sub"].(string)
 	if !ok {
@@ -205,9 +210,8 @@ func getUsernameAndTokenFromJwt(response string) (string, string, error) {
 // getTokenFromCode returns the JWT from the auth code provided
 func getTokenFromCode(code string, port int, conf *config.Conf) (string, error) {
 	tokenUrl := conf.Idp.Url + "/oauth2/token"
-	responseBody := "client_id=" + conf.Idp.ClientId +
-		"&grant_type=authorization_code&code=" + code +
-		"&redirect_uri=" + fmt.Sprintf(callBackUrl, port)
+	responseBody := fmt.Sprintf("client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s",
+		conf.Idp.ClientId, code, fmt.Sprintf(callBackUrl, port))
 	body := strings.NewReader(responseBody)
 	// Token request
 	req, err := http.NewRequest("POST", tokenUrl, body)
